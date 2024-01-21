@@ -187,7 +187,8 @@ public class JaudiotaggerParser extends MetaDataParser {
     }
 
     private static Set<String> imageAvailableFormats = ImmutableSet.of("mp3", "m4a", "m4b", "m4p", "aac", "ogg", "flac", "wav", "aif", "dsf", "aiff", "wma");
-    private static Set<String> applicableFormats = ImmutableSet.of("mp3", "m4a", "m4p", "aac", "ogg", "flac", "wav", "aif", "dsf", "aiff", "wma");
+    private static Set<String> applicableFormats = ImmutableSet.of("mp3","flac");
+
 
     /**
      * Returns whether this parser is applicable to the given file.
