@@ -63,7 +63,7 @@ public class Playlist {
             inverseJoinColumns = @JoinColumn(name = "username"))
     private List<User> sharedUsers;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "playlist_file",
             joinColumns = @JoinColumn(name = "playlist_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "media_file_id", referencedColumnName = "id"))
