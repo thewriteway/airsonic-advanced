@@ -20,6 +20,7 @@
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.command.EditTagsCommand;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.metadata.JaudiotaggerParser;
@@ -36,9 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controller for the page used to edit MP3 tags.
@@ -59,23 +58,23 @@ public class EditTagsController {
         MediaFile dir = mediaFileService.getMediaFile(id);
         List<MediaFile> files = mediaFileService.getChildrenOf(dir, true, false, true, false);
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        EditTagsCommand command = new EditTagsCommand();
         if (!files.isEmpty()) {
-            map.put("defaultArtist", files.get(0).getArtist());
-            map.put("defaultAlbum", files.get(0).getAlbumName());
-            map.put("defaultYear", files.get(0).getYear());
-            map.put("defaultGenre", files.get(0).getGenre());
+            command.setDefaultArtist(files.get(0).getArtist());
+            command.setDefaultAlbum(files.get(0).getAlbumName());
+            command.setDefaultYear(files.get(0).getYear());
+            command.setDefaultGenre(files.get(0).getGenre());
         }
-        map.put("allGenres", JaudiotaggerParser.getID3V1Genres());
+        command.setAllGenres(JaudiotaggerParser.getID3V1Genres());
 
         List<Song> songs = new ArrayList<Song>();
         for (int i = 0; i < files.size(); i++) {
             songs.add(createSong(files.get(i), i));
         }
-        map.put("id", id);
-        map.put("songs", songs);
+        command.setId(id);
+        command.setSongs(songs);
 
-        return new ModelAndView("editTags","model",map);
+        return new ModelAndView("editTags","command", command);
     }
 
     private Song createSong(MediaFile file, int index) {

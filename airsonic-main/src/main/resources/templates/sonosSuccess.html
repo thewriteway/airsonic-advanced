@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+
+<html><head>
+    <th:block th:replace="head" />
+    <script type="text/javascript">
+        if (window != window.top) {
+            top.location.href = location.href;
+        }
+    </script>
+
+</head>
+<body style="min-width:550px" class="mainframe bgcolor1">
+    <span th:text="#{sonos.link.ok}"></span>
+</body>
+</html>

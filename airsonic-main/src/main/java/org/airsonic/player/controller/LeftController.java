@@ -73,7 +73,7 @@ public class LeftController {
 
     /**
      * Note: This class intentionally does not implement org.springframework.web.servlet.mvc.LastModified
-     * as we don't need browser-side caching of left.jsp.  This method is only used by RESTController.
+     * as we don't need browser-side caching of left.html.  This method is only used by RESTController.
      */
     long getLastModified(HttpServletRequest request) throws Exception {
         saveSelectedMusicFolder(request);
@@ -126,7 +126,7 @@ public class LeftController {
         boolean musicFolderChanged = saveSelectedMusicFolder(request);
         Map<String, Object> map = new HashMap<>();
 
-        MediaLibraryStatistics statistics = indexManager.getStatistics();
+        MediaLibraryStatistics statistics = Optional.ofNullable(indexManager.getStatistics()).orElse(new MediaLibraryStatistics());
         Locale locale = RequestContextUtils.getLocale(request);
 
         boolean refresh = ServletRequestUtils.getBooleanParameter(request, "refresh", false);

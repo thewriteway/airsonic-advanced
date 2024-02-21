@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <script type="text/javascript" th:src="@{/script/utils.js}"></script>
+    <script type="text/javascript" th:inline="javascript">
+        function init() {
+            top.StompClient.subscribe("left.html", {
+                '/user/queue/playlists/deleted': function(msg) {
+                    deletedPlaylistCallback(JSON.parse(msg.body));
+                },
+                '/topic/playlists/deleted': function(msg) {
+                    deletedPlaylistCallback(JSON.parse(msg.body));
+                },
+                '/user/queue/playlists/updated': function(msg) {
+                    updatedPlaylistCallback(JSON.parse(msg.body));
+                },
+                '/topic/playlists/updated': function(msg) {
+                    updatedPlaylistCallback(JSON.parse(msg.body));
+                },
+                // Add existing (initial population, one time)
+                '/app/playlists/readable': function(msg) {
+                    populatePlaylistCallback(JSON.parse(msg.body));
+                }
+            });
+
+            var mainLocation = top.main.location.href;
+            if (/*[[${model.musicFolderChanged}]]*/ false) {
+                if (mainLocation.indexOf("/home") != -1) {
+                    top.main.location.href = mainLocation;
+                }
+            }
+
+            $('.radio-play').on('click', function(evt) {
+                top.playQueue.onPlayInternetRadio($(this).data("id"), 0);
+                evt.preventDefault();
+            });
+        }
+
+        function createEmptyPlaylist() {
+            showAllPlaylists();
+            top.StompClient.send("/app/playlists/create/empty", "");
+        }
+
+        function showAllPlaylists() {
+            $('#playlistOverflow').show('blind');
+            $('#showAllPlaylists').hide('blind');
+        }
+
+        function populatePlaylistCallback(playlists) {
+            $("#playlists").empty();
+            $("#playlistOverflow").empty();
+            for (var i = 0; i < playlists.length; i++) {
+                var playlist = playlists[i];
+                var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
+                var node = $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
+                        playlist.id + "'>" + playlistName + "</a></p>");
+                var overflow = i > 9;
+                if (!overflow) {
+                    node.addClass("nonoverflown");
+                }
+
+                //append only if not already there
+                if ($("#playlistid-" + playlist.id).length == 0) {
+                    node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
+                }
+            }
+
+            if (playlists.length > 10 && !$('#playlistOverflow').is(":visible")) {
+                $('#showAllPlaylists').show();
+            }
+        }
+
+        function updatedPlaylistCallback(playlist) {
+            var oldNode = $("#playlistid-" + playlist.id);
+            var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
+            var node = $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
+                        playlist.id + "'>" + playlistName + "</a></p>");
+            if (oldNode.length == 0) {
+                var overflow = $(".playlist").length > 10;
+                if (!overflow) {
+                    node.toggleClass("nonoverflown");
+                }
+                node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
+            } else {
+                if (oldNode.hasClass("nonoverflown")) {
+                    node.addClass("nonoverflown");
+                }
+                oldNode.replaceWith(node);
+            }
+        }
+
+        function deletedPlaylistCallback(id) {
+            var node = $("#playlistid-" + id);
+            if (node.hasClass("nonoverflown")) {
+                // move one element over to take the place
+                $("#playlistOverflow").children().first().addClass("nonoverflown").appendTo("#playlists");
+            }
+            node.remove();
+        }
+    </script>
+</head>
+
+<body class="bgcolor2 leftframe" onload="init()">
+<a id="top"></a>
+
+<div style="padding-bottom:1.5em">
+    <a th:href="@{/home}" target="main">
+      <img th:src="${#themes.code('logoImage')}" style="width:196px" th:title="#{top.help}" alt="">
+    </a>
+</div>
+
+<div style="padding-bottom:1.0em" th:if="${#lists.size(model.musicFolders) > 1}">
+<select name="musicFolderId" style="width:100%" onchange="location='left?musicFolderId=' + options[selectedIndex].value;">
+        <option value="-1" th:text="#{left.allfolders}">All folders</option>
+        <option th:each="musicFolder:${model.musicFolders}" th:selected="${model.selectedMusicFolder?.id == musicFolder.id}"
+                    th:value="${musicFolder.id}" th:text="${musicFolder.name}">folder name</option>
+    </select>
+</div>
+
+<div style="margin-bottom:0.5em;padding-left: 2px" class="bgcolor1">
+    <th:block th:each="index: ${model.indexes}">
+        <a th:href="|#${index.index}|" th:accesskey="${index.index}" th:text="${index.index}">index</a>
+    </th:block>
+
+</div>
+
+<div style="padding-bottom:0.5em">
+    <div class="forward">
+        <a th:if="${model.scanning}" th:href="@{/left}" th:text="#{common.refresh}">Refresh</a>
+        <a th:unless="${model.scanning}" th:href="@{/left(refresh=true)}" th:text="#{common.refresh}">Refresh</a>
+    </div>
+</div>
+
+<th:block th:if="${!#lists.isEmpty(model.shortcuts)}">
+    <h2 class="bgcolor1" style="padding-left: 2px" th:text="#{left.shortcut}">shortcut</h2>
+    <p th:each="shortcut : ${model.shortcuts}" class="dense truncate" style="padding-left:2px">
+        <a target="main" th:href="@{/main(id=${shortcut.id})}" th:text="${shortcut.name}">name</a>
+    </p>
+</th:block>
+
+<h2 class="bgcolor1" style="padding-left: 2px" th:text="#{left.playlists}">playlists</h2>
+<div id="playlistWrapper" style='padding-left:2px'>
+    <div id="playlists"></div>
+    <div id="playlistOverflow" style="display:none"></div>
+    <div style="padding-top: 0.3em"></div>
+    <div class="forward" id="showAllPlaylists" style="display: none"><a href="#" onclick="showAllPlaylists()" th:text="#{left.showallplaylists}">show all</a></div>
+    <div class="forward"><a href="#" onclick="createEmptyPlaylist()" th:text="#{left.createplaylist}">create</a></div>
+    <div class="forward"><a th:href="@{/importPlaylist}" target="main" th:text="#{left.importplaylist}">import</a></div>
+</div>
+
+<th:block th:unless="${#lists.isEmpty(model.radios)}">
+    <h2 class="bgcolor1" style="padding-left: 2px" th:utext="#{left.radio}">radio</h2>
+    <iframe id="radio-playlist-data" style="display:none;"></iframe>
+    <th:block th:each="radio : ${model.radios}">
+        <p class="dense truncate" style="padding-left: 2px">
+        <a target="hidden" th:href="${radio.streamUrl}" class="radio-play" th:data-id="${radio.id}">
+            <img th:src="${#themes.code('playImage')}" th:alt="#{common.play}" th:title="#{common.play}"></a>
+            <span style="vertical-align: middle">
+                <span th:if="${#strings.isEmpty(radio.homepageUrl)}" th:title="${radio.name}" th:text="${radio.name}">name</span>
+                <a th:unless="${#strings.isEmpty(radio.homepageUrl)}" target="_blank" rel="noopener" th:href="${radio.homepageUrl}" th:title="|Visit ${radio.name}|" th:text="${radio.name}">name</a>
+            </span>
+        </p>
+    </th:block>
+</th:block>
+
+<th:block th:each="entry : ${model.indexedArtists}">
+    <table class="bgcolor1" style="width:100%;padding:0;margin:1em 0 0 0;border:0">
+        <tr style="padding:0;margin:0;border:0">
+            <th style="text-align:left;padding:0;margin:0;border:0"><a th:name="${entry.key.index}"></a>
+                <h2 style="padding:0;margin:0;border:0" th:text="${entry.key.index}">index</h2>
+            </th>
+            <th style="text-align:right;">
+                <a href="#top"><img th:src="${#themes.code('upImage')}" alt="" style="height:18px;"></a>
+            </th>
+        </tr>
+    </table>
+
+    <p th:each="artist : ${entry.value}" class="dense truncate" style="padding-left:2px">
+        <span th:title="${artist.name}">
+<!--            TODO CDC is mediafiles always a single element?-->
+            <a target="main"
+               th:href="@{/main(id=${artist.mediaFiles[0].id})}"
+               th:text="${#strings.abbreviate(artist.name, 35)}">artist.name</a>
+        </span>
+    </p>
+</th:block>
+
+<div style="padding-top:1em"></div>
+
+<p th:each="song : ${model.singleSongs}" class="dense truncate" style="padding-left:2px">
+    <span class="songTitle" th:title="${song.title}">
+        <th:block th:replace="playButtons :: buttons(
+        id=${song.id},
+        playEnabled=${model.user.streamRole and not model.partyMode},
+        addEnabled=${model.user.streamRole},
+        downloadEnabled=${model.user.downloadRole and not model.partyMode},
+        video=${song.video and model.player.web})" />
+        <th:block th:text="${#strings.abbreviate(song.title, 35)}"></th:block>
+    </span>
+</p>
+
+<div th:if="${model.statistics.songCount gt 0}" class="detail" style="padding-top: 0.6em; padding-left: 2px"
+th:utext="#{left.statistics(${model.statistics.artistCount}, ${model.statistics.albumCount}, ${model.statistics.songCount}, ${model.bytes}, ${model.hours})}">
+</div>
+
+<div style="height:5em"></div>
+
+<div class="bgcolor2" style="opacity: 1.0; clear: both; position: fixed; bottom: 0px; right: 0; left: 0;
+      padding: 0.25em 0.75em 0.25em 0.75em; border-top:1px solid black; max-width: 850px;">
+    <th:block th:each="index: ${model.indexes}">
+        <a th:href="|#${index.index}|" th:text="${index.index}">A</a>
+    </th:block>
+</div>
+
+</body></html>

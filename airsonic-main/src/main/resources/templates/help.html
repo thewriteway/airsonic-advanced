@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+    <script type="text/javascript" th:src="@{/script/utils.js}"></script>
+</head>
+<body class="mainframe bgcolor1">
+
+<h1>
+    <img th:src="${#themes.code('helpImage')}" alt="">
+    <span style="vertical-align: middle" th:text="#{help.title(${model.brand})}"></span>
+</h1>
+
+<p th:if="${model.newVersionAvailable}" class="warning" th:utext="#{help.upgrade(${model.brand},${model.latestVersion}, ${model.latestVersion.url})}"></p>
+
+<table width="75%" class="ruleTable indent">
+
+    <tr th:with="unknownLabel=#{common.unknown}">
+        <td class="ruleTableHeader" th:text="#{help.version.title}"></td>
+        <td class="ruleTableCell"><span th:text="|${#strings.isEmpty(model.localVersion) ? unknownLabel : model.localVersion} &ndash;
+        ${#strings.isEmpty(model.buildDate) ? unknownLabel : #dates.format(model.buildDate)} [Commit:|"></span> <a th:href="|https://github.com/kagemomiji/airsonic-advanced/commit/${model.buildNumber}|" target="_blank" th:text="${model.buildNumber}"></a>]</td>
+    </tr>
+    <tr>
+        <td class="ruleTableHeader" th:text="#{help.server.title}"></td>
+        <td class="ruleTableCell" th:text="|${model.serverInfo} (${model.usedMemory} / ${model.totalMemory})|"></td>
+    </tr>
+    <tr>
+        <td class="ruleTableHeader" th:text="#{help.license.title}"></td>
+        <td class="ruleTableCell">
+        <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank"><img style="float:right;margin-left: 10px" alt="GPL 3.0" th:src="@{/icons/default_light/gpl.png}"></a>
+        <span th:utext="#{help.license.text(${model.brand})}"></span></td></tr>
+    <tr>
+        <td class="ruleTableHeader" th:text="#{help.homepage.title}"></td>
+        <td class="ruleTableCell"><a target="_blank" href="https://airsonic.github.io/" rel="noopener nofererrer">Airsonic website</a></td>
+    </tr>
+    <tr>
+        <td class="ruleTableHeader" th:text="#{help.forum.title}"></td>
+        <td class="ruleTableCell"><a target="_blank" href="https://www.reddit.com/r/airsonic" rel="noopener noreferrer">Airsonic on Reddit</a></td>
+    </tr>
+    <tr>
+        <td class="ruleTableHeader" th:text="#{help.contact.title}"></td>
+        <td class="ruleTableCell" th:utext="#{help.contact.text(${model.brand})}"></td>
+    </tr>
+</table>
+
+<p></p>
+
+<h2>
+    <img th:src="${#themes.code('logImage')}" alt="">
+    <span style="vertical-align: middle; white-space: pre" th:text="#{help.log}"></span>
+</h2>
+
+<table cellpadding="2" class="log indent">
+    <tr th:each="entry:${model.logEntries}">
+        <td th:text="${entry}"></td>
+    </tr>
+</table>
+
+<p th:text="#{help.logfile(${model.logFile})}"> </p>
+
+<div class="forward"><a th:href="@{/help}" th:text="#{common.refresh}"></a></div>
+
+</body></html>

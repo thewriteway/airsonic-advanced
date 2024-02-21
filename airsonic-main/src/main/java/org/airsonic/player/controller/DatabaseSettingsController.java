@@ -147,7 +147,7 @@ public class DatabaseSettingsController {
         DatabaseSettingsCommand command = new DatabaseSettingsCommand();
         command.setUrl(settingsService.getDatabaseUrl());
         command.setDriver(settingsService.getDatabaseDriver());
-        command.setPassword(settingsService.getDatabasePassword());
+        command.setJdbcPassword(settingsService.getDatabasePassword());
         command.setUsername(settingsService.getDatabaseUsername());
         command.setJNDIName(settingsService.getDatabaseJNDIName());
         command.setMysqlVarcharMaxlength(settingsService.getDatabaseMysqlVarcharMaxlength());
@@ -156,7 +156,7 @@ public class DatabaseSettingsController {
             command.setConfigType(DataSourceConfigType.JNDI);
         } else if (StringUtils.equals(command.getUrl(), homeConfig.getDefaultJDBCUrl())
                 && StringUtils.equals(command.getUsername(), SettingsService.DEFAULT_JDBC_USERNAME)
-                && StringUtils.equals(command.getPassword(), SettingsService.DEFAULT_JDBC_PASSWORD)) {
+                && StringUtils.equals(command.getJdbcPassword(), SettingsService.DEFAULT_JDBC_PASSWORD)) {
             command.setConfigType(DataSourceConfigType.BUILTIN);
         } else {
             command.setConfigType(DataSourceConfigType.EXTERNAL);
@@ -178,7 +178,7 @@ public class DatabaseSettingsController {
             switch (command.getConfigType()) {
                 case EXTERNAL:
                     settingsService.setDatabaseDriver(command.getDriver());
-                    settingsService.setDatabasePassword(command.getPassword());
+                    settingsService.setDatabasePassword(command.getJdbcPassword());
                     settingsService.setDatabaseUrl(command.getUrl());
                     settingsService.setDatabaseUsername(command.getUsername());
                     break;

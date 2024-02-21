@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html><head>
+
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <script type="text/javascript" th:src="@{/script/utils.js}"></script>
+    <script type="text/javascript">
+        function init() {
+            enablePasswordChangeFields();
+            let settings_reload = /*[[${settings_reload == true}]]*/ false;
+            if(settings_reload) {
+                parent.frames.left.location.href="left.view?";
+            }
+        }
+        function enablePasswordChangeFields() {
+            var changePasswordCheckbox = $("#passwordChange");
+            var ldapCheckbox = $("#ldapAuthenticated");
+            var passwordChangeTable = $("#passwordChangeTable");
+            var passwordChangeCheckboxTable = $("#passwordChangeCheckboxTable");
+
+            if (changePasswordCheckbox && changePasswordCheckbox.is(":checked") && (ldapCheckbox == null || !ldapCheckbox.is(":checked"))) {
+                passwordChangeTable.show();
+            } else {
+                passwordChangeTable.hide();
+            }
+
+            if (changePasswordCheckbox) {
+                if (ldapCheckbox && ldapCheckbox.is(":checked")) {
+                    passwordChangeCheckboxTable.hide();
+                } else {
+                    passwordChangeCheckboxTable.show();
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="mainframe bgcolor1" onload="init()">
+<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
+<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+
+<th:block th:replace="settingsHeader::header(cat='user',toast=${settings_toast})" />
+
+<table class="indent">
+    <tr>
+        <td><b th:text="#{usersettings.title}"></b></td>
+        <td>
+            <select name="username" onchange="location='userSettings.view?userIndex=' + (selectedIndex - 1);">
+                <option value="" th:text="|-- #{usersettings.newuser} --|">-- New User --</option>
+                <option th:each="user:${command.users}"
+                        th:text="${user.username}" th:selected="${user.username eq command.username}"
+                        th:value="${user.username}"></option>
+            </select>
+        </td>
+    </tr>
+</table>
+
+<p/>
+
+<form method="post" th:action="@{/userSettings.view}" th:object="${command}">
+        <table>
+            <tr th:style="*{currentUser ? 'display:none' : ''}">
+                <td><input type="checkbox" th:field="*{adminRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('adminRole')}" th:text="#{usersettings.admin}"></label></td>
+                <td class="warning"><form:errors path="adminRole"/></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{settingsRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('settingsRole')}" th:text="#{usersettings.settings}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{streamRole}" class="checkbox" /></td>
+                <td><label th:for="${#ids.prev('streamRole')}" th:text="#{usersettings.stream}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{jukeboxRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('jukeboxRole')}" th:text="#{usersettings.jukebox}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{downloadRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('downloadRole')}" th:text="#{usersettings.download}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{uploadRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('uploadRole')}" th:text="#{usersettings.upload}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{shareRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('shareRole')}" th:text="#{usersettings.share}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{coverArtRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('coverArtRole')}" th:text="#{usersettings.coverart}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{commentRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('commentRole')}" th:text="#{usersettings.comment}"></label></td>
+            </tr>
+            <tr>
+                <td><input type="checkbox" th:field="*{podcastRole}" class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('podcastRole')}" th:text="#{usersettings.podcast}"></label></td>
+            </tr>
+        </table>
+
+    <th:block th:if="*{!#lists.isEmpty(allMusicFolders)}">
+        <h2 th:text="#{usersettings.folderaccess}"></h2>
+
+        <table>
+            <tr th:each="musicFolder, itemStat:*{allMusicFolders}">
+                <td><input type="checkbox" th:field="*{allowedMusicFolderIds}" th:value="${musicFolder.id}" 
+                           class="checkbox"/></td>
+                <td><label th:for="${#ids.prev('allowedMusicFolderIds')}" style="padding-right:1.5em" th:text="${musicFolder.name}"></label></td>
+                <td><label th:for="${#ids.prev('allowedMusicFolderIds')}" style="padding-right:1.5em" th:text="${musicFolder.path}"></label></td>
+            </tr>
+        </table>
+    </th:block>
+
+    <table class="indent">
+        <tr>
+            <td th:text="#{playersettings.maxbitrate}"></td>
+            <td>
+                <select th:field="*{transcodeSchemeName}" style="width:8em">
+                    <option th:each="transcodeSchemeHolder:*{transcodeSchemeHolders}"
+                            th:value="${transcodeSchemeHolder.name}" th:text="${transcodeSchemeHolder.description}"></option>
+                </select>
+            </td>
+            <td><th:block th:replace="helpToolTip(topic=transcode)" /></td>
+            <td th:if="*{!transcodingSupported}" class="warning" th:text="#{playersettings.notranscoder}"></td>
+        </tr>
+    </table>
+
+    <table th:if="*{!newUser and !admin and !currentUser}" class="indent">
+        <tr>
+            <td><input type="checkbox" name="deleteUser" id="delete" class="checkbox"/></td>
+            <td><label for="delete" th:text="#{usersettings.delete}"></label></td>
+            <td class="warning" th:errors="*{deleteUser}"></td>
+        </tr>
+    </table>
+
+    <table th:if="*{ldapEnabled and !admin}">
+        <tr>
+            <td><input type="checkbox" name="ldapAuthenticated" id="ldapAuthenticated" class="checkbox"
+                       onclick="enablePasswordChangeFields()"/></td>
+            <td><label for="ldapAuthenticated" th:text="#{usersettings.ldap}"></label></td>
+            <td><th:block th:replace="helpToolTip(topic=ldap)" /></td>
+        </tr>
+    </table>
+
+    <th:block th:if="*{newUser}">
+        <div style="display:none"><input name="newUser" th:value="${command.newUser}" /></div>
+        <table class="indent">
+            <tr>
+                <td th:text="#{usersettings.username}"></td>
+                <td><input th:field="*{username}" style="width:15em"/></td>
+                <td class="warning" th:errors="*{username}" style="width:15em"></td>
+            </tr>
+            <tr>
+                <td th:text="#{usersettings.email}"></td>
+                <td><input th:field="*{email}" style="width:15em"/></td>
+                <td class="warning" th:errors="*{email}"></td>
+            </tr>
+            <tr>
+                <td th:text="#{usersettings.password}"></td>
+                <td><input type="password" th:field="*{password}" style="width:15em"/></td>
+                <td class="warning" th:errors="*{password}"></td>
+            </tr>
+            <tr>
+                <td th:text="#{usersettings.confirmpassword}"></td>
+                <td><input type="password" th:field="*{confirmPassword}" style="width:15em"/></td>
+                <td/>
+            </tr>
+        </table>
+    </th:block>
+
+    <th:block th:unless="*{newUser}">
+        <div style="display:none"><input th:field="*{username}"/></div>
+        <table id="passwordChangeCheckboxTable">
+            <tr>
+                <td><input type="checkbox" name="passwordChange" id="passwordChange" onclick="enablePasswordChangeFields();" class="checkbox"/></td>
+                <td><label for="passwordChange" th:text="|#{credentialsettings.addcredentials} #{credentialsettings.credentialsnotremoved}|"></label></td>
+                <td><th:block th:replace="helpToolTip(topic=credentialsadd)" /></td>
+            </tr>
+        </table>
+
+        <table id="passwordChangeTable" style="display:none">
+            <tr>
+                <td th:text="#{usersettings.newpassword}"></td>
+                <td><input type="password" th:field="*{password}" /></td>
+                <td class="warning" th:errors="*{password}"></td>
+            </tr>
+            <tr>
+                <td th:text="#{usersettings.confirmpassword}"></td>
+                <td><input type="password" th:field="*{confirmPassword}" /></td>
+                <td/>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <td th:text="#{usersettings.email}"></td>
+                <td><input th:field="*{email}" style="width:20em"/></td>
+                <td class="warning" th:errors="*{email}"></td>
+            </tr>
+        </table>
+    </th:block>
+
+    <input type="submit" th:value="#{common.save}" style="margin-top:1.5em;margin-right:0.3em">
+    <a th:href='@{/nowPlaying.view}'><input type="button" th:value="#{common.cancel}" style="margin-top:1.5em"></a>
+</form>
+
+</body></html>

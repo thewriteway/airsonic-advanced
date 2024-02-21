@@ -1,0 +1,133 @@
+<!--/*
+PARAMETERS
+  albumId: ID of album.
+  playlistId: ID of playlist.
+  podcastChannelId: ID of podcast channel
+  coverArtSize: Height and width of cover art.
+  caption1: Caption line 1
+  caption2: Caption line 2
+  caption3: Caption line 3
+  captionCount: Number of caption lines to display (default 0)
+  showLink: Whether to make the cover art image link to the album page.
+  showZoom: Whether to display a link for zooming the cover art.
+  showChange: Whether to display a link for changing the cover art.
+  appearAfter: Fade in after this many milliseconds, or nil if no fading in should happen.
+  hideOverflow: Hide cover art overflow when height is greater than width
+*/-->
+<th:block th:fragment="art" th:with="
+    captionCount=${captionCount?:0},
+    caption1=${caption1?:''},
+    caption2=${caption2?:''},
+    caption3=${caption3?:''},
+    size=${coverArtSize},
+    divId=${'div'+#strings.randomAlphanumeric(5)},
+    imgId=${'img'+#strings.randomAlphanumeric(5)},
+    playId=${'play'+#strings.randomAlphanumeric(5)},
+    addId=${'add'+#strings.randomAlphanumeric(5)},
+    appearAfter=0
+">
+    <th:block th:remove="all">
+        <th:block th:fragment="album(id, targetUrl, coverArtUrl)">
+
+        <div class="coverart dropshadow" th:with="
+            size=${!#strings.isEmpty(coverArtSize) ? coverArtSize+'px':'auto'}
+        ">
+            <div th:style="|width:${size};max-width:${size};height:${size};max-height:${size};cursor:pointer;${hideOverflow == true?'overflow:hidden;':''}|"
+                 th:title="${caption1}" th:id="${divId}">
+
+                <div style="position: relative; width: 0; height: 0">
+                    <img alt="Play overlay" th:src="${#themes.code('playOverlayImage')}" th:id="${playId}"
+                         style="position: relative; top: 8px; left: 8px; z-index: 2; display:none" >
+                </div>
+
+                <th:block th:if="${!#strings.isEmpty(albumId) or !#strings.isEmpty(playlistId)}">
+                  <div style="position: relative; width: 0; height: 0">
+                      <img alt="Add overlay" th:src="${#themes.code('addOverlayImage')}" th:id="${addId}"
+                           style="position: relative; top: 8px; left: 48px; z-index: 2; display:none" >
+                  </div>
+                </th:block>
+
+                <a th:if="${showLink}" th:href="${targetUrl}" th:title="${caption1}">
+                    <img th:src="${coverArtUrl}" th:id="${imgId}" th:alt="${caption1}" style="display:none">
+                </a>
+                <img th:unless="${showLink}" th:src="${coverArtUrl}" th:id="${imgId}" th:alt="${caption1}" style="display:none">
+
+                <a th:if="${showZoom}" th:href="@{/coverArt(id=${albumId})}" class="fancy" rel="zoom" th:title="${param.caption1}">
+                    <img th:src="${coverArtUrl}" th:id="${imgId}" th:alt="${caption1}" style="display:none">
+                </a>
+            </div>
+
+            <div th:if="${!#strings.isEmpty(caption1)}" class="caption1" th:style="|width:${coverArtSize - 16}px|">
+                <a th:href="${targetUrl}" th:title="${caption1}" th:text="${caption1}"></a>
+            </div>
+            <div th:if="${!#strings.isEmpty(caption2)}" class="caption2" th:style="|width:${coverArtSize - 16}px|" th:text="${caption2}">cap2</div>
+            <div th:if="${!#strings.isEmpty(caption3)}" class="caption3" th:style="|width:${coverArtSize - 16}px|" th:text="${caption3}">cap3</div>
+        </div>
+
+        <th:block th:if="${showChange== true or showZoom == true}">
+            <div style="padding-top:6px;text-align:right">
+                <th:block th:if="${showChange}">
+                    <a class="detail" th:href="@{/changeCoverArt(id=${albumId})}" th:text="#{coverart.change}">change</a>
+                </th:block>
+
+                <th:block th:if="${showZoom and showChange}">
+                    |
+                </th:block>
+
+                <th:block th:if="${showZoom}">
+                    <a class="detail" rel="zoom" th:title="${caption1}" th:href="@{/coverArt(id=${albumId})}" th:text="#{coverart.zoom}">zoom</a>
+                </th:block>
+            </div>
+        </th:block>
+
+        <script type="text/javascript" th:inline="javascript">
+            $(document).ready(function () {
+                setTimeout("$('#[(${imgId})]').fadeIn(500)", /*[[(${appearAfter ?: 0 })]]*/ 0);
+            });
+
+            $("#[(${divId})]").mouseenter(function () {
+                $("#[(${playId})]").show();
+                $("#[(${addId})]").show();
+                $("#[(${imgId})]").stop();
+                $("#[(${imgId})]").animate({opacity: 0.7}, 150);
+            });
+            $("#[(${divId})]").mouseleave(function () {
+                $("#[(${playId})]").hide();
+                $("#[(${addId})]").hide();
+                $("#[(${imgId})]").stop();
+                $("#[(${imgId})]").animate({opacity: 1.0}, 150);
+            });
+            $("#[(${playId})]").click(function () {
+                let albumIdClick = /*[[${albumId}]]*/ null;
+                if(albumIdClick) {
+                    top.playQueue.onPlay(/*[[(${albumId})]]*/ 0);
+                }
+                let playlistIdClick = /*[[${playlistId}]]*/ null;
+                if(playlistIdClick) {
+                    top.playQueue.onPlayPlaylist(/*[[(${playlistId})]]*/ 0);
+                }
+                let podcastChannelIdClick = /*[[${podcastChannelId}]]*/ null;
+                if(podcastChannelIdClick) {
+                    top.playQueue.onPlayPodcastChannel(/*[[(${podcastChannelId})]]*/ 0);
+                }
+            });
+            $("#[(${addId})]").click(function () {
+                let albumIdClick = /*[[${albumId}]]*/ null;
+                if(albumIdClick) {
+                    top.playQueue.onAdd(/*[[${albumId}]]*/ 0);
+                }
+                let playlistIdClick = /*[[${playlistId}]]*/ null;
+                if(playlistIdClick) {
+                    top.playQueue.onAddPlaylist(/*[[${playlistId}]]*/ 0);
+                }
+            });
+        </script>
+
+        </th:block>
+    </th:block>
+
+    <th:block th:if="${!#strings.isEmpty(albumId)}"><th:block th:replace="::album(${albumId}, @{/main(id=${albumId})}, @{/coverArt(id=${albumId}, size=${coverArtSize})})" /></th:block>
+    <th:block th:if="${!#strings.isEmpty(playlistId)}"><th:block th:replace="::album(${playlistId}, @{/playlist(id=${playlistId})}, @{/coverArt(id=${'pl-'+playlistId}, size=${coverArtSize})})" /></th:block>
+    <th:block th:if="${!#strings.isEmpty(podcastChannelId)}"><th:block th:replace="::album(${podcastChannelId}, @{/podcastChannel(id=${podcastChannelId})},  @{/coverArt(id=${'pod-'+podcastChannelId}, size=${coverArtSize})})" /></th:block>
+
+</th:block>

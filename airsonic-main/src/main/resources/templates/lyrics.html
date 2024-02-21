@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <th:block th:replace="websocket" />
+    <title th:text="#{lyrics.title}"></title>
+
+    <script type="text/javascript" th:inline="javascript">
+        // independent page, so StompClient does not belong to window.top
+        function init() {
+            StompClient.subscribe("lyrics.html", {
+                "/user/queue/lyrics/get": function(msg) {
+                    getLyricsCallback(JSON.parse(msg.body));
+                }
+            }, function() {
+                getLyrics('[(${model.artist})]', '[(${model.song})]');
+            });
+        }
+
+        function getLyrics(artist, song) {
+            $("#wait").css("display", "inline");
+            $("#lyrics").css("display", "none");
+            $("#noLyricsFound").css("display", "none");
+            $("#tryLater").css("display", "none");
+            StompClient.send("/app/lyrics/get", JSON.stringify({artist: artist, song: song}));
+        }
+
+        function getLyricsCallback(lyricsInfo) {
+            $("#lyricsHeader").text(lyricsInfo.artist + " - " + lyricsInfo.title);
+            var lyrics;
+            if (lyricsInfo.lyrics != null) {
+                lyrics = lyricsInfo.lyrics.replace(/\n/g, "<br>");
+            }
+            $("#lyricsText").html(lyrics);
+            $("#wait").css("display", "none");
+            if (lyricsInfo.tryLater) {
+                $("#tryLater").css("display", "inline");
+            } else if (lyrics != null) {
+                $("#lyrics").css("display", "inline");
+            } else {
+                $("#noLyricsFound").css("display", "inline");
+            }
+        }
+
+        function search() {
+            getLyrics($('#artist').val(), $('#song').val());
+        }
+    </script>
+
+</head>
+<body class="mainframe bgcolor1" onload="init();">
+
+<form action="#" onsubmit="search();return false;">
+    <table>
+        <tr>
+            <td th:text="#{lyrics.artist}"></td>
+            <td style="padding-left:0.50em"><input id="artist" type="text" size="40" th:value="${model.artist}" tabindex="1"/></td>
+            <td style="padding-left:0.75em"><input type="submit" th:value="#{lyrics.search}" style="width:6em"
+                                                   tabindex="3"/></td>
+        </tr>
+        <tr>
+            <td th:text="#{lyrics.song}"></td>
+            <td style="padding-left:0.50em"><input id="song" type="text" size="40" th:value="${model.song}" tabindex="2"/></td>
+            <td style="padding-left:0.75em"><input type="button" th:value="#{common.close}" style="width:6em"
+                                                   onclick="self.close()" tabindex="4"/></td>
+        </tr>
+    </table>
+</form>
+<hr/>
+<h2 id="wait" th:text="#{lyrics.wait}"></h2>
+<h2 id="noLyricsFound" style="display:none" th:text="#{lyrics.nolyricsfound}"></h2>
+<p id="tryLater" style="display:none"><b th:text="#{lyrics.trylater}"></b></p>
+
+<div id="lyrics" style="display:none;">
+    <h2 id="lyricsHeader" style="text-align:center;margin-bottom:1em"></h2>
+
+    <div id="lyricsText"></div>
+
+    <p class="detail" style="text-align:right" th:utext="#{lyrics.courtesy}">
+    </p>
+</div>
+
+<hr/>
+<p style="text-align:center">
+    <a href="javascript:self.close()">[<span th:text="#{common.close}"></span>]</a>
+</p>
+
+</body>
+</html>

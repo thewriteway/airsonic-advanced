@@ -19,6 +19,7 @@
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.command.HomeCommand;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.MediaFolderService;
@@ -89,7 +90,7 @@ public class HomeController {
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(user.getUsername(), userSettings.getSelectedMusicFolderId());
         MusicFolder selectedMusicFolder = musicFolders.parallelStream().filter(f -> f.getId().equals(userSettings.getSelectedMusicFolderId())).findAny().orElse(null);
 
-        Map<String, Object> map = new HashMap<>();
+        HomeCommand command = new HomeCommand();
         List<Album> albums = Collections.emptyList();
         switch (listType) {
             case HIGHEST:
@@ -115,17 +116,17 @@ public class HomeController {
                 break;
             case DECADE:
                 List<Integer> decades = createDecades();
-                map.put("decades", decades);
+                command.setDecades(decades);
                 int decade = getIntParameter(request, "decade", decades.get(0));
-                map.put("decade", decade);
+                command.setDecade(decade);
                 albums = getByYear(listOffset, LIST_SIZE, decade, decade + 9, musicFolders);
                 break;
             case GENRE:
                 List<Genre> genres = mediaFileService.getGenres(true);
-                map.put("genres", genres);
+                command.setGenres(genres);
                 if (!genres.isEmpty()) {
                     String genre = getStringParameter(request, "genre", genres.get(0).getName());
-                    map.put("genre", genre);
+                    command.setGenre(genre);
                     albums = getByGenre(listOffset, LIST_SIZE, genre, musicFolders);
                 }
                 break;
@@ -133,19 +134,20 @@ public class HomeController {
                 break;
         }
 
-        map.put("albums", albums);
-        map.put("welcomeTitle", settingsService.getWelcomeTitle());
-        map.put("welcomeSubtitle", settingsService.getWelcomeSubtitle());
-        map.put("welcomeMessage", settingsService.getWelcomeMessage());
-        map.put("isIndexBeingCreated", mediaScannerService.isScanning());
-        map.put("musicFoldersExist", !mediaFolderService.getAllMusicFolders().isEmpty());
-        map.put("listType", listType.getId());
-        map.put("listSize", LIST_SIZE);
-        map.put("coverArtSize", CoverArtScheme.MEDIUM.getSize());
-        map.put("listOffset", listOffset);
-        map.put("musicFolder", selectedMusicFolder);
+        command.setAlbums(albums);
+        command.setWelcomeTitle(settingsService.getWelcomeTitle());
+        command.setWelcomeSubtitle(settingsService.getWelcomeSubtitle());
+        command.setWelcomeMessage(settingsService.getWelcomeMessage());
+        command.setIndexBeingCreated(mediaScannerService.isScanning());
+        command.setMusicFoldersExist(!mediaFolderService.getAllMusicFolders().isEmpty());
+        command.setListType(listType.getId());
+        command.setListSize(LIST_SIZE);
+        command.setCoverArtSize(CoverArtScheme.MEDIUM.getSize());
+        command.setListOffset(listOffset);
+        command.setMusicFolder(selectedMusicFolder);
+        command.setKeyboardShortcutsEnabled(userSettings.getKeyboardShortcutsEnabled());
 
-        return new ModelAndView("home","model",map);
+        return new ModelAndView("home","model",command);
     }
 
     private List<Album> getHighestRated(int offset, int count, List<MusicFolder> musicFolders) {

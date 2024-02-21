@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <meta name="og:type" content="album"/>
+    <script type="text/javascript" th:src="@{/script/mediaelement/mediaelement-and-player.min.js}"></script>
+    <script type="text/javascript" th:src="@{/script/mediaelement/plugins/playlist/playlist.js}"></script>
+    <script th:src="@{/script/mediaelement/plugins/speed/speed.min.js}"></script>
+    <script th:src="@{/script/mediaelement/plugins/speed/speed-i18n.js}"></script>
+    <script th:src="@{/script/mediaelement/plugins/quality/quality.min.js}"></script>
+    <script th:src="@{/script/mediaelement/plugins/quality/quality-i18n.js}"></script>
+    <script th:src="@{/script/mediaelement/plugins/chromecast/chromecast.js}"></script>
+    <script th:src="@{/script/mediaelement/plugins/chromecast/chromecast-i18n.js}"></script>
+
+    <link type="text/css" rel="stylesheet" th:href="@{/script/mediaelement/plugins/playlist/playlist.min.css}">
+    <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/speed/speed.min.css}">
+    <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/quality/quality.min.css}">
+    <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/chromecast/chromecast.min.css}">
+
+    <th:block th:if="${!#lists.isEmpty(model.media)}">
+        <meta name="og:title"
+              th:content="|${model.media[0].file.artist} &mdash; ${model.media[0].file.albumName}|"/>
+        <meta name="og:image" th:content="${model.media[0].coverArtUrl}"/>
+    </th:block>
+</head>
+
+<body class="mainframe bgcolor1" style="height:100vh;margin:0;">
+<div class="external box">
+    <div class="header">
+        <h1>
+                <span th:if="${#strings.isEmpty(model.share) or #lists.isEmpty(model.media)}">
+                    Sorry, the content is not available.
+                </span>
+                <span th:if="${#strings.isEmpty(model.share) or #lists.isEmpty(model.media)}"
+                      th:text="${#strings.isEmpty(model.share.description) ? model.media[0].file.artist : model.share.description}">
+                </span>
+        </h1>
+        <div>
+            <h2 style="margin:0;" th:text="${#strings.isEmpty(model.share.description) ? model.media[0].file.albumName : model.share.username}"></h2>
+        </div>
+    </div>
+
+    <audio th:if="${!model.videoPresent}" id='player'
+        data-cast-title="[Your title]"
+        data-cast-description="[Your optional description]"
+        poster="/path/to/poster.jpg">
+    </audio>
+    <video th:if="${model.videoPresent}" id='player' style="width:100%; height:100%;"
+        data-cast-title="[Your title]"
+        data-cast-description="[Your optional description]"
+        poster="/path/to/poster.jpg">
+    </video>
+
+    <div class="detail" style="text-align:center;">Streaming by <a href="https://airsonic.github.io/"
+								   rel="noopener noreferrer"
+                                                                   target="_blank"><b>Airsonic</b></a></div>
+
+</div>
+
+<script type="text/javascript" th:inline="javascript">
+    var player = new MediaElementPlayer('player', {
+        useDefaultControls: true,
+        features: ['speed', 'quality', 'chromecast', 'playlist', 'prevtrack', 'nexttrack', 'shuffle', 'loop'],
+        iconSprite: /*[[@{/script/mediaelement/mejs-controls.svg}]]*/ 'mejs.controls.svg',
+        currentMessage: "",
+        defaultSpeed: "1.00",
+        speeds: ["8.00", "2.00", "1.50", "1.25", "1.00", "0.75", "0.5"],
+        castTitle: "Airsonic",
+        castAppID: "4FBFE470",
+        castPolicy: "tab",
+        castEnableTracks: true,
+        playlistTitle: /*[[${model.share.description}]]*/ 'Airsonic',
+        playlist: [
+            /*[# th:each="song:${model.media}"]*/
+            {
+                "src": /*[[${song.streamUrl}]]*/ 'src',
+                "title": /*[[${song.file.title}]]*/ 'title',
+                "type": /*[[${song.contentType}]]*/ 'type',
+                "data-playlist-thumbnail": /*[[${song.coverArtUrl}]]*/ 'thumbnail',
+                "data-playlist-description": /*[[${song.file.artist}]]*/ 'description',
+                "data-playlist-caption": /*[[${song.captionsUrl}]]*/ 'caption'
+            },
+            /*[/]*/
+        ],
+        audioWidth: 600,
+        success: function(m, n, p) {
+            $(p.playlistLayer).on('newplaylistsrc', e => {
+                m.originalNode.setAttribute('type', e.detail['type']);
+                $.get(e.detail['data-playlist-caption'], data => {
+                    const tracks = data.map(s => {
+                        const track = document.createElement('track');
+                        track.kind = 'subtitles';
+                        track.label = s.identifier + " (" + s.language + ")";
+                        track.src = s.url;
+                        track.srclang = s.language;
+
+                        return track;
+                    });
+
+                    p.trackFiles = tracks;
+                    p.rebuildtracks();
+                });
+
+                p.buildspeed(p, p.getElement(p.controls), p.getElement(p.layers), m);
+            });
+        }
+    });
+</script>
+<style>
+    .external .mejs-container.mejs-audio, .external .mejs-container.mejs-video, .mejs__container.mejs__audio, .mejs__container.mejs__video {
+        margin: auto;
+        margin-top: 2%;
+        margin-bottom: 2%;
+        flex-grow: 1;
+        flex-shrink: 1;
+        flex-basis: auto;
+    }
+    .external.box {
+        display: flex;
+        flex-flow: column;
+        height: 100%;
+    }
+    .external > .header {
+        padding-top: 2em;
+        margin: auto;
+        width: 500px;
+        flex-grow: 0;
+        flex-shrink: 1;
+        flex-basis: auto;
+    }
+    .external > .detail {
+        flex-grow: 0;
+        flex-shrink: 1;
+        flex-basis: 40px;
+    }
+</style>
+</body>
+</html>

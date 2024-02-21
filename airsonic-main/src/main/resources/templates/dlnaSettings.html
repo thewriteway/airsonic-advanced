@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!--
+  ~ This file is part of Airsonic.
+  ~
+  ~ Airsonic is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ Airsonic is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
+  ~
+  ~ Copyright 2024 (C) Y.Tory
+  ~ Copyright 2013 (C) Sindre Mehus
+  -->
+
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <script type="text/javascript" th:src="@{/script/utils.js}"></script>
+</head>
+
+<body class="mainframe bgcolor1">
+<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
+<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+
+<th:block th:replace="settingsHeader::header(cat='dlna',toast=${settings_toast})" />
+
+<form method="post" th:action="@{/dlnaSettings.view}" th:object="${command}">
+
+    <div>
+        <input type="checkbox" th:field="*{dlnaEnabled}" />
+        <label th:for="${#ids.prev('dlnaEnabled')}" th:text="#{dlnasettings.enabled}"></label>
+    </div>
+    <p class="detail" style="width:60%;white-space:normal" th:text="#{dlnasettings.description}"></p>
+
+    <div>
+        <span th:text="#{dlnasettings.servername}"></span>
+        <input th:field="*{dlnaServerName}" size="40" />
+    </div>
+    <p class="detail" style="width:60%;white-space:normal;padding-top:0" th:text="#{dlnasettings.servername.description}">
+    </p>
+
+    <div>
+        <label th:for="${#ids.next('dlnaBaseLANURL')}" th:text="#{dlnasettings.baselanurl}"></label>
+        <input type="text" size="50" th:field="*{dlnaBaseLANURL}" />
+    </div>
+    <p class="detail" style="width:60%;white-space:normal" th:text="#{dlnasettings.lanurl.description}"></p>
+
+    <p>
+        <input type="submit" th:value="#{common.save}" style="margin-right:0.3em">
+        <a th:href='@{/nowPlaying.view}'><input type="button" th:value="#{common.cancel}"></a>
+    </p>
+
+</form>
+
+</body></html>

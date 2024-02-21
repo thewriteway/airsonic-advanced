@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <style th:inline="text">
+        .progress-bar {width: 350px; height: 10px; border: 1px solid black; display:block;}
+        .progress-bar-content {width: 0; height: 10px; background: url("[(@{/icons/default_light/progress.png})]") repeat;}
+        .progress-text {display:block;}
+        #randomPlayQueue td { padding: 0 5px; }
+    </style>
+    <script type="text/javascript" th:inline="javascript">
+        // From Modernizr
+        // See: https://modernizr.com/
+        function isLocalStorageEnabled() {
+            var mod = 'modernizr';
+            try {
+                localStorage.setItem(mod, mod);
+                localStorage.removeItem(mod);
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // Load previously used shuffle parameters
+        function loadShuffleForm() {
+            if (!isLocalStorageEnabled()) return;
+            var form = document.getElementById("randomPlayQueue");
+            try {
+                var data = JSON.parse(localStorage.getItem("randomPlayQueue"));
+            } catch(e) { return; }
+            if (data == null ) { return; }
+            var elements = form.getElementsByTagName("input");
+            for (var i = 0; i < elements.length; i++) {
+                if (elements[i].type == "hidden") continue;
+                if (elements[i].type == "submit") continue;
+                if (data[elements[i].name]) elements[i].value = data[elements[i].name];
+            }
+            elements = form.getElementsByTagName("select");
+            for (var i = 0; i < elements.length; i++) {
+                var element = elements[i];
+                var value = data[element.name];
+                if (value) {
+                    for (var j = 0; j < element.options.length; j++) {
+                        if (element.options[j].value == value) {
+                            element.value = value;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Save shuffle parameters
+        function saveShuffleForm() {
+            if (!isLocalStorageEnabled()) return;
+            var form = document.getElementById("randomPlayQueue");
+            var data = {};
+            var elements = [];
+            elements = form.getElementsByTagName("input");
+            for (var i = 0; i < elements.length; i++) {
+                if (elements[i].type == "hidden") continue;
+                if (elements[i].type == "submit") continue;
+                data[elements[i].name] = elements[i].value;
+            }
+            elements = form.getElementsByTagName("select");
+            for (var i = 0; i < elements.length; i++) {
+                if (elements[i].type == "hidden") continue;
+                if (elements[i].type == "submit") continue;
+                data[elements[i].name] = elements[i].value;
+            }
+            localStorage.setItem("randomPlayQueue", JSON.stringify(data));
+        }
+
+        function uploadStatus(msg) {
+            var uploadInfo = JSON.parse(msg.body);
+
+            var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
+
+            if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
+                if (progressBarHolder.length != 0) {
+                    // remove it
+                    progressBarHolder.remove();
+                }
+            } else {
+                if (progressBarHolder.length == 0) {
+                    // create it
+                    progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
+                    $("#progressBars").append(progressBarHolder);
+                }
+
+                var progressBarContent = progressBarHolder.find(".progress-bar-content");
+                var progressText = progressBarHolder.find(".progress-text");
+
+                var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
+                progressBarContent.width(parseInt(percent * 3.5));
+                progressText.text(percent + "[(#{more.upload.progress})]");
+            }
+        }
+
+        $(function() {
+            let uploadRole = /*[[${model.user.uploadRole}]]*/ false;
+            if(uploadRole) {
+                top.StompClient.subscribe("more.html", {
+                    '/user/queue/uploads/status': uploadStatus
+                });
+            }
+
+            $("#randomPlayQueue").on("submit", saveShuffleForm);
+            loadShuffleForm();
+        });
+
+    </script>
+
+    <style>
+        .more-shortcut {
+            padding: 0 15px;
+        }
+    </style>
+
+</head>
+<body class="mainframe bgcolor1">
+
+<h1>
+    <img th:src="${#themes.code('moreImage')}" alt=""/>
+    <span style="vertical-align: middle" th:text="#{more.title}"></span>
+</h1>
+
+<th:block th:if="${model.user.streamRole}">
+    <h2>
+        <img th:src="${#themes.code('shuffleImage')}" alt=""/>
+        <span style="vertical-align: middle" th:text="#{more.random.title}"></span>
+    </h2>
+
+    <form id="randomPlayQueue" method="post" th:action="@{/randomPlayQueue.view}" >
+        <table>
+            <tr>
+                <td th:text="#{more.random.text}"></td>
+                <td>
+                    <select style="width: 100%;" name="size">
+                        <option value="10" th:text="#{more.random.songs(${10})}"></option>
+                        <option value="20" th:text="#{more.random.songs(${20})}" selected></option>
+                        <option value="30" th:text="#{more.random.songs(${30})}"></option>
+                        <option value="40" th:text="#{more.random.songs(${40})}"></option>
+                        <option value="50" th:text="#{more.random.songs(${50})}"></option>
+                        <option value="100" th:text="#{more.random.songs(${100})}"></option>
+                    </select>
+                </td>
+                <td th:text="#{more.random.year}"></td>
+                <td>
+                    <select style="width: 100%;" name="year">
+                        <option value="any" th:text="#{more.random.anyyear}"></option>
+
+                        <option th:each="yearOffset: ${#numbers.sequence(0, (model.currentYear - 2015))}"
+                                th:with="year=${model.currentYear - yearOffset}"
+                                th:value="|${year} ${year}|" th:text="${year}"></option>
+
+                        <option value="2015 2020">2015 &ndash; 2020</option>
+                        <option value="2010 2015">2010 &ndash; 2015</option>
+                        <option value="2005 2010">2005 &ndash; 2010</option>
+                        <option value="2000 2005">2000 &ndash; 2005</option>
+                        <option value="1990 2000">1990 &ndash; 2000</option>
+                        <option value="1980 1990">1980 &ndash; 1990</option>
+                        <option value="1970 1980">1970 &ndash; 1980</option>
+                        <option value="1960 1970">1960 &ndash; 1970</option>
+                        <option value="1950 1960">1950 &ndash; 1960</option>
+                        <option value="0 1949">&lt; 1950</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td th:text="#{more.random.genre}"></td>
+                <td>
+                    <select style="width: 100%;" name="genre">
+                        <option value="any" th:text="#{more.random.anygenre}"></option>
+                        <option th:each="genre:${model.genres}" th:value="${genre.name}" th:text="|${#strings.abbreviate(genre.name, 20)} (${genre.songCount})|"></option>
+                    </select>
+                </td>
+                <td th:text="#{more.random.albumrating}"></td>
+                <td>
+                    <select name="albumRatingComp">
+                        <option value="lt">&lt;</option>
+                        <option value="le">&le;</option>
+                        <option value="eq">=</option>
+                        <option value="ge" selected="selected">&ge;</option>
+                        <option value="gt">&gt;</option>
+                    </select>
+                    <select name="albumRatingValue">
+                        <option value="" selected="selected" th:text="#{more.random.any}"></option>
+                        <option value="0">0 <th:block th:text="#{more.random.stars}"></th:block></option>
+                        <option value="1">1 <th:block th:text="#{more.random.star}"></th:block></option>
+                        <option value="2">2 <th:block th:text="#{more.random.stars}"></th:block></option>
+                        <option value="3">3 <th:block th:text="#{more.random.stars}"></th:block></option>
+                        <option value="4">4 <th:block th:text="#{more.random.stars}"></th:block></option>
+                        <option value="5">5 <th:block th:text="#{more.random.stars}"></th:block></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td th:text="#{more.random.songrating}"></td>
+                <td>
+                    <select style="width: 100%;" name="songRating">
+                        <option value="any" selected="selected" th:text="#{more.random.any}"></option>
+                        <option value="starred" th:text="#{more.random.starred}"></option>
+                        <option value="unstarred" th:text="#{more.random.unstarred}"></option>
+                    </select>
+                </td>
+                <td th:text="#{more.random.lastplayed}"></td>
+                <td>
+                    <select name="lastPlayedComp">
+                        <option value="lt" selected="selected">&lt;</option>
+                        <option value="gt">&gt;</option>
+                    </select>
+                    <select name="lastPlayedValue">
+                        <option value="any" selected="selected" th:text="#{more.random.any}"></option>
+                        <option value="1day" th:text="#{more.random.1day}"></option>
+                        <option value="1week" th:text="#{more.random.1week}"></option>
+                        <option value="1month" th:text="#{more.random.1month}"></option>
+                        <option value="3months" th:text="#{more.random.3months}"></option>
+                        <option value="6months" th:text="#{more.random.6months}"></option>
+                        <option value="1year" th:text="#{more.random.1year}"></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td th:text="#{more.random.folder}"></td>
+                <td>
+                    <select style="width: 100%;" name="musicFolderId">
+                        <option value="-1" th:text="#{more.random.anyfolder}"></option>
+                        <option th:each="musicFolder:${model.musicFolders}" th:value="${musicFolder.id}" th:text="${musicFolder.name}"></option>
+                    </select>
+                </td>
+                <td th:text="#{more.random.playcount}"></td>
+                <td>
+                    <select name="playCountComp">
+                        <option value="lt" selected="selected">&lt;</option>
+                        <option value="gt">&gt;</option>
+                    </select>
+                    <input type="number" name="playCountValue"/> times
+                </td>
+            </tr>
+            <tr>
+                <td th:text="#{more.random.format}"></td>
+                <td>
+                    <select style="width: 100%;" name="format">
+                        <option value="any" selected="selected" th:text="#{more.random.any}"></option>
+                        <option value="flac">FLAC</option>
+                        <option value="mp3">MP3</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                  <input type="submit" name="addToPlaylist" th:value="#{more.random.add}">
+                  <input type="submit" name="autoRandom" th:value="#{more.random.radio}">
+                </td>
+            </tr>
+        </table>
+    </form>
+</th:block>
+
+<a href="https://airsonic.github.io/docs/apps/" target="_blank" rel="noopener noreferrer"><img alt="Apps" th:src="@{/icons/default_light/apps.png}" style="float: right;margin-left: 3em; margin-right: 3em"/></a>
+
+<h2>
+    <img th:src="${#themes.code('androidImage')}" alt=""/>
+    <span style="vertical-align: middle" th:text="#{more.apps.title}"></span>
+</h2>
+<span th:Utext="#{more.apps.text}"></span>
+
+
+<h2>
+    <img th:src="${#themes.code('statusSmallImage')}" alt=""/>
+    <span style="vertical-align: middle" th:text="#{more.status.title}"></span>
+</h2>
+<span th:Utext="#{more.status.text}"></span>
+
+<h2>
+    <img th:src="${#themes.code('podcastImage')}" alt=""/>
+    <span style="vertical-align: middle" th:text="#{more.podcast.title}"></span>
+</h2>
+<span th:utext="#{more.podcast.text}"></span>
+
+<th:block th:if="${model.user.uploadRole}">
+
+    <h2>
+        <img th:src="${#themes.code('uploadImage')}" alt=""/>
+        <span style="vertical-align: middle" th:text="#{more.upload.title}"></span>
+    </h2>
+
+    <form method="post" enctype="multipart/form-data" action="upload.view">
+        <input type="hidden"
+                th:name="${_csrf.parameterName}"
+                th:value="${_csrf.token}" />
+        <table>
+            <tr>
+                <td th:text="#{more.upload.source}"></td>
+                <td colspan="2"><input type="file" id="file" name="file" size="40" multiple="multiple"/></td>
+            </tr>
+            <tr>
+                <td th:text="#{more.upload.target}"></td>
+                <td><input type="text" id="dir" name="dir" size="37" th:value="${model.uploadDirectory}"/></td>
+                <td><input type="submit" th:value="#{more.upload.ok}"/></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="checkbox" checked name="unzip" id="unzip"/>
+                    <label for="unzip" th:text="#{more.upload.unzip}"></label>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <div id="progressBars"></div>
+
+</th:block>
+
+<a name="shortcuts"></a>
+<h2>
+    <img th:src="${#themes.code('keyboardImage')}" alt=""/>
+    <span style="vertical-align: middle" th:text="#{more.keyboard.title}"></span>
+</h2>
+<span th:utext="#{more.keyboard.text}"></span>
+<table class="indent music" style="width:inherit">
+    <tr>
+        <th colspan="2" th:text="#{more.keyboard.playback}"></th>
+        <th colspan="2" th:text="#{more.keyboard.navigation}"></th>
+        <th colspan="2" th:text="#{more.keyboard.general}"></th>
+    </tr>
+    <tr>
+        <td class="more-shortcut">Space</td><td class="more-shortcut-descr" th:text="#{more.keyboard.playpause}"></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> h</td><td class="more-shortcut-descr" th:text="#{more.keyboard.home}"></td>
+        <td class="more-shortcut">/</td><td class="more-shortcut-descr" th:text="#{more.keyboard.search}"></td>
+    </tr>
+    <tr>
+        <td class="more-shortcut">&#8592;</td><td class="more-shortcut-descr" th:text="#{more.keyboard.previous}"></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> p</td><td class="more-shortcut-descr" th:text="#{more.keyboard.playlists}"></td>
+        <td class="more-shortcut">m</td><td class="more-shortcut-descr" th:text="#{more.keyboard.sidebar}"></td>
+    </tr>
+    <tr>
+        <td class="more-shortcut">&#8594;</td><td class="more-shortcut-descr" th:text="#{more.keyboard.next}"></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> o</td><td class="more-shortcut-descr" th:text="#{more.keyboard.podcasts}"></td>
+        <td class="more-shortcut">q</td><td class="more-shortcut-descr" th:text="#{more.keyboard.playqueue}"></td>
+    </tr>
+    <tr>
+        <td class="more-shortcut">&ndash;</td><td class="more-shortcut-descr" th:text="#{more.keyboard.volumedown}"></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> s</td><td class="more-shortcut-descr" th:text="#{more.keyboard.settings}"></td>
+        <td class="more-shortcut">?</td><td class="more-shortcut-descr" th:text="#{more.keyboard.shortcuts}"></td>
+    </tr>
+    <tr>
+        <td class="more-shortcut">+</td><td class="more-shortcut-descr" th:text="#{more.keyboard.volumeup}"></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> t</td><td class="more-shortcut-descr" th:text="#{more.keyboard.starred}"></td>
+        <td></td><td></td>
+    </tr>
+    <tr>
+        <td class="more-shortcut">*</td><td class="more-shortcut-descr" th:text="#{more.keyboard.star}"></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> b</td><td class="more-shortcut-descr" th:text="#{more.keyboard.bookmarks}"></td>
+        <td></td><td></td>
+    </tr>
+    <tr>
+        <td></td><td></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> r</td><td class="more-shortcut-descr" th:text="#{more.keyboard.more}"></td>
+        <td></td><td></td>
+    </tr>
+    <tr>
+        <td></td><td></td>
+        <td class="more-shortcut">g <span th:text="#{more.keyboard.then}"></span> a</td><td class="more-shortcut-descr" th:text="#{more.keyboard.about}"></td>
+        <td></td><td></td>
+    </tr>
+</table>
+
+</body></html>

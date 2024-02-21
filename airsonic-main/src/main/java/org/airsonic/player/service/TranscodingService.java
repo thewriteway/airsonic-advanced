@@ -14,7 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
- Copyright 2023 (C) Y.Tory
+ Copyright 2023-2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -154,6 +154,32 @@ public class TranscodingService {
         transcodingRepository.save(transcoding);
     }
 
+    /**
+     * Updates the given transcoding.
+     * @param id The transcoding ID.
+     * @param name The transcoding name.
+     * @param sourceFormats The source formats.
+     * @param targetFormat The target format.
+     * @param step1 The first step.
+     * @param step2 The second step.
+     * @param defaultActive Whether the transcoding is active by default.
+     */
+    @Transactional
+    public void updateTranscoding(Integer id, String name, String sourceFormats, String targetFormat, String step1,
+            String step2, boolean defaultActive) {
+        transcodingRepository.findById(id).ifPresentOrElse(t -> {
+            t.setName(name);
+            t.setSourceFormats(sourceFormats);
+            t.setTargetFormat(targetFormat);
+            t.setStep1(step1);
+            t.setStep2(step2);
+            t.setDefaultActive(defaultActive);
+            transcodingRepository.save(t);
+        }, () -> {
+                LOG.warn("Transcoding with id {} not found", id);
+            }
+        );
+    }
     /**
      * Returns whether transcoding is required for the given media file and player combination.
      *

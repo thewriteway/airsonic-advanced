@@ -7,7 +7,7 @@ public class DatabaseSettingsCommand {
     @NotNull
     private DataSourceConfigType configType;
     private String driver;
-    private String password;
+    private String jdbcPassword;
     private String url;
     private String username;
     private String JNDIName;
@@ -34,12 +34,12 @@ public class DatabaseSettingsCommand {
         this.driver = driver;
     }
 
-    public String getPassword() {
-        return password;
+    public String getJdbcPassword() {
+        return jdbcPassword;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setJdbcPassword(String jdbcPassword) {
+        this.jdbcPassword = jdbcPassword;
     }
 
     public String getUrl() {

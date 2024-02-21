@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+</head><body>
+
+<h1 th:text="#{upload.title}"></h1>
+
+<th:block th:each="file :${model.uploadedFiles}" >
+    <p th:utext="#{upload.success(${#strings.escapeXml(file.toString())})}"></p>
+</th:block>
+
+<th:block th:each="file : ${model.unzippedFiles}">
+    <span th:utext="#{upload.unzipped(${#strings.escapeXml(file.toString())})}"></span><br/>
+</th:block>
+
+<th:block th:each="exception:${model.exceptions}">
+    <p th:utext="#{upload.failed(${#strings.escapeXml(exception.message)})}"></p>
+</th:block>
+
+    <th:block th:if="${#lists.isEmpty(model.uploadedFiles)}">
+        <p th:text="#{upload.empty}"></p>
+    </th:block>
+
+<div class="back"><a href="javascript:history.back()" th:text="#{common.back}"></a></div>
+</body></html>

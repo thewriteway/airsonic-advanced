@@ -199,6 +199,7 @@ public class SecurityService implements UserDetailsService {
                                 if (dbCreds.updateEncoder(c.getEncoder(),
                                         reencodePlaintextNewCreds)) {
                                     dbCreds.setComment(comment);
+                                    dbCreds.setUpdated(Instant.now());
                                     dbCreds.setExpiration(c.getExpirationInstant());
                                     userCredentialRepository.save(dbCreds);
                                 } else {

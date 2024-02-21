@@ -32,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 
+import java.nio.file.Path;
+
 /**
  * Controller which produces avatar images.
  *
@@ -81,9 +83,10 @@ public class AvatarController {
         }
 
         response.setContentType(avatar.getMimeType());
-        Resource res = loader.getResource(avatar.getPath().toString());
+        String avatarPath = Path.of("static").resolve(avatar.getPath()).toString();
+        Resource res = loader.getResource("classpath:" + avatarPath);
         if (!res.exists()) {
-            res = loader.getResource("file:" + avatar.getPath().toString());
+            res = loader.getResource("file:" + avatarPath);
         }
         IOUtils.copy(res.getInputStream(), response.getOutputStream());
     }

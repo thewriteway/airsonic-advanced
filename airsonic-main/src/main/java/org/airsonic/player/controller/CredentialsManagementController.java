@@ -9,7 +9,6 @@ import org.airsonic.player.domain.UserCredential.App;
 import org.airsonic.player.security.GlobalSecurityConfig;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
-import org.airsonic.player.util.Util;
 import org.airsonic.player.validator.CredentialsManagementValidators.CredentialCreateChecks;
 import org.airsonic.player.validator.CredentialsManagementValidators.CredentialUpdateChecks;
 import org.apache.commons.beanutils.BeanMap;
@@ -22,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -91,11 +89,8 @@ public class CredentialsManagementController {
         map.addAttribute("appsMap", EnumSet.allOf(App.class).stream().collect(toMap(a -> a, a -> new BeanMap(a))));
 
         map.addAttribute("decodableEncoders", GlobalSecurityConfig.NONLEGACY_DECODABLE_ENCODERS);
-        map.addAttribute("decodableEncodersJson", Util.toJson(GlobalSecurityConfig.NONLEGACY_DECODABLE_ENCODERS));
         map.addAttribute("nonDecodableEncoders", GlobalSecurityConfig.NONLEGACY_NONDECODABLE_ENCODERS);
-        map.addAttribute("nonDecodableEncodersJson", Util.toJson(GlobalSecurityConfig.NONLEGACY_NONDECODABLE_ENCODERS));
         map.addAttribute("encoderAliases", ENCODER_ALIASES);
-        map.addAttribute("encoderAliasesJson", Util.toJson(ENCODER_ALIASES));
 
         map.addAttribute("preferredEncoderNonDecodableAllowed", securityService.getPreferredPasswordEncoder(true));
         map.addAttribute("preferredEncoderDecodableOnly", securityService.getPreferredPasswordEncoder(false));
@@ -136,7 +131,7 @@ public class CredentialsManagementController {
         return "redirect:credentialsSettings.view";
     }
 
-    @PutMapping
+    @PostMapping("update")
     protected String updateCreds(Principal user,
             @ModelAttribute("command") @Validated(value = { Default.class, CredentialUpdateChecks.class }) CredentialsManagementCommand cmc,
             BindingResult br, RedirectAttributes redirectAttributes) {
@@ -148,7 +143,7 @@ public class CredentialsManagementController {
 
         redirectAttributes.addFlashAttribute("settings_toast", result);
 
-        return "redirect:credentialsSettings.view";
+        return "redirect:/credentialsSettings.view";
     }
 
     @PostMapping(path = "/admin")

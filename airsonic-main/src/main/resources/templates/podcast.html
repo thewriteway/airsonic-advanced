@@ -1,0 +1,21 @@
+<rss version="2.0">
+    <channel>
+        <title>Airsonic Podcast</title>
+        <link th:text="${model.url}" />
+        <description>Airsonic Podcast</description>
+        <language>en-us</language>
+        <image>
+            <url>http://www.airsonic.org/pages/inc/img/airsonic_logo.png</url>
+            <title>Airsonic Podcast</title>
+        </image>
+
+        <item th:each="podcast:${model.podcasts}">
+            <title th:text="${podcast.name}"></title>
+            <link th:text="${model.url}"></link>
+            <description>Airsonic playlist <th:block th:text="${podcast.name}"></th:block></description>
+            <pubDate th:text="${podcast.publishDate}"></pubDate>
+            <enclosure th:url="${podcast.enclosureUrl}" th:length="${podcast.length}" th:type="${podcast.type}"/>
+        </item>
+
+    </channel>
+</rss>

@@ -19,14 +19,7 @@
  */
 package org.airsonic.player.domain.entity;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -58,7 +51,7 @@ public class Share {
     @Column(name = "visit_count")
     private int visitCount;
 
-    @OneToMany(mappedBy = "share", cascade = { CascadeType.MERGE, CascadeType.REMOVE, CascadeType.PERSIST })
+    @OneToMany(mappedBy = "share", fetch = FetchType.EAGER, cascade = { CascadeType.MERGE, CascadeType.REMOVE, CascadeType.PERSIST })
     private List<ShareFile> files = new ArrayList<>();
 
     public Share() {

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+
+    <script type="text/javascript" th:inline="javascript">
+        var previousQuery = "";
+        var instantSearchTimeout;
+        var showSideBar = /*[[${model.showSideBar}]]*/ false;
+
+        function init() {
+            top.StompClient.subscribe("top.html", {
+                "/user/queue/settings/sidebar": function(msg) {
+                    toggleLeftFrameCallback(JSON.parse(msg.body));
+                }
+            });
+
+            top.StompClient.onConnect.push(function() {
+                setConnectedImage();
+            });
+
+            top.StompClient.onDisconnect.push(function() {
+                setDisconnectedImage();
+            });
+
+            top.StompClient.onConnecting.push(function() {
+                setConnectingImage();
+            });
+
+            // in case this frame instantiates too late
+            if (top.StompClient.state == 'connected') {
+                setConnectedImage();
+            }
+        }
+
+        function setConnectedImage() {
+            $("#connectionStatus img").attr("src", /*[[${#themes.code('connectedImage')}]]*/ "/images/connected.png");
+            $("#connectionStatus div").text(/*[[#{top.connected}]]*/ "Connected");
+        }
+
+        function setDisconnectedImage() {
+            $("#connectionStatus img").attr("src", /*[[${#themes.code('disconnectedImage')}]]*/ "/images/disconnected.png");
+            $("#connectionStatus div").text(/*[[#{top.disconnected}]]*/ "Disconnected");
+        }
+
+        function setConnectingImage() {
+            $("#connectionStatus img").attr("src", /*[[${#themes.code('connectingImage')}]]*/ "/images/connecting.gif");
+            $("#connectionStatus div").text(/*[[#{top.connecting}]]*/ "Connecting");
+        }
+
+        function toggleLeftFrameCallback(show) {
+            if (showSideBar != show) {
+                if (show) {
+                    doShowLeftFrame();
+                } else {
+                    doHideLeftFrame();
+                }
+            }
+        }
+
+        function triggerInstantSearch() {
+            if (instantSearchTimeout) {
+                window.clearTimeout(instantSearchTimeout);
+            }
+            instantSearchTimeout = window.setTimeout(executeInstantSearch, 300);
+        }
+
+        function executeInstantSearch() {
+            var query = $("#query").val().trim();
+            if (query.length > 1 && query != previousQuery) {
+                previousQuery = query;
+                document.searchForm.submit();
+            }
+        }
+
+        function showLeftFrame() {
+            doShowLeftFrame();
+            top.StompClient.send("/app/settings/sidebar", true);
+        }
+
+        function doShowLeftFrame() {
+            $("div.left-nav-container", window.parent.document).show('slide', {direction:"left"}, 100, function() {
+                $("#show-left-frame").hide();
+                $("#hide-left-frame").show();
+                showSideBar = true;
+            });
+        }
+
+        function hideLeftFrame() {
+            doHideLeftFrame();
+            top.StompClient.send("/app/settings/sidebar", false);
+        }
+
+        function doHideLeftFrame() {
+            $("div.left-nav-container", window.parent.document).hide('slide', {direction:"left"}, 100, function() {
+                $("#hide-left-frame").hide();
+                $("#show-left-frame").show();
+                showSideBar = false;
+            });
+        }
+        
+        function toggleConnectionStatus() {
+            setConnectingImage();
+            if (top.StompClient.state == 'connected') {
+                top.StompClient.disconnect();
+            } else if (top.StompClient.state == 'dc') {
+                top.StompClient.connect();
+            }
+        }
+
+        function airsonicLogout() {
+            $("#logoutForm")[0].submit();
+        }
+    </script>
+</head>
+
+<body class="bgcolor2 topframe" style="margin:0.4em 1em 0 1em;" onload="init()">
+
+<span id="dummy-animation-target" style="max-width:0;display: none"></span>
+
+
+<table style="margin:0;padding-top:5px">
+    <tr>
+        <td style="padding-right:4.5em;">
+            <img id="show-left-frame" th:src="${#themes.code('sidebarImage')}" onclick="showLeftFrame()" alt="" th:style="|${model.showSideBar ? 'display:none' : 'display:inline'};cursor:pointer|">
+            <img id="hide-left-frame" th:src="${#themes.code('sidebarImage')}" onclick="hideLeftFrame()" alt="" th:style="|${model.showSideBar ? 'display:inline' : 'display:none'};cursor:pointer|">
+        </td>
+        <td style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/home}" target="main"><img th:src="${#themes.code('homeImage')}" th:title="#{top.home}" th:alt="#{top.home}"></a>
+            <div class="topHeader"><a th:href="@{/home}" target="main" th:utext="#{top.home}">Home</a></div>
+        </td>
+        <td style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/nowPlaying}" target="main"><img th:src="${#themes.code('nowPlayingImage')}" th:title="#{top.now_playing}" th:alt="#{top.now_playing}"></a>
+            <div class="topHeader"><a th:href="@{/nowPlaying}" target="main" th:utext="#{top.now_playing}">Top Now Playing</a></div>
+        </td>
+        <td style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/starred}" target="main"><img th:src="${#themes.code('starredImage')}" th:title="#{top.starred}" th:alt="#{top.starred}"></a>
+            <div class="topHeader"><a th:href="@{/starred}" target="main" th:utext="#{top.starred}">Starred</a></div>
+        </td>
+        <td style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/playlists}" target="main"><img th:src="${#themes.code('playlistImage')}" th:title="#{left.playlists}" th:alt="#{left.playlists}"></a>
+            <div class="topHeader"><a th:href="@{/playlists}" target="main" th:utext="#{left.playlists}">Playlists</a></div>
+        </td>
+        <td style="min-width:4em;padding-right:1em;text-align: center">
+            <a th:href="@{/podcastChannels}" target="main"><img th:src="${#themes.code('podcastLargeImage')}" th:title="#{top.podcast}" th:alt="#{top.podcast}"></a>
+            <div class="topHeader"><a th:href="@{/podcastChannels}" target="main" th:utext="#{top.podcast}">Podcast</a></div>
+        </td>
+        <td style="min-width:4em;padding-right:1em;text-align: center">
+            <a th:href="@{/bookmarks}" target="main"><img th:src="${#themes.code('bookmarkImage')}" th:title="#{top.bookmarks}" th:alt="#{top.bookmarks}"></a>
+            <div class="topHeader"><a th:href="@{/bookmarks}" target="main" th:utext="#{top.bookmarks}">Bookmarks</a></div>
+        </td>
+        <td th:if="${model.user.settingsRole}" style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/settings}" target="main"><img th:src="${#themes.code('settingsImage')}" th:title="#{top.settings}" th:alt="#{top.settings}"></a>
+            <div class="topHeader"><a th:href="@{/settings}" target="main" th:utext="#{top.settings}">Settings</a></div>
+        </td>
+        <td style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/status}" target="main"><img th:src="${#themes.code('statusImage')}" th:title="#{top.status}" th:alt="#{top.status}"></a>
+            <div class="topHeader"><a th:href="@{/status}" target="main" th:utext="#{top.status}">Status</a></div>
+        </td>
+        <td style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/more}" target="main"><img th:src="${#themes.code('moreImage')}" th:title="#{top.more}" th:alt="#{top.more}"></a>
+            <div class="topHeader"><a th:href="@{/more}" target="main" th:utext="#{top.more}">More</a></div>
+        </td>
+        <td style="min-width:3em;padding-right:1em;text-align: center">
+            <a th:href="@{/help}" target="main"><img th:src="${#themes.code('helpImage')}" th:title="#{top.help}" th:alt="#{top.help}"></a>
+            <div class="topHeader"><a th:href="@{/help}" target="main" th:utext="#{top.help}">Help</a></div>
+        </td>
+
+        <td style="padding-left:1em">
+            <form method="post" th:action="@{/search}" target="main" name="searchForm">
+                <td><input required type="text" name="query" id="query" size="28" th:placeholder="#{top.search}" onclick="select();"
+                           onkeyup="triggerInstantSearch();"></td>
+                <td><a href="javascript:document.searchForm.submit()"><img th:src="${#themes.code('searchImage')}" th:alt="#{top.search}" th:title="#{top.search}"></a></td>
+            </form>
+        </td>
+
+        <td style="padding-left:15pt;padding-right:5pt;vertical-align: middle;width: 100%;text-align: center">
+            <div>
+              <a th:href="@{/personalSettings}" th:if="${model.user.settingsRole}" target="main">
+                <img th:if="${model.showAvatar}"
+                     th:src="@{/avatar(username=${model.user.username})}" th:alt="#{status.user}" width="30" height="30">
+                <img th:unless="${model.showAvatar}"
+                     th:src="${#themes.code('userImage')}" th:alt="#{status.user}" height="24">
+              </a>
+
+
+              <div class="topHeader">
+                  <a th:href="@{/personalSettings.view}" target="main" th:text="${model.user.username}"> </a>
+              </div>
+
+            </div>
+        </td>
+
+        <td style="padding-left:15pt;padding-right:5pt;width: 100%;text-align: center">
+            <a id="connectionStatus" href="javascript:void(0)" onclick="toggleConnectionStatus();">
+                <img th:src="${#themes.code('disconnectedImage')}" alt="connect" height="24">
+                <div class="detail" th:utext="#{top.disconnected}">Disconnected</div>
+            </a>
+        </td>
+
+        <td style="padding-left:15pt;padding-right:5pt;width: 100%;text-align: center">
+            <a href="#" onclick="airsonicLogout();">
+                <img th:src="${#themes.code('logoutImage')}" alt="logout" height="24">
+                <div class="detail" th:utext="#{top.logout}">Logout</div>
+            </a>
+        </td>
+
+    </tr></table>
+    <form id="logoutForm" th:action="@{/logout}"  method="POST" style="display:none">
+    </form>
+
+</body></html>

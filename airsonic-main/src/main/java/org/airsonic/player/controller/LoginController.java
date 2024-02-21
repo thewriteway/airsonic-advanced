@@ -52,6 +52,8 @@ public class LoginController {
 
         if (securityService.checkDefaultAdminCredsPresent()) {
             map.put("insecure", true);
+        } else {
+            map.put("insecure", false);
         }
 
         return new ModelAndView("login", "model", map);

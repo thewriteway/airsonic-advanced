@@ -42,6 +42,7 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -124,7 +125,7 @@ class AudioScrobblerServiceTest {
             creds.put(App.LISTENBRAINZ, listenBreinzCredential);
             when(mockedUserSettings.getListenBrainzUrl()).thenReturn("listenBrainzUrl");
         }
-        when(securityService.getDecodableCredsForApps(any(), any())).thenReturn(creds);
+        doReturn(creds).when(securityService).getDecodableCredsForApps(eq(username), any(App[].class));
 
         // Act
         audioScrobblerService.register(mockedMediaFile, username, submission, time);
@@ -151,7 +152,7 @@ class AudioScrobblerServiceTest {
         when(mockedUserSettings.getLastFmEnabled()).thenReturn(lastFmEnabled);
         when(mockedUserSettings.getListenBrainzEnabled()).thenReturn(listenBrainzEnabled);
         Map<App, UserCredential> creds = new HashMap<>();
-        when(securityService.getDecodableCredsForApps(any(), any())).thenReturn(creds);
+        when(securityService.getDecodableCredsForApps(eq(username), any(App[].class))).thenReturn(creds);
 
         // Act
         audioScrobblerService.register(mockedMediaFile, username, submission, time);

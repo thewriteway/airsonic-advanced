@@ -1,0 +1,40 @@
+<th:block th:fragment="header">
+    <th:block th:if="${toast}">
+        <script type="text/javascript" th:inline="javascript">
+            $(document).ready(function () {
+                $().toastmessage("showSuccessToast", "[(#{common.settingssaved})]");
+            });
+        </script>
+    </th:block>
+
+<!--    th:with="tokens=${ {'random', 'newest', 'starred', 'highest', 'frequent', 'recent', 'decade', 'genre', 'alphabetical'} }"-->
+<!--    <c:set var="categories" value="${param.restricted ? 'personal credentials player share' : 'musicFolder general advanced personal credentials user player share dlna sonos transcoding internetRadio podcast database'}"/>-->
+    <h1>
+        <img th:src="${#themes.code('settingsImage')}" alt=""/>
+        <span style="vertical-align: middle" th:text="#{settingsheader.title}"></span>
+    </h1>
+
+    <th:block th:remove="all">
+        <th:block th:fragment="links(categories)">
+            <th:block th:each="category, loopStatus: ${categories}">
+                <th:block th:unless="${loopStatus.first && ((loopStatus.count -1) % 7 == 0) }">&nbsp;|&nbsp;</th:block>
+                <th:block th:if="${(loopStatus.count gt 1) && ((loopStatus.count -1) % 7 == 0) }"></h2><h2 style="white-space: normal"></th:block>
+
+                <span th:if="${cat eq category}" class="headerSelected" th:utext="#{settingsheader.__${category}__}"></span>
+                <span th:unless="${cat eq category}" class="header" ><a th:href="|${category}Settings|" th:utext="#{settingsheader.__${category}__}"></a></span>
+
+            </th:block>
+        </th:block>
+    </th:block>
+
+    <h2 style="white-space: normal">
+    <th:block th:if="${restricted}" >
+        <th:block th:replace="::links(${ {'personal', 'credentials', 'player', 'share'} })" />
+    </th:block>
+    <th:block th:unless="${restricted}" >
+        <th:block th:replace="::links(${ {'musicFolder', 'general', 'advanced', 'personal', 'credentials', 'user', 'player', 'share', 'dlna', 'sonos', 'transcoding', 'internetRadio', 'podcast', 'database'} })" />
+    </th:block>
+    </h2>
+
+    <p></p>
+</th:block>

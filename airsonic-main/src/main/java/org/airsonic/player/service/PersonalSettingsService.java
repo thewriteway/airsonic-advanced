@@ -201,7 +201,7 @@ public class PersonalSettingsService {
      * @return User-specific settings. Never <code>null</code>.
      */
     private UserSetting getUserSetting(String username) {
-        return userSettingRepository.findById(username).orElseGet(() -> new UserSetting(username, createDefaultUserSetting()));
+        return userSettingRepository.findByUsername(username).orElseGet(() -> new UserSetting(username, createDefaultUserSetting()));
     }
 
     private UserSettingDetail createDefaultUserSetting() {

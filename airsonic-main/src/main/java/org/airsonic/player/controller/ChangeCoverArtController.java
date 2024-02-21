@@ -14,11 +14,13 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.command.ChangeCoverArtCommand;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFileService;
 import org.apache.commons.lang.StringUtils;
@@ -32,8 +34,6 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Controller for changing cover art.
@@ -61,14 +61,8 @@ public class ChangeCoverArtController {
         if (StringUtils.isBlank(album)) {
             album = dir.getAlbumName();
         }
+        return new ModelAndView("changeCoverArt", "command", new ChangeCoverArtCommand(id, artist, album));
 
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", id);
-        map.put("artist", artist);
-        map.put("album", album);
-
-
-        return new ModelAndView("changeCoverArt","model",map);
     }
 
 }

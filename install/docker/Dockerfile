@@ -1,5 +1,5 @@
-FROM eclipse-temurin:17.0.5_8-jdk AS builder
-WORKDIR target
+FROM eclipse-temurin:17.0.10_7-jdk AS builder
+WORKDIR /target
 
 COPY run.sh /usr/local/bin/run.sh
 RUN chmod +x /usr/local/bin/run.sh
@@ -13,7 +13,7 @@ RUN mv WEB-INF/lib lib
 RUN mv WEB-INF/classes/META-INF cMETA-INF
 RUN mv WEB-INF/classes/liquibase cliquibase
 
-FROM eclipse-temurin:17.0.5_8-jre-jammy
+FROM eclipse-temurin:17.0.10_7-jre-jammy
 
 LABEL description="Airsonic-Advanced is a free, web-based media streamer, providing ubiquitous access to your music." \
       url="https://github.com/kagemomiji/airsonic-advanced"
@@ -35,20 +35,17 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+
 COPY --from=builder /usr/local/bin/run.sh /usr/local/bin/run.sh
 COPY --from=builder /usr/local/bin/entry.sh /usr/local/bin/entry.sh
 
-COPY --from=builder target/cMETA-INF /app/WEB-INF/classes/META-INF
-COPY --from=builder target/lib /app/WEB-INF/lib
-COPY --from=builder target/lib-provided /app/WEB-INF/lib-provided
-COPY --from=builder target/org /app/org
-COPY --from=builder target/sonos /app/sonos
-COPY --from=builder target/icons /app/icons
-COPY --from=builder target/style /app/style
-COPY --from=builder target/cliquibase /app/WEB-INF/classes/liquibase
-COPY --from=builder target/script /app/script
-COPY --from=builder target/META-INF /app/META-INF
-COPY --from=builder target/WEB-INF /app/WEB-INF
+COPY --from=builder /target/cMETA-INF /app/WEB-INF/classes/META-INF
+COPY --from=builder /target/lib /app/WEB-INF/lib
+COPY --from=builder /target/lib-provided /app/WEB-INF/lib-provided
+COPY --from=builder /target/org /app/org
+COPY --from=builder /target/cliquibase /app/WEB-INF/classes/liquibase
+COPY --from=builder /target/META-INF /app/META-INF
+COPY --from=builder /target/WEB-INF /app/WEB-INF
 
 EXPOSE $AIRSONIC_PORT
 

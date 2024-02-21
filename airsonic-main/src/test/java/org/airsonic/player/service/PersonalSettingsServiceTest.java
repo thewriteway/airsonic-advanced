@@ -14,7 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
- Copyright 2023 (C) Y.Tory
+ Copyright 2023-2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -199,7 +199,7 @@ public class PersonalSettingsServiceTest {
                 Paths.get("$[AIRSONIC_HOME]/icons/avatars/avatar.png"), "user");
         when(customAvatarRepository.findByUsername("user")).thenReturn(Optional.of(avatar));
         when(homeConfig.getAirsonicHome()).thenReturn(Paths.get("/airsonic_home"));
-        when(userSettingRepository.findById("user")).thenReturn(Optional.of(mockedUserSetting));
+        when(userSettingRepository.findByUsername("user")).thenReturn(Optional.of(mockedUserSetting));
         when(mockedUserSetting.getSettings()).thenReturn(mockedUserSettingDetail);
         when(mockedUserSettingDetail.getAvatarScheme()).thenReturn(AvatarScheme.CUSTOM);
 
@@ -220,7 +220,7 @@ public class PersonalSettingsServiceTest {
                 Paths.get("$[AIRSONIC_HOME]/icons/avatars/avatar.png"), "user");
         when(customAvatarRepository.findByUsername("user")).thenReturn(Optional.of(avatar));
         when(homeConfig.getAirsonicHome()).thenReturn(Paths.get("/airsonic_home"));
-        when(userSettingRepository.findById("user")).thenReturn(Optional.of(mockedUserSetting));
+        when(userSettingRepository.findByUsername("user")).thenReturn(Optional.of(mockedUserSetting));
 
         Avatar actual = service.getAvatar(null, "user", true);
         assertEquals(avatar.getId(), actual.getId());
@@ -238,7 +238,7 @@ public class PersonalSettingsServiceTest {
     public void testGetAvatarWhenSchemeIsNoneReturnNull() throws Exception {
 
         // given
-        when(userSettingRepository.findById("user")).thenReturn(Optional.of(mockedUserSetting));
+        when(userSettingRepository.findByUsername("user")).thenReturn(Optional.of(mockedUserSetting));
         when(mockedUserSetting.getSettings()).thenReturn(mockedUserSettingDetail);
         when(mockedUserSettingDetail.getAvatarScheme()).thenReturn(AvatarScheme.NONE);
 
@@ -256,7 +256,7 @@ public class PersonalSettingsServiceTest {
         SystemAvatar avatar = new SystemAvatar(10, "avatar", Instant.now(), "image/png", 60, 70,
                 Paths.get("icons/avatars/avatar.png"));
         when(systemAvatarRepository.findById(10)).thenReturn(Optional.of(avatar));
-        when(userSettingRepository.findById("user")).thenReturn(Optional.of(mockedUserSetting));
+        when(userSettingRepository.findByUsername("user")).thenReturn(Optional.of(mockedUserSetting));
         when(mockedUserSetting.getSettings()).thenReturn(mockedUserSettingDetail);
         when(mockedUserSettingDetail.getAvatarScheme()).thenReturn(AvatarScheme.SYSTEM);
         when(mockedUserSettingDetail.getSystemAvatarId()).thenReturn(10);

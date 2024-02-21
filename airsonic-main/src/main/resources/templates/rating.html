@@ -1,0 +1,41 @@
+
+<!--/*
+Creates HTML for displaying the rating stars.
+PARAMETERS
+  id: Album ID. May be null if readonly.
+  readonly: Whether rating can be changed.
+  rating: The rating, an integer from 0 (no rating), through 10 (lowest rating), to 50 (highest rating).
+*/-->
+<th:block th:fragment="rating(id, readOnly, rating)">
+    <th:block th:each="i: ${#numbers.sequence(1, 5)}">
+
+        <th:block th:if="${rating ge (i * 10)}">
+            <th:block th:replace="::star(${#themes.code('ratingOnImage')}, ${i})" />
+        </th:block>
+        <th:block th:if="${rating ge (i*10) - 7 and rating le (i*10) - 3}">
+            <th:block th:replace="::star(${#themes.code('ratingHalfImage')}, ${i})" />
+        </th:block>
+        <th:block th:if="${rating le (i * 10) -3}">
+              <th:block th:replace="::star(${#themes.code('ratingOffImage')}, ${i})" />
+        </th:block>
+
+        <th:block remove="all">
+            <th:block th:fragment="star(url ,i)">
+                <img th:if="${readOnly == true}" th:src="${url}"
+                      style="margin-right:-3px;height:18px;" alt=""
+                      th:title="|#{rating.rating} ${(rating ?: 0)/10}|">
+                <a th:unless="${readOnly == true}" th:href="@{/setRating(id=${id}, action='rating', rating=${i})}">
+                    <img th:src="${url}" style="margin-right:-3px;height:18px" alt="" th:title="|#{rating.rating} ${i}|">
+                </a>
+            </th:block>
+        </th:block>
+
+
+    </th:block>
+
+    <th:block th:if="${readOnly != true}">
+            &nbsp;| <a th:href="@{/setRating(id=${id},action=rating,rating=0)}">
+        <img th:src="${#themes.code('clearRatingImage')}" alt="" th:title="#{rating.clearrating}" style="margin-right:5px;height:18px">
+    </a>
+    </th:block>
+</th:block>

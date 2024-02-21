@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:include="head" />
+    <script type="text/javascript">
+        if (window != window.top) {
+            top.location.href = location.href;
+        }
+    </script>
+
+</head>
+<body style="min-width:550px" class="mainframe bgcolor1">
+
+    <form th:action="@{/login}" method="POST">
+        <div id="loginframe" class="bgcolor2 shadow">
+
+            <img th:src="${#themes.code('logoImage')}" alt="">
+
+            <div class="loginmessagetop" th:text="${model.loginMessage}"></div>
+
+            <input required type="text" autofocus id="j_username" name="j_username" tabindex="1"
+                   th:placeholder="#{login.username}">
+
+            <input required type="password" autocomplete="off"  name="j_password" tabindex="2"
+                   th:placeholder="#{login.password}">
+
+            <input name="submit" type="submit" th:value="#{login.login}" tabindex="4">
+
+            <div class="details">
+                <div id="loginremember">
+                    <label for="remember" th:text="#{login.remember}">Remember</label>
+                    <input type="checkbox" name="remember-me" id="remember" tabindex="3">
+                </div>
+
+                <a href="recover.view" th:text="#{login.recover}">Recover</a>
+            </div>
+
+            <th:block th:if="${model.logout}">
+                <div class="loginmessagebottom">
+                    <b th:text="#{login.logout}">Logout</b>
+                </div>
+            </th:block>
+
+            <th:block th:if="${model.error}">
+                <div class="loginmessagebottom">
+                    <span class="warning" th:text="#{login.error}">Error</span>
+                    <br/>
+                    <th:block th:if="${SPRING_SECURITY_LAST_EXCEPTION != null}">
+                       Reason: <th:block th:text="SPRING_SECURITY_LAST_EXCEPTION.message"></th:block>
+                    </th:block>
+                </div>
+            </th:block>
+
+            <th:block th:if="${model.insecure}">
+                <div class="loginmessagebottom">
+                    <p class="warning" th:utext="#{login.insecure(${model.brand})}"></p>
+                </div>
+            </th:block>
+
+        </div>
+    </form>
+
+</body>
+</html>

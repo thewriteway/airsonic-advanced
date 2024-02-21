@@ -1,6 +1,5 @@
 package org.airsonic.player.service;
 
-import com.google.common.io.MoreFiles;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.apache.commons.configuration2.*;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
@@ -13,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 
 public class ConfigurationPropertiesService {
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationPropertiesService.class);
@@ -45,7 +46,8 @@ public class ConfigurationPropertiesService {
         Path propertyFile = homeConfig.getPropertyFile();
         if (!Files.exists(propertyFile)) {
             try {
-                MoreFiles.touch(propertyFile);
+                Files.createFile(propertyFile);
+                Files.setLastModifiedTime(propertyFile, FileTime.from(Instant.now()));
             } catch (IOException e) {
                 throw new RuntimeException("Could not create new property file", e);
             }

@@ -67,6 +67,8 @@ public class RightController {
         } else if (userSettings.getBetaVersionNotificationEnabled() && versionService.isNewBetaVersionAvailable()) {
             map.put("newVersionAvailable", true);
             map.put("latestVersion", versionService.getLatestBetaVersion());
+        } else {
+            map.put("newVersionAvailable", false);
         }
 
         map.put("brand", settingsService.getBrand());

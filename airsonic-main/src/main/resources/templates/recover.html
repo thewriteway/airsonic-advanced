@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <th:block th:include="head" />
+</head>
+<body class="mainframe bgcolor1">
+
+<form th:action="@{/recover.view}" method="POST">
+    <div class="bgcolor2 shadow" style="padding:20px 50px 20px 50px; margin-top:100px;margin-left:50px;margin-right:50px">
+
+        <div style="margin-left: auto; margin-right: auto; width: 45em">
+
+            <h1 th:text="#{recover.title}"></h1>
+            <p style="padding-top: 1em; padding-bottom: 0.5em" th:utext="#{recover.text}"></p>
+
+            <th:block th:if="${#strings.isEmpty(model['sentTo'])}">
+                <input type="text" id="usernameOrEmail" autofocus name="usernameOrEmail" style="width:18em;margin-right: 1em">
+                <input name="submit" type="submit" th:value="#{recover.send}">
+            </th:block>
+
+            <th:block th:if="${!#strings.isEmpty(model['recaptchaSiteKey']) && #strings.isEmpty(model['sentTo'])}">
+                <p style="padding-top: 1em">
+                    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                    <div class="g-recaptcha" th:data-sitekey="${model.recaptchaSiteKey}"></div>
+                </p>
+            </th:block>
+
+            <th:block th:if="${!#strings.isEmpty(model['sentTo'])}">
+                <p style="padding-top: 1em" th:text="#{recover.success(${model.sentTo})}"></p>
+            </th:block>
+
+            <th:block th:if="${!#strings.isEmpty(model['error'])}">
+                <p style="padding-top: 1em" class="warning" th:text="#{__${model.error}__}"></p>
+            </th:block>
+
+            <div class="back" style="margin-top: 1.5em"><a th:href="@{/login}" th:text="#{common.back}"></a></div>
+
+        </div>
+    </div>
+</form>
+</body>
+</html>

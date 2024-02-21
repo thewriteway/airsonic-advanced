@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <script>
+        function updateShownOptions() {
+            $(".hideawayDatabaseOptions").hide();
+            var value = $('select#configType').val();
+            var objToShow = $("#" + value + "DatabaseOptions");
+            if (objToShow.length) {
+                objToShow.show();
+            }
+            if(value != 'BUILTIN') {
+                $("#nonBUILTINDatabaseOptions").show();
+            }
+        }
+
+        function uploadStatus(uploadInfo) {
+            var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
+
+            if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
+                if (progressBarHolder.length != 0) {
+                    // remove it
+                    progressBarHolder.remove();
+                }
+            } else {
+                if (progressBarHolder.length == 0) {
+                    // create it
+                    progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
+                    $("#progressBars").append(progressBarHolder);
+                }
+
+                var progressBarContent = progressBarHolder.find(".progress-bar-content");
+                var progressText = progressBarHolder.find(".progress-text");
+
+                var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
+                progressBarContent.width(parseInt(percent * 3.5));
+                progressText.text(percent + "<fmt:message key='more.upload.progress'/>");
+            }
+        }
+
+        function backupDB() {
+            $("#backupdb").prop("disabled", true);
+            $.get("databaseSettings/backup");
+        }
+
+        function exportDB() {
+            $("#exportdb").prop("disabled", true);
+            location.href="databaseSettings/export";
+        }
+
+        function importDB() {
+            $("#importdb").prop("disabled", true);
+        }
+
+        function backupStatus(msg) {
+            if (msg == "ended") {
+               $("#backupdb").prop("disabled", false);
+            }
+            $().toastmessage('showSuccessToast', 'Backup DB: ' + msg);
+        }
+
+        function importStatus(msg) {
+            if (msg == "ended") {
+               $("#importdb").prop("disabled", false);
+            }
+            $().toastmessage('showSuccessToast', 'Import DB: ' + msg);
+        }
+
+        function exportStatus(msg) {
+            if (msg == "ended") {
+               $("#exportdb").prop("disabled", false);
+            }
+            $().toastmessage('showSuccessToast', 'Export DB: ' + msg);
+        }
+
+        function bindComponentHandling() {
+            // blur out sensitive data
+            $('.sensitive').hover(function() {
+              $(this).removeClass('blur');
+            }).mouseout(function() {
+              $(this).addClass('blur');
+            });
+        }
+
+        $(document).ready(function () {
+            updateShownOptions();
+            bindComponentHandling();
+            $('select#configType').on('change', function () {
+                updateShownOptions();
+            });
+            top.StompClient.subscribe("databaseSettings.html", {
+                '/user/queue/uploads/status': function(msg) { uploadStatus(JSON.parse(msg.body)); },
+                '/topic/backupStatus': function(msg) { backupStatus(msg.body); },
+                '/topic/importStatus': function(msg) { importStatus(msg.body); },
+                '/topic/exportStatus': function(msg) { exportStatus(msg.body); }
+            });
+        });
+    </script>
+    <style>
+    </style>
+</head>
+<body class="mainframe bgcolor1">
+<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
+<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+
+<th:block th:replace="settingsHeader::header(cat='database',toast=${settings_toast})" />
+
+<form th:action="@{/databaseSettings.view}" th:object="${command}" method="post">
+    <p th:utext="#{databasesettings.moreinfo}"></p>
+
+    <table style="white-space:nowrap" class="indent">
+        <tr>
+            <td th:text="#{databasesettings.configtype}"></td>
+            <td>
+                <select th:field="*{configType}" style="width:12em">
+                    <option value="BUILTIN" th:text="Built-in"></option>
+                    <option value="EXTERNAL" th:text="External"></option>
+                    <option value="JNDI" th:text="JNDI"></option>
+                </select>
+                <th:block th:replace="helpToolTip(topic=databaseConfigType)" />
+            </td>
+        </tr>
+    </table>
+
+    <div id="EXTERNALDatabaseOptions" class="hideawayDatabaseOptions">
+        <table style="white-space:nowrap;" class="indent">
+            <table style="white-space:nowrap;" class="indent">
+                <tr>
+                    <td th:text="#{databasesettings.driver}"></td>
+                    <td>
+                        <input th:field="*{driver}" size="30"/>
+                        <th:block th:replace="helpToolTip(topic=jdbcdriver)" />
+                    </td>
+                </tr>
+                <tr>
+                    <td th:text="#{databasesettings.url}"></td>
+                    <td>
+                        <input th:field="*{url}" size="58"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td th:text="#{databasesettings.username}"></td>
+                    <td>
+                        <input type="text" th:field="*{username}" size="36" class="sensitive blur"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td th:text="#{databasesettings.password}"></td>
+                    <td>
+                        <input th:field="*{jdbcPassword}" size="36" class="sensitive blur"/>
+                    </td>
+                </tr>
+            </table>
+        </table>
+    </div>
+
+    <div id="JNDIDatabaseOptions" class="hideawayDatabaseOptions">
+        <table style="white-space:nowrap;" class="indent">
+            <tr>
+                <td th:text="#{databasesettings.jndiname}"></td>
+                <td>
+                    <input type="text" th:field="*{JNDIName}" size="36"/>
+                    <th:block th:replace="helpToolTip(topic=jndiname)" />
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="nonBUILTINDatabaseOptions" class="hideawayDatabaseOptions">
+        <table style="white-space:nowrap" class="indent">
+            <tr>
+                <td th:text="#{databasesettings.mysqlvarcharmaxlength}"></td>
+                <td>
+                    <input th:field="*{mysqlVarcharMaxlength}" size="8"/>
+                    <th:block th:replace="helpToolTip(topic=mysqlvarcharmaxlength)" />
+                </td>
+            </tr>
+        </table>
+        <p class="warning" th:utext="#{databasesettings.jdbclibrary}"></p>
+    </div>
+
+    <p class="warning" th:text="#{databasettings.restartRequired}"></p>
+
+   <th:block th:if="*{backuppable}">
+    <p th:text="#{databasesettings.autodbbackup}"></p>
+    <table>
+      <tr>
+        <td th:text="#{databasesettings.dbbackupschedule}"></td>
+
+        <td>
+          <select th:field="*{dbBackupInterval}" style="width:20em">
+              <option value="-1" th:text="#{podcastsettings.interval.manually}"></option>
+              <option value="1" th:text="#{podcastsettings.interval.hourly}"></option>
+              <option value="24" th:text="#{podcastsettings.interval.daily}"></option>
+              <option value="168" th:text="#{podcastsettings.interval.weekly}"></option>
+              <option value="720" th:text="#{podcastsettings.interval.monthly}"></option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td th:text="#{podcastsettings.keep}"></td>
+
+        <td>
+          <select th:field="*{dbBackupRetentionCount}" style="width:20em">
+              <option value="-1" th:text="#{databasesettings.keep.all}" ></option>
+              <option value="1" th:text="#{databasesettings.keep.one}"></option>
+              <option th:each="count: ${ {2, 3, 4, 5, 10, 20, 30, 50, 100, 500, 1000} }"
+                    th:value="${count}" th:text="#{databasesettings.keep.many(${count})}"></option>
+
+          </select>
+        </td>
+      </tr>
+    </table>
+   </th:block>
+   <th:block th:if="*{!backuppable}">
+    <input type="hidden" th:field="*{dbBackupInterval}"/>
+    <input type="hidden" th:field="*{dbBackupRetentionCount}"/>
+   </th:block>
+
+    <p>
+        <input type="submit" th:value="#{common.save}" style="margin-right:0.3em">
+        <a th:href="@{/nowPlaying.view}"><input type="button" th:value="#{common.cancel}"></a>
+    </p>
+
+</form>
+
+<div style="display:table;">
+  <div style="display:table-row;">
+    <div th:if="${command.backuppable}" style="display:table-cell; padding:0.5em;">
+      <button id="backupdb" onclick="backupDB()">
+        <span th:text="#{databasesettings.backup}"></span>
+          <th:block th:replace="helpToolTip(topic=backupdb)" />
+      </button>
+    </div>
+
+    <div style="display:table-cell; padding:0.5em;">
+      <button id="exportdb" onclick="exportDB()">
+        <img th:src="${#themes.code('downloadImage')}" alt=""/>
+        <span th:text="#{databasesettings.export}"></span>
+          <th:block th:replace="helpToolTip(topic=exportdb)" />
+      </button>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" th:action="@{/upload.view}" th:object="${command}" onsubmit="importDB()">
+        <input type="hidden" id="dir" name="dir" th:value="*{importFolder}"/>
+        <input type="hidden" name="callback" th:value="*{callback}"/>
+        <input type="hidden" name="unzip" value="true"/>
+        <div style="display:table-cell; padding:0.5em; padding-right:0;"><input type="file" id="file" name="file" size="40" multiple="multiple"/></div>
+        <div style="display:table-cell; padding:0.5em; padding-left:0;">
+          <button id="importdb" type="submit">
+            <img th:src="${#themes.code('uploadImage')}" alt=""/>
+            <span style="vertical-align: middle" th:text="#{databasesettings.import}"></span>
+              <th:block th:replace="helpToolTip(topic=importdb)" />
+          </button>
+        </div>
+    </form>
+  </div>
+  <div id="progressBars"></div>
+</div>
+
+
+</body>
+</html>

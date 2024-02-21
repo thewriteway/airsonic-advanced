@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <th:block th:replace="head" />
+</head>
+
+<body class="mainframe bgcolor1">
+
+<h1>
+    <img th:src="${#themes.code('errorImage')}" alt=""/>
+    <span style="vertical-align: middle" th:text="#{accessDenied.title}"></span>
+</h1>
+
+<p>
+    <div th:utext="#{accessDenied.text}"></div>
+</p>
+
+<div class="back"><a href="javascript:history.go(-1)" th:text="#{common.back}"></a></div>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+
+<html><head>
+    <th:block th:replace="head" />
+    <script type="text/javascript">
+        if (window != window.top) {
+            top.location.href = location.href;
+        }
+    </script>
+
+</head>
+<body style="min-width:550px" class="mainframe bgcolor1">
+<h2>Error</h2> 
+<span th:text="${model.linkCode}"></span><br>
+<span th:text="#{${model.errorCode}}"></span>
+</body>
+</html>

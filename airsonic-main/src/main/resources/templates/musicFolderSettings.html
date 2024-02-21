@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+
+    <script th:inline="javascript">
+        function init() {
+            $("#newMusicFolderName").attr("placeholder", "[(#{musicfoldersettings.name})]");
+            $("#newMusicFolderPath").attr("placeholder", "[(#{musicfoldersettings.path})]");
+
+            let settingsReload = /*[[${settings_reload}]]*/ false;
+            if(settingsReload) {
+                parent.frames.left.location.href="left";
+            }
+
+            updateEnableCueIndexing();
+            updateClearFullScan();
+
+            /*[+
+            $([[|#${#ids.next('fullScan')}|]]).change(function() {updateClearFullScan();});
+            $([[|#${#ids.next('enableCueIndexing')}|]]).change(function() {updateEnableCueIndexing();});
+            +]*/
+        }
+
+        function updateClearFullScan() {
+            /*[+
+            if (!$([[|#${#ids.next('fullScan')}|]]).prop("checked")) {
+                $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("disabled", true);
+                $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("checked", false);
+            } else {
+                $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("disabled", false);
+            }
+            +]*/
+        }
+
+        function updateEnableCueIndexing() {
+            /*[+
+            if (!$([[|#${#ids.next('enableCueIndexing')}|]]).prop("checked")) {
+                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("disabled", true)
+                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("checked", false)
+            } else {
+                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("disabled", false)
+            }
+            +]*/
+        }
+
+        function podcastEnabler(event, el) {
+            $('.podcast-enable-radio[value="false"]').prop("checked", true);
+            $(el).prop("checked", true);
+        }
+    </script>
+</head>
+<body class="mainframe bgcolor1" onload="init()">
+<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
+<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+
+
+<th:block th:replace="settingsHeader::header(cat='musicFolder',toast=${settings_toast})" />
+
+<form th:action="@{/musicFolderSettings}" th:object="${command}" method="post">
+<table class="indent">
+    <tr>
+        <th th:text="#{musicfoldersettings.name}"></th>
+        <th th:text="#{musicfoldersettings.path}"></th>
+        <th th:text="#{status.type}"></th>
+        <th th:text="#{musicfoldersettings.enabled}"></th>
+        <th th:text="#{common.delete}"></th>
+        <th></th>
+    </tr>
+
+    <tr th:each="folder, loopStatus: *{musicFolders}">
+        <td><input th:field="*{musicFolders[__${loopStatus.index}__].name}" style="width:90%"/></td>
+        <td><input th:field="*{musicFolders[__${loopStatus.index}__].path}" style="width:90%"/></td>
+        <td align="center"><span th:text="${folder.type}"></span></td>
+        <td align="center">
+          <th:block th:if="${folder.type != 'PODCAST'}">
+            <input type="checkbox" th:field="*{musicFolders[__${loopStatus.index}__].enabled}" class="checkbox"/>
+          </th:block>
+          <th:block th:if="${folder.type == 'PODCAST'}">
+              <input type="radio" th:field="*{musicFolders[__${loopStatus.index}__].enabled}" value="true"  class="podcast-enable-radio" onchange="podcastEnabler(event, this)"/>
+              <input type="radio" th:field="*{musicFolders[__${loopStatus.index}__].enabled}" value="false" class="podcast-enable-radio" style="display: none;"/>
+          </th:block>
+        </td>
+        <td align="center"><input type="checkbox" th:field="*{musicFolders[__${loopStatus.index}__].delete}" class="checkbox"/></td>
+        <td>
+          <span th:if="${!folder.existing}" class="warning" th:text="#{musicfoldersettings.notfound}"></span>
+          <span th:if="${folder.overlap}" th:text="#{musicfoldersettings.overlap(${folder.overlapStatus})}"></span>
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="6" align="left" style="padding-top:1em"><span class="detail" style="white-space: normal" th:text="#{musicfoldersettings.podcastfoldernote}"></span></td>
+    </tr>
+
+    <tr>
+        <th colspan="6" align="left" style="padding-top:1em" th:text="#{musicfoldersettings.deleted}"></th>
+    </tr>
+
+    <tr th:each="folder, loopStatus: *{deletedMusicFolders}">
+        <td><span th:text="${folder.name}"></span></td>
+        <td><span th:text="${folder.path}"></span></td>
+        <td align="center"><span th:text="${folder.type}"></span></td>
+        <td></td>
+        <td></td>
+        <td>
+          <span th:if="${!folder.existing}" class="warning" th:text="#{musicfoldersettings.notfound}"></span>
+          <span th:if="${folder.overlap}" th:text="#{musicfoldersettings.overlap(${folder.overlapStatus})}"></span>
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="6" align="left" style="padding-top:1em"><span class="detail" th:text="#{musicfoldersettings.deletenote}"></span></td>
+    </tr>
+
+    <tr th:if="${!#lists.isEmpty(command.musicFolders)}">
+        <th colspan="6" align="left" style="padding-top:1em" th:text="#{musicfoldersettings.add}"></th>
+    </tr>
+
+    <tr>
+        <td><input th:field="*{newMusicFolder.name}" th:placeholder="#{musicfoldersettings.name}" style="width:90%"/></td>
+        <td><input th:field="*{newMusicFolder.path}" th:placeholder="#{musicfoldersettings.path}" style="width:90%"/></td>
+        <td align="center">
+          <select th:field="*{newMusicFolder.type}">
+              <option th:each="type:*{musicFolderTypes}" th:value="${type}" th:text="${type}" ></option>
+          </select>
+        </td>
+        <td align="center"><input type="checkbox" th:field="*{newMusicFolder.enabled}" class="checkbox"/></td>
+        <td></td>
+        <td></td>
+    </tr>
+
+</table>
+
+    <p class="forward"><a href="userSettings" th:text="#{musicfoldersettings.access}"></a></p>
+    <p class="detail" style="width:60%;white-space:normal;margin-top:-10px;" th:text="#{musicfoldersettings.access.description}"></p>
+    
+    <div>
+        <span th:text="#{musicfoldersettings.uploadsfolder}"></span>
+	    <input th:field="*{uploadsFolder}" size="70"/>
+        <th:block th:replace="helpToolTip(topic=uploadsfolderpattern)" />
+    </div>
+
+    <div>
+        <span th:text="#{musicfoldersettings.excludepattern}"></span>
+        <input th:field="*{excludePatternString}" size="70"/>
+        <th:block th:replace="helpToolTip(topic=excludepattern)" />
+    </div>
+
+    <div>
+        <input type="checkbox" th:field="*{ignoreSymLinks}" size="70" class="checkbox"/>
+     	<label th:for="${#ids.prev('ignoreSymLinks')}" th:text="#{musicfoldersettings.ignoresymlinks}"></label>
+    </div>
+
+    <div>
+        <input type="checkbox" th:field="*{enableCueIndexing}" size="70" class="checkbox"/>
+        <label th:for="${#ids.prev('enableCueIndexing')}" th:text="#{musicfoldersettings.enablecueindexing}"></label>
+        <th:block th:replace="helpToolTip(topic=enablecueindexing)" />
+    </div>
+    <div style="margin-left:1em;">
+        <input type="checkbox" th:field="*{hideIndexedFiles}" size="70"/>
+        <label th:for="${#ids.prev('hideIndexedFiles')}" th:text="#{musicfoldersettings.hideindexedfiles}"></label>
+        <th:block th:replace="helpToolTip(topic=hideindexedfiles)" />
+    </div>
+
+    <div>
+        <input type="checkbox" th:field="*{fullScan}" size="70"/>
+        <label th:for="${#ids.prev('fullScan')}" th:text="#{musicfoldersettings.fullscan}"></label>
+        <th:block th:replace="helpToolTip(topic=fullscan)" />
+    </div>
+    <div style="margin-left:1em;">
+        <input type="checkbox" th:field="*{clearFullScanSettingAfterScan}" size="70"/>
+        <label th:for="${#ids.prev('clearFullScanSettingAfterScan')}" th:text="#{musicfoldersettings.fullscanclear}"></label>
+        <th:block th:replace="helpToolTip(topic=clearfullscan)" />
+    </div>
+
+    <div style="padding-top: 0.5em;padding-bottom: 0.3em">
+        <span style="white-space: nowrap">
+            <span th:text="#{musicfoldersettings.scan}"></span>
+            <select th:field="*{interval}">
+                <option value="-1" th:text="#{musicfoldersettings.interval.never}"></option>
+                <option value="1" th:text="#{musicfoldersettings.interval.one}"></option>
+
+                <th:block th:with="intervals=${ { '2','3','7','14','30','60'} }">
+                    <option th:each="interval:${intervals}" th:value="${interval}" th:text="#{musicfoldersettings.interval.many(${interval})}"></option>
+                </th:block>
+            </select>
+            <select th:field="*{hour}" th:with="hours=${ { '0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23' } }">
+                <option th:each="hour:${hours}" th:value="${hour}" th:text="#{musicfoldersettings.hour(${hour})}"></option>
+            </select>
+        </span>
+    </div>
+
+    <table>
+        <tr>
+            <td><div class="forward"><a href="musicFolderSettings?scanNow" th:text="#{musicfoldersettings.scannow}"></a></div></td>
+            <td><th:block th:replace="helpToolTip(topic=scanMediaFolders)" /></td>
+        </tr>
+    </table>
+
+    <p th:if="*{scanning}" style="width:60%"><b th:text="#{musicfoldersettings.nowscanning}"></b></p>
+
+    <div>
+        <input type="checkbox" th:field="*{fastCache}" size="70" class="checkbox"/>
+        <label th:for="${#ids.prev('fastCache')}" th:text="#{musicfoldersettings.fastcache}"></label>
+    </div>
+
+    <p class="detail" style="width:60%;white-space:normal;" th:text="#{musicfoldersettings.fastcache.description}"></p>
+
+    <p class="forward"><a href="musicFolderSettings.view?expunge" th:text="#{musicfoldersettings.expunge}"></a></p>
+    <p class="detail" style="width:60%;white-space:normal;margin-top:-10px;" th:text="#{musicfoldersettings.expunge.description}">
+    </p>
+
+    <!--<div>--%>
+        <%--<form:checkbox path="organizeByFolderStructure" cssClass="checkbox" id="organizeByFolderStructure"/>--%>
+        <%--<form:label path="organizeByFolderStructure"><fmt:message key="musicfoldersettings.organizebyfolderstructure"/></form:label>--%>
+    <%--</div>--%>
+
+    <%--<p class="detail" style="width:60%;white-space:normal;">--%>
+        <%--<fmt:message key="musicfoldersettings.organizebyfolderstructure.description"/>--%>
+    <%--</p>
+    -->
+
+    <p >
+        <input type="submit" th:value="#{common.save}" style="margin-right:0.3em">
+        <a th:href='nowPlaying'><input type="button" th:value="#{common.cancel}"></a>
+    </p>
+
+</form>
+
+</body></html>

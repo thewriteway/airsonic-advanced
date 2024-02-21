@@ -14,18 +14,19 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyrifht 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
 package org.airsonic.player.controller;
 
-import com.google.common.io.MoreFiles;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.entity.Share;
 import org.airsonic.player.security.JWTAuthenticationToken;
 import org.airsonic.player.service.*;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,7 +148,7 @@ public class ExternalPlayerController {
         String baseUrl = NetworkUtil.getBaseUrl(request);
 
         boolean streamable = true;
-        String contentType = StringUtil.getMimeType(MoreFiles.getFileExtension(mediaFile.getRelativePath()));
+        String contentType = StringUtil.getMimeType(FilenameUtils.getExtension(mediaFile.getPath()));
         String streamUrl = baseUrl + jwtSecurityService
                 .addJWTToken(User.USERNAME_GUEST, UriComponentsBuilder.fromUriString(prefix + "/stream")
                         .queryParam("id", mediaFile.getId())

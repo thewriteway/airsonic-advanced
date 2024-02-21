@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!--
+  ~ This file is part of Airsonic.
+  ~
+  ~  Airsonic is free software: you can redistribute it and/or modify
+  ~  it under the terms of the GNU General Public License as published by
+  ~  the Free Software Foundation, either version 3 of the License, or
+  ~  (at your option) any later version.
+  ~
+  ~  Airsonic is distributed in the hope that it will be useful,
+  ~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~  GNU General Public License for more details.
+  ~
+  ~  You should have received a copy of the GNU General Public License
+  ~  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
+  ~
+  ~  Copyright 2024 (C) Y.Tory
+  ~  Copyright 2015 (C) Sindre Mehus
+  -->
+
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+
+    <script type="text/javascript" th:inline="javascript">
+        function init() {
+            $("#dialog-delete").dialog({resizable: false, height: 170, autoOpen: false,
+                buttons: {
+                    /*[+
+                    [(#{common.delete})]: function() {
+                        location.href = "[(@{/podcastReceiverAdmin.view(channelId=${model.channel.id}, deleteChannel=${model.channel.id})})]";
+                    },
+                    [(#{common.cancel})]: function() {
+                        $(this).dialog("close");
+                    }
+                    +]*/
+                    /*[-*/
+                    "Delete": function() {
+                        location.href = "podcastReceiverAdmin.view?channelId=0" +
+                                "&deleteChannel=0";
+                    },
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    }
+                    /*-]*/
+                }});
+                
+              $( '#episodessa' ).click( function () {
+                  $( '.music tr input[type="checkbox"]' ).prop('checked', this.checked);
+              });
+        }
+
+        function downloadSelected() {
+            /*[+
+            location.href = "[(|@{/podcastReceiverAdmin.view(channelId=${model.channel.id})}&|)]" +
+                    getSelectedEpisodes().map(i => "downloadEpisode=" + i).join("&");
+            +]*/
+            /*[-*/
+            location.href = "podcastReceiverAdmin.view?channelId=0&" +
+                    getSelectedEpisodes().map(i => "downloadEpisode=" + i).join("&");
+            /*-]*/
+        }
+
+        function deleteChannel() {
+            $("#dialog-delete").dialog("open");
+        }
+
+        function deleteSelected() {
+            /*[+
+            location.href = "[(|@{/podcastReceiverAdmin.view(channelId=${model.channel.id})}&|)]" +
+                    getSelectedEpisodes().map(i => "deleteEpisode=" + i).join("&");
+            +]*/
+            /*[-*/
+            location.href = "podcastReceiverAdmin.view?channelId=0&" +
+                    getSelectedEpisodes().map(i => "deleteEpisode=" + i).join("&");
+            /*-]*/ 
+        }
+
+        function refreshChannels() {
+            /*[+
+            location.href = "[(@{/podcastReceiverAdmin.view(refresh,channelId=${model.channel.id})})]";
+            +]*/
+            /*[-*/
+            location.href = "podcastReceiverAdmin.view?refresh&channelId=0";
+            /*-]*/
+        }
+
+        function refreshPage() {
+            /*[+
+            location.href = "[(@{/podcastChannel.view(id=${model.channel.id})})]";
+            +]*/
+            /*[-*/
+            location.href = "podcastChannel.view?id=0";
+            /*-]*/
+        }
+
+        function getSelectedEpisodes() {
+            var result = [];
+            for (var i = 0; i < /*[(${#lists.size(model.episodes)})]*/ 3; i++) {
+                var checkbox = $("#episode" + i);
+                if (checkbox.is(":checked")) {
+                    result.push(checkbox.val());
+                }
+            }
+            return result;
+        }
+
+    </script>
+    <style type="text/css">
+      .music .center {
+          text-align: center;
+      }
+      .music .left {
+          text-align: left;
+      }
+    </style>
+</head>
+<body class="mainframe bgcolor1" onload="init()">
+
+<div style="float:left;margin-right:1.5em;margin-bottom:1.5em">
+    <th:block th:replace="coverArt::art(podcastChannelId=${model.channel.id}, coverArtSize=${160})" />
+</div>
+
+<h1 id="name"><a th:href="@{/podcastChannels.view}" th:text="#{podcastreceiver.title}"></a> &raquo; <span th:text="${model.channel.title}"></span></h1>
+<h2>
+    <span class="header"><a th:href="|javascript:top.playQueue.onPlayPodcastChannel(${model.channel.id})|" th:text="#{common.play}"></a></span>
+
+    <th:block th:if="${model.user.podcastRole}">
+        | <span class="header"><a href="javascript:deleteChannel()" th:text="#{common.delete}"></a></span>
+        | <span class="header"><a href="javascript:refreshChannels()" th:text="#{podcastreceiver.check}"></a></span>
+    </th:block>
+</h2>
+
+<div class="detail" style="padding-top:0.2em;white-space:normal;width:80%" th:text="${model.channel.description}"></div>
+
+<div class="detail" style="padding-top:1.0em">
+    <span th:text="#{podcastreceiver.episodes(${#lists.size(model.episodes)})}"></span> &ndash;
+    <span th:text="#{podcastreceiver.status.__${#strings.toLowerCase(model.channel.status)}__}"></span>
+    <span th:if="${model.channel.status.name eq 'ERROR'}" class="warning" th:text="${model.channel.errorMessage}"></span>
+</div>
+
+<div style="height:0.7em;clear:both"></div>
+
+<table class="music">
+        <tr>
+            <th class="fit center"><input type="checkbox" id="episodessa" value="all"/></th>
+            <th colspan="4"></th>
+            <th class="truncate left" th:text="#{podcastreceiver.episode}"></th>
+            <th class="fit center" th:text="#{personalsettings.duration}"></th>
+            <th class="fit left" th:text="#{podcastreceiver.published}"></th>
+            <th class="fit center" th:text="#{top.status}"></th>
+            <th class="truncate left" th:text="#{sharesettings.description}"></th>
+        </tr>
+        <tr th:each="episode, i: ${model.episodes}">
+
+            <td class="fit center"><input type="checkbox" th:id="|episode${i.index}|" th:value="${episode.id}"/></td>
+
+            <th:block th:if="${#strings.isEmpty(episode.mediaFile?.id) or episode.status.name ne 'COMPLETED'}">
+                <td colspan="4"></td>
+            </th:block>
+            <th:block th:if="${!#strings.isEmpty(episode.mediaFile?.id) && episode.status.name eq 'COMPLETED'}">
+                    <th:block th:replace="playButtons::buttons(
+                        id=${episode.mediaFile.id},
+                        playEnabled=${model.user.streamRole and model['partyModeEnabled'] != true},
+                        addEnabled=${model.user.streamRole and model['partyModeEnabled'] != true},
+                        asTable=true,
+                        podcastId=${episode.id}
+                    )" />
+            </th:block>
+
+            <td class="truncate">
+                    <span th:title="${episode.title}" class="songTitle" th:text="${episode.title}"></span>
+            </td>
+
+            <td class="fit center">
+                <span class="detail" th:text="${episode.duration}"></span>
+            </td>
+
+            <td class="fit left">
+                <span class="detail" th:text="${#temporals.format(episode.publishDate, 'MEDIUM')}"></span>
+            </td>
+
+            <td class="fit center">
+                <span class="detail">
+                        <span th:if="${episode.status.name eq 'DOWNLOADING'}" th:text="${#numbers.formatPercent(episode.completionRate, 1 ,1)}">
+                        </span>
+                        <span th:if="${episode.status.name ne 'DOWNLOADING'}" th:text="#{podcastreceiver.status.__${#strings.toLowerCase(episode.status)}__}">
+                        </span>
+                </span>
+            </td>
+
+            <td class="truncate">
+                <span th:if="${episode.status.name eq 'ERROR'}" class="detail warning" th:title="${episode.errorMessage}"
+                    th:text="${episode.errorMessage}"></span>
+                <span th:if="${episode.status.name ne 'ERROR'}" class="detail" th:title="${episode.description}"
+                    th:text="${episode.description}"></span>
+            </td>
+
+        </tr>
+</table>
+
+<table style="padding-top:1em"><tr>
+    <th:block th:if="${model.user.podcastRole}">
+        <td style="padding-right:2em"><div class="forward"><a href="javascript:downloadSelected()" th:text="#{podcastreceiver.downloadselected}"></a></div></td>
+        <td style="padding-right:2em"><div class="forward"><a href="javascript:deleteSelected()" th:text="#{podcastreceiver.deleteselected}"></a></div></td>
+    </th:block>
+    <td style="padding-right:2em"><div class="forward"><a href="javascript:refreshPage()" th:text="#{podcastreceiver.refresh}"></a></div></td>
+    <th:block th:if="${model.user.adminRole}">
+        <td style="padding-right:2em"><div class="forward"><a th:href="@{/podcastSettings.view}" th:text="#{podcastreceiver.settings}"></a></div></td>
+    </th:block>
+</tr></table>
+
+
+<div id="dialog-delete" th:title="#{common.confirm}" style="display: none;">
+    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>
+        <span th:text="#{podcastreceiver.confirmdelete}"></span></p>
+</div>
+
+</body></html>

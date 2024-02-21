@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <th:block th:replace="head" />
+</head>
+
+<body class="mainframe bgcolor1">
+
+<h1>
+    <img th:src="${#themes.code('errorImage')}" alt=""/>
+    <span style="vertical-align: middle" th:text="${#messages.msg('notFound.title')}"></span>
+</h1>
+
+<div th:utext="${#messages.msg('notFound.text')}"></div>
+
+<div class="forward" style="float:left;padding-right:10pt"><a href="javascript:top.location.reload(true)" th:text="${#messages.msg('notFound.reload')}"/></a></div>
+<div class="forward" style="float:left"><a th:href="@{/musicFolderSettings.view}" th:text="${#messages.msg('notFound.scan')}"></a></div>
+
+</body>
+</html>

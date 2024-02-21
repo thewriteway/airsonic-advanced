@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+</head>
+<body class="mainframe bgcolor1">
+
+<th:block th:replace="settingsHeader::header(cat='internetRadio',toast=${settings_toast})" />
+
+<form method="post" th:action="@{/internetRadioSettings.view}" th:object="${command}">
+<table class="indent">
+    <tr>
+        <th th:text="#{internetradiosettings.name}"></th>
+        <th th:text="#{internetradiosettings.streamurl}"></th>
+        <th th:text="#{internetradiosettings.homepageurl}"></th>
+        <th style="padding-left:1em" th:text="#{internetradiosettings.enabled}"></th>
+        <th style="padding-left:1em" th:text="#{common.delete}"></th>
+    </tr>
+
+    <tr th:each="radio, loopStatus:*{internetRadios}">
+        <input type="hidden" th:field="*{internetRadios[__${loopStatus.index}__].id}" />
+        <td><input type="text" th:field="*{internetRadios[__${loopStatus.index}__].name}" size="20" /></td>
+        <td><input type="text" th:field="*{internetRadios[__${loopStatus.index}__].streamUrl}" size="40" /></td>
+        <td><input type="text" th:field="*{internetRadios[__${loopStatus.index}__].homepageUrl}" size="40" /></td>
+        <td align="center" style="padding-left:1em"><input type="checkbox" th:field="*{internetRadios[__${loopStatus.index}__].enabled}" /></td>
+        <td align="center" style="padding-left:1em"><input type="checkbox" th:field="*{internetRadios[__${loopStatus.index}__].delete}" /></td>
+    </tr>
+
+    <tr th:if="*{!#lists.isEmpty(internetRadios)}">
+        <th colspan="5" align="left" style="padding-top:1em" th:utext="#{internetradiosettings.add}"></th>
+    </tr>
+
+    <tr>
+        <td><input type="text" th:field="*{newRadio.name}" size="20" th:placeholder="#{internetradiosettings.name}"/></td>
+        <td><input type="text" th:field="*{newRadio.streamUrl}" size="40" th:placeholder="#{internetradiosettings.streamurl}"/></td>
+        <td><input type="text" th:field="*{newRadio.homepageUrl}" size="40" th:placeholder="#{internetradiosettings.homepageurl}"/></td>
+        <td align="center" style="padding-left:1em"><input th:field="*{newRadio.enabled}" checked type="checkbox"/></td>
+        <td/>
+    </tr>
+
+    <tr>
+        <td style="padding-top:1.5em" colspan="5">
+            <input type="submit" th:value="#{common.save}" style="margin-right:0.3em">
+            <a th:href="@{/nowPlaying.view}"><input type="button" th:value="#{common.cancel}"></a>
+        </td>
+    </tr>
+</table>
+</form>
+
+
+    <p th:if="${!#strings.isEmpty(error)}" class="warning" th:text="#{__${error}__}"></p>
+
+    <script th:if="${settings_reload}" type="text/javascript">parent.frames.left.location.href="left.view?"</script>
+</body></html>

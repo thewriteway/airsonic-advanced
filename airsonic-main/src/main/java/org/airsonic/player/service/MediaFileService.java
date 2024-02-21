@@ -23,6 +23,7 @@ package org.airsonic.player.service;
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 import org.airsonic.player.ajax.MediaFileEntry;
+import org.airsonic.player.controller.HomeController;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.CoverArt.EntityType;
 import org.airsonic.player.domain.MediaFile.MediaType;
@@ -55,6 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
@@ -71,6 +73,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,6 +114,8 @@ public class MediaFileService {
     private StarredMediaFileRepository starredMediaFileRepository;
     @Autowired
     private LocaleResolver localeResolver;
+    @Autowired
+    private MessageSource messageSource;
     @Autowired
     private MusicFileInfoRepository musicFileInfoRepository;
     @Autowired
@@ -1506,6 +1513,29 @@ public class MediaFileService {
         file.setChildrenLastUpdated(Instant.ofEpochMilli(1));
         mediaFileRepository.save(file);
         return file;
+    }
+
+    public String calcAlbumThirdCaption(HomeController.Album album, Locale locale) {
+        String caption3 = "";
+
+        if (album.getPlayCount() != null) {
+            caption3 = messageSource.getMessage("home.playcount", new Object[] {album.getPlayCount()}, locale);
+        }
+        if (album.getLastPlayed() != null) {
+            DateTimeFormatter dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withZone(ZoneId.systemDefault()).withLocale(locale);
+            String lastPlayedDate = dateFormat.format(album.getLastPlayed());
+            caption3 = messageSource.getMessage("home.lastplayed", new Object[] {lastPlayedDate}, locale);
+        }
+        if (album.getCreated() != null) {
+            DateTimeFormatter dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withZone(ZoneId.systemDefault()).withLocale(locale);
+            String creationDate = dateFormat.format(album.getCreated());
+            caption3 = messageSource.getMessage("home.created", new Object[] {creationDate}, locale);
+        }
+        if (album.getYear() != null) {
+            caption3 = album.getYear().toString();
+        }
+
+        return caption3;
     }
 
     /**

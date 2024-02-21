@@ -54,7 +54,7 @@ public class PodcastController {
     @GetMapping
     protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) {
 
-        String url = request.getRequestURL().toString();
+        String url = request.getRequestURL().toString().replace("/podcast","").replace("/podcast.view","");
         String username = securityService.getCurrentUsername(request);
         List<Playlist> playlists = playlistService.getReadablePlaylistsForUser(username);
         List<Podcast> podcasts = new ArrayList<>();

@@ -1,0 +1,66 @@
+<table th:object="${model}">
+    <tr>
+        <th:block th:if="*{!#strings.isEmpty(musicFolder)}">
+            <td style="padding-right: 2em">
+                <div th:style="|border:1px solid #${#themes.code('detailColor')}; padding-left: 0.5em;padding-right: 0.5em|"
+                th:text="*{musicFolder.name}">
+                </div>
+            </td>
+        </th:block>
+
+        <th:block th:if="*{listType ne 'random'}">
+            <th:block th:if="*{#lists.size(albums) gt 0}">
+                <td style="padding-right:0.5em" th:utext="#{home.albums(*{listOffset + 1},*{listOffset + #lists.size(albums)})}">
+                </td>
+
+                <td th:if="*{listOffset gt 0}">
+                    <a th:href="@{/home(listType=*{listType},listOffset=*{listOffset - listSize},genre=*{genre}, decade=*{decade})}"><img th:src="${#themes.code('backImage')}" alt=""></a>
+                </td>
+
+                <td th:if="*{#lists.size(albums) eq listSize}">
+                    <a th:href="@{/home(listType=*{listType},listOffset=*{listOffset + listSize},genre=*{genre}, decade=*{decade})}">
+                        <img th:src="${#themes.code('forwardImage')}" alt=""></a>
+                </td>
+                <td style="padding-right: 2em">
+                </td>
+            </th:block>
+
+            <th:block th:if="*{listType eq 'decade'}" >
+                <td th:text="#{home.decade.text}"></td>
+                <td style="padding-right: 2em">
+                    <select th:field="*{decade}"
+                            th:data-listtype="*{listType}"
+                            onchange="location='home?listType='+this.getAttribute('data-listtype')+'&amp;decade=' + options[selectedIndex].value">
+                            <option th:each="item: *{decades}" 
+                             th:value="${item}" th:text="${item}">1990</option>
+                    </select>
+                </td>
+            </th:block>
+            <th:block th:if="*{listType eq 'genre'}">
+                <td th:text="#{home.genre.text}"></td>
+                <td style="padding-right: 2em">
+                    <select name="genre"
+                            th:data-listtype="*{listType}"
+                            onchange="location='home?listType='+this.getAttribute('data-listtype')+'&amp;genre=' + encodeURIComponent(options[selectedIndex].value)">
+                        <option th:each="item: *{genres}" th:value="${item.name}"
+                        th:text="|${item.name} (${item.albumCount})|"></option>
+                    </select>
+                </td>
+            </th:block>
+        </th:block>
+
+        <td style="padding-right: 2em;">
+            <a href="javascript:refresh()">
+                <img th:src="${#themes.code('refreshImage')}" th:alt="#{common.refresh}" style="height:16px;">
+                <span th:text="#{common.refresh}"></span>
+            </a>
+        </td>
+
+        <td th:if="${!#strings.isEmpty(model.albums)}">
+            <a href="javascript:playShuffle()">
+              <img th:src="${#themes.code('shuffleImage')}" th:alt="#{home.shuffle}" style="height:16px;">
+                <span th:text="#{home.shuffle}"></span>
+            </a>
+        </td>
+    </tr>
+</table>

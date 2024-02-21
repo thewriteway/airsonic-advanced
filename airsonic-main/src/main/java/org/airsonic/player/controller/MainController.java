@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -21,7 +22,6 @@ package org.airsonic.player.controller;
 
 import org.airsonic.player.domain.*;
 import org.airsonic.player.service.*;
-import org.airsonic.player.util.Util;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -74,11 +74,11 @@ public class MainController {
         map.put("viewAsList", userSettings.getViewAsList());
         map.put("initialPaginationSizeFiles", userSettings.getPaginationSizeFiles());
         map.put("initialPaginationSizeFolders", userSettings.getPaginationSizeFolders());
-        map.put("initialPathsJSON",
-                Util.toJson(Stream.of(ServletRequestUtils.getStringParameters(request, "path"))
+        map.put("initialPaths",
+                Stream.of(ServletRequestUtils.getStringParameters(request, "path"))
                         .map(pf -> StringUtils.split(pf, ":", 2))
-                        .collect(groupingBy(pf -> pf[0], mapping(pf -> pf.length == 1 ? "" : pf[1], toSet())))));
-        map.put("initialIdsJSON", Util.toJson(ServletRequestUtils.getIntParameters(request, "id")));
+                        .collect(groupingBy(pf -> pf[0], mapping(pf -> pf.length == 1 ? "" : pf[1], toSet()))));
+        map.put("initialIds", ServletRequestUtils.getIntParameters(request, "id"));
 
         return new ModelAndView("mediaMain", "model", map);
     }

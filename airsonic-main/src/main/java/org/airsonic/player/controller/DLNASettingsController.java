@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
  *
+ * Copyrifht 2024 (C) Y.Tory
  * Copyright 2013 (C) Sindre Mehus
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.command.DLNACommand;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.service.UPnPService;
 import org.apache.commons.lang.StringUtils;
@@ -31,9 +33,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Controller for the page used to administrate the UPnP/DLNA server settings.
@@ -53,13 +52,13 @@ public class DLNASettingsController {
     @GetMapping
     public String handleGet(Model model) {
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        DLNACommand dlnaCommand = new DLNACommand(
+            settingsService.isDlnaEnabled(),
+            settingsService.getDlnaServerName(),
+            settingsService.getDlnaBaseLANURL()
+        );
 
-        map.put("dlnaEnabled", settingsService.isDlnaEnabled());
-        map.put("dlnaServerName", settingsService.getDlnaServerName());
-        map.put("dlnaBaseLANURL", settingsService.getDlnaBaseLANURL());
-
-        model.addAttribute("model", map);
+        model.addAttribute("command", dlnaCommand);
         return "dlnaSettings";
     }
 
@@ -86,11 +85,4 @@ public class DLNASettingsController {
         upnpService.setMediaServerEnabled(dlnaEnabled);
     }
 
-    public void setSettingsService(SettingsService settingsService) {
-        this.settingsService = settingsService;
-    }
-
-    public void setUpnpService(UPnPService upnpService) {
-        this.upnpService = upnpService;
-    }
 }

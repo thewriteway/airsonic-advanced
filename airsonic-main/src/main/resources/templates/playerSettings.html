@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+    <script type="text/javascript" th:src="@{/script/utils.js}"></script>
+</head>
+<body class="mainframe bgcolor1">
+<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
+<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+
+<script lang="javascript" th:inline="javascript">
+
+function hideAllTechnologyDepends() {
+  $('.technologyDepends').hide();
+}
+
+function showTechnologyDepends(technologyName) {
+  var selector = '.technologyDepends.' + technologyName;
+  $(selector).show();
+}
+
+$(document).ready(function() {
+
+  $('.technologyRadio').click(function() {
+    hideAllTechnologyDepends();
+    var technologyName = $(this).val();
+    showTechnologyDepends(technologyName);
+  });
+
+  hideAllTechnologyDepends();
+  $('.technologyRadio:checked').each(function() {
+    var technologyName = $(this).val();
+    showTechnologyDepends(technologyName);
+  });
+});
+
+</script>
+
+<th:block th:replace="settingsHeader::header(cat='player',toast=${settings_toast}, restricted=${!command.admin})" />
+
+
+    <p th:if="${#lists.isEmpty(command.players)}" th:text="#{playersettings.noplayers}"></p>
+    <th:block th:if="!${#lists.isEmpty(command.players)}">
+
+        <table class="indent">
+            <tr>
+                <td><b th:text="#{playersettings.title}"></b></td>
+                <td>
+                    <select name="player" onchange="location='playerSettings.view?id=' + options[selectedIndex].value;">
+                        <option th:each="player:${command.players}" th:selected="${player.id eq command.playerId}"
+                                th:value="${player.id}" th:text="${player.description}"></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+
+                <td style="padding-right:1em"><div class="forward">
+                    <a th:href="@{/playerSettings.view(delete=${command.playerId})}" th:text="#{playersettings.forget}"></a>
+                </div></td>
+
+                <td><div class="forward">
+                    <a th:href="@{/playerSettings.view(clone=${command.playerId})}" th:text="#{playersettings.clone}"></a>
+                </div></td>
+            </tr>
+        </table>
+
+        <form  method="post" th:action="@{/playerSettings.view}" th:object="${command}">
+            <input type="hidden" th:field="*{playerId}" />
+
+            <table class="ruleTable indent">
+                <th:block th:each="technologyHolder, loopStatus:*{technologyHolders}" >
+                    <tr>
+                        <td class="ruleTableHeader">
+                            <input type="radio" class="technologyRadio" th:field="*{technologyName}" th:value="${technologyHolder.name}"/>
+                            <b><label th:for="${#ids.prev('technologyName')}" th:text="#{playersettings.technology.__${#strings.toLowerCase(technologyHolder.name)}__.title}"></label></b>
+                        </td>
+                        <td class="ruleTableCell" style="width:40em" th:text="#{playersettings.technology.__${#strings.toLowerCase(technologyHolder.name)}__.text}"></td>
+                    </tr>
+                </th:block>
+            </table>
+
+            <table class="indent" style="border-spacing:3pt;">
+                <tr>
+                    <td style="padding-right: 1.5em" th:text="#{playersettings.type}"></td>
+                    <td>
+                        <span th:if="*{#strings.isEmpty(type)}" th:text="#{common.unknown}"></span>
+                        <span th:unless="*{#strings.isEmpty(type)}" th:text="*{type}">}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-right: 1.5em" th:text="#{playersettings.lastseen}"></td>
+                    <td th:text="*{#temporals.format(lastSeen,'LONG')}"></td>
+                </tr>
+            </table>
+
+            <table class="indent" style="border-spacing:3pt;">
+                <tr>
+                    <td th:text="#{playersettings.name}"></td>
+                    <td><input th:field="*{name}" size="16"/></td>
+                    <td colspan="2"><th:block th:replace="helpToolTip(topic=playername)" /></td>
+                </tr>
+
+                <tr class="technologyDepends WEB EXTERNAL EXTERNAL_WITH_PLAYLIST JUKEBOX">
+                    <td th:text="#{playersettings.maxbitrate}"></td>
+                    <td>
+                        <select th:field="*{transcodeSchemeName}" style="width:8em">
+                            <option th:each="transcodeSchemeHolder:*{transcodeSchemeHolders}"
+                                    th:value="${transcodeSchemeHolder.name}" th:text="${transcodeSchemeHolder.description}"></option>
+                        </select>
+                    </td>
+                    <td>
+                        <th:block th:replace="helpToolTip(topic=transcode)" />
+                    </td>
+                    <td class="warning">
+                        <span  th:if="*{!transcodingSupported}" th:text="#{playersettings.notranscoder}">
+                        </span>
+                    </td>
+                </tr>
+            </table>
+
+            <table class="indent technologyDepends WEB EXTERNAL EXTERNAL_WITH_PLAYLIST JUKEBOX" style="border-spacing:3pt">
+                <tr>
+                    <td>
+                        <input type="checkbox" th:field="*{dynamicIp}" class="checkbox"/>
+                        <label th:for="${#ids.prev('dynamicIp')}" th:text="#{playersettings.dynamicip}"></label>
+                    </td>
+                    <td><th:block th:replace="helpToolTip(topic=dynamicip)" /></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <input type="checkbox" th:field="*{autoControlEnabled}" class="checkbox"/>
+                        <label th:for="${#ids.prev('autoControlEnabled')}" th:text="#{playersettings.autocontrol}"></label>
+                    </td>
+                    <td><th:block th:replace="helpToolTip(topic=autocontrol)" /></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <input type="checkbox" th:field="*{m3uBomEnabled}" class="checkbox"/>
+                        <label th:for="${#ids.prev('m3uBomEnabled')}" th:text="#{playersettings.m3ubom}"></label>
+                    </td>
+                    <td><th:block th:replace="helpToolTip(topic=m3ubom)" /></td>
+                </tr>
+            </table>
+
+            <table th:if="*{!#lists.isEmpty(allTranscodings)}" class="indent technologyDepends WEB EXTERNAL EXTERNAL_WITH_PLAYLIST JUKEBOX">
+                <tr><td><b th:text="#{playersettings.transcodings}"></b></td></tr>
+                <th:block th:each="transcoding,loopStatus:*{allTranscodings}" >
+                    <th:block th:if="${loopStatus.count % 3 == 1}"><tr></th:block>
+                        <td style="padding-right:2em">
+                        <input type="checkbox" th:field="*{activeTranscodingIds}" th:value="${transcoding.id}"
+                               class="checkbox"/>
+                        <label th:for="${#ids.prev('activeTranscodingIds')}" th:text="${transcoding.name}"></label>
+                    </td>
+                    <th:block th:if="${loopStatus.count % 3 == 0} or ${loopStatus.count} eq *{#lists.size(allTranscodings)}"></tr></th:block>
+                </th:block>
+            </table>
+
+            <input type="submit" th:value="#{common.save}" style="margin-top:1em;margin-right:0.3em">
+            <a th:href="@{/nowPlaying.view}"><input type="button" th:value="#{common.cancel}" style="margin-top:1em"></a>
+        </form>
+    </th:block>
+
+</body></html>

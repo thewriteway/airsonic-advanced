@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+</head>
+<body class="mainframe bgcolor1">
+
+<th:block th:replace="settingsHeader::header(cat='podcast',toast=${settings_toast})" />
+
+<form th:action="@{/podcastSettings.view}" method="post" th:object="${command}">
+<table class="indent">
+    <tr>
+        <th th:text="#{podcastsettings.podcast}"></th>
+        <th th:text="#{podcastsettings.update}"></th>
+        <th th:text="#{podcastsettings.keep}"></th>
+        <th th:text="#{podcastsettings.download}"></th>
+        <th style="padding-left:1em" th:text="#{common.delete}"></th>
+    </tr>
+    <tr th:each="rule, loopStatus:*{rules}">
+        <td>
+            <span th:text="|${rule.id} - ${rule.name}|"></span>
+          <input type="hidden" th:field="*{rules[__${loopStatus.index}__].id}" />
+        </td>
+        <td>
+            <select th:field="*{rules[__${loopStatus.index}__].interval}" style="width:20em">
+                <option value="-1" th:text="#{podcastsettings.interval.manually}"></option>
+                <option value="1" th:text="#{podcastsettings.interval.hourly}"></option>
+                <option value="24" th:text="#{podcastsettings.interval.daily}"></option>
+                <option value="168" th:text="#{podcastsettings.interval.weekly}"></option>
+            </select>
+        </td>
+        <td>
+            <select th:field="*{rules[__${loopStatus.index}__].episodeRetentionCount}" style="width:20em">
+                <option value="-1" th:text="#{podcastsettings.keep.all}"></option>
+                <option value="1" th:text="#{podcastsettings.keep.one}"></option>
+
+                <th:block th:each="count:${ {2, 3, 4, 5, 10, 20, 30, 50, 100, 125, 150, 200}}">
+                    <option th:value="${count}" th:text="#{podcastsettings.keep.many(${count})}"></option>
+                </th:block>
+
+            </select>
+        </td>
+        <td>
+            <select th:field="*{rules[__${loopStatus.index}__].episodeDownloadCount}" style="width:20em">
+                <option value="-1" th:text="#{podcastsettings.download.all}"></option>
+                <option value="1" th:text="#{podcastsettings.download.one}"></option>
+
+                <option th:each="count: ${ {2, 3, 4, 5, 10} }"
+                        th:value="${count}" th:text="#{podcastsettings.download.many(${count})}"></option>
+
+                <option value="0" th:text="#{podcastsettings.download.none}"></option>
+
+            </select>
+        </td>
+        <td align="center" style="padding-left:1em">
+            <input th:if="${rule.id != -1}" type="checkbox" th:field="*{rules[__${loopStatus.index}__].delete}" class="checkbox"/>
+        </td>
+    </tr>
+  <tr>
+    <th colspan="5" align="left" style="padding-top:1em" th:text="#{podcastsettings.ruleadd}"></th>
+  </tr>
+  <tr>
+        <td>
+            <select th:field="*{newRule.id}" style="width:13em">
+              <option selected="true" value="" label="-"></option>
+              <option th:each="channel, loopStatus: *{noRuleChannels}" th:value="${channel.id}"
+                      th:text="|${channel.id} - ${channel.name}|"></option>
+            </select>
+        </td>
+        <td>
+            <select th:field="*{newRule.interval}" style="width:20em">
+                <option value="-1" th:text="#{podcastsettings.interval.manually}"></option>
+                <option value="1" th:text="#{podcastsettings.interval.hourly}"></option>
+                <option value="24" th:text="#{podcastsettings.interval.daily}"></option>
+                <option value="168" th:text="#{podcastsettings.interval.weekly}"></option>
+            </select>
+        </td>
+        <td>
+            <select th:field="*{newRule.episodeRetentionCount}" style="width:20em">
+                <option value="-1" th:text="#{podcastsettings.keep.all}"></option>
+                <option value="1" th:text="#{podcastsettings.keep.one}"></option>
+
+                <option th:each="count: ${ {2, 3, 4, 5, 10, 20, 30, 50} }"
+                        th:value="${count}" th:text="#{podcastsettings.keep.many(${count})}"></option>
+
+            </select>
+        </td>
+        <td>
+            <select th:field="*{newRule.episodeDownloadCount}" style="width:20em">
+                <option value="-1" th:text="#{podcastsettings.download.all}"></option>
+                <option value="1" th:text="#{podcastsettings.download.one}"></option>
+
+                <option th:each="count: ${ {2, 3, 4, 5, 10} }"
+                        th:value="${count}" th:text="#{podcastsettings.download.many(${count})}"></option>
+                <option value="0" th:text="#{podcastsettings.download.none}"></option>
+
+            </select>
+        </td>
+        <td align="center" style="padding-left:1em"></td>
+    </tr>
+</table>
+<div class="tableSpacer"></div>
+<div>
+    <span th:text="#{podcastsettings.folder}"></span>
+    <select th:field="*{folderId}" style="width:20em">
+        <option th:each="folder:*{folders}" th:value="${folder.key}" th:text="${folder.value}"></option>
+    </select>
+</div>
+<div class="tableSpacer"></div>
+<div>
+    <span th:text="#{podcastsettings.podcastindexintegration}"></span>
+</div>
+<div class="tableSpacer"></div>
+<div>
+    <input type="submit" th:value="#{common.save}" style="margin-right:0.3em">
+    <a th:href="@{/nowPlaying.view}"><input type="button" th:value="#{common.cancel}"></a>
+</div>
+
+</form>
+
+</body></html>

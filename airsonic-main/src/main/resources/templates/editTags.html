@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+<script type="text/javascript" th:inline="javascript">
+    var index = 0;
+    var fileCount = /*[[${#lists.size(command.songs)}]]*/ 0;
+    function setArtist() {
+        var artist = $("input[name='artistAll']").val();
+        for (var i = 0; i < fileCount; i++) {
+            $("input[name='artist" + i + "']").val(artist);
+        }
+    }
+    function setAlbum() {
+        var album = $("input[name='albumAll']").val();
+        for (var i = 0; i < fileCount; i++) {
+            $("input[name='album" + i + "']").val(album);
+        }
+    }
+    function setYear() {
+        var year = $("input[name='yearAll']").val();
+        for (var i = 0; i < fileCount; i++) {
+            $("input[name='year" + i + "']").val(year);
+        }
+    }
+    function setGenre() {
+        var genre = $("select[name='genreAll']").val();
+        for (var i = 0; i < fileCount; i++) {
+            $("input[name='genre" + i + "']").val(genre);
+        }
+    }
+    function suggestTitle() {
+        for (var i = 0; i < fileCount; i++) {
+            var title = $("input[name='suggestedTitle" + i + "']").val();
+            $("input[name='title" + i + "']").val(title);
+        }
+    }
+    function resetTitle() {
+        for (var i = 0; i < fileCount; i++) {
+            var title = $("input[name='originalTitle" + i + "']").val();
+            $("input[name='title" + i + "']").val(title);
+        }
+    }
+    function suggestTrack() {
+        for (var i = 0; i < fileCount; i++) {
+            var track = $("input[name='suggestedTrack" + i + "']").val();
+            $("input[name='track" + i + "']").val(track);
+        }
+    }
+    function resetTrack() {
+        for (var i = 0; i < fileCount; i++) {
+            var track = $("input[name='originalTrack" + i + "']").val();
+            $("input[name='track" + i + "']").val(track);
+        }
+    }
+    function updateTags() {
+        document.getElementById("save").disabled = true;
+        index = 0;
+        $("#errors").empty();
+        for (var i = 0; i < fileCount; i++) {
+            $("#status" + i).empty();
+        }
+        updateNextTag();
+    }
+    function updateNextTag() {
+        var id = $("input[name='id" + index + "']").val();
+        var artist = $("input[name='artist" + index + "']").val();
+        var track = $("input[name='track" + index + "']").val();
+        var album = $("input[name='album" + index + "']").val();
+        var title = $("input[name='title" + index + "']").val();
+        var year = $("input[name='year" + index + "']").val();
+        var genre = $("input[name='genre" + index + "']").val();
+        $("#status" + index).append("[(#{edittags.working})]");
+        top.StompClient.send("/app/tags/edit", JSON.stringify({mediaFileId: id, artist: artist, track: track, album: album, title: title, year: year, genre: genre}));
+    }
+    function setTagsCallback(result) {
+        var message;
+        if (result == "SKIPPED") {
+            message = "[(#{edittags.skipped})]";
+        } else if (result == "UPDATED") {
+            message = "<b>[(#{edittags.updated})]</b>";
+        } else {
+            message = "<div class='warning'>[(#{edittags.error})]</div>";
+            $("#errors").append("<br>" + result + "<br>");
+        }
+        $("#status" + index).empty().append(message);
+        index++;
+        if (index < fileCount) {
+            updateNextTag();
+        } else {
+            document.getElementById("save").disabled = false;
+        }
+    }
+
+    function init() {
+        top.StompClient.subscribe("editTags.html", {
+            "/user/queue/tags/edit": function(msg) {
+                setTagsCallback(msg.body);
+            }
+        });
+        $("input[name='artistAll']").keypress(function(event) {
+            if (e.which == 13) {
+                setArtist();
+                event.preventDefault();
+            }
+        });
+        $("input[name='albumAll']").keypress(function(event) {
+            if (e.which == 13) {
+                setAlbum();
+                event.preventDefault();
+            }
+        });
+        $("input[name='yearAll']").keypress(function(event) {
+            if (e.which == 13) {
+                setYear();
+                event.preventDefault();
+            }
+        });
+    }
+</script>
+</head>
+<body class="mainframe bgcolor1" onload="init()">
+<h1 th:text="#{edittags.title}"></h1>
+<div class="back"><a th:href="@{/main.view(id=${command.id})}" th:text="#{common.back}"></a></div>
+
+<table class="ruleTable indent">
+    <tr>
+        <th class="ruleTableHeader" th:text="#{edittags.file}"></th>
+        <th class="ruleTableHeader" th:text="#{edittags.track}"></th>
+        <th class="ruleTableHeader" th:text="#{edittags.songtitle}"></th>
+        <th class="ruleTableHeader" th:text="#{edittags.artist}"></th>
+        <th class="ruleTableHeader" th:text="#{edittags.album}"></th>
+        <th class="ruleTableHeader" th:text="#{edittags.year}"></th>
+        <th class="ruleTableHeader" th:text="#{edittags.genre}"></th>
+        <th class="ruleTableHeader" width="60pt" th:text="#{edittags.status}"></th>
+    </tr>
+    <tr>
+        <th class="ruleTableHeader"></th>
+        <th class="ruleTableHeader"><a href="javascript:suggestTrack()" th:text="#{edittags.suggest.short}"></a> |
+            <a href="javascript:resetTrack()" th:text="#{edittags.reset.short}"></a></th>
+        <th class="ruleTableHeader"><a href="javascript:suggestTitle()" th:text="#{edittags.suggest}"></a> |
+            <a href="javascript:resetTitle()" th:text="#{edittags.reset}"></a></th>
+        <th class="ruleTableHeader" style="white-space: nowrap">
+            <input type="text" name="artistAll" size="15" th:value="${command.defaultArtist}"/>&nbsp;<a href="javascript:setArtist()" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" style="white-space: nowrap">
+            <input type="text" name="albumAll" size="15" th:value="${command.defaultAlbum}"/>&nbsp;<a href="javascript:setAlbum()" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" style="white-space: nowrap">
+            <input type="text" name="yearAll" size="5" th:value="${command.defaultYear}"/>&nbsp;<a href="javascript:setYear()" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" style="white-space: nowrap">
+            <select name="genreAll" style="width:7em">
+                <option value=""/>
+                <option th:each="genre:${command.allGenres}" th:selected="${genre eq command.defaultGenre}" th:value="${genre}" th:text="${genre}"></option>
+            </select>
+
+            <a href="javascript:setGenre()" th:text="#{edittags.set}"></a>
+        </th>
+        <th class="ruleTableHeader"></th>
+    </tr>
+
+    <tr th:each="song,loopStatus:${command.songs}">
+        <input type="hidden" th:name="|id${loopStatus.index}|" th:value="${song.id}"/>
+        <input type="hidden" th:name="|suggestedTitle${loopStatus.index}|" th:value="${song.suggestedTitle}"/>
+        <input type="hidden" th:name="|originalTitle${loopStatus.index}|" th:value="${song.title}"/>
+        <input type="hidden" th:name="|suggestedTrack${loopStatus.index}|" th:value="${song.suggestedTrack}"/>
+        <input type="hidden" th:name="|originalTrack${loopStatus.index}|" th:value="${song.track}"/>
+        <td class="ruleTableCell" th:title="|${song.fileName}|" th:text="${#strings.abbreviate(song.fileName,30)}"></td>
+        <td class="ruleTableCell"><input type="text" size="5" th:name="|track${loopStatus.index}|" th:value="${song.track}"/></td>
+        <td class="ruleTableCell"><input type="text" size="30" th:name="|title${loopStatus.index}|" th:value="${song.title}"/></td>
+        <td class="ruleTableCell"><input type="text" size="15" th:name="|artist${loopStatus.index}|" th:value="${song.artist}"/></td>
+        <td class="ruleTableCell"><input type="text" size="15" th:name="|album${loopStatus.index}|" th:value="${song.album}"/></td>
+        <td class="ruleTableCell"><input type="text" size="5"  th:name="|year${loopStatus.index}|" th:value="${song.year}"/></td>
+        <td class="ruleTableCell"><input type="text" th:name="|genre${loopStatus.index}|" th:value="${song.genre}" style="width:7em"/></td>
+        <td class="ruleTableCell"><div th:id="|status${loopStatus.index}|"></div></td>
+    </tr>
+
+</table>
+
+<p><input type="submit" id="save" th:value="#{common.save}" onclick="updateTags()"/></p>
+<div class="warning" id="errors"/>
+</body></html>

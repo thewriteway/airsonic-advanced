@@ -14,29 +14,26 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
- Copyright 2023 (C) Y.Tory
+ Copyright 2023-2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.command.TranscodingCommand;
+import org.airsonic.player.command.TranscodingCommand.TranscodingDTO;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.Transcoding;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.service.TranscodingService;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import javax.servlet.http.HttpServletRequest;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Controller for the page used to administrate the set of transcoding configurations.
@@ -55,30 +52,28 @@ public class TranscodingSettingsController {
     private AirsonicHomeConfig homeConfig;
 
     @GetMapping
-    public String doGet(Model model) {
+    public ModelAndView doGet() {
 
-        Map<String, Object> map = new HashMap<>();
+        TranscodingCommand command = new TranscodingCommand();
+        command.setTranscodings(transcodingService.getAllTranscodings().stream().map(t -> new TranscodingDTO(t)).toList());
+        command.setTranscodeDirectory(homeConfig.getTranscodeDirectory());
+        command.setSplitOptions(settingsService.getSplitOptions());
+        command.setSplitCommand(settingsService.getSplitCommand());
+        command.setDownsampleCommand(settingsService.getDownsamplingCommand());
+        command.setHlsCommand(settingsService.getHlsCommand());
+        command.setJukeboxCommand(settingsService.getJukeboxCommand());
+        command.setVideoImageCommand(settingsService.getVideoImageCommand());
+        command.setSubtitlesExtractionCommand(settingsService.getSubtitlesExtractionCommand());
+        command.setTranscodeEstimateTimePadding(settingsService.getTranscodeEstimateTimePadding());
+        command.setTranscodeEstimateBytePadding(settingsService.getTranscodeEstimateBytePadding());
+        command.setBrand(settingsService.getBrand());
 
-        map.put("transcodings", transcodingService.getAllTranscodings());
-        map.put("transcodeDirectory", homeConfig.getTranscodeDirectory());
-        map.put("splitOptions", settingsService.getSplitOptions());
-        map.put("splitCommand", settingsService.getSplitCommand());
-        map.put("downsampleCommand", settingsService.getDownsamplingCommand());
-        map.put("hlsCommand", settingsService.getHlsCommand());
-        map.put("jukeboxCommand", settingsService.getJukeboxCommand());
-        map.put("videoImageCommand", settingsService.getVideoImageCommand());
-        map.put("subtitlesExtractionCommand", settingsService.getSubtitlesExtractionCommand());
-        map.put("transcodeEstimateTimePadding", settingsService.getTranscodeEstimateTimePadding());
-        map.put("transcodeEstimateBytePadding", settingsService.getTranscodeEstimateBytePadding());
-        map.put("brand", settingsService.getBrand());
-
-        model.addAttribute("model", map);
-        return "transcodingSettings";
+        return new ModelAndView("transcodingSettings", "command", command);
     }
 
     @PostMapping
-    public String doPost(HttpServletRequest request, RedirectAttributes redirectAttributes) {
-        String error = handleParameters(request, redirectAttributes);
+    public String doPost(@ModelAttribute TranscodingCommand command, RedirectAttributes redirectAttributes) {
+        String error = handleParameters(command, redirectAttributes);
         if (error != null) {
             redirectAttributes.addFlashAttribute("error", error);
         } else {
@@ -87,81 +82,74 @@ public class TranscodingSettingsController {
         return "redirect:transcodingSettings.view";
     }
 
-    private String handleParameters(HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    private String handleParameters(TranscodingCommand command, RedirectAttributes redirectAttributes) {
 
-        for (Transcoding transcoding : transcodingService.getAllTranscodings()) {
-            Integer id = transcoding.getId();
-            String name = getParameter(request, "name", id);
-            String sourceFormats = getParameter(request, "sourceFormats", id);
-            String targetFormat = getParameter(request, "targetFormat", id);
-            String step1 = getParameter(request, "step1", id);
-            String step2 = getParameter(request, "step2", id);
-            boolean delete = getParameter(request, "delete", id) != null;
+        for (TranscodingDTO transcoding : command.getTranscodings()) {
 
-            if (delete) {
-                transcodingService.deleteTranscoding(id);
-            } else if (name == null) {
+            if (transcoding.isDelete()) {
+                transcodingService.deleteTranscoding(transcoding.getId());
+            } else if (transcoding.getName() == null) {
                 return "transcodingsettings.noname";
-            } else if (sourceFormats == null) {
+            } else if (transcoding.getSourceFormats() == null) {
                 return "transcodingsettings.nosourceformat";
-            } else if (targetFormat == null) {
+            } else if (transcoding.getTargetFormat() == null) {
                 return "transcodingsettings.notargetformat";
-            } else if (step1 == null) {
+            } else if (transcoding.getStep1() == null) {
                 return "transcodingsettings.nostep1";
             } else {
-                transcoding.setName(name);
-                transcoding.setSourceFormats(sourceFormats);
-                transcoding.setTargetFormat(targetFormat);
-                transcoding.setStep1(step1);
-                transcoding.setStep2(step2);
-                transcodingService.updateTranscoding(transcoding);
+                transcodingService.updateTranscoding(
+                        transcoding.getId(),
+                        transcoding.getName(),
+                        transcoding.getSourceFormats(),
+                        transcoding.getTargetFormat(),
+                        transcoding.getStep1(),
+                        transcoding.getStep2(),
+                        transcoding.isDefaultActive()
+                );
             }
         }
 
-        String name = StringUtils.trimToNull(request.getParameter("name"));
-        String sourceFormats = StringUtils.trimToNull(request.getParameter("sourceFormats"));
-        String targetFormat = StringUtils.trimToNull(request.getParameter("targetFormat"));
-        String step1 = StringUtils.trimToNull(request.getParameter("step1"));
-        String step2 = StringUtils.trimToNull(request.getParameter("step2"));
-        boolean defaultActive = request.getParameter("defaultActive") != null;
+        TranscodingDTO newDto = command.getNewTranscoding();
 
-        if (name != null || sourceFormats != null || targetFormat != null || step1 != null || step2 != null) {
-            Transcoding transcoding = new Transcoding(null, name, sourceFormats, targetFormat, step1, step2, null, defaultActive);
+        Transcoding newTranscoding = new Transcoding(
+            null,
+            newDto.getName(),
+            newDto.getSourceFormats(),
+            newDto.getTargetFormat(),
+            newDto.getStep1(),
+            newDto.getStep2(),
+            null,
+            newDto.isDefaultActive());
+        if (newDto != null && newDto.isConfigured()) {
             String error = null;
-            if (name == null) {
+            if (newTranscoding.getName() == null) {
                 error = "transcodingsettings.noname";
-            } else if (sourceFormats == null) {
+            } else if (newTranscoding.getSourceFormats() == null) {
                 error = "transcodingsettings.nosourceformat";
-            } else if (targetFormat == null) {
+            } else if (newTranscoding.getTargetFormat() == null) {
                 error = "transcodingsettings.notargetformat";
-            } else if (step1 == null) {
+            } else if (newTranscoding.getStep1() == null) {
                 error = "transcodingsettings.nostep1";
             } else {
-                transcodingService.createTranscoding(transcoding);
+                transcodingService.createTranscoding(newTranscoding);
             }
             if (error != null) {
-                redirectAttributes.addAttribute("newTranscoding", transcoding);
+                redirectAttributes.addAttribute("newTranscoding", newTranscoding);
                 return error;
             }
         }
-        settingsService.setSplitOptions(StringUtils.trim(request.getParameter("splitOptions")));
-        settingsService.setSplitCommand(StringUtils.trim(request.getParameter("splitCommand")));
-        settingsService.setDownsamplingCommand(StringUtils.trim(request.getParameter("downsampleCommand")));
-        settingsService.setHlsCommand(StringUtils.trim(request.getParameter("hlsCommand")));
-        settingsService.setJukeboxCommand(StringUtils.trim(request.getParameter("jukeboxCommand")));
-        settingsService.setVideoImageCommand(StringUtils.trim(request.getParameter("videoImageCommand")));
-        settingsService.setSubtitlesExtractionCommand(StringUtils.trim(request.getParameter("subtitlesExtractionCommand")));
-
-        String timePad = StringUtils.trimToNull(request.getParameter("transcodeEstimateTimePadding"));
-        String bytePad = StringUtils.trimToNull(request.getParameter("transcodeEstimateBytePadding"));
-        settingsService.setTranscodeEstimateTimePadding(timePad == null ? null : Long.parseLong(timePad));
-        settingsService.setTranscodeEstimateBytePadding(bytePad == null ? null : Long.parseLong(bytePad));
+        settingsService.setSplitOptions(command.getSplitOptions());
+        settingsService.setSplitCommand(command.getSplitCommand());
+        settingsService.setDownsamplingCommand(command.getDownsampleCommand());
+        settingsService.setHlsCommand(command.getHlsCommand());
+        settingsService.setJukeboxCommand(command.getJukeboxCommand());
+        settingsService.setVideoImageCommand(command.getVideoImageCommand());
+        settingsService.setSubtitlesExtractionCommand(command.getSubtitlesExtractionCommand());
+        settingsService.setTranscodeEstimateTimePadding(command.getTranscodeEstimateTimePadding());
+        settingsService.setTranscodeEstimateBytePadding(command.getTranscodeEstimateBytePadding());
 
         settingsService.save();
         return null;
     }
 
-    private String getParameter(HttpServletRequest request, String name, Integer id) {
-        return StringUtils.trimToNull(request.getParameter(name + "[" + id + "]"));
-    }
 }

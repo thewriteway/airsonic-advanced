@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="head" />
+    <th:block th:replace="jquery" />
+</head>
+<body class="mainframe bgcolor1">
+
+<th:block th:replace="settingsHeader::header(cat='share',toast=${settings_toast}, restricted=${!model.user.adminRole})" />
+
+<form method="post" th:action="@{/shareSettings.view}">
+    <table class="music indent">
+        <tr>
+            <th style="padding-left:1em" th:text="#{sharesettings.name}"></th>
+            <th style="padding-left:1em" th:text="#{sharesettings.owner}"></th>
+            <th style="padding-left:1em" th:text="#{sharesettings.description}"></th>
+            <th style="padding-left:1em" th:text="#{sharesettings.lastvisited}"></th>
+            <th style="padding-left:1em" th:text="#{sharesettings.visits}"></th>
+            <th style="padding-left:1em" th:text="#{sharesettings.files}"></th>
+            <th style="padding-left:1em" th:text="#{sharesettings.expires}"></th>
+            <th style="padding-left:1em" th:text="#{sharesettings.expirein}"></th>
+            <th style="padding-left:1em" th:text="#{common.delete}"></th>
+        </tr>
+
+        <th:block th:each="shareInfo,loopStatus:${model.shareInfos}"
+            th:with="share=${shareInfo.share}">
+
+
+            <tr>
+                <td style="padding-left:1em"><a th:href="${shareInfo.shareUrl}" target="_blank" th:text="${share.name}"></a></td>
+                <td style="padding-left:1em" th:text="${share.username}"></td>
+                <td style="padding-left:1em"><input type="text" th:name="|description[${share.id}]|" size="40" th:value="${share.description}"/></td>
+                <td style="padding-left:1em" th:text="${#temporals.format(share.lastVisited, 'SHORT')}"></td>
+                <td style="padding-left:1em; text-align:right" th:text="${share.visitCount}"></td>
+                <td style="padding-left:1em"><a th:href="@{/main.view(id=${shareInfo.dir.id})}" th:title="${shareInfo.dir.name}"
+                    th:text="${#strings.abbreviate(shareInfo.dir.name, 30)}"></a></td>
+                <td style="padding-left:1em" th:text="${#temporals.format(share.expires, 'SHORT')}"></td>
+                <td style="padding-left:1em">
+                    <label><input type="radio" th:name="|expireIn[${share.id}]|" value="7" ><span th:text="#{sharesettings.expirein.week}"></span></label>
+                    <label><input type="radio" th:name="|expireIn[${share.id}]|" value="30"><span th:text="#{sharesettings.expirein.month}"></span></label>
+                    <label><input type="radio" th:name="|expireIn[${share.id}]|" value="365"><span th:text="#{sharesettings.expirein.year}"></span></label>
+                    <label><input type="radio" th:name="|expireIn[${share.id}]|" value="0"><span th:text="#{sharesettings.expirein.never}"></span></label>
+                </td>
+                <td style="padding-left:1em" align="center">
+                    <input type="checkbox" name="delete[${share.id}]"/>
+                </td>
+            </tr>
+        </th:block>
+
+    </table>
+
+    <p style="padding-top:1em">
+        <input type="submit" th:value="#{common.save}" style="margin-right:0.3em">
+        <a th:href="@{/nowPlaying.view}"><input type="button" th:value="#{common.cancel}" style="margin-right:2.0em"></a>
+        <input type="checkbox" id="deleteExpired" name="deleteExpired"/>
+        <label for="deleteExpired" th:text="#{sharesettings.deleteexpired}"></label>
+    </p>
+
+</form>
+
+</body></html>

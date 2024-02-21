@@ -215,8 +215,9 @@ public class DatabaseService {
         truncateAll(database, connection);
         try (Stream<Path> files = Files.list(p)) {
             files.sorted().forEach(LambdaUtils.uncheckConsumer(f -> {
-                Liquibase liquibase = new Liquibase(p.relativize(f).toString(), new DirectoryResourceAccessor(p.toFile()), database);
-                liquibase.update(new Contexts());
+                try (Liquibase liquibase = new Liquibase(p.relativize(f).toString(), new DirectoryResourceAccessor(p.toFile()), database)) {
+                    liquibase.update(new Contexts());
+                }
             }));
         }
     }
