@@ -5,7 +5,7 @@
     <th:block th:replace="jquery" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 
-    <script type="text/javascript">
+    <script type="text/javascript" th:inline="javascript">
         function scanningStatus(msg) {
             var scanInfo = JSON.parse(msg.body);
             $("#scanCount").text(scanInfo.count);
@@ -83,7 +83,7 @@
             html += "<span class='songTitle'>" + status.title + "</span></a><br/>";
             if (status.lyricsUrl != null) {
                 html += "<span class='forward'><a href='" + status.lyricsUrl + "' onclick=\"return popupSize(this, 'lyrics', 500, 550)\">" +
-                        "[[#{main.lyrics}]]" + "</a></span>";
+                        /*[[#{main.lyrics}]]*/ "Lyrics" + "</a></span>";
             }
             html += "</td><td>" +
                     "<a title='" + status.tooltip + "' target='main' href='" + status.albumUrl + "'>" +

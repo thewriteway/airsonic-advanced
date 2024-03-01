@@ -265,7 +265,8 @@ public class UploadController {
         // zip files
         if (file.getFileName().toString().toLowerCase().endsWith(".zip")) {
             LOG.info("Trying zip-specific extraction method for {}", file);
-            try (FileChannel channel = FileChannel.open(file); ZipFile zip = new ZipFile(channel)) {
+            try (FileChannel channel = FileChannel.open(file);
+                ZipFile zip = ZipFile.builder().setSeekableByteChannel(channel).get()) {
                 Enumeration<ZipArchiveEntry> entries = zip.getEntries();
                 ZipArchiveEntry entry = null;
                 while (entries.hasMoreElements()) {
@@ -292,7 +293,8 @@ public class UploadController {
         // 7z files
         if (file.getFileName().toString().toLowerCase().endsWith(".7z")) {
             LOG.info("Trying 7z-specific extraction method for {}", file);
-            try (FileChannel channel = FileChannel.open(file); SevenZFile zip = new SevenZFile(channel)) {
+            try (FileChannel channel = FileChannel.open(file);
+                    SevenZFile zip = SevenZFile.builder().setSeekableByteChannel(channel).get()) {
                 byte[] buffer = new byte[8042];
                 SevenZArchiveEntry entry = null;
                 while ((entry = zip.getNextEntry()) != null) {
@@ -318,7 +320,7 @@ public class UploadController {
         if (!unzipped) {
             LOG.info("Trying a generic extraction method for {}", file);
             try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(file));
-                    ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(bis)) {
+                    ArchiveInputStream<ArchiveEntry> ais = new ArchiveStreamFactory().createArchiveInputStream(bis)) {
                 ArchiveEntry entry = null;
                 while ((entry = ais.getNextEntry()) != null) {
                     if (!ais.canReadEntryData(entry)) {

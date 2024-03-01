@@ -256,7 +256,7 @@ public class CaptionsController {
         if (CAPTION_FORMAT_VTT.equals(format)) {
             return new PathResource(captionsFile);
         } else {
-            return new InputStreamResource(new BOMInputStream(Files.newInputStream(captionsFile)));
+            return new InputStreamResource(BOMInputStream.builder().setInputStream(Files.newInputStream(captionsFile)).get());
         }
     }
 

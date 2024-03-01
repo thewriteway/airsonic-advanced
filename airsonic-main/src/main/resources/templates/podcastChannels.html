@@ -6,7 +6,7 @@
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript"
         th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(model.initialPaginationSize ?: '') ) ?
-                            '' : ', '.concat(model.initialPaginationSizeFiles ?: '')}"
+                            '' : ', '.concat(model.initialPaginationSize ?: '')}"
     >
       var podcasts = [];
       var searchResults = [];
@@ -184,7 +184,6 @@
                 [10, 20, 50, 100, "All"] 
             ],
             /* -]*/
-            lengthMenu: [ [10, 20, 50, 100, -1 ], [10, 20, 50, 100, "All" ] ],
             processing: true,
             autoWidth: true,
             scrollCollapse: true,
