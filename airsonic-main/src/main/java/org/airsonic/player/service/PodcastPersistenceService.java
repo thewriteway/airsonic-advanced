@@ -34,6 +34,7 @@ import org.airsonic.player.repository.PodcastEpisodeRepository;
 import org.airsonic.player.repository.PodcastRuleRepository;
 import org.airsonic.player.service.websocket.AsyncWebSocketClient;
 import org.airsonic.player.util.FileUtil;
+import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.PodcastUtil;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang.StringUtils;
@@ -332,7 +333,8 @@ public class PodcastPersistenceService {
 
     @Transactional
     public PodcastChannel createChannel(String url) {
-        if (StringUtils.isBlank(url)) {
+        if (!NetworkUtil.isValidUrl(url)) {
+            LOG.warn("Invalid Podcast URL: {}", url);
             return null;
         }
         PodcastChannel channel = new PodcastChannel(PodcastUtil.sanitizeUrl(url, false));
@@ -549,8 +551,10 @@ public class PodcastPersistenceService {
                     }
                 });
             MediaFile mediaFile = channel.getMediaFile();
-            FileUtil.delete(mediaFile.getFullPath());
-            mediaFileService.delete(mediaFile);
+            if (mediaFile != null) {
+                FileUtil.delete(mediaFile.getFullPath());
+                mediaFileService.delete(mediaFile);
+            }
             podcastChannelRepository.delete(channel);
             return true;
         }).orElse(false);

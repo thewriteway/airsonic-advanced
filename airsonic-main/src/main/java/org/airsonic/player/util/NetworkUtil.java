@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -123,5 +124,20 @@ public class NetworkUtil {
         int port = url.getPort();
         String userInfo = url.getUserInfo();
         return new URI(scheme, userInfo, host, port, urlPathHelper.getContextPath(request), null, null);
+    }
+
+    /**
+     * Check if a given URL is valid
+     *
+     * @param url the URL to check
+     * @return true if the URL is valid, false otherwise
+     */
+    public static boolean isValidUrl(String url) {
+        try {
+            new URL(url).toURI();
+            return true;
+        } catch (MalformedURLException | URISyntaxException e) {
+            return false;
+        }
     }
 }
