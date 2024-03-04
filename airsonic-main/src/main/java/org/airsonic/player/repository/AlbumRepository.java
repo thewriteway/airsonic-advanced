@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Repository
 public interface AlbumRepository extends JpaRepository<Album, Integer> {
@@ -34,7 +35,7 @@ public interface AlbumRepository extends JpaRepository<Album, Integer> {
 
     public List<Album> findByGenreAndFolderInAndPresentTrue(String genre, Iterable<MusicFolder> musicFolders, Pageable pageable);
 
-    public List<Album> findByFolderInAndPlayCountGreaterThanAndPresentTrue(Iterable<MusicFolder> musicFolders, int playCount, Pageable pageable);
+    public List<Album> findByFolderInAndPlayCountGreaterThanAndPresentTrue(Iterable<MusicFolder> musicFolders, AtomicInteger playCount, Pageable pageable);
 
     public List<Album> findByFolderInAndLastPlayedNotNullAndPresentTrue(Iterable<MusicFolder> musicFolders, Pageable pageable);
 

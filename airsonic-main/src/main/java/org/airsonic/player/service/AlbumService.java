@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class AlbumService {
@@ -160,7 +161,7 @@ public class AlbumService {
         OffsetBasedPageRequest pageRequest = new OffsetBasedPageRequest(offset, size,
                 Sort.by(Order.desc("playCount"), Order.asc("id")));
         return albumRepository.findByFolderInAndPlayCountGreaterThanAndPresentTrue(
-                musicFolders, 0, pageRequest);
+                musicFolders, new AtomicInteger(0), pageRequest);
     }
 
     /**
