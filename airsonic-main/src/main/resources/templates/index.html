@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <th:block th:replace="~{head}" />
     <th:block th:replace="websocket" />
     <link rel="alternate" type="application/rss+xml" title="Airsonic Podcast" th:href="@{/podcast.view(suffix=.rss)}">
     <style>
@@ -61,7 +64,7 @@
     </style>
 </head>
 
-<body class="bgcolor2" style="height: 100%; margin: 0; overflow-y: hidden" th:with="mainParam=${#request.getParameter('main')}">
+<body class="bgcolor2" style="height: 100%; margin: 0; overflow-y: hidden">
     <div class="entire-panel">
         <iframe id="upper" name="upper" th:src="@{/top}" onload="this.style.height=(this.contentWindow.document.body.clientHeight+15)+'px';" class="bgcolor2 main-navigation"></iframe>
 
@@ -71,8 +74,8 @@
             </div>
             <div class="non-left-navigation-container">
                 <div class="main-right-container">
-                    <iframe id="main" name="main" th:src="${mainParam} ?: @{/nowPlaying.view}"
-                            class="bgcolor1 main-panel" allowfullscreen></iframe>
+                    <iframe id="main" name="main" th:src="${#request.getParameter('main')} ?: @{/nowPlaying.view}"
+                    class="bgcolor1 main-panel" allowfullscreen></iframe>
                     <div class="bgcolor1 right-info-container" th:style="${!model.showRight ? 'display: none;' : ''}">
                         <iframe id="right" name="right" th:src="@{/right}" class="right-info"></iframe>
                     </div>

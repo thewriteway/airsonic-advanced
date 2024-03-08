@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 
 <html><head>
-    <th:block th:replace="head" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <th:block th:replace="~{head}" />
     <th:block th:replace="jquery" />
 
     <script th:inline="javascript">
@@ -134,7 +137,7 @@
 
     <p class="forward"><a href="userSettings" th:text="#{musicfoldersettings.access}"></a></p>
     <p class="detail" style="width:60%;white-space:normal;margin-top:-10px;" th:text="#{musicfoldersettings.access.description}"></p>
-    
+
     <div>
         <span th:text="#{musicfoldersettings.uploadsfolder}"></span>
 	    <input th:field="*{uploadsFolder}" size="70"/>

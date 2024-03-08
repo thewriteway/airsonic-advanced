@@ -17,7 +17,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.18</version>
+        <version>3.2.3</version>
         <relativePath />
     </parent>
 
@@ -25,7 +25,7 @@
         <failOnDependencyWarning>true</failOnDependencyWarning>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
-        <cxf.version>3.5.5</cxf.version>
+        <cxf.version>4.0.4</cxf.version>
         <docker.container.repo>ghcr.io/kagemomiji/airsonic-advanced</docker.container.repo>
     </properties>
 
@@ -78,48 +78,111 @@
             <dependency>
                 <groupId>org.ow2.asm</groupId>
                 <artifactId>asm</artifactId>
-                <version>9.0</version>
+                <version>9.6</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.10.0</version>
+                <version>2.15.1</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>32.0.0-jre</version>
+                <version>33.0.0-jre</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.ant</groupId>
                 <artifactId>ant</artifactId>
-                <version>1.10.11</version>
+                <version>1.10.14</version>
                 <scope>runtime</scope>
             </dependency>
+<dependency>
+    <groupId>org.glassfish.jaxb</groupId>
+    <artifactId>jaxb-runtime</artifactId>
+<version>4.0.5</version>
+</dependency>
             <dependency>
                 <groupId>org.jvnet.staxex</groupId>
                 <artifactId>stax-ex</artifactId>
-                <version>1.8.2</version>
+                <version>2.1.0</version>
             </dependency>
             <dependency>
-                <groupId>jakarta.jws</groupId>
-                <artifactId>jakarta.jws-api</artifactId>
-                <version>1.1.1</version>
-            </dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>4.0.2</version>
+              </dependency>
+             <dependency>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>6.0.0</version>
+             </dependency>
+             <dependency>
+               <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-core</artifactId>
+                 <version>4.26.0</version>
+                </dependency>
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjtools</artifactId>
+    <version>1.9.21.1</version>
+</dependency>
+<dependency>
+    <groupId>org.fourthline.cling</groupId>
+    <artifactId>cling-core</artifactId>
+    <version>2.1.2</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework.security </groupId>
+    <artifactId>spring-security-crypto</artifactId>
+    <version>6.2.2</version>
+</dependency>
+<dependency>
+    <groupId>org.fourthline.cling</groupId>
+    <artifactId>cling</artifactId>
+    <version>2.1.2</version>
+</dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+<version>2.1.1</version>
+        </dependency>
+<dependency>
+    <groupId>org.fourthline.cling</groupId>
+    <artifactId>cling-support</artifactId>
+    <version>2.1.2</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-api</artifactId>
+    <version>2.0.12</version>
+</dependency>
+
+                <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>4.0.5</version>
+                <scope>runtime</scope>
+              </dependency>
+               <dependency>
+                  <groupId>org.springframework.security</groupId>
+                  <artifactId>spring-security-core</artifactId>
+                  <version>6.2.2</version>
+             </dependency>
             <dependency>
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
-                <version>1.15.3</version>
+                <version>1.17.2</version>
             </dependency>
             <dependency>
                 <groupId>com.google.j2objc</groupId>
                 <artifactId>j2objc-annotations</artifactId>
-                <version>2.8</version>
+                <version>3.0.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
-                <version>2.24.1</version>
+                <version>2.26.0</version>
             </dependency>
             <dependency>
                 <groupId>org.checkerframework</groupId>
@@ -136,7 +199,7 @@
                 <artifactId>jna-platform</artifactId>
                 <version>5.14.0</version>
             </dependency>
- 
+
         </dependencies>
     </dependencyManagement>
 
@@ -146,7 +209,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>buildnumber-maven-plugin</artifactId>
-                    <version>1.4</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.cxf</groupId>
@@ -156,12 +219,12 @@
                 <plugin>
                     <groupId>org.jvnet.jaxb2.maven2</groupId>
                     <artifactId>maven-jaxb2-plugin</artifactId>
-                    <version>0.14.0</version>
+                    <version>0.15.3</version>
                 </plugin>
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.34.1</version>
+                    <version>0.44.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-war-plugin</artifactId>
@@ -177,7 +240,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.3.1</version>
                     <executions>
                         <execution>
                             <id>validate</id>
@@ -198,14 +261,14 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>8.31</version>
+                            <version>10.14.1</version>
                         </dependency>
                     </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.21.2</version>
                     <executions>
                         <execution>
                             <id>validate</id>
@@ -222,7 +285,7 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>5.3.2</version>
+                    <version>9.0.9</version>
                     <inherited>true</inherited>
                     <configuration>
                         <cveValidForHours>24</cveValidForHours>
@@ -256,7 +319,7 @@
                 <plugin>
                     <groupId>net.nicoulaj.maven.plugins</groupId>
                     <artifactId>checksum-maven-plugin</artifactId>
-                    <version>1.8</version>
+                    <version>1.11</version>
                     <executions>
                         <execution>
                             <phase>package</phase>
@@ -290,7 +353,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
                         <id>analyze</id>
@@ -307,18 +370,16 @@
                                 <ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:tomcat-embed-core*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.apache.tomcat:tomcat-annotations-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:tomcat-embed-el*</ignoredUsedUndeclaredDependency>
-                                <ignoredUsedUndeclaredDependency>*javax*:*</ignoredUsedUndeclaredDependency>
+                                <ignoredUsedUndeclaredDependency>*jakarta*:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.hamcrest:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>com.fasterxml.jackson.*:jackson-*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.aspectj:aspectjweaver</ignoredUsedUndeclaredDependency>
-                                <ignoredUsedUndeclaredDependency>org.glassfish:jakarta.el</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-params:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.mockito:mockito-junit-jupiter:*</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>jakarta.persistence:jakarta.persistence-api</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>org.springframework.data:spring-data-jpa</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-params:*</ignoredUsedUndeclaredDependency>
-                                <ignoredUsedUndeclaredDependency>jakarta.transaction:jakarta.transaction-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.springframework.data:spring-data-commons:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>commons-collections:commons-collections:*</ignoredUsedUndeclaredDependency>
                             </ignoredUsedUndeclaredDependencies>
@@ -329,6 +390,13 @@
                                 <ignoredUnusedDeclaredDependency>org.seamless:seamless-http*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>taglibs:string:jar*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.seamless:seamless-http*</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.eclipse:persistence:*</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.airsonic.player:airsonic-sonos-api</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.apache.cxf:*</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.glassfish:jakarta.el</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.jsoup:jsoup</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.aspectj:aspectjrt</ignoredUnusedDeclaredDependency>
+
                                 <ignoredUnusedDeclaredDependency>org.tukaani:xz:*</ignoredUnusedDeclaredDependency>
                                 <!-- Needed for airsonic-booter to load Airsonic correctly -->
                                 <ignoredUnusedDeclaredDependency>org.springframework.security:*</ignoredUnusedDeclaredDependency>
@@ -341,6 +409,9 @@
 				                <ignoredUnusedDeclaredDependency>org.springframework:spring-aspects</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.yaml:snakeyaml</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
+                            <ignoredNonTestScopedDependencies>
+                                <ignoredNonTestScopedDependency>jakarta.transaction:*</ignoredNonTestScopedDependency>
+                            </ignoredNonTestScopedDependencies>
                         </configuration>
                     </execution>
                 </executions>

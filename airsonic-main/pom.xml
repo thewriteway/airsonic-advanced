@@ -13,13 +13,13 @@
     </parent>
 
     <properties>
-        <chameleon.version>2.0.0-RELEASE</chameleon.version>
+        <chameleon.version>1.2.1-RELEASE</chameleon.version>
         <tomcat.server.scope>provided</tomcat.server.scope>
         <!-- For fixing import/export due to https://github.com/liquibase/liquibase/issues/1598 -->
-        <liquibase.version>4.22.0</liquibase.version>
-        <logback.version>1.2.13</logback.version>
+        <liquibase.version>4.26.0</liquibase.version>
         <mockito.version>5.8.0</mockito.version>
         <mariadb.version>3.3.2</mariadb.version>
+        <aspectj.version>1.9.21.1</aspectj.version>
     </properties>
 
     <dependencies>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>2.0</version>
+            <version>2.2</version>
         </dependency>
 
         <!-- Metrics
@@ -158,7 +158,7 @@
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
-            <version>3.15.0</version>
+            <version>4.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.ldap</groupId>
@@ -171,7 +171,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.76</version>
+            <version>1.77</version>
             <scope>runtime</scope>
         </dependency>
         <!-- END Spring -->
@@ -179,12 +179,12 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>8.9.0</version>
+            <version>8.11.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>8.9.0</version>
+            <version>8.11.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
@@ -201,7 +201,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.10.0</version>
+            <version>1.11.0</version>
         </dependency>
 
         <dependency>
@@ -229,7 +229,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.26.0</version>
+            <version>1.26.1</version>
         </dependency>
         <dependency>
 <!--            compression library-->
@@ -240,7 +240,7 @@
         <dependency>
             <groupId>com.github.junrar</groupId>
             <artifactId>junrar</artifactId>
-            <version>7.5.4</version>
+            <version>7.5.5</version>
         </dependency>
 
         <dependency>
@@ -267,17 +267,19 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
+            <version>4.4.16</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
+            <version>4.5.14</version>
             <artifactId>httpclient</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.7.1</version>
+            <version>2.7.2</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -298,35 +300,29 @@
             <version>2.0.6.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>org.eclipse.persistence.moxy</artifactId>
-            <version>2.7.8</version>
-        </dependency>
-
-        <dependency>
+           <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
+<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-api</artifactId>
+    <version>2.0.12</version>
+</dependency>
+
         <dependency>
             <groupId>org.glassfish.web</groupId>
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>
-            <version>1.2.6</version>
+            <version>3.0.1</version>
             <scope>runtime</scope>
         </dependency>
 
         <dependency>
             <groupId>jakarta.mail</groupId>
             <artifactId>jakarta.mail-api</artifactId>
-        </dependency>
-
-        <dependency>
-
-            <groupId>com.hoodcomputing</groupId>
-            <artifactId>natpmp</artifactId>
-            <version>0.1</version>
         </dependency>
 
         <dependency>
@@ -364,10 +360,10 @@
             <artifactId>cling-core</artifactId>
             <!-- Cling removed the org.fourthline.cling.transport.impl.apache package in 2.1, which is needed to make Cling work with Tomcat. -->
             <!-- Don't upgrade this unless you can test UPnP/DLNA support properly! -->
-            <version>2.0.1</version>
+            <version>2.1.2</version>
             <exclusions>
                 <exclusion>
-                    <groupId>javax.servlet</groupId>
+                    <groupId>jakarta.servlet</groupId>
                     <artifactId>servlet-api</artifactId>
                 </exclusion>
             </exclusions>
@@ -378,13 +374,13 @@
             <artifactId>cling-support</artifactId>
             <!-- Cling removed the org.fourthline.cling.transport.impl.apache package in 2.1, which is needed to make Cling work with Tomcat. -->
             <!-- Don't upgrade this unless you can test UPnP/DLNA support properly! -->
-            <version>2.0.1</version>
+            <version>2.1.2</version>
         </dependency>
 
-        <dependency>
+           <dependency>
             <groupId>org.seamless</groupId>
             <artifactId>seamless-util</artifactId>
-            <version>1.1.0</version>
+            <version>1.1.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-collections</groupId>
@@ -395,7 +391,7 @@
                     <artifactId>commons-lang</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.activation</groupId>
+                    <groupId>jakarta.activation</groupId>
                     <artifactId>activation</artifactId>
                 </exclusion>
             </exclusions>
@@ -453,7 +449,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-configuration2</artifactId>
-            <version>2.8.0</version>
+            <version>2.9.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -469,7 +465,7 @@
         <dependency>
             <groupId>com.mattbertolini</groupId>
             <artifactId>liquibase-slf4j</artifactId>
-            <version>4.0.0</version>
+            <version>5.0.0</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -483,7 +479,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjrt</artifactId>
+       <version>${aspectj.version}</version>
+  </dependency>
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
@@ -499,7 +499,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.6.0</version>
+            <version>3.9.6</version>
         </dependency>
 
         <dependency>
@@ -513,7 +513,7 @@
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.xml.stream</groupId>
+                    <groupId>jakarta.xml.stream</groupId>
                     <artifactId>stax-api</artifactId>
                 </exclusion>
                 <exclusion>
@@ -570,18 +570,10 @@
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-json</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jaxb-annotations</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
@@ -589,7 +581,7 @@
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
-            <version>64.2</version>
+            <version>74.2</version>
         </dependency>
         <dependency>
             <groupId>org.digitalmediaserver</groupId>
@@ -599,11 +591,13 @@
         <dependency>
             <groupId>com.sun.mail</groupId>
             <artifactId>jakarta.mail</artifactId>
+            <version>2.0.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
+           <version>2.1.1</version>
         </dependency>
         <dependency>
             <groupId>jakarta.xml.ws</groupId>
@@ -612,6 +606,7 @@
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -627,7 +622,7 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>8.0.33</version>
+            <version>8.3.0</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -686,7 +681,7 @@
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>buildnumber-maven-plugin</artifactId>
-              <version>3.1.0</version>
+              <version>3.2.0</version>
               <executions>
                 <execution>
                   <phase>generate-resources</phase>
@@ -713,10 +708,17 @@
                 <artifactId>checksum-maven-plugin</artifactId>
             </plugin>
             <plugin>
-                <!-- Change to non-snapshot version once it is released (change groupId) -->
                 <groupId>dev.aspectj</groupId>
                 <artifactId>aspectj-maven-plugin</artifactId>
-                <version>1.13.1</version>
+                <version>1.14</version>
+                <dependencies>
+                  <dependency>
+                    <groupId>org.aspectj</groupId>
+                    <artifactId>aspectjtools</artifactId>
+                    <!-- AspectJ compiler version, in sync with runtime -->
+                    <version>${aspectj.version}</version>
+                  </dependency>
+                </dependencies>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -730,15 +732,8 @@
                          </aspectLibrary>
                      </aspectLibraries>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>test-compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+              </plugin>
+
         </plugins>
     </build>
     <reporting>
@@ -746,7 +741,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.3.2</version>
             </plugin>
         </plugins>
     </reporting>

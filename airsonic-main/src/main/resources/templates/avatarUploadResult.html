@@ -1,25 +1,21 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-    <th:block th:replace="head" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <th:block th:replace="~{head}" />
 </head>
 <body class="mainframe bgcolor1">
-
-<h1>
-    <img th:src="${#themes.code('settingsImage')}" alt=""/>
-    <span style="vertical-align: middle" th:text="#{avataruploadresult.title}"></span>
-</h1>
-
-<p th:if="${#strings.isEmpty(model['error'])}">
-    <span th:text="#{avataruploadresult.success(${model.avatar.name})}"></span>
-    <img th:src="@{/avatar.view(username=${model.username}, forceCustom=true)}" th:alt="${model.avatar.name}" th:width="${model.avatar.width}"
-         th:height="${model.avatar.height}" style="padding-left:2em"/>
-</p>
-<p th:if="${!#strings.isEmpty(model['error'])}" class="warning" th:utext="#{avataruploadresult.failure}">
-</p>
-
-<div class="back"><a th:href="@{/personalSettings.view}" th:text="#{common.back}"></a></div>
-
+    <h1>
+        <img th:src="${#themes.code('settingsImage')}" alt=""/>
+        <span style="vertical-align: middle" th:text="#{avataruploadresult.title}"></span>
+    </h1>
+    <p th:if="${#strings.isEmpty(model['error'])}">
+        <span th:text="#{avataruploadresult.success(${model.avatar.name})}"></span>
+        <img th:src="@{/avatar.view(username=${model.username}, forceCustom=true)}" th:alt="${model.avatar.name}" th:width="${model.avatar.width}" th:height="${model.avatar.height}" style="padding-left:2em"/>
+    </p>
+    <p th:if="${!#strings.isEmpty(model['error'])}" class="warning" th:utext="#{avataruploadresult.failure}">
+    </p>
+    <div class="back"><a th:href="@{/personalSettings.view}" th:text="#{common.back}"></a></div>
 </body>
 </html>
