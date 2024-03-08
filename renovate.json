@@ -13,7 +13,7 @@
     {
       "datasources": ["maven"],
       "packagePatterns": ["*"],
-      "groupName": "all maven dependencies",
+      "groupName": "all maven dependencies"
     }
   ],
   "repositories": ["thewriteway/airsonic-advanced"]
