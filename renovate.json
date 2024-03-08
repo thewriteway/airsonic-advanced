@@ -4,7 +4,6 @@
   "forkProcessing": "enabled",
   "dependencyDashboard": true,
   "assignees": ["thewriteway"],
-  "schedule": ["every day"],
   "packageRules": [
     {
       "updateTypes": ["minor", "patch"],
@@ -15,7 +14,6 @@
       "datasources": ["maven"],
       "packagePatterns": ["*"],
       "groupName": "all maven dependencies",
-      "schedule": ["every day"]
     }
   ],
   "repositories": ["thewriteway/airsonic-advanced"]
