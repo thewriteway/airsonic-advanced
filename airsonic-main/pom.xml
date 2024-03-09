@@ -16,11 +16,11 @@
         <chameleon.version>1.2.1-RELEASE</chameleon.version>
         <tomcat.server.scope>provided</tomcat.server.scope>
         <!-- For fixing import/export due to https://github.com/liquibase/liquibase/issues/1598 -->
-        <liquibase.version>4.26.0</liquibase.version>
+        <liquibase.version>4.8.0</liquibase.version>
         <logback.version>1.2.13</logback.version>
         <mockito.version>5.8.0</mockito.version>
         <mariadb.version>3.3.2</mariadb.version>
-        <aspectj.version>1.9.21</aspectj.version>
+        <aspectj.version>1.9.21.1</aspectj.version>
     </properties>
 
     <dependencies>
@@ -268,12 +268,12 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
-            <version>4.4.7</version>
+            <version>4.4.16</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
-            <version>4.5</version>
+            <version>4.5.14</version>
             <artifactId>httpclient</artifactId>
         </dependency>
 
