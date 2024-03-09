@@ -7,7 +7,7 @@ import org.airsonic.player.domain.entity.StarredMediaFile;
 import org.airsonic.player.domain.entity.UserRating;
 import org.springframework.data.jpa.domain.Specification;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
 
 import java.util.ArrayList;
 import java.util.List;

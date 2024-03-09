@@ -25,7 +25,7 @@ import org.airsonic.player.domain.User.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 
 import java.util.HashSet;
 import java.util.Set;

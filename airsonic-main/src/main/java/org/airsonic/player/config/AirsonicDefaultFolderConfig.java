@@ -20,11 +20,9 @@ package org.airsonic.player.config;
 
 import org.airsonic.player.util.Util;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.util.StringUtils;
 
 @ConfigurationProperties(prefix = "airsonic")
-@ConstructorBinding
 public class AirsonicDefaultFolderConfig {
 
     // constants

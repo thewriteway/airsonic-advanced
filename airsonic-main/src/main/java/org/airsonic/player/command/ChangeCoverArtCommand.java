@@ -20,7 +20,7 @@
  */
 package org.airsonic.player.command;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Command used in ChangeCoverArtController.
