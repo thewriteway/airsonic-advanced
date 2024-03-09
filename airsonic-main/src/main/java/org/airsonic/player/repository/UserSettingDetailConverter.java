@@ -25,7 +25,7 @@ import org.airsonic.player.domain.entity.UserSettingDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.AttributeConverter;
+import jakarta.persistence.AttributeConverter;
 
 public class UserSettingDetailConverter implements AttributeConverter<UserSettingDetail, String> {
 

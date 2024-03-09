@@ -21,7 +21,7 @@ package org.airsonic.player.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.ArrayList;

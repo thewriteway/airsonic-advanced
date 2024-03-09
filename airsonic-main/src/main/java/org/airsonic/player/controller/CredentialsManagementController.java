@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.validation.groups.Default;
+import jakarta.validation.groups.Default;
 
 import java.security.Principal;
 import java.util.Comparator;

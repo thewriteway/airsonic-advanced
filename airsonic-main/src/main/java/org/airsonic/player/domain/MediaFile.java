@@ -23,7 +23,7 @@ package org.airsonic.player.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.io.FilenameUtils;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

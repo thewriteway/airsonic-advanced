@@ -2,7 +2,7 @@ package org.airsonic.player.domain.entity;
 
 import org.airsonic.player.domain.MediaFile;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 
