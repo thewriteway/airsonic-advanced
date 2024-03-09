@@ -107,6 +107,17 @@
                 <version>3.0.0</version>
             </dependency>
             <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>4.0.0</version>
+              </dependency>
+              <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>4.0.0</version>
+                <scope>runtime</scope>
+              </dependency>
+            <dependency>
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
                 <version>1.17.2</version>
@@ -136,7 +147,7 @@
                 <artifactId>jna-platform</artifactId>
                 <version>5.14.0</version>
             </dependency>
- 
+
         </dependencies>
     </dependencyManagement>
 
