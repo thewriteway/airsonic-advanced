@@ -94,7 +94,8 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
     }
 
-    public static class WebsocketInterceptedServletRequest implements ServletRequest() {
+    public static class WebsocketInterceptedServletRequest implements ServletRequest {
+
         private final ServletServerHttpRequest originalRequest;
         private final String contextPath;
 
@@ -105,6 +106,24 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
         public ServletServerHttpRequest getOriginalRequest() {
             return originalRequest;
+        }
+
+        @Override
+        public String getRequestId() {
+            // Provide the implementation or return null
+            return null;
+        }
+
+        @Override
+        public String getProtocolRequestId() {
+            // Provide the implementation or return null
+            return null;
+        }
+
+        @Override
+        public ServletConnection getServletConnection() {
+            // Provide the implementation or return null
+            return null;
         }
 
         @Override
@@ -218,23 +237,6 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
 
         @Override
-        public void setAttribute(String name, Object o) {
-            if (getSession() == null) {
-                return;
-            }
-
-            getSession().setAttribute(name, o);
-        }
-
-        @Override
-        public void removeAttribute(String name) {
-            if (getSession() == null) {
-                return;
-            }
-            getSession().removeAttribute(name);
-        }
-
-        @Override
         public Locale getLocale() {
             return null;
         }
@@ -251,11 +253,6 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
         @Override
         public RequestDispatcher getRequestDispatcher(String path) {
-            return null;
-        }
-
-        @Override
-        public String getRealPath(String path) {
             return null;
         }
 
@@ -320,173 +317,16 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
 
         @Override
-        public String getAuthType() {
-            return null;
+        public void setAttribute(String name, Object o) {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'setAttribute'");
         }
 
         @Override
-        public Cookie[] getCookies() {
-            return getOriginalRequest().getServletRequest().getCookies();
+        public void removeAttribute(String name) {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'removeAttribute'");
         }
 
-        @Override
-        public long getDateHeader(String name) {
-            return 0;
-        }
-
-        @Override
-        public String getHeader(String name) {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getHeader(name)).orElse(
-                    Optional.ofNullable(getOriginalRequest().getHeaders().get(name)).map(x -> x.get(0)).orElse(null));
-        }
-
-        @Override
-        public Enumeration<String> getHeaders(String name) {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getHeaders(name))
-                    .orElse(Collections.enumeration(getOriginalRequest().getHeaders().get(name)));
-        }
-
-        @Override
-        public Enumeration<String> getHeaderNames() {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getHeaderNames())
-                    .orElse(Collections.enumeration(getOriginalRequest().getHeaders().keySet()));
-        }
-
-        @Override
-        public int getIntHeader(String name) {
-            return 0;
-        }
-
-        @Override
-        public String getMethod() {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getMethod())
-                    .orElse(getOriginalRequest().getMethodValue());
-        }
-
-        @Override
-        public String getPathInfo() {
-            return null;
-        }
-
-        @Override
-        public String getPathTranslated() {
-            return null;
-        }
-
-        @Override
-        public String getContextPath() {
-            return Optional
-                    .ofNullable(StringUtils.trimToNull(getOriginalRequest().getServletRequest().getContextPath()))
-                    .orElse(this.contextPath);
-        }
-
-        @Override
-        public String getQueryString() {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getQueryString())
-                    .orElse(getOriginalRequest().getURI().getQuery());
-        }
-
-        @Override
-        public String getRemoteUser() {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getRemoteUser())
-                    .orElse(getOriginalRequest().getPrincipal().getName());
-        }
-
-        @Override
-        public boolean isUserInRole(String role) {
-            return getOriginalRequest().getServletRequest().isUserInRole(role);
-        }
-
-        @Override
-        public Principal getUserPrincipal() {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getUserPrincipal())
-                    .orElse(getOriginalRequest().getPrincipal());
-        }
-
-        @Override
-        public String getRequestedSessionId() {
-            return getOriginalRequest().getServletRequest().getRequestedSessionId();
-        }
-
-        @Override
-        public String getRequestURI() {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getRequestURI())
-                    .orElse(getOriginalRequest().getURI().toString());
-        }
-
-        @Override
-        public StringBuffer getRequestURL() {
-            return getAddress(() -> getOriginalRequest().getServletRequest().getRequestURL(),
-                uri -> new StringBuffer(uri.toString()));
-        }
-
-        @Override
-        public String getServletPath() {
-            return getOriginalRequest().getServletRequest().getServletPath();
-        }
-
-        @Override
-        public HttpSession getSession(boolean create) {
-            return getOriginalRequest().getServletRequest().getSession(create);
-        }
-
-        @Override
-        public HttpSession getSession() {
-            return getOriginalRequest().getServletRequest().getSession();
-        }
-
-        @Override
-        public String changeSessionId() {
-            return getOriginalRequest().getServletRequest().changeSessionId();
-        }
-
-        @Override
-        public boolean isRequestedSessionIdValid() {
-            return getOriginalRequest().getServletRequest().isRequestedSessionIdValid();
-        }
-
-        @Override
-        public boolean isRequestedSessionIdFromCookie() {
-            return getOriginalRequest().getServletRequest().isRequestedSessionIdFromCookie();
-        }
-
-        @Override
-        public boolean isRequestedSessionIdFromURL() {
-            return getOriginalRequest().getServletRequest().isRequestedSessionIdFromURL();
-        }
-
-        @Override
-        public boolean isRequestedSessionIdFromUrl() {
-            return isRequestedSessionIdFromURL();
-        }
-
-        @Override
-        public boolean authenticate(HttpServletResponse response) throws IOException, ServletException {
-            return getOriginalRequest().getServletRequest().authenticate(response);
-        }
-
-        @Override
-        public void login(String username, String password) throws ServletException {
-        }
-
-        @Override
-        public void logout() throws ServletException {
-        }
-
-        @Override
-        public Collection<Part> getParts() throws IOException, ServletException {
-            return null;
-        }
-
-        @Override
-        public Part getPart(String name) throws IOException, ServletException {
-            return null;
-        }
-
-        @Override
-        public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
-            return null;
-        }
-
-    }
+    }}
 

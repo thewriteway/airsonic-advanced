@@ -3,6 +3,7 @@ package org.airsonic.player.service;
 
 import jakarta.annotation.PostConstruct;
 import liquibase.Contexts;
+import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseConnection;
 import liquibase.database.DatabaseFactory;
