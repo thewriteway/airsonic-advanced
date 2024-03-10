@@ -100,7 +100,7 @@ public class JAXBWriter {
         }
     }
 
-    private static String parseRESTProtocolVersion() {
+    public static String parseRESTProtocolVersion() {
         try (InputStream in = StringUtil.class.getResourceAsStream("/subsonic-rest-api.xsd")) {
             Document document = createSAXBuilder().build(in);
             Attribute version = document.getRootElement().getAttribute("version");

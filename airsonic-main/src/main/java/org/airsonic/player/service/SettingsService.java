@@ -30,7 +30,6 @@ import org.airsonic.player.config.AirsonicDefaultFolderConfig;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.CoverArtSource;
 import org.airsonic.player.domain.Theme;
-import org.airsonic.player.service.sonos.SonosServiceRegistration;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -228,7 +227,6 @@ public class SettingsService {
     private static final boolean DEFAULT_SONOS_ENABLED = false;
     private static final String DEFAULT_SONOS_SERVICE_NAME = "Airsonic";
     private static final int DEFAULT_SONOS_SERVICE_ID = 242;
-    private static final String DEFAULT_SONOS_LINK_METHOD = SonosServiceRegistration.AuthenticationType.APPLICATION_LINK.name();
     private static final String DEFAULT_EXPORT_PLAYLIST_FORMAT = "m3u";
     private static final boolean DEFAULT_IGNORE_SYMLINKS = false;
     private static final String DEFAULT_EXCLUDE_PATTERN_STRING = null;
@@ -1261,47 +1259,7 @@ public class SettingsService {
         setString(KEY_DLNA_BASE_LAN_URL, dlnaBaseLANURL);
     }
 
-    public boolean isSonosEnabled() {
-        return getBoolean(KEY_SONOS_ENABLED, DEFAULT_SONOS_ENABLED);
-    }
-
-    public void setSonosEnabled(boolean sonosEnabled) {
-        setBoolean(KEY_SONOS_ENABLED, sonosEnabled);
-    }
-
-    public String getSonosServiceName() {
-        return getString(KEY_SONOS_SERVICE_NAME, DEFAULT_SONOS_SERVICE_NAME);
-    }
-
-    public void setSonosServiceName(String sonosServiceName) {
-        setString(KEY_SONOS_SERVICE_NAME, sonosServiceName);
-    }
-
-    int getSonosServiceId() {
-        return getInt(KEY_SONOS_SERVICE_ID, DEFAULT_SONOS_SERVICE_ID);
-    }
-
-    public String getSonosLinkMethod() {
-        return getString(KEY_SONOS_LINK_METHOD, DEFAULT_SONOS_LINK_METHOD);
-    }
-
-    public void setSonosLinkMethod(String linkMethod) {
-        setString(KEY_SONOS_LINK_METHOD, linkMethod);
-    }
-
-    public String getSonosCallbackHostAddress() {
-        return getSonosCallbackHostAddress(null);
-    }
-
-    public String getSonosCallbackHostAddress(String def) {
-        return getString(KEY_SONOS_CALLBACK_HOST_ADDRESS, def);
-    }
-
-    public void setSonosCallbackHostAddress(String hostAddress) {
-        setString(KEY_SONOS_CALLBACK_HOST_ADDRESS, hostAddress);
-    }
-
-    private static Set<String> splitLowerString(String s, String splitter) {
+        private static Set<String> splitLowerString(String s, String splitter) {
         //serial stream and linkedhashset because order matters
         return Stream.of(s.split(splitter)).filter(x -> StringUtils.isNotBlank(x)).map(x -> x.toLowerCase()).collect(Collectors.toCollection(LinkedHashSet::new));
     }

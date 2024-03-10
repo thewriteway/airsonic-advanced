@@ -68,6 +68,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * Controller which produces the HLS (Http Live Streaming) playlist.

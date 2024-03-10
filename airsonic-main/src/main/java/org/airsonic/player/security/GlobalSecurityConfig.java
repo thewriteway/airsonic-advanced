@@ -8,7 +8,6 @@ import jakarta.servlet.ServletContext;
 import org.airsonic.player.service.JWTSecurityService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
-import org.airsonic.player.service.sonos.SonosLinkSecurityInterceptor.SonosJWTVerification;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +25,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.keygen.KeyGenerators;
@@ -36,9 +36,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -106,9 +108,6 @@ public class GlobalSecurityConfig {
     @Lazy
     @Autowired
     MultipleCredsMatchingAuthenticationProvider multipleCredsProvider;
-
-    @Autowired
-    SonosJWTVerification sonosJwtVerification;
 
     @Autowired
     private ServletContext servletContext;
@@ -201,7 +200,6 @@ public class GlobalSecurityConfig {
             settingsService.save();
         }
         JWTAuthenticationProvider jwtAuth = new JWTAuthenticationProvider(jwtKey);
-        jwtAuth.addAdditionalCheck(servletContext.getContextPath() + "/ws/Sonos", sonosJwtVerification);
         auth.authenticationProvider(jwtAuth);
         auth.authenticationProvider(multipleCredsProvider);
     }
@@ -211,41 +209,35 @@ public class GlobalSecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    @Bean
-    @Order(1)
-    public SecurityFilterChain extSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
-
-        http = http.addFilter(new WebAsyncManagerIntegrationFilter());
-        http = http.addFilterBefore(
+@Bean
+@Order(1)
+public SecurityFilterChain extSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    http
+        .authorizeHttpRequests(authz -> authz
+            .requestMatchers("/ext/**").hasAnyRole("TEMP", "USER")
+            .anyRequest().authenticated())
+        .addFilterBefore(
             new JWTRequestParameterProcessingFilter(
                 authenticationManager,
                 FAILURE_URL)
-            , UsernamePasswordAuthenticationFilter.class);
+            , UsernamePasswordAuthenticationFilter.class)
+        .csrf(csrf -> csrf
+            .requireCsrfProtectionMatcher(csrfSecurityRequestMatcher))
+        .headers(headers -> headers
+            .frameOptions().sameOrigin())
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .sessionFixation().none());
 
-        http
-            .antMatcher("/ext/**")
-            .csrf()
-            // .disable()
-            .requireCsrfProtectionMatcher(csrfSecurityRequestMatcher).and()
-            .headers().frameOptions().sameOrigin().and()
-            .authorizeRequests()
-            .antMatchers(
-                    "/ext/stream/**",
-                    "/ext/coverArt*",
-                    "/ext/share/**",
-                    "/ext/hls/**",
-                    "/ext/captions**")
-            .hasAnyRole("TEMP", "USER").and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).sessionFixation().none().and()
-            .exceptionHandling().and()
-            .securityContext().and()
-            .requestCache().and()
-            .anonymous().and()
-            .servletApi();
-        return http.build();
+    return http.build();
+}
+
+private Object authorizeRequests() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'authorizeRequests'");
     }
 
-    @Bean
+@Bean
     @Order(2)
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
 
@@ -275,37 +267,36 @@ public class GlobalSecurityConfig {
             .and()
             .addFilterAfter(restAuthenticationFilter, BasicAuthenticationFilter.class)
             .csrf()
-            .ignoringAntMatchers("/ws/Sonos/**")
             .requireCsrfProtectionMatcher(csrfSecurityRequestMatcher)
             .and()
             .headers()
             .frameOptions()
             .sameOrigin()
             .and().authorizeRequests()
-            .antMatchers("/recover*", "/accessDenied*", "/style/**", "/icons/**", "/flash/**", "/script/**",
-                    "/login", "/error", "/sonos/**", "/sonoslink/**", "/ws/Sonos/**")
+            .requestMatchers("/recover*", "/accessDenied*", "/style/**", "/icons/**", "/flash/**", "/script/**",
+            "/login", "/error", "/sonos/**", "/sonoslink/**", "/ws/Sonos/**")
             .permitAll()
-            .antMatchers("/personalSettings*",
+            .requestMatchers("/personalSettings*",
                     "/playerSettings*", "/shareSettings*", "/credentialsSettings*")
             .hasRole("SETTINGS")
-            .antMatchers("/generalSettings*", "/advancedSettings*", "/userSettings*",
+            .requestMatchers("/generalSettings*", "/advancedSettings*", "/userSettings*",
                     "/musicFolderSettings*", "/databaseSettings*", "/transcodeSettings*", "/rest/startScan*")
             .hasRole("ADMIN")
-            .antMatchers("/deletePlaylist*", "/savePlaylist*")
+            .requestMatchers("/deletePlaylist*", "/savePlaylist*")
             .hasRole("PLAYLIST")
-            .antMatchers("/download*")
+            .requestMatchers("/download*")
             .hasRole("DOWNLOAD")
-            .antMatchers("/upload*")
+            .requestMatchers("/upload*")
             .hasRole("UPLOAD")
-            .antMatchers("/createShare*")
+            .requestMatchers("/createShare*")
             .hasRole("SHARE")
-            .antMatchers("/changeCoverArt*", "/editTags*")
+            .requestMatchers("/changeCoverArt*", "/editTags*")
             .hasRole("COVERART")
-            .antMatchers("/setMusicFileInfo*")
+            .requestMatchers("/setMusicFileInfo*")
             .hasRole("COMMENT")
-            .antMatchers("/podcastReceiverAdmin*")
+            .requestMatchers("/podcastReceiverAdmin*")
             .hasRole("PODCAST")
-            .antMatchers("/**")
+            .requestMatchers("/**")
             .hasRole("USER")
             .anyRequest().authenticated()
             .and().formLogin()

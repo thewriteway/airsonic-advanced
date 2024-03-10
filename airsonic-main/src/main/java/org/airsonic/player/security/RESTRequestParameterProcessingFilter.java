@@ -59,7 +59,7 @@ public class RESTRequestParameterProcessingFilter extends AbstractAuthentication
     private static final Logger LOG = LoggerFactory.getLogger(RESTRequestParameterProcessingFilter.class);
 
     private static final RequestMatcher requiresAuthenticationRequestMatcher = new RegexRequestMatcher("/rest/.+", null);
-    private static final Version serverVersion = new Version(JAXBWriter.getRestProtocolVersion());
+    private static final Version serverVersion = new Version(JAXBWriter.parseRESTProtocolVersion());
 
     protected RESTRequestParameterProcessingFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
         super(requiresAuthenticationRequestMatcher);

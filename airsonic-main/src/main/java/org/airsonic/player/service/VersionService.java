@@ -213,16 +213,19 @@ public class VersionService {
         }
     };
 
-    private static final Function<Map<String,Object>, Version> releaseToVersionMapper = r ->
-            new Version(
-                    (String) r.get("tag_name"),
-                    (String) r.get("target_commitish"),
-                    r.get("draft") || (Boolean) r.get("prerelease"),
-                    (String) r.get("html_url"),
-                    Instant.parse((String) r.get("published_at")),
-                    Instant.parse((String) r.get("created_at")),
-                    (List<Map<String,Object>>) r.get("assets")
-                    );
+    private static final Function<Map<String,Object>, Version> releaseToVersionMapper = r -> {
+        Boolean draft = Boolean.valueOf(String.valueOf(r.get("draft")));
+        Boolean prerelease = Boolean.valueOf(String.valueOf(r.get("prerelease")));
+        return new Version(
+                (String) r.get("tag_name"),
+                (String) r.get("target_commitish"),
+                draft || prerelease,
+                (String) r.get("html_url"),
+                Instant.parse((String) r.get("published_at")),
+                Instant.parse((String) r.get("created_at")),
+                (List<Map<String,Object>>) r.get("assets")
+                );
+    };
 
     /**
      * Resolves the latest available Airsonic version by inspecting github.

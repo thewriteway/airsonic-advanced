@@ -79,14 +79,12 @@ public class UPnPService {
 
     @PostConstruct
     public void init() {
-        if (settingsService.isDlnaEnabled() || settingsService.isSonosEnabled()) {
+        if (settingsService.isDlnaEnabled()) {
             ensureServiceStarted();
-            if (settingsService.isDlnaEnabled()) {
-                // Start DLNA media server?
-                setMediaServerEnabled(true);
-            }
+            // Start DLNA media server
+            setMediaServerEnabled(true);
         }
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> ensureServiceStopped()));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::ensureServiceStopped));
     }
 
     public void ensureServiceStarted() {
