@@ -117,7 +117,7 @@
   </dependency>
                <dependency>
                 <groupId>jakarta.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
+                <artifactId>jakarta.servlet-api</artifactId>
                 <version>6.0.0</version>
              </dependency>
               <dependency>

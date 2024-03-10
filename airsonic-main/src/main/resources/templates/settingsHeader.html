@@ -18,7 +18,7 @@
         <th:block th:fragment="links(categories)">
             <th:block th:each="category, loopStatus: ${categories}">
                 <th:block th:unless="${loopStatus.first && ((loopStatus.count -1) % 7 == 0) }">&nbsp;|&nbsp;</th:block>
-                <th:block th:if="${(loopStatus.count gt 1) && ((loopStatus.count -1) % 7 == 0) }"></h2><h2 style="white-space: normal"></th:block>
+                <th:block th:if="${(loopStatus.count gt 1) && ((loopStatus.count -1) % 7 == 0) }"><h2 style="white-space: normal"></h2></th:block>x
 
                 <span th:if="${cat eq category}" class="headerSelected" th:utext="#{settingsheader.__${category}__}"></span>
                 <span th:unless="${cat eq category}" class="header" ><a th:href="|${category}Settings|" th:utext="#{settingsheader.__${category}__}"></a></span>
