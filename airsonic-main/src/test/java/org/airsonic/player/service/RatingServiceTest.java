@@ -60,7 +60,7 @@ public class RatingServiceTest {
     @InjectMocks
     private RatingService ratingService;
 
-    private ArgumentCaptor<UserRating> userRatingCaptor = ArgumentCaptor.forClass(UserRating.class);
+    private final ArgumentCaptor<UserRating> userRatingCaptor = ArgumentCaptor.forClass(UserRating.class);
 
     @Test
     public void testSetRatingForUser() {

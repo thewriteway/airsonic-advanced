@@ -89,7 +89,7 @@ public class FFmpegParser extends MetaDataParser {
             Process process = Runtime.getRuntime().exec(command.toArray(new String[0]));
             JsonNode result = null;
             try (InputStream in = process.getInputStream();
-                BufferedInputStream bin = new BufferedInputStream(in); ) {
+                BufferedInputStream bin = new BufferedInputStream(in)) {
                 result = Util.getObjectMapper().readTree(bin);
             }
 

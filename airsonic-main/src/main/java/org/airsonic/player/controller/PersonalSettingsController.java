@@ -19,6 +19,7 @@
  */
 package org.airsonic.player.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.command.PersonalSettingsCommand;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.UserCredential.App;
@@ -33,8 +34,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Locale;
 import java.util.Map;

@@ -176,7 +176,7 @@ public class SearchServiceTestCase extends AbstractAirsonicHomeTest {
         Assert.assertEquals(
                 "(19) Whether the acquired album contains data of the specified album name", 1L,
                 albumResult.getItems().stream()
-                        .filter(r -> "_ID3_ALBUM_ Sackcloth \'n\' Ashes".equals(r.getName()))
+                        .filter(r -> "_ID3_ALBUM_ Sackcloth 'n' Ashes".equals(r.getName()))
                         .count());
 
         /*

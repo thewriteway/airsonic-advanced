@@ -19,6 +19,7 @@
  */
 package org.airsonic.player.validator;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.command.UserSettingsCommand;
 import org.airsonic.player.controller.UserSettingsController;
 import org.airsonic.player.service.SecurityService;
@@ -27,8 +28,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 /**
  * Validator for {@link UserSettingsController}.
  *
@@ -36,9 +35,9 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 public class UserSettingsValidator implements Validator {
 
-    private SecurityService securityService;
-    private SettingsService settingsService;
-    private HttpServletRequest request;
+    private final SecurityService securityService;
+    private final SettingsService settingsService;
+    private final HttpServletRequest request;
 
     public UserSettingsValidator(SecurityService securityService, SettingsService settingsService, HttpServletRequest request) {
         this.securityService = securityService;

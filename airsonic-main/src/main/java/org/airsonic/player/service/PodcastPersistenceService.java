@@ -21,14 +21,8 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.command.PodcastSettingsCommand.PodcastRule;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.MusicFolder;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.MusicFolder.Type;
-import org.airsonic.player.domain.PodcastChannel;
-import org.airsonic.player.domain.PodcastChannelRule;
-import org.airsonic.player.domain.PodcastEpisode;
-import org.airsonic.player.domain.PodcastExportOPML;
-import org.airsonic.player.domain.PodcastStatus;
 import org.airsonic.player.repository.PodcastChannelRepository;
 import org.airsonic.player.repository.PodcastEpisodeRepository;
 import org.airsonic.player.repository.PodcastRuleRepository;
@@ -79,7 +73,7 @@ public class PodcastPersistenceService {
     private final PodcastRuleRepository podcastRuleRepository;
     private final SecurityService securityService;
 
-    private Predicate<PodcastEpisode> filterAllowed;
+    private final Predicate<PodcastEpisode> filterAllowed;
 
     public PodcastPersistenceService(
         SecurityService securityService,
@@ -177,7 +171,7 @@ public class PodcastPersistenceService {
         channel.setErrorMessage(null);
         channel.setMediaFile(mediaFile);
         return podcastChannelRepository.save(channel);
-    };
+    }
 
     /**
      * set error status to channel and save

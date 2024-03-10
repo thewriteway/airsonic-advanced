@@ -46,7 +46,7 @@ public class HlsSession {
     private ScheduledFuture<?> destroySessionFuture;
 
     public HlsSession(Key sessionKey, MediaFile mediaFile, TranscodingService transcodingService, Path hlsRootDirectory) {
-        this.LOG = LoggerFactory.getLogger(HlsSession.class.toString() + "-" + sessionKey.id());
+        this.LOG = LoggerFactory.getLogger(HlsSession.class + "-" + sessionKey.id());
         this.LOG.info("Creating HLS session {}: {}", sessionKey.id(), sessionKey);
         this.sessionKey = sessionKey;
         this.mediaFile = mediaFile;

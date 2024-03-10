@@ -110,11 +110,8 @@ public class PlayStatus {
         } else if (other.player == null || !player.getId().equals(other.player.getId()))
             return false;
         if (transferId == null) {
-            if (other.transferId != null)
-                return false;
-        } else if (!transferId.equals(other.transferId))
-            return false;
-        return true;
+            return other.transferId == null;
+        } else return transferId.equals(other.transferId);
     }
 
 }

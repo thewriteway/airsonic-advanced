@@ -19,6 +19,9 @@
  */
 package org.airsonic.player.filter;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.controller.JAXBWriter;
 import org.airsonic.player.controller.SubsonicRESTController;
 import org.airsonic.player.util.Util;
@@ -26,10 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.util.NestedServletException;
-
-import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Intercepts exceptions thrown by RESTController.

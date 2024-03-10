@@ -1,9 +1,8 @@
 package org.airsonic.player.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerMapping;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * This class has been created to refactor code previously present

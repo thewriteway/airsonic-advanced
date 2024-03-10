@@ -220,11 +220,10 @@ public class PodcastEpisode {
     @Override
     public boolean equals(Object obj) {
 
-        if (obj == null || !(obj instanceof PodcastEpisode)) {
+        if (obj == null || !(obj instanceof PodcastEpisode other)) {
             return false;
         }
 
-        PodcastEpisode other = (PodcastEpisode) obj;
         return Objects.equals(url, other.url);
     }
 

@@ -29,7 +29,7 @@ public class AirsonicRestApiIntTest {
     private static final String AIRSONIC_PASSWORD = "admin";
     private static final String EXPECTED_FORMAT = "json";
 
-    private static String AIRSONIC_API_VERSION = TestCaseUtils.restApiVersion();
+    private static final String AIRSONIC_API_VERSION = TestCaseUtils.restApiVersion();
 
     @Autowired
     private MockMvc mvc;

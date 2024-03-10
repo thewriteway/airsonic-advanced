@@ -19,24 +19,16 @@
  */
 package org.airsonic.player.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.command.HomeCommand;
 import org.airsonic.player.domain.*;
-import org.airsonic.player.service.MediaFileService;
-import org.airsonic.player.service.MediaFolderService;
-import org.airsonic.player.service.MediaScannerService;
-import org.airsonic.player.service.PersonalSettingsService;
-import org.airsonic.player.service.RatingService;
-import org.airsonic.player.service.SearchService;
-import org.airsonic.player.service.SecurityService;
-import org.airsonic.player.service.SettingsService;
+import org.airsonic.player.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;
 import java.time.LocalDate;

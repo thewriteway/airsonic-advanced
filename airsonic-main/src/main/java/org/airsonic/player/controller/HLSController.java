@@ -21,6 +21,8 @@
 package org.airsonic.player.controller;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Player;
@@ -28,13 +30,7 @@ import org.airsonic.player.domain.TransferStatus;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.io.PipeStreams.MonitoredResource;
 import org.airsonic.player.security.JWTAuthenticationToken;
-import org.airsonic.player.service.JWTSecurityService;
-import org.airsonic.player.service.MediaFileService;
-import org.airsonic.player.service.PlayerService;
-import org.airsonic.player.service.SecurityService;
-import org.airsonic.player.service.SettingsService;
-import org.airsonic.player.service.StatusService;
-import org.airsonic.player.service.TranscodingService;
+import org.airsonic.player.service.*;
 import org.airsonic.player.service.hls.HlsSession;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.NetworkUtil;
@@ -46,11 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
@@ -62,20 +54,13 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import java.awt.*;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -176,7 +161,6 @@ public class HLSController {
             generateNormalPlaylist(authentication, basePath, prefix, id, player, bitRates.get(0), Math.round(duration), writer);
         }
 
-        return;
     }
 
     private List<Pair<Integer, Dimension>> parseBitRates(HttpServletRequest request) throws IllegalArgumentException {

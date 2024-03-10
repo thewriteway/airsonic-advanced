@@ -21,12 +21,7 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.ajax.NowPlayingInfo;
-import org.airsonic.player.domain.AvatarScheme;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.PlayStatus;
-import org.airsonic.player.domain.Player;
-import org.airsonic.player.domain.TransferStatus;
-import org.airsonic.player.domain.UserSettings;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.service.websocket.AsyncWebSocketClient;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -38,12 +33,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

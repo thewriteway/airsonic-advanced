@@ -42,7 +42,7 @@ public class ShoutCastOutputStream extends OutputStream {
     /**
      * The underlying output stream to decorate.
      */
-    private OutputStream out;
+    private final OutputStream out;
 
     /**
      * Keeps track of the number of bytes written (excluding meta-data).  Between 0 and {@link #META_DATA_INTERVAL}.

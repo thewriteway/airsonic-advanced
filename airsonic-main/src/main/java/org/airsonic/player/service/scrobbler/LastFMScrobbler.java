@@ -283,12 +283,12 @@ public class LastFMScrobbler {
                 LOG.info("Last.fm registration for '" + registrationData.title +
                          "' encountered network error: " + errorMessage + ".  Will try again later. In queue: " + queue.size());
             } catch (InterruptedException x) {
-                LOG.error("Failed to reschedule Last.fm registration for '" + registrationData.title + "': " + x.toString());
+                LOG.error("Failed to reschedule Last.fm registration for '" + registrationData.title + "': " + x);
             }
             try {
                 sleep(60L * 1000L);  // Wait 60 seconds.
             } catch (InterruptedException x) {
-                LOG.error("Failed to sleep after Last.fm registration failure for '" + registrationData.title + "': " + x.toString());
+                LOG.error("Failed to sleep after Last.fm registration failure for '" + registrationData.title + "': " + x);
             }
         }
     }

@@ -111,7 +111,12 @@
                 <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>4.0.2</version>
               </dependency>
-             <dependency>
+  <dependency>
+      <groupId>org.eclipse.persistence</groupId>
+      <artifactId>org.eclipse.persistence.moxy</artifactId>
+      <version>4.0.2</version>
+  </dependency>
+               <dependency>
                 <groupId>jakarta.servlet</groupId>
                 <artifactId>javax.servlet-api</artifactId>
                 <version>6.0.0</version>
@@ -119,7 +124,7 @@
               <dependency>
                <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-core</artifactId>
-                 <version>4.8.0</version>
+                 <version>4.2.6.0</version>
                 </dependency>
 <dependency>
     <groupId>org.fourthline.cling</groupId>

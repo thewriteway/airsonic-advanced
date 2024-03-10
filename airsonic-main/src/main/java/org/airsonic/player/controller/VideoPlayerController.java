@@ -21,16 +21,13 @@ package org.airsonic.player.controller;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.MoreFiles;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.domain.Bookmark;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserSettings;
-import org.airsonic.player.service.BookmarkService;
-import org.airsonic.player.service.JWTSecurityService;
-import org.airsonic.player.service.MediaFileService;
-import org.airsonic.player.service.PersonalSettingsService;
-import org.airsonic.player.service.PlayerService;
-import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.service.*;
 import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
@@ -43,14 +40,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,8 +55,8 @@ public class VideoPlayerController {
 
     public static final int DEFAULT_BIT_RATE = 1500;
     public static final Set<Integer> BIT_RATES = ImmutableSet.of(200, 300, 400, 500, 700, 1000, 1200, DEFAULT_BIT_RATE, 2000, 3000, 5000);
-    private static Set<String> STREAMABLE_FORMATS = ImmutableSet.of("mp4", "m4v");
-    private static Set<String> CASTABLE_FORMATS = ImmutableSet.of("mp4", "m4v", "mkv");
+    private static final Set<String> STREAMABLE_FORMATS = ImmutableSet.of("mp4", "m4v");
+    private static final Set<String> CASTABLE_FORMATS = ImmutableSet.of("mp4", "m4v", "mkv");
 
     @Autowired
     private MediaFileService mediaFileService;
@@ -160,9 +150,7 @@ public class VideoPlayerController {
             return true;
         if (!metaData.getVideoTracks().isEmpty() && !metaData.getVideoTracks().get(0).isStreamable())
             return false;
-        if (!metaData.getAudioTracks().isEmpty() && !metaData.getAudioTracks().get(0).isStreamable())
-            return false;
-        return true;
+        return metaData.getAudioTracks().isEmpty() || metaData.getAudioTracks().get(0).isStreamable();
     }
 
     public static boolean isCastable(MediaFile file) {

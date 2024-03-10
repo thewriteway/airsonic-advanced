@@ -24,21 +24,15 @@ import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
-import org.apache.lucene.document.Document;
+import org.apache.lucene.document.*;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.SortedDocValuesField;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.TextField;
+import static org.springframework.util.ObjectUtils.isEmpty;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.util.BytesRef;
 import org.springframework.stereotype.Component;
 
 import java.util.function.BiConsumer;
-
-import static org.springframework.util.ObjectUtils.isEmpty;
 
 /**
  * A factory that generates the documents to be stored in the index.
@@ -83,39 +77,39 @@ public class DocumentFactory {
 
     }
 
-    private BiConsumer<Document, Integer> fieldId = (doc, value) -> {
+    private final BiConsumer<Document, Integer> fieldId = (doc, value) -> {
         doc.add(new StoredField(FieldNames.ID, Integer.toString(value), TYPE_ID));
     };
 
-    private BiConsumer<Document, Integer> fieldFolderId = (doc, value) -> {
+    private final BiConsumer<Document, Integer> fieldFolderId = (doc, value) -> {
         doc.add(new StoredField(FieldNames.FOLDER_ID, Integer.toString(value), TYPE_ID_NO_STORE));
     };
 
-    private Consumer<Document, String, String> fieldKey = (doc, field, value) -> {
+    private final Consumer<Document, String, String> fieldKey = (doc, field, value) -> {
         doc.add(new StoredField(field, value, TYPE_KEY));
     };
 
-    private BiConsumer<Document, String> fieldMediatype = (doc, value) ->
+    private final BiConsumer<Document, String> fieldMediatype = (doc, value) ->
         fieldKey.accept(doc, FieldNames.MEDIA_TYPE, value);
 
-    private BiConsumer<Document, String> fieldFolderPath = (doc, value) ->
+    private final BiConsumer<Document, String> fieldFolderPath = (doc, value) ->
         fieldKey.accept(doc, FieldNames.FOLDER, value);
 
-    private BiConsumer<Document, String> fieldGenre = (doc, value) -> {
+    private final BiConsumer<Document, String> fieldGenre = (doc, value) -> {
         if (isEmpty(value)) {
             return;
         }
         fieldKey.accept(doc, FieldNames.GENRE, value);
     };
 
-    private Consumer<Document, String, Integer> fieldYear = (doc, fieldName, value) -> {
+    private final Consumer<Document, String, Integer> fieldYear = (doc, fieldName, value) -> {
         if (isEmpty(value)) {
             return;
         }
         doc.add(new IntPoint(fieldName, value));
     };
 
-    private Consumer<Document, String, String> fieldWords = (doc, fieldName, value) -> {
+    private final Consumer<Document, String, String> fieldWords = (doc, fieldName, value) -> {
         if (isEmpty(value)) {
             return;
         }

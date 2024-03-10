@@ -78,9 +78,9 @@ public class LastFmServiceTest {
     private Album mockedLastFmAlbum;
 
 
-    private static List<String> similarArtists = new ArrayList<String>();
+    private static final List<String> similarArtists = new ArrayList<String>();
 
-    private static List<String> similarArtistsWithNotPresent = new ArrayList<String>();
+    private static final List<String> similarArtistsWithNotPresent = new ArrayList<String>();
 
     @BeforeAll
     public static void setUp() {

@@ -1,12 +1,7 @@
 package org.airsonic.player.service.podcast;
 
-import org.airsonic.player.domain.CoverArt;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.CoverArt.EntityType;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.MusicFolder;
-import org.airsonic.player.domain.PodcastChannel;
-import org.airsonic.player.domain.PodcastEpisode;
-import org.airsonic.player.domain.PodcastStatus;
 import org.airsonic.player.domain.entity.CoverArtKey;
 import org.airsonic.player.repository.CoverArtRepository;
 import org.airsonic.player.service.PodcastPersistenceService;

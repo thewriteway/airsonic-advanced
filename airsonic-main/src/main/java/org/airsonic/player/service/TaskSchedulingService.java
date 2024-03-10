@@ -11,13 +11,7 @@ import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
 import org.springframework.boot.task.TaskSchedulerBuilder;
 import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.scheduling.config.FixedDelayTask;
-import org.springframework.scheduling.config.FixedRateTask;
-import org.springframework.scheduling.config.IntervalTask;
-import org.springframework.scheduling.config.ScheduledTask;
-import org.springframework.scheduling.config.ScheduledTaskHolder;
-import org.springframework.scheduling.config.ScheduledTaskRegistrar;
-import org.springframework.scheduling.config.TriggerTask;
+import org.springframework.scheduling.config.*;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -26,12 +20,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -142,8 +131,7 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
         private RunMetadata getRunMetadata(Instant created, ScheduledTask scheduledTask, Instant now) {
             if (scheduledTask.getTask() instanceof TriggerTask) {
                 TriggerTask task = (TriggerTask) scheduledTask.getTask();
-                if (task.getTrigger() instanceof RunOnceTrigger) {
-                    RunOnceTrigger trigger = (RunOnceTrigger) task.getTrigger();
+                if (task.getTrigger() instanceof RunOnceTrigger trigger) {
                     Instant firstRun = created.plusMillis(trigger.getInitialDelay());
                     if (firstRun.isAfter(now)) {
                         return new RunMetadata(firstRun, null, firstRun, RunMetadata.Type.RUN_ONCE);
@@ -211,7 +199,7 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
                 return type;
             }
 
-            public static enum Type {
+            public enum Type {
                 FIXED_RATE, FIXED_DELAY, RUN_ONCE
             }
         }

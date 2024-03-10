@@ -1,11 +1,7 @@
 package org.airsonic.player.spring;
 
 import org.airsonic.player.config.AirsonicHomeConfig;
-import org.airsonic.player.domain.CoverArt;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.Playlist;
-import org.airsonic.player.domain.User;
-import org.airsonic.player.domain.UserSettings;
+import org.airsonic.player.domain.*;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ConfigurationBuilder;
 import org.ehcache.config.builders.ExpiryPolicyBuilder;
@@ -27,7 +23,6 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
-
 import java.time.Duration;
 import java.util.EnumSet;
 

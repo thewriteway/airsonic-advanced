@@ -24,6 +24,12 @@ import com.google.common.cache.CacheBuilder;
 import com.sonos.services._1.*;
 import com.sonos.services._1_1.CustomFault;
 import com.sonos.services._1_1.SonosSoap;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+import jakarta.xml.ws.Holder;
+import jakarta.xml.ws.WebServiceContext;
+import jakarta.xml.ws.handler.MessageContext;
 import org.airsonic.player.domain.AlbumListType;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Playlist;
@@ -33,6 +39,7 @@ import org.airsonic.player.service.search.IndexType;
 import org.airsonic.player.service.sonos.SonosHelper;
 import org.airsonic.player.service.sonos.SonosLinkSecurityInterceptor;
 import org.airsonic.player.service.sonos.SonosServiceRegistration;
+import org.airsonic.player.service.sonos.SonosServiceRegistration.AuthenticationType;
 import org.airsonic.player.service.sonos.SonosSoapFault;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -46,21 +53,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
 import javax.xml.datatype.XMLGregorianCalendar;
-import jakarta.xml.ws.Holder;
-import jakarta.xml.ws.WebServiceContext;
-import jakarta.xml.ws.handler.MessageContext;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
-
-import static org.airsonic.player.service.sonos.SonosServiceRegistration.AuthenticationType;
 
 /**
  * For manual testing of this service:
@@ -345,18 +343,46 @@ public class SonosService implements SonosSoap {
         return response;
     }
 
-    @Override
-    public void getMediaURI(String id, MediaUriAction action, Integer secondsSinceExplicit, Holder<String> deviceSessionToken,
-                            Holder<String> result, Holder<EncryptionContext> deviceSessionKey, Holder<EncryptionContext> contentKey,
-                            Holder<HttpHeaders> httpHeaders, Holder<Integer> uriTimeout, Holder<PositionInformation> positionInformation,
-                            Holder<String> privateDataFieldName
-    ) throws CustomFault {
-        int mediaFileId = Integer.parseInt(id);
-        String username = getUsername();
-        result.value = sonosHelper.getMediaURI(mediaFileId, getUsername(), getRequest());
-        positionInformation.value = this.sonosHelper.getPositionInformation(mediaFileId, username);
-        LOG.debug("getMediaURI: {} -> {}", id, result.value);
+        public class MediaURIResponse {
+        public String getMediaURIResult;
+        public String deviceSessionToken;
+        public EncryptionContext deviceSessionKey;
+        public EncryptionContext contentKey;
+        public HttpHeaders httpHeaders;
+        public Integer uriTimeout;
+        public PositionInformation positionInformation;
+        public String privateDataFieldName;
     }
+
+    public MediaURIResponse getMediaURI(String id, MediaUriAction action, Integer secondsSinceExplicit,
+                                        Holder<String> deviceSessionToken, Holder<EncryptionContext> deviceSessionKey,
+                                        Holder<EncryptionContext> contentKey, Holder<HttpHeaders> httpHeaders,
+                                        Holder<Integer> uriTimeout, Holder<PositionInformation> positionInformation,
+                                        Holder<String> privateDataFieldName) throws CustomFault {
+        MediaURIResponse response = new MediaURIResponse();
+        try {
+            int mediaFileId = Integer.parseInt(id);
+            String username = getUsername(); // Implement getUsername() accordingly
+            String resultUri = sonosHelper.getMediaURI(mediaFileId, username, getRequest()); // Implement getRequest() accordingly
+
+            response.getMediaURIResult = resultUri;
+            response.deviceSessionToken = deviceSessionToken.value;
+            response.deviceSessionKey = deviceSessionKey.value;
+            response.contentKey = contentKey.value;
+            response.httpHeaders = httpHeaders.value;
+            response.uriTimeout = uriTimeout.value;
+            response.positionInformation = positionInformation.value;
+            response.privateDataFieldName = privateDataFieldName.value;
+
+            LOG.debug("getMediaURI: {} -> {}", id, resultUri);
+            return response;
+        } catch (NumberFormatException e) {
+            throw new CustomFault("Invalid ID format", e); // Handle exception appropriately
+        }
+    }
+
+
+
 
     @Override
     public CreateContainerResult createContainer(String containerType, String title, String parentId, String seedId) {
@@ -558,7 +584,7 @@ public class SonosService implements SonosSoap {
         return null;
     }
 
-    private Cache<String, Triple<String, String, Instant>> sonosLinkCache = CacheBuilder.newBuilder().expireAfterWrite(7, TimeUnit.MINUTES).<String, Triple<String, String, Instant>>build();
+    private final Cache<String, Triple<String, String, Instant>> sonosLinkCache = CacheBuilder.newBuilder().expireAfterWrite(7, TimeUnit.MINUTES).<String, Triple<String, String, Instant>>build();
 
     // The link code must be exactly 32 characters long
     private String createLinkCode() {

@@ -24,6 +24,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.sonos.services._1.*;
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.controller.CoverArtController;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.service.*;
@@ -34,8 +35,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDate;
 import java.util.*;

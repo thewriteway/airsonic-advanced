@@ -1,6 +1,9 @@
 package org.airsonic.player.service;
 
-import chameleon.playlist.*;
+import chameleon.playlist.BasePlaylistVisitor;
+import chameleon.playlist.Media;
+import chameleon.playlist.SpecificPlaylist;
+import chameleon.playlist.SpecificPlaylistFactory;
 import org.airsonic.player.domain.InternetRadio;
 import org.airsonic.player.domain.InternetRadioSource;
 import org.airsonic.player.repository.InternetRadioRepository;
@@ -170,7 +173,7 @@ public class InternetRadioService {
         SpecificPlaylist inputPlaylist = null;
         HttpURLConnection urlConnection = connectToURLWithRedirects(new URL(streamUrl), maxRedirects);
         try (InputStream in = urlConnection.getInputStream();
-                BoundedInputStream bin = new BoundedInputStream(in, maxByteSize);) {
+                BoundedInputStream bin = new BoundedInputStream(in, maxByteSize)) {
             String contentType = urlConnection.getContentType();
             if (contentType != null && DIRECT_PLAYABLE_TYPES.contains(contentType)) {
                 //for direct binary streams, just return a collection with a single internet radio source

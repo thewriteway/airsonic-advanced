@@ -10,16 +10,16 @@ import java.util.Optional;
 @Repository
 public interface PlaylistRepository extends JpaRepository<Playlist, Integer> {
 
-    public List<Playlist> findByUsername(String username);
+    List<Playlist> findByUsername(String username);
 
-    public List<Playlist> findByUsernameOrderByNameAsc(String username);
+    List<Playlist> findByUsernameOrderByNameAsc(String username);
 
-    public List<Playlist> findBySharedTrue();
+    List<Playlist> findBySharedTrue();
 
-    public List<Playlist> findByUsernameNotAndSharedUsersUsername(String username, String sharedUsername);
+    List<Playlist> findByUsernameNotAndSharedUsersUsername(String username, String sharedUsername);
 
-    public Optional<Playlist> findByIdAndSharedUsersUsername(Integer id, String sharedUsername);
+    Optional<Playlist> findByIdAndSharedUsersUsername(Integer id, String sharedUsername);
 
-    public boolean existsByIdAndUsername(Integer id, String username);
+    boolean existsByIdAndUsername(Integer id, String username);
 
 }

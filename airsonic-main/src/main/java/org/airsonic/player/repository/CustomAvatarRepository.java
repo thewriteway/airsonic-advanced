@@ -30,9 +30,9 @@ import java.util.Optional;
 @Repository
 public interface CustomAvatarRepository extends JpaRepository<CustomAvatar, Integer> {
 
-    public Optional<CustomAvatar> findByUsername(String username);
+    Optional<CustomAvatar> findByUsername(String username);
 
     @Transactional
-    public void deleteAllByUsername(String username);
+    void deleteAllByUsername(String username);
 
 }

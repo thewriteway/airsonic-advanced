@@ -100,7 +100,7 @@ public class PodcastPersistenceServiceTestCase {
     private Path tempFolder;
 
     // test data
-    private PodcastChannelRule RULE_SCHEDULE = new PodcastChannelRule(1, 1, 1, 1);
+    private final PodcastChannelRule RULE_SCHEDULE = new PodcastChannelRule(1, 1, 1, 1);
 
     @Test
     void testCreateOrUpdateChannelRule() {

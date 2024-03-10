@@ -47,7 +47,7 @@ public class SonosFaultInterceptor extends AbstractSoapInterceptor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SonosFaultInterceptor.class);
 
-    private static Marshaller marshaller = createMarshaller();
+    private static final Marshaller marshaller = createMarshaller();
 
     private static Marshaller createMarshaller() {
         try {

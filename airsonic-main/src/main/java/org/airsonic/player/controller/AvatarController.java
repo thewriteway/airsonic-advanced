@@ -19,6 +19,7 @@
  */
 package org.airsonic.player.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.domain.Avatar;
 import org.airsonic.player.service.PersonalSettingsService;
 import org.apache.commons.io.IOUtils;
@@ -29,8 +30,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.nio.file.Path;
 

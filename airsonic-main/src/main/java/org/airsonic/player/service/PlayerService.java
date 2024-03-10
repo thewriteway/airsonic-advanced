@@ -20,13 +20,11 @@
 package org.airsonic.player.service;
 
 import com.google.common.collect.ImmutableMap;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.command.PlayerSettingsCommand;
-import org.airsonic.player.domain.PlayQueue;
-import org.airsonic.player.domain.Player;
-import org.airsonic.player.domain.PlayerTechnology;
-import org.airsonic.player.domain.TranscodeScheme;
-import org.airsonic.player.domain.Transcoding;
-import org.airsonic.player.domain.User;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.repository.PlayerRepository;
 import org.airsonic.player.repository.TranscodingRepository;
 import org.airsonic.player.service.websocket.AsyncWebSocketClient;
@@ -44,18 +42,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.ServletRequestUtils;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Provides services for maintaining the set of players.
@@ -87,7 +76,7 @@ public class PlayerService {
         deleteOldPlayers(60);
     }
 
-    private Map<Integer, PlayQueue> playlists = Collections.synchronizedMap(new HashMap<Integer, PlayQueue>());
+    private final Map<Integer, PlayQueue> playlists = Collections.synchronizedMap(new HashMap<Integer, PlayQueue>());
 
     /**
      * Adds a playlist to the given player.

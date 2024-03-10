@@ -20,9 +20,8 @@
  */
 package org.airsonic.player.domain;
 
-import org.apache.commons.lang.StringUtils;
-
 import jakarta.persistence.*;
+import org.apache.commons.lang.StringUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -430,10 +429,9 @@ public class Player {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj == null || !(obj instanceof Player)) {
+        if (obj == null || !(obj instanceof Player other)) {
             return false;
         }
-        Player other = (Player) obj;
         return Objects.equals(id, other.id);
     }
 

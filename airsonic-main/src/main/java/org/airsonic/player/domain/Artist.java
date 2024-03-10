@@ -20,9 +20,8 @@
  */
 package org.airsonic.player.domain;
 
-import org.airsonic.player.repository.AtomicIntegerConverter;
-
 import jakarta.persistence.*;
+import org.airsonic.player.repository.AtomicIntegerConverter;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -137,11 +136,10 @@ public class Artist {
     @Override
     public boolean equals(Object obj) {
 
-        if (obj == null || !(obj instanceof Artist)) {
+        if (obj == null || !(obj instanceof Artist other)) {
             return false;
         }
 
-        Artist other = (Artist) obj;
         return Objects.equals(name, other.name);
     }
 }

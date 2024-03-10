@@ -41,14 +41,10 @@ public class CoverArtKey implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof CoverArtKey)) return false;
-
-        CoverArtKey that = (CoverArtKey) o;
+        if (!(o instanceof CoverArtKey that)) return false;
 
         if (entityId != that.entityId) return false;
-        if (entityType != (that.entityType)) return false;
-
-        return true;
+        return entityType == (that.entityType);
     }
 
     @Override

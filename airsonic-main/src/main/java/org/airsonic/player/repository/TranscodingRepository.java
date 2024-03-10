@@ -26,10 +26,10 @@ import java.util.List;
 
 public interface TranscodingRepository extends JpaRepository<Transcoding, Integer> {
 
-    public List<Transcoding> findByIdIn(List<Integer> ids);
+    List<Transcoding> findByIdIn(List<Integer> ids);
 
-    public List<Transcoding> findByPlayersContaining(Player player);
+    List<Transcoding> findByPlayersContaining(Player player);
 
-    public List<Transcoding> findByDefaultActiveTrue();
+    List<Transcoding> findByDefaultActiveTrue();
 
 }

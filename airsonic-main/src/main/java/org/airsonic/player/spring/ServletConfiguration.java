@@ -1,13 +1,10 @@
 package org.airsonic.player.spring;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.Servlet;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.controller.PodcastController;
-import org.airsonic.player.filter.BootstrapVerificationFilter;
-import org.airsonic.player.filter.MetricsFilter;
-import org.airsonic.player.filter.ParameterDecodingFilter;
-import org.airsonic.player.filter.RESTFilter;
-import org.airsonic.player.filter.RequestEncodingFilter;
-import org.airsonic.player.filter.ResponseHeaderFilter;
+import org.airsonic.player.filter.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
@@ -21,9 +18,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
-
-import jakarta.servlet.Filter;
-import jakarta.servlet.Servlet;
 
 import java.util.Properties;
 

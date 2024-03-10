@@ -131,13 +131,13 @@ public class PersonalSettingsServiceTest {
         when(systemAvatarRepository.findById(10)).thenReturn(Optional.empty());
 
         Avatar actual = service.getSystemAvatar(10);
-        assertEquals(null, actual);
+        assertNull(actual);
     }
 
     @Test
     public void testGetSystemAvatarWhenIdIsNull() throws Exception {
         Avatar actual = service.getSystemAvatar(null);
-        assertEquals(null, actual);
+        assertNull(actual);
         verify(systemAvatarRepository, never()).findById(anyInt());
     }
 
@@ -163,7 +163,7 @@ public class PersonalSettingsServiceTest {
         when(customAvatarRepository.findByUsername("user")).thenReturn(Optional.empty());
 
         Avatar actual = service.getCustomAvatar("user");
-        assertEquals(null, actual);
+        assertNull(actual);
     }
 
     @ParameterizedTest
@@ -171,7 +171,7 @@ public class PersonalSettingsServiceTest {
     @ValueSource(strings = { " " })
     public void testGetCustomAvatarWhenUsernameIsNull(String username) throws Exception {
         Avatar actual = service.getCustomAvatar(username);
-        assertEquals(null, actual);
+        assertNull(actual);
         verify(customAvatarRepository, never()).findByUsername(username);
     }
 

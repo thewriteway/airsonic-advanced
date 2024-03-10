@@ -4,11 +4,7 @@ import com.google.common.util.concurrent.RateLimiter;
 import org.airsonic.player.domain.TransferStatus;
 import org.springframework.core.io.Resource;
 
-import java.io.File;
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.function.BiConsumer;
@@ -445,7 +441,7 @@ public class PipeStreams {
         }
 
         @Override
-        public int read(byte b[], int off, int len) throws IOException {
+        public int read(byte[] b, int off, int len) throws IOException {
             int read = super.read(b, off, len);
             if (read > 0) {
                 acquire(read);

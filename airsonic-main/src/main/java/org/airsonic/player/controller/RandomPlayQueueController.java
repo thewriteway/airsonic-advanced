@@ -19,7 +19,11 @@
  */
 package org.airsonic.player.controller;
 
-import org.airsonic.player.domain.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.airsonic.player.domain.MusicFolder;
+import org.airsonic.player.domain.Player;
+import org.airsonic.player.domain.RandomSearchCriteria;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.PlayQueueService;
 import org.airsonic.player.service.PlayerService;
@@ -32,9 +36,6 @@ import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

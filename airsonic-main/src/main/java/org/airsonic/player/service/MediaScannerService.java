@@ -37,13 +37,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
-import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -101,7 +96,7 @@ public class MediaScannerService {
     private final AirsonicScanConfig scanConfig;
 
     private int scannerParallelism;
-    private AtomicInteger scanCount = new AtomicInteger(0);
+    private final AtomicInteger scanCount = new AtomicInteger(0);
 
     public void init() {
         this.scannerParallelism = scanConfig.getParallelism();
@@ -188,7 +183,7 @@ public class MediaScannerService {
         return scanCount.get();
     }
 
-    private static ForkJoinWorkerThreadFactory mediaScannerThreadFactory = new ForkJoinWorkerThreadFactory() {
+    private static final ForkJoinWorkerThreadFactory mediaScannerThreadFactory = new ForkJoinWorkerThreadFactory() {
         @Override
         public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
             final ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);

@@ -35,20 +35,20 @@ import java.util.Optional;
 @Repository
 public interface StarredMediaFileRepository extends JpaRepository<StarredMediaFile, Integer> {
 
-    public int countByUsernameAndMediaFileMediaTypeAndMediaFileFolderInAndMediaFilePresentTrue(
+    int countByUsernameAndMediaFileMediaTypeAndMediaFileFolderInAndMediaFilePresentTrue(
             String username, MediaType mediaType, Iterable<MusicFolder> folders);
 
-    public Optional<StarredMediaFile> findByUsernameAndMediaFile(String username, MediaFile mediaFile);
+    Optional<StarredMediaFile> findByUsernameAndMediaFile(String username, MediaFile mediaFile);
 
-    public List<StarredMediaFile> findByUsername(String username);
+    List<StarredMediaFile> findByUsername(String username);
 
-    public List<StarredMediaFile> findByUsernameAndMediaFileMediaTypeAndMediaFileFolderInAndMediaFilePresentTrue(
+    List<StarredMediaFile> findByUsernameAndMediaFileMediaTypeAndMediaFileFolderInAndMediaFilePresentTrue(
             String username, MediaType mediaType, Iterable<MusicFolder> folders, Pageable page);
 
-    public List<StarredMediaFile> findByUsernameAndMediaFileMediaTypeInAndMediaFileFolderInAndMediaFilePresentTrue(
+    List<StarredMediaFile> findByUsernameAndMediaFileMediaTypeInAndMediaFileFolderInAndMediaFilePresentTrue(
             String username, Iterable<MediaType> mediaType, Iterable<MusicFolder> folders, Pageable page);
 
     @Transactional
-    public void deleteAllByMediaFileIdInAndUsername(List<Integer> mediaFileIds, String username);
+    void deleteAllByMediaFileIdInAndUsername(List<Integer> mediaFileIds, String username);
 
 }

@@ -20,11 +20,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class JWTAuthenticationProvider implements AuthenticationProvider {
 
@@ -36,7 +32,7 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
         this.jwtKey = jwtSignAndVerifyKey;
     }
 
-    private Map<String, List<VerificationCheck>> additionalChecks = new HashMap<>();
+    private final Map<String, List<VerificationCheck>> additionalChecks = new HashMap<>();
 
     @Override
     public Authentication authenticate(Authentication auth) throws AuthenticationException {
@@ -135,6 +131,6 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
 
     @FunctionalInterface
     public interface VerificationCheck {
-        public void check(DecodedJWT jwt) throws AuthenticationException;
+        void check(DecodedJWT jwt) throws AuthenticationException;
     }
 }

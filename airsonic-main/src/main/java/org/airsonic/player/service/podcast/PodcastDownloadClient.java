@@ -20,16 +20,8 @@
  */
 package org.airsonic.player.service.podcast;
 
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.MusicFolder;
-import org.airsonic.player.domain.PodcastChannel;
-import org.airsonic.player.domain.PodcastEpisode;
-import org.airsonic.player.domain.PodcastStatus;
-import org.airsonic.player.service.MediaFileService;
-import org.airsonic.player.service.PodcastPersistenceService;
-import org.airsonic.player.service.SecurityService;
-import org.airsonic.player.service.SettingsService;
-import org.airsonic.player.service.VersionService;
+import org.airsonic.player.domain.*;
+import org.airsonic.player.service.*;
 import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.service.metadata.MetaDataParser;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;

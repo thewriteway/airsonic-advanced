@@ -20,13 +20,7 @@
 
 package org.airsonic.player.service;
 
-import org.airsonic.player.domain.Album;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.MusicFolder;
-import org.airsonic.player.domain.ParamSearchResult;
-import org.airsonic.player.domain.RandomSearchCriteria;
-import org.airsonic.player.domain.SearchCriteria;
-import org.airsonic.player.domain.SearchResult;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.service.search.IndexType;
 
 import java.util.List;

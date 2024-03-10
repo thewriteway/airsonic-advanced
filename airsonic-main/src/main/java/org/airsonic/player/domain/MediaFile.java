@@ -21,9 +21,8 @@
 package org.airsonic.player.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.io.FilenameUtils;
-
 import jakarta.persistence.*;
+import org.apache.commons.io.FilenameUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -141,7 +140,7 @@ public class MediaFile {
     private boolean present;
 
     @Column(name = "version", nullable = false)
-    private int version = VERSION;
+    private final int version = VERSION;
 
     @Column(name = "mb_release_id", nullable = true)
     private String musicBrainzReleaseId;
@@ -522,10 +521,7 @@ public class MediaFile {
         if (!folder.equals(other.folder)) {
             return false;
         }
-        if (!startPosition.equals(other.startPosition)) {
-            return false;
-        }
-        return true;
+        return startPosition.equals(other.startPosition);
     }
 
     @Override
@@ -550,7 +546,7 @@ public class MediaFile {
 
     public static final int VERSION = 4;
 
-    public static enum MediaType {
+    public enum MediaType {
         MUSIC,
         PODCAST,
         AUDIOBOOK,

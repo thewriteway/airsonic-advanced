@@ -11,7 +11,7 @@ public interface UserService {
      *
      * @return all users.
      */
-    public List<User> getAllUsers();
+    List<User> getAllUsers();
 
     /**
      * Get system administrator user, which system operations perform on behalf.

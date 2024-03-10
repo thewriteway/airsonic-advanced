@@ -75,7 +75,7 @@ public class DropConstraintWithoutName implements CustomSqlChange {
         if (conn != null) {
             try (PreparedStatement st1 = conn.prepareStatement(
                     "select * from information_schema.table_constraints tc, information_schema.key_column_usage cu WHERE cu.constraint_name=tc.constraint_name and lower(tc.table_name)=? and lower(tc.constraint_type)=? and lower(cu.column_name) in ("
-                            + columns.stream().map(c -> "?").collect(joining("?")) + ")");) {
+                            + columns.stream().map(c -> "?").collect(joining("?")) + ")")) {
                 st1.setString(1, tableName);
                 st1.setString(2, constraintType);
                 for (int i = 0; i < columns.size(); i++) {

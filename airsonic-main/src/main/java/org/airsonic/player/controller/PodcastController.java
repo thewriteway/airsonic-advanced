@@ -19,6 +19,8 @@
  */
 package org.airsonic.player.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Playlist;
 import org.airsonic.player.service.PlaylistService;
@@ -29,9 +31,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -97,11 +96,11 @@ public class PodcastController {
      * Contains information about a single Podcast.
      */
     public static class Podcast {
-        private String name;
-        private String publishDate;
-        private String enclosureUrl;
-        private long length;
-        private String type;
+        private final String name;
+        private final String publishDate;
+        private final String enclosureUrl;
+        private final long length;
+        private final String type;
 
         public Podcast(String name, String publishDate, String enclosureUrl, long length, String type) {
             this.name = name;

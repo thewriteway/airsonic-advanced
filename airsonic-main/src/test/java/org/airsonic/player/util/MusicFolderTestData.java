@@ -13,7 +13,7 @@ import java.util.List;
 
 public class MusicFolderTestData {
 
-    private static String baseResources = "/MEDIAS/";
+    private static final String baseResources = "/MEDIAS/";
 
     public static Path resolveBaseMediaPath() {
         try {

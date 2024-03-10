@@ -86,9 +86,9 @@ public class PodcastManagementServiceTestCase {
     private Path tempFolder;
 
     // test data
-    private PodcastChannelRule RULE_SCHEDULE = new PodcastChannelRule(1, 1, 1, 1);
-    private PodcastRule RULE_SCHEDULE_COMMAND = new PodcastRule(RULE_SCHEDULE, "test");
-    private PodcastChannelRule RULE_UNSCHEDULE = new PodcastChannelRule(2, -1, null, null);
+    private final PodcastChannelRule RULE_SCHEDULE = new PodcastChannelRule(1, 1, 1, 1);
+    private final PodcastRule RULE_SCHEDULE_COMMAND = new PodcastRule(RULE_SCHEDULE, "test");
+    private final PodcastChannelRule RULE_UNSCHEDULE = new PodcastChannelRule(2, -1, null, null);
 
     @Test
     void testCreateOrUpdateChannelRule() {

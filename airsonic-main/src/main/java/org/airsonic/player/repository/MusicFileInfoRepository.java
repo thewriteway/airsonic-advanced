@@ -7,6 +7,6 @@ import java.util.Optional;
 
 public interface MusicFileInfoRepository extends JpaRepository<MusicFileInfo, Integer> {
 
-    public Optional<MusicFileInfo> findByPath(String path);
+    Optional<MusicFileInfo> findByPath(String path);
 
 }

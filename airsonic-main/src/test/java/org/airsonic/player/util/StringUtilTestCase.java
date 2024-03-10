@@ -32,7 +32,7 @@ import java.util.Locale;
 public class StringUtilTestCase extends TestCase {
 
     public void testToHtml() {
-        assertEquals(null, StringEscapeUtils.escapeHtml(null));
+        assertNull(StringEscapeUtils.escapeHtml(null));
         assertEquals("", StringEscapeUtils.escapeHtml(""));
         assertEquals(" ", StringEscapeUtils.escapeHtml(" "));
         assertEquals("q &amp; a", StringEscapeUtils.escapeHtml("q & a"));
@@ -161,7 +161,7 @@ public class StringUtilTestCase extends TestCase {
         assertEquals("Error in removeMarkup()", "foobar", StringUtil.removeMarkup("<b>foo</b>bar"));
         assertEquals("Error in removeMarkup()", "foo", StringUtil.removeMarkup("foo"));
         assertEquals("Error in removeMarkup()", "foo", StringUtil.removeMarkup("<b>foo"));
-        assertEquals("Error in removeMarkup()", null, StringUtil.removeMarkup(null));
+        assertNull("Error in removeMarkup()", StringUtil.removeMarkup(null));
     }
 
 }

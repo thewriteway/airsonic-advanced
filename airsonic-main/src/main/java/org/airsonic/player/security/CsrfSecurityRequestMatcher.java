@@ -1,11 +1,10 @@
 package org.airsonic.player.security;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +19,8 @@ import java.util.List;
  */
 @Component
 public class CsrfSecurityRequestMatcher implements RequestMatcher {
-    static private List<String> allowedMethods = Arrays.asList("GET", "HEAD", "TRACE", "OPTIONS");
-    private List<RequestMatcher> whiteListedMatchers;
+    static private final List<String> allowedMethods = Arrays.asList("GET", "HEAD", "TRACE", "OPTIONS");
+    private final List<RequestMatcher> whiteListedMatchers;
 
     public CsrfSecurityRequestMatcher() {
         this.whiteListedMatchers = Arrays.asList(

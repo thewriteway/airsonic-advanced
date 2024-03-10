@@ -21,11 +21,7 @@
 
 package org.airsonic.player.service.search;
 
-import org.airsonic.player.domain.Album;
-import org.airsonic.player.domain.Artist;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.ParamSearchResult;
-import org.airsonic.player.domain.SearchResult;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.repository.AlbumRepository;
 import org.airsonic.player.repository.ArtistRepository;
 import org.airsonic.player.service.MediaFileService;

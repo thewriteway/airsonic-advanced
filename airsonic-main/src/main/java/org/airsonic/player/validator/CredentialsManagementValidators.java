@@ -1,19 +1,14 @@
 package org.airsonic.player.validator;
 
-import org.airsonic.player.command.CredentialsManagementCommand.CredentialsCommand;
-import org.airsonic.player.security.GlobalSecurityConfig;
-import org.apache.commons.lang3.StringUtils;
-
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.Payload;
+import org.airsonic.player.command.CredentialsManagementCommand.CredentialsCommand;
+import org.airsonic.player.security.GlobalSecurityConfig;
+import org.apache.commons.lang3.StringUtils;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 public class CredentialsManagementValidators {
     @Target({ ElementType.TYPE, ElementType.ANNOTATION_TYPE })

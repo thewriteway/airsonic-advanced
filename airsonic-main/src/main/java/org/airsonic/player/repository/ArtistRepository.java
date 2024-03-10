@@ -36,27 +36,27 @@ import java.util.Optional;
 @Repository
 public interface ArtistRepository extends JpaRepository<Artist, Integer> {
 
-    public Optional<Artist> findByName(String name);
+    Optional<Artist> findByName(String name);
 
-    public Optional<Artist> findByNameAndFolderIn(String name, Iterable<MusicFolder> folders);
+    Optional<Artist> findByNameAndFolderIn(String name, Iterable<MusicFolder> folders);
 
-    public List<Artist> findByFolderInAndPresentTrue(Iterable<MusicFolder> folders, Sort sort);
+    List<Artist> findByFolderInAndPresentTrue(Iterable<MusicFolder> folders, Sort sort);
 
-    public List<Artist> findByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders,
-            Pageable pageable);
+    List<Artist> findByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders,
+                                              Pageable pageable);
 
-    public List<Artist> findByPresentFalse();
+    List<Artist> findByPresentFalse();
 
-    public boolean existsByName(String name);
+    boolean existsByName(String name);
 
-    public boolean existsByLastScannedBeforeAndPresentTrue(Instant lastScanned);
+    boolean existsByLastScannedBeforeAndPresentTrue(Instant lastScanned);
 
     @Transactional
-    public void deleteAllByPresentFalse();
+    void deleteAllByPresentFalse();
 
     @Transactional
     @Modifying
     @Query("UPDATE Artist a SET a.present = false WHERE a.lastScanned < :lastScanned")
-    public void markNonPresent(@Param("lastScanned") Instant lastScanned);
+    void markNonPresent(@Param("lastScanned") Instant lastScanned);
 
 }

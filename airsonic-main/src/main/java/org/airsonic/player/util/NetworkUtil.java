@@ -20,14 +20,13 @@
  */
 package org.airsonic.player.util;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.spring.WebsocketConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.web.util.UrlPathHelper;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -36,7 +35,7 @@ import java.net.URL;
 
 public class NetworkUtil {
 
-    private static UrlPathHelper urlPathHelper = new UrlPathHelper();
+    private static final UrlPathHelper urlPathHelper = new UrlPathHelper();
     private static final String X_FORWARDED_SERVER = "X-Forwarded-Server";
     private static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
     private static final String X_FORWARDED_HOST = "X-Forwarded-Host";
@@ -59,7 +58,7 @@ public class NetworkUtil {
                 uri = calculateNonProxyUri(request);
             }
 
-            String baseUrl = uri.toString() + "/";
+            String baseUrl = uri + "/";
             LOG.debug("Calculated base url to " + baseUrl);
             return baseUrl;
         } catch (MalformedURLException | URISyntaxException e) {

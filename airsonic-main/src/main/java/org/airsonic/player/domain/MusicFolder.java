@@ -65,7 +65,7 @@ public class MusicFolder implements Serializable {
     private boolean deleted;
 
     @ManyToMany(mappedBy = "musicFolders")
-    private List<User> users = new ArrayList<>();
+    private final List<User> users = new ArrayList<>();
 
     public MusicFolder() {
     }
@@ -217,7 +217,7 @@ public class MusicFolder implements Serializable {
         return Objects.hashCode(id);
     }
 
-    public static enum Type {
+    public enum Type {
         MEDIA, PODCAST
     }
 

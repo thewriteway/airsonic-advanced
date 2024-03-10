@@ -31,17 +31,17 @@ import java.util.Optional;
 @Repository
 public interface MusicFolderRepository extends JpaRepository<MusicFolder, Integer> {
 
-    public List<MusicFolder> findByDeleted(boolean deleted);
+    List<MusicFolder> findByDeleted(boolean deleted);
 
-    public List<MusicFolder> findByUsersAndDeletedFalseAndEnabledTrue(User user);
+    List<MusicFolder> findByUsersAndDeletedFalseAndEnabledTrue(User user);
 
-    public Optional<MusicFolder> findByIdAndDeletedFalse(Integer id);
+    Optional<MusicFolder> findByIdAndDeletedFalse(Integer id);
 
-    public Optional<MusicFolder> findByIdAndTypeAndDeletedFalse(Integer id, Type type);
+    Optional<MusicFolder> findByIdAndTypeAndDeletedFalse(Integer id, Type type);
 
-    public List<MusicFolder> findByIdNotAndTypeAndDeletedFalse(Integer id, Type type);
+    List<MusicFolder> findByIdNotAndTypeAndDeletedFalse(Integer id, Type type);
 
     @Transactional
-    public void deleteAllByDeletedTrue();
+    void deleteAllByDeletedTrue();
 
 }

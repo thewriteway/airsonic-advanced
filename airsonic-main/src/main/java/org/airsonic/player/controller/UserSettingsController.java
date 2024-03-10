@@ -19,6 +19,7 @@
  */
 package org.airsonic.player.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.command.UserSettingsCommand;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.MusicFolder;
@@ -26,12 +27,7 @@ import org.airsonic.player.domain.MusicFolder.Type;
 import org.airsonic.player.domain.TranscodeScheme;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserSettings;
-import org.airsonic.player.service.MediaFolderService;
-import org.airsonic.player.service.PersonalSettingsService;
-import org.airsonic.player.service.SecurityService;
-import org.airsonic.player.service.SettingsService;
-import org.airsonic.player.service.TranscodingService;
-import org.airsonic.player.service.UserService;
+import org.airsonic.player.service.*;
 import org.airsonic.player.util.Util;
 import org.airsonic.player.validator.UserSettingsValidator;
 import org.apache.commons.lang.StringUtils;
@@ -45,20 +41,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.stream.Collectors.toSet;
 

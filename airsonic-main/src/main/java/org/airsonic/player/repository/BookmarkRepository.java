@@ -29,10 +29,10 @@ import java.util.Optional;
 @Repository
 public interface BookmarkRepository extends JpaRepository<Bookmark, Integer> {
 
-    public List<Bookmark> findByUsername(String username);
+    List<Bookmark> findByUsername(String username);
 
-    public Optional<Bookmark> findOptByUsernameAndMediaFileId(String username, int mediaFileId);
+    Optional<Bookmark> findOptByUsernameAndMediaFileId(String username, int mediaFileId);
 
     @Transactional
-    public void deleteByUsernameAndMediaFileId(String username, int mediaFileId);
+    void deleteByUsernameAndMediaFileId(String username, int mediaFileId);
 }

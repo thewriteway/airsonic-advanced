@@ -31,7 +31,7 @@ import java.util.Collection;
 
 public class CustomUserDetailsContextMapper implements UserDetailsContextMapper {
     private static final Logger LOG = LoggerFactory.getLogger(CustomUserDetailsContextMapper.class);
-    private String passwordAttributeName = "userPassword";
+    private final String passwordAttributeName = "userPassword";
 
     @Override
     public UserDetails mapUserFromContext(DirContextOperations ctx, String username,

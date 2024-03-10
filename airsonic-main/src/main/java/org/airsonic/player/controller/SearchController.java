@@ -19,15 +19,11 @@
  */
 package org.airsonic.player.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.command.SearchCommand;
 import org.airsonic.player.domain.*;
-import org.airsonic.player.service.AlbumService;
-import org.airsonic.player.service.MediaFileService;
-import org.airsonic.player.service.MediaFolderService;
-import org.airsonic.player.service.PersonalSettingsService;
-import org.airsonic.player.service.PlayerService;
-import org.airsonic.player.service.SearchService;
-import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.service.*;
 import org.airsonic.player.service.search.IndexType;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -39,17 +35,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 /**
  * Controller for the search page.

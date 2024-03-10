@@ -21,17 +21,11 @@
 package org.airsonic.player.service.search;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.cjk.CJKWidthFilterFactory;
 import org.apache.lucene.analysis.core.KeywordTokenizerFactory;
-import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
-import org.apache.lucene.analysis.core.StopFilterFactory;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.analysis.custom.CustomAnalyzer.Builder;
-import org.apache.lucene.analysis.en.EnglishPossessiveFilterFactory;
-import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilterFactory;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
-import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -103,26 +97,27 @@ public final class AnalyzerFactory {
                     "pattern", "\\[\\]", "replacement", "\\[ \\]", "replace", "all");
     }
 
-    private Builder createDefaultAnalyzerBuilder() throws IOException {
-        Builder builder = CustomAnalyzer.builder()
-                .withTokenizer(StandardTokenizerFactory.class)
-                .addTokenFilter(CJKWidthFilterFactory.class)
-                .addTokenFilter(ASCIIFoldingFilterFactory.class, "preserveOriginal", "false")
-                .addTokenFilter(LowerCaseFilterFactory.class)
-                .addTokenFilter(StopFilterFactory.class, "words", STOP_WORDS)
-                .addTokenFilter(EnglishPossessiveFilterFactory.class);
+    private CustomAnalyzer.Builder createDefaultAnalyzerBuilder() throws IOException {
+
+        CustomAnalyzer.Builder builder = CustomAnalyzer.builder()
+            .withTokenizer("org.apache.lucene.analysis.standard.StandardTokenizerFactory")
+            .addTokenFilter("org.apache.lucene.analysis.cjk.CJKWidthFilterFactory")
+            .addTokenFilter("org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilterFactory", "preserveOriginal", "false")
+            .addTokenFilter("org.apache.lucene.analysis.core.LowerCaseFilterFactory")
+            .addTokenFilter("org.apache.lucene.analysis.core.StopFilterFactory", "words", STOP_WORDS)
+            .addTokenFilter("org.apache.lucene.analysis.en.EnglishPossessiveFilterFactory");
         addTokenFilterForUnderscoreRemovalAroundToken(builder);
         return builder;
     }
 
     private Builder createArtistAnalyzerBuilder() throws IOException {
         Builder builder = CustomAnalyzer.builder()
-                .withTokenizer(StandardTokenizerFactory.class)
-                .addTokenFilter(CJKWidthFilterFactory.class)
-                .addTokenFilter(ASCIIFoldingFilterFactory.class, "preserveOriginal", "false")
-                .addTokenFilter(LowerCaseFilterFactory.class)
-                .addTokenFilter(StopFilterFactory.class, "words", STOP_WORDS_ARTIST)
-                .addTokenFilter(EnglishPossessiveFilterFactory.class);
+                .withTokenizer("org.apache.lucene.analysis.standard.StandardTokenizerFactory")
+                .addTokenFilter("org.apache.lucene.analysis.cjk.CJKWidthFilterFactory")
+                .addTokenFilter("org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilterFactory", "preserveOriginal", "false")
+                .addTokenFilter("org.apache.lucene.analysis.core.LowerCaseFilterFactory")
+                .addTokenFilter("org.apache.lucene.analysis.core.StopFilterFactory", "words", STOP_WORDS_ARTIST)
+                .addTokenFilter("org.apache.lucene.analysis.en.EnglishPossessiveFilterFactory");
         addTokenFilterForUnderscoreRemovalAroundToken(builder);
         return builder;
     }

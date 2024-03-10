@@ -55,7 +55,7 @@ public class JaudiotaggerParser extends MetaDataParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(JaudiotaggerParser.class);
     @Autowired
-    private MediaFolderService mediaFolderService;
+    private final MediaFolderService mediaFolderService;
 
     public JaudiotaggerParser(MediaFolderService mediaFolderService) {
         this.mediaFolderService = mediaFolderService;
@@ -185,7 +185,7 @@ public class JaudiotaggerParser extends MetaDataParser {
         return true;
     }
 
-    private static Set<String> applicableFormats = ImmutableSet.of("mp3","flac");
+    private static final Set<String> applicableFormats = ImmutableSet.of("mp3","flac");
 
     /**
      * Returns whether this parser is applicable to the given file.

@@ -14,8 +14,8 @@ public class OffsetBasedPageRequest implements Pageable, Serializable {
 
     private static final long serialVersionUID = -25822477129613575L;
 
-    private int limit;
-    private long offset;
+    private final int limit;
+    private final long offset;
     private final Sort sort;
 
     /**
@@ -109,9 +109,7 @@ public class OffsetBasedPageRequest implements Pageable, Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
 
-        if (!(o instanceof OffsetBasedPageRequest)) return false;
-
-        OffsetBasedPageRequest that = (OffsetBasedPageRequest) o;
+        if (!(o instanceof OffsetBasedPageRequest that)) return false;
 
         return new EqualsBuilder()
                 .append(limit, that.limit)
@@ -140,6 +138,6 @@ public class OffsetBasedPageRequest implements Pageable, Serializable {
 
     @Override
     public Pageable withPage(int pageNumber) {
-        return new OffsetBasedPageRequest(pageNumber * limit, limit, sort);
+        return new OffsetBasedPageRequest((long) pageNumber * limit, limit, sort);
     }
 }

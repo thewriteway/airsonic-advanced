@@ -1,19 +1,9 @@
 package org.airsonic.player.domain;
 
+import jakarta.persistence.*;
 import org.airsonic.player.security.GlobalSecurityConfig;
 import org.airsonic.player.security.PasswordDecoder;
 import org.springframework.util.StringUtils;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -223,11 +213,8 @@ public class UserCredential {
         } else if (!updated.equals(other.updated))
             return false;
         if (user == null) {
-            if (other.user != null)
-                return false;
-        } else if (!user.getUsername().equals(other.user.getUsername()))
-            return false;
-        return true;
+            return other.user == null;
+        } else return user.getUsername().equals(other.user.getUsername());
     }
 
     /**
@@ -275,7 +262,7 @@ public class UserCredential {
         private final boolean usernameRequired;
         private final boolean nonDecodableEncodersAllowed;
 
-        private App(String name, boolean usernameRequired, boolean nonDecodableEncodersAllowed) {
+        App(String name, boolean usernameRequired, boolean nonDecodableEncodersAllowed) {
             this.name = name;
             this.usernameRequired = usernameRequired;
             this.nonDecodableEncodersAllowed = nonDecodableEncodersAllowed;

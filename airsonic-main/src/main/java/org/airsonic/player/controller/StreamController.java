@@ -22,6 +22,7 @@ package org.airsonic.player.controller;
 
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.io.PipeStreams.MonitoredInputStream;
 import org.airsonic.player.io.PipeStreams.PipedInputStream;
@@ -53,8 +54,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.awt.*;
 import java.io.FilterInputStream;
@@ -361,7 +360,7 @@ public class StreamController {
      *
      */
     private static class ThresholdInputStream extends FilterInputStream {
-        private long threshold;
+        private final long threshold;
         private long bytesRead = 0;
 
         protected ThresholdInputStream(InputStream in, long threshold) {
@@ -392,7 +391,7 @@ public class StreamController {
         private static byte[] zeros = new byte[4096];
 
         @Override
-        public int read(byte b[], int off, int len) throws IOException {
+        public int read(byte[] b, int off, int len) throws IOException {
             int read = super.read(b, off, len);
             if (read == -1 && bytesRead < threshold) {
                 if (zeros.length < len) {

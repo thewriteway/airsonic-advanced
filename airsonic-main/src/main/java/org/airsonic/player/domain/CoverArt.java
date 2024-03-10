@@ -1,18 +1,7 @@
 package org.airsonic.player.domain;
 
+import jakarta.persistence.*;
 import org.airsonic.player.domain.entity.CoverArtKey;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -189,8 +178,6 @@ public class CoverArt {
         CoverArt other = (CoverArt) obj;
         if (entityId != other.entityId)
             return false;
-        if (entityType != other.entityType)
-            return false;
-        return true;
+        return entityType == other.entityType;
     }
 }

@@ -38,7 +38,7 @@ import java.nio.file.Path;
 public class DefaultMetaDataParser extends MetaDataParser {
 
     @Autowired
-    private MediaFolderService mediaFolderService;
+    private final MediaFolderService mediaFolderService;
 
     public DefaultMetaDataParser(MediaFolderService mediaFolderService) {
         this.mediaFolderService = mediaFolderService;

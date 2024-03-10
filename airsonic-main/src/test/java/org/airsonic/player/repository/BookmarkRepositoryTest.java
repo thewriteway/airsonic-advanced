@@ -85,7 +85,7 @@ public class BookmarkRepositoryTest {
 
     private MusicFolder testFolder;
 
-    private List<MediaFile> mediaFileList = new ArrayList<MediaFile>();
+    private final List<MediaFile> mediaFileList = new ArrayList<MediaFile>();
 
     @BeforeAll
     public static void beforeAll() {
@@ -156,7 +156,7 @@ public class BookmarkRepositoryTest {
         Bookmark savedBookmark = bookmarkRepository.save(bookmark);
         assertNotNull(savedBookmark.getId());
         assertEquals((int)mediaFile.getId(), savedBookmark.getMediaFileId());
-        assertEquals(1000L, (long) savedBookmark.getPositionMillis());
+        assertEquals(1000L, savedBookmark.getPositionMillis());
         assertEquals(TEST_USER_NAME, savedBookmark.getUsername());
         assertEquals("test comment", savedBookmark.getComment());
     }
@@ -178,7 +178,7 @@ public class BookmarkRepositoryTest {
 
         Bookmark foundBookmark = optionalBookmark.get();
         assertEquals((int)mediaFile.getId(), foundBookmark.getMediaFileId());
-        assertEquals(2000L, (long) foundBookmark.getPositionMillis());
+        assertEquals(2000L, foundBookmark.getPositionMillis());
         assertEquals(TEST_USER_NAME, foundBookmark.getUsername());
         assertEquals("test comment", foundBookmark.getComment());
     }
@@ -202,7 +202,7 @@ public class BookmarkRepositoryTest {
 
         Bookmark updatedBookmark = optionalBookmark.get();
         assertEquals((int)mediaFile.getId(), updatedBookmark.getMediaFileId());
-        assertEquals(4000L, (long) updatedBookmark.getPositionMillis());
+        assertEquals(4000L, updatedBookmark.getPositionMillis());
         assertEquals(TEST_USER_NAME, updatedBookmark.getUsername());
         assertEquals("test comment", updatedBookmark.getComment());
     }
@@ -272,7 +272,7 @@ public class BookmarkRepositoryTest {
         for (int i = 0; i < mediaFileList.size(); i++) {
             Bookmark foundBookmark = foundBookmarks.get(i);
             assertEquals((int)mediaFileList.get(i).getId(), foundBookmark.getMediaFileId());
-            assertEquals((i) * 1000L, (long) foundBookmark.getPositionMillis());
+            assertEquals((i) * 1000L, foundBookmark.getPositionMillis());
             assertEquals(TEST_USER_NAME, foundBookmark.getUsername());
             assertEquals("test comment " + (i), foundBookmark.getComment());
         }

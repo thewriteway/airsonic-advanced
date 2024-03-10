@@ -21,14 +21,17 @@
 package org.airsonic.player.controller;
 
 import com.google.common.primitives.Ints;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.ajax.LyricsInfo;
 import org.airsonic.player.ajax.LyricsWSController;
 import org.airsonic.player.command.UserSettingsCommand;
-import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.Bookmark;
-import org.airsonic.player.domain.CoverArt.EntityType;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.User;
+import org.airsonic.player.domain.CoverArt.EntityType;
 import org.airsonic.player.i18n.LocaleResolver;
 import org.airsonic.player.service.*;
 import org.airsonic.player.service.podcast.PodcastDownloadClient;
@@ -53,14 +56,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
-import org.subsonic.restapi.*;
 import org.subsonic.restapi.PodcastStatus;
+import org.subsonic.restapi.*;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
-import jakarta.servlet.http.HttpServletResponse;
 import javax.xml.datatype.XMLGregorianCalendar;
-
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.time.Instant;
@@ -1355,8 +1354,8 @@ public class SubsonicRESTController {
     }
 
     public static class APIException extends Exception {
-        private String message;
-        private ErrorCode error;
+        private final String message;
+        private final ErrorCode error;
 
         public APIException(ErrorCode error, String message) {
             this.message = message;

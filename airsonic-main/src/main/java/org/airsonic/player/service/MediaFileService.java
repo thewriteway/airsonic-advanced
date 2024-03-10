@@ -30,13 +30,7 @@ import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.domain.MusicFolder.Type;
 import org.airsonic.player.domain.entity.StarredMediaFile;
 import org.airsonic.player.i18n.LocaleResolver;
-import org.airsonic.player.repository.AlbumRepository;
-import org.airsonic.player.repository.GenreRepository;
-import org.airsonic.player.repository.MediaFileRepository;
-import org.airsonic.player.repository.MediaFileSpecifications;
-import org.airsonic.player.repository.MusicFileInfoRepository;
-import org.airsonic.player.repository.OffsetBasedPageRequest;
-import org.airsonic.player.repository.StarredMediaFileRepository;
+import org.airsonic.player.repository.*;
 import org.airsonic.player.service.metadata.JaudiotaggerParser;
 import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.service.metadata.MetaDataParser;
@@ -1196,7 +1190,7 @@ public class MediaFileService {
                     int THRESHOLD = 35; // 0-100, the higher the more certain the guess
                     CharsetDetector cd = new CharsetDetector();
                     try (FileInputStream fis = new FileInputStream(cueFile.toFile());
-                        BufferedInputStream bis = new BufferedInputStream(fis);) {
+                        BufferedInputStream bis = new BufferedInputStream(fis)) {
                         cd.setText(bis);
                         CharsetMatch cm = cd.detect();
                         if (cm != null && cm.getConfidence() > THRESHOLD) {

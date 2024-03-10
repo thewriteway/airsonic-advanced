@@ -1,7 +1,6 @@
 package org.airsonic.player.repository;
 
 import com.google.common.util.concurrent.AtomicDouble;
-
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

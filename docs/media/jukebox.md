@@ -20,7 +20,7 @@ import java.io.*;
 import javax.sound.sampled.*;
 
 public class audioDevList {
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Mixer.Info[] mixerInfo =
             AudioSystem.getMixerInfo();
             System.out.println("Available mixers:");

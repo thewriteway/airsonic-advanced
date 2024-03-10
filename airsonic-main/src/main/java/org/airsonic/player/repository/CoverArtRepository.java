@@ -14,13 +14,13 @@ import java.util.Optional;
 @Repository
 public interface CoverArtRepository extends JpaRepository<CoverArt, CoverArtKey> {
 
-    public Optional<CoverArt> findByEntityTypeAndEntityId(EntityType entityType, Integer entityId);
+    Optional<CoverArt> findByEntityTypeAndEntityId(EntityType entityType, Integer entityId);
 
-    public List<CoverArt> findByFolder(MusicFolder folder);
+    List<CoverArt> findByFolder(MusicFolder folder);
 
-    public List<CoverArt> findByFolderAndPathStartsWith(MusicFolder folder, String path);
+    List<CoverArt> findByFolderAndPathStartsWith(MusicFolder folder, String path);
 
     @Transactional
-    public void deleteByEntityTypeAndEntityId(EntityType entityType, Integer entityId);
+    void deleteByEntityTypeAndEntityId(EntityType entityType, Integer entityId);
 
 }

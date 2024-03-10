@@ -7,7 +7,7 @@ import java.util.Collection;
 
 public class JWTAuthenticationToken extends UsernamePasswordAuthenticationToken {
 
-    private String requestedPath;
+    private final String requestedPath;
 
     public JWTAuthenticationToken(Object principal, Object credentials, String requestedPath) {
         super(principal, credentials);

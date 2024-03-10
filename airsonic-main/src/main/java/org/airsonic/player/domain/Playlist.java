@@ -20,7 +20,6 @@
 package org.airsonic.player.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -224,11 +223,10 @@ public class Playlist {
             return true;
         }
 
-        if (o == null || !(o instanceof Playlist)) {
+        if (o == null || !(o instanceof Playlist p)) {
             return false;
         }
 
-        Playlist p = (Playlist) o;
         return Objects.equals(id, p.id);
     }
 

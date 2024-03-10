@@ -50,7 +50,7 @@ public class AirsonicScanConfigTest {
         @Autowired
         private AirsonicScanConfig scanConfig;
 
-        private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
         @Test
         public void testFullTimeoutProperty() {
@@ -114,7 +114,7 @@ public class AirsonicScanConfigTest {
     @Nested
     public class AirsonicScanConfigTestWithCustomValue {
 
-        private AirsonicScanConfig scanConfig = new AirsonicScanConfig(100, 10, 5);
+        private final AirsonicScanConfig scanConfig = new AirsonicScanConfig(100, 10, 5);
 
         @Test
         public void testFullTimeoutProperty() {

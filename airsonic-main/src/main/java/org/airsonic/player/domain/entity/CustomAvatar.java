@@ -1,15 +1,8 @@
 package org.airsonic.player.domain.entity;
 
+import jakarta.persistence.*;
 import org.airsonic.player.domain.Avatar;
 import org.airsonic.player.repository.PathConverter;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

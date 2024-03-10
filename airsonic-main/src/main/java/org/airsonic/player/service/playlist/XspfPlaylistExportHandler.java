@@ -22,7 +22,7 @@ import java.util.Optional;
 @Component
 public class XspfPlaylistExportHandler implements PlaylistExportHandler {
 
-    private static Logger LOG = LoggerFactory.getLogger(XspfPlaylistExportHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(XspfPlaylistExportHandler.class);
 
     @Autowired
     private PlaylistRepository playlistRepository;

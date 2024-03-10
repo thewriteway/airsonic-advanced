@@ -113,11 +113,11 @@ public class IndexManager {
     /**
      * Returns the directory of the specified index
      */
-    private Function<IndexType, Path> getIndexDirectory = (indexType) -> rootIndexDirectory.resolve(indexType.toString().toLowerCase());
+    private final Function<IndexType, Path> getIndexDirectory = (indexType) -> rootIndexDirectory.resolve(indexType.toString().toLowerCase());
 
-    private Map<IndexType, SearcherManager> searchers = new ConcurrentHashMap<>();
+    private final Map<IndexType, SearcherManager> searchers = new ConcurrentHashMap<>();
 
-    private Map<IndexType, IndexWriter> writers = new ConcurrentHashMap<>();
+    private final Map<IndexType, IndexWriter> writers = new ConcurrentHashMap<>();
 
     public void index(Album album) {
         Term primarykey = documentFactory.createPrimarykey(album);
@@ -346,8 +346,8 @@ public class IndexManager {
         });
     }
 
-    private static Pattern legacyIndexPattern = Pattern.compile("^lucene\\d+$");
-    private static Pattern nonCurrentIndexPattern = Pattern.compile("^index\\d+$");
+    private static final Pattern legacyIndexPattern = Pattern.compile("^lucene\\d+$");
+    private static final Pattern nonCurrentIndexPattern = Pattern.compile("^index\\d+$");
 
     /**
      * Check the version of the index and clean it up if necessary.

@@ -35,20 +35,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -69,7 +63,7 @@ public class TranscodingService {
     @Autowired
     private SettingsService settingsService;
     @Autowired
-    private PlayerRepository playerRepository;;
+    private PlayerRepository playerRepository;
     @Autowired
     private TranscodingRepository transcodingRepository;
     @Autowired

@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JukeboxService {
 
-    private JukeboxLegacySubsonicService jukeboxLegacySubsonicService;
+    private final JukeboxLegacySubsonicService jukeboxLegacySubsonicService;
 
     public JukeboxService(JukeboxLegacySubsonicService jukeboxLegacySubsonicService) {
         this.jukeboxLegacySubsonicService = jukeboxLegacySubsonicService;

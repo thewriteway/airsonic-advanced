@@ -35,10 +35,10 @@ public abstract class AbstractAirsonicHomeTest {
      * so this class can hold the state.
      * When executing in parallel, subclasses should override this.
      */
-    private static AtomicBoolean dataBasePopulated = new AtomicBoolean();
+    private static final AtomicBoolean dataBasePopulated = new AtomicBoolean();
 
     // Above.
-    private static AtomicBoolean dataBaseReady = new AtomicBoolean();
+    private static final AtomicBoolean dataBaseReady = new AtomicBoolean();
 
     @Autowired
     protected MediaScannerService mediaScannerService;

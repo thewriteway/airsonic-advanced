@@ -20,6 +20,7 @@
  */
 package org.airsonic.player.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.User;
@@ -34,8 +35,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

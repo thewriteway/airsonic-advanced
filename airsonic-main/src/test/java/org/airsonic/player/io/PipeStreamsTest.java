@@ -33,7 +33,7 @@ public class PipeStreamsTest {
 
         try (PipedInputStream pin = new PipedInputStream(null, 5);
                 MonitoredInputStream min = new MonitoredInputStream(pin, null, () -> status, s -> {}, (i, s) -> {});
-                PipedOutputStream pout = new PipedOutputStream(pin);) {
+                PipedOutputStream pout = new PipedOutputStream(pin)) {
 
             // can initialize it in the MonitoredInputStream constructor too, but chose not
             // to for simplicity

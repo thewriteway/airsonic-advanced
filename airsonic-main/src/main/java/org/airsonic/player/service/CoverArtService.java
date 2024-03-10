@@ -1,11 +1,7 @@
 package org.airsonic.player.service;
 
-import org.airsonic.player.domain.Album;
-import org.airsonic.player.domain.Artist;
-import org.airsonic.player.domain.CoverArt;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.CoverArt.EntityType;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.repository.CoverArtRepository;
 import org.airsonic.player.repository.MediaFileRepository;
 import org.apache.commons.lang.StringEscapeUtils;

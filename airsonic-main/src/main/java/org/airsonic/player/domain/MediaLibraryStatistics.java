@@ -34,11 +34,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class MediaLibraryStatistics {
     private Instant scanDate = Instant.now();
-    private AtomicInteger artistCount = new AtomicInteger(0);
-    private AtomicInteger albumCount = new AtomicInteger(0);
-    private AtomicInteger songCount = new AtomicInteger(0);
-    private AtomicLong totalLengthInBytes = new AtomicLong(0);
-    private AtomicDouble totalDurationInSeconds = new AtomicDouble(0);
+    private final AtomicInteger artistCount = new AtomicInteger(0);
+    private final AtomicInteger albumCount = new AtomicInteger(0);
+    private final AtomicInteger songCount = new AtomicInteger(0);
+    private final AtomicLong totalLengthInBytes = new AtomicLong(0);
+    private final AtomicDouble totalDurationInSeconds = new AtomicDouble(0);
 
     public MediaLibraryStatistics() {}
 

@@ -146,11 +146,10 @@ public class SavedPlayQueue {
             return true;
         }
 
-        if (other == null || !(other instanceof SavedPlayQueue)) {
+        if (other == null || !(other instanceof SavedPlayQueue otherQueue)) {
             return false;
         }
 
-        SavedPlayQueue otherQueue = (SavedPlayQueue) other;
         return Objects.equals(id, otherQueue.id);
     }
 }

@@ -20,9 +20,8 @@
  */
 package org.airsonic.player.domain;
 
-import org.airsonic.player.repository.AtomicIntegerConverter;
-
 import jakarta.persistence.*;
+import org.airsonic.player.repository.AtomicIntegerConverter;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,11 +42,11 @@ public class Genre {
 
     @Column(name = "song_count")
     @Convert(converter = AtomicIntegerConverter.class)
-    private AtomicInteger songCount = new AtomicInteger(0);
+    private final AtomicInteger songCount = new AtomicInteger(0);
 
     @Column(name = "album_count")
     @Convert(converter = AtomicIntegerConverter.class)
-    private AtomicInteger albumCount = new AtomicInteger(0);
+    private final AtomicInteger albumCount = new AtomicInteger(0);
 
     public Genre() {
     }
@@ -90,11 +89,10 @@ public class Genre {
     @Override
     public boolean equals(Object obj) {
 
-        if (obj == null || !(obj instanceof Genre)) {
+        if (obj == null || !(obj instanceof Genre other)) {
             return false;
         }
 
-        Genre other = (Genre) obj;
         return Objects.equals(name, other.name);
     }
 }

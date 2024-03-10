@@ -81,7 +81,7 @@ public class AlbumRepositoryTest {
     }
 
 
-    private List<MusicFolder> testFolders = new ArrayList<>();
+    private final List<MusicFolder> testFolders = new ArrayList<>();
 
     @BeforeEach
     public void setupFolder() {

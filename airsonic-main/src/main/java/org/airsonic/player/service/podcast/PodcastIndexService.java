@@ -81,7 +81,7 @@ public class PodcastIndexService {
 
     private PodcastIndexResponse executeRequest(HttpUriRequest request) throws Exception {
         try (CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse resp = client.execute(request);) {
+                CloseableHttpResponse resp = client.execute(request)) {
             boolean ok = resp.getStatusLine().getStatusCode() == 200;
             if (!ok) {
                 LOG.warn("Failed to execute PodcastIndex request: {}", resp.getEntity().toString());

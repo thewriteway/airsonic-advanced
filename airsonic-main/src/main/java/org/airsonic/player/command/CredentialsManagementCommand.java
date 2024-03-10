@@ -1,24 +1,15 @@
 package org.airsonic.player.command;
 
-import org.airsonic.player.domain.UserCredential;
-import org.airsonic.player.domain.UserCredential.App;
-import org.airsonic.player.validator.CredentialsManagementValidators.ConsistentPasswordConfirmation;
-import org.airsonic.player.validator.CredentialsManagementValidators.CredEncoderForAppValid;
-import org.airsonic.player.validator.CredentialsManagementValidators.CredentialCreateChecks;
-import org.airsonic.player.validator.CredentialsManagementValidators.CredentialUpdateChecks;
-import org.airsonic.player.validator.CredentialsManagementValidators.EncoderValid;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.airsonic.player.domain.UserCredential;
+import org.airsonic.player.domain.UserCredential.App;
+import org.airsonic.player.validator.CredentialsManagementValidators.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class CredentialsManagementCommand {
     @Valid
@@ -68,7 +59,7 @@ public class CredentialsManagementCommand {
         private Instant created;
         private Instant updated;
         private String comment;
-        private Set<String> displayComments = new HashSet<>();
+        private final Set<String> displayComments = new HashSet<>();
         private boolean markedForDeletion;
 
         public CredentialsCommand(String username, String encoder, App app, Instant created,

@@ -20,10 +20,14 @@
 package org.airsonic.player.controller;
 
 import com.google.common.net.MediaType;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
 import org.airsonic.player.controller.SubsonicRESTController.APIException;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.persistence.jaxb.JAXBContext;
 import org.eclipse.persistence.jaxb.MarshallerProperties;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
@@ -34,13 +38,9 @@ import org.subsonic.restapi.ObjectFactory;
 import org.subsonic.restapi.Response;
 import org.subsonic.restapi.ResponseStatus;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -59,26 +59,26 @@ public class JAXBWriter {
 
     private static final Logger LOG = LoggerFactory.getLogger(JAXBWriter.class);
 
-    private final javax.xml.bind.JAXBContext jaxbContext;
+    private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
-    private static final String restProtocolVersion = parseRESTProtocolVersion();
+    private static final String REST_PROTOCOL_VERSION = parseRESTProtocolVersion();
 
-    private final String SERVER_TYPE = "Airsonic-Advanced";
+    private static final String SERVER_TYPE = "Airsonic-Advanced";
 
     public JAXBWriter() {
         try {
-            jaxbContext = JAXBContext.newInstance(Response.class);
-            datatypeFactory = DatatypeFactory.newInstance();
-        } catch (Exception x) {
+            this.jaxbContext = JAXBContext.newInstance(Response.class); // Corrected to affect the class field
+            this.datatypeFactory = DatatypeFactory.newInstance();
+        } catch (JAXBException | DatatypeConfigurationException x) {
             throw new RuntimeException(x);
         }
     }
 
+
     private Marshaller createXmlMarshaller() {
-        Marshaller marshaller = null;
         try {
-            marshaller = jaxbContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_ENCODING, StringUtil.ENCODING_UTF8);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             return marshaller;
         } catch (JAXBException e) {
@@ -110,14 +110,10 @@ public class JAXBWriter {
         }
     }
 
-    public static String getRestProtocolVersion() {
-        return restProtocolVersion;
-    }
-
-    public Response createResponse(boolean ok) {
+     public Response createResponse(boolean ok) {
         Response response = new ObjectFactory().createResponse();
         response.setStatus(ok ? ResponseStatus.OK : ResponseStatus.FAILED);
-        response.setVersion(restProtocolVersion);
+        response.setVersion(REST_PROTOCOL_VERSION);
         response.setType(SERVER_TYPE);
         return response;
     }

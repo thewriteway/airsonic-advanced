@@ -19,6 +19,7 @@
  */
 package org.airsonic.player.service;
 
+import jakarta.annotation.PostConstruct;
 import org.airsonic.player.service.upnp.CustomContentDirectory;
 import org.airsonic.player.service.upnp.MSMediaReceiverRegistrarService;
 import org.airsonic.player.util.FileUtil;
@@ -49,8 +50,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
-
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ public class UPnPService {
     @Qualifier("dispatchingContentDirectory")
     private CustomContentDirectory dispatchingContentDirectory;
 
-    private AtomicReference<Boolean> running = new AtomicReference<>(false);
+    private final AtomicReference<Boolean> running = new AtomicReference<>(false);
 
     @PostConstruct
     public void init() {

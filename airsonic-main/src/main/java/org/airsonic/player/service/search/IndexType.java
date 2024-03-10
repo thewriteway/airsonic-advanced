@@ -20,12 +20,8 @@
 
 package org.airsonic.player.service.search;
 
-import java.util.AbstractMap;
+import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Enum that symbolizes the each lucene index entity.
@@ -107,7 +103,7 @@ public enum IndexType {
 
     private final String[] fields;
 
-    private IndexType(String[] fieldNames, Map<String, Float> boosts) {
+    IndexType(String[] fieldNames, Map<String, Float> boosts) {
         this.fields = fieldNames;
         this.boosts = boosts;
     }

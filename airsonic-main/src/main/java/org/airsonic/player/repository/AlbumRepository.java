@@ -19,40 +19,40 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Repository
 public interface AlbumRepository extends JpaRepository<Album, Integer> {
 
-    public Optional<Album> findByArtistAndName(String artist, String name);
+    Optional<Album> findByArtistAndName(String artist, String name);
 
-    public List<Album> findByName(String artist);
+    List<Album> findByName(String artist);
 
-    public List<Album> findByArtistAndFolderInAndPresentTrue(String artist, Iterable<MusicFolder> musicFolders);
+    List<Album> findByArtistAndFolderInAndPresentTrue(String artist, Iterable<MusicFolder> musicFolders);
 
-    public List<Album> findByArtistAndFolderInAndPresentTrue(String artist, Iterable<MusicFolder> musicFolders, Pageable pageable);
+    List<Album> findByArtistAndFolderInAndPresentTrue(String artist, Iterable<MusicFolder> musicFolders, Pageable pageable);
 
-    public int countByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders);
+    int countByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders);
 
-    public List<Album> findByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders, Sort sort);
+    List<Album> findByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders, Sort sort);
 
-    public List<Album> findByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders, Pageable pageable);
+    List<Album> findByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders, Pageable pageable);
 
-    public List<Album> findByGenreAndFolderInAndPresentTrue(String genre, Iterable<MusicFolder> musicFolders, Pageable pageable);
+    List<Album> findByGenreAndFolderInAndPresentTrue(String genre, Iterable<MusicFolder> musicFolders, Pageable pageable);
 
-    public List<Album> findByFolderInAndPlayCountGreaterThanAndPresentTrue(Iterable<MusicFolder> musicFolders, AtomicInteger playCount, Pageable pageable);
+    List<Album> findByFolderInAndPlayCountGreaterThanAndPresentTrue(Iterable<MusicFolder> musicFolders, AtomicInteger playCount, Pageable pageable);
 
-    public List<Album> findByFolderInAndLastPlayedNotNullAndPresentTrue(Iterable<MusicFolder> musicFolders, Pageable pageable);
+    List<Album> findByFolderInAndLastPlayedNotNullAndPresentTrue(Iterable<MusicFolder> musicFolders, Pageable pageable);
 
-    public List<Album> findByFolderInAndYearBetweenAndPresentTrue(Iterable<MusicFolder> musicFolders, int startYear, int endYear, Pageable pageable);
+    List<Album> findByFolderInAndYearBetweenAndPresentTrue(Iterable<MusicFolder> musicFolders, int startYear, int endYear, Pageable pageable);
 
-    public List<Album> findByPresentFalse();
+    List<Album> findByPresentFalse();
 
-    public Optional<Album> findByIdAndStarredAlbumsUsername(Integer id, String username);
+    Optional<Album> findByIdAndStarredAlbumsUsername(Integer id, String username);
 
-    public boolean existsByLastScannedBeforeAndPresentTrue(Instant lastScanned);
+    boolean existsByLastScannedBeforeAndPresentTrue(Instant lastScanned);
 
     @Transactional
-    public void deleteAllByPresentFalse();
+    void deleteAllByPresentFalse();
 
     @Transactional
     @Modifying
     @Query("UPDATE Album a SET a.present = false WHERE a.lastScanned < :lastScanned")
-    public void markNonPresent(@Param("lastScanned") Instant lastScanned);
+    void markNonPresent(@Param("lastScanned") Instant lastScanned);
 
 }

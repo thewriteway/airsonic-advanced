@@ -29,15 +29,15 @@ import java.util.List;
 @Repository
 public interface PlayerRepository extends JpaRepository<Player, Integer> {
 
-    public List<Player> findByUsername(String username);
+    List<Player> findByUsername(String username);
 
-    public List<Player> findByUsernameAndClientIdIsNull(String username);
+    List<Player> findByUsernameAndClientIdIsNull(String username);
 
-    public List<Player> findByUsernameAndClientId(String username, String clientId);
-
-    @Transactional
-    public void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenIsNull();
+    List<Player> findByUsernameAndClientId(String username, String clientId);
 
     @Transactional
-    public void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenBefore(Instant lastSeen);
+    void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenIsNull();
+
+    @Transactional
+    void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenBefore(Instant lastSeen);
 }

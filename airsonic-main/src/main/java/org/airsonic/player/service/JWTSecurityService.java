@@ -50,7 +50,7 @@ public class JWTSecurityService {
 
     // TODO make this configurable
     public static final int DEFAULT_DAYS_VALID_FOR = 7;
-    private static SecureRandom secureRandom = new SecureRandom();
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     private final SettingsService settingsService;
 

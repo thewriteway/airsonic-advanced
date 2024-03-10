@@ -19,16 +19,11 @@
  */
 package org.airsonic.player.domain;
 
+import jakarta.persistence.*;
 import org.airsonic.player.repository.RolesConverter;
 import org.airsonic.player.util.Util;
 
-import jakarta.persistence.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represent a user.

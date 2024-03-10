@@ -13,7 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ScanningTestUtils {
-    private static Map<UUID, List<MusicFolder>> map = new ConcurrentHashMap<>();
+    private static final Map<UUID, List<MusicFolder>> map = new ConcurrentHashMap<>();
 
     public static UUID before(List<MusicFolder> musicFolders, MediaFolderService mediaFolderService, MediaScannerService mediaScannerService) {
         UUID id = UUID.randomUUID();

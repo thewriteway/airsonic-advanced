@@ -1,5 +1,8 @@
 package org.airsonic.player.spring;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+import org.airsonic.player.spring.WebsocketConfiguration.WebsocketInterceptedServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,32 +19,12 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.HttpUpgradeHandler;
-import jakarta.servlet.http.Part;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.security.Principal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -111,7 +94,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
     }
 
-    public static class WebsocketInterceptedServletRequest implements HttpServletRequest {
+    public static class WebsocketInterceptedServletRequest implements ServletRequest() {
         private final ServletServerHttpRequest originalRequest;
         private final String contextPath;
 
@@ -506,4 +489,4 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
 
     }
-}
+

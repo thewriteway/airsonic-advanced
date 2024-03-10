@@ -20,8 +20,7 @@
  */
 package org.airsonic.player.util;
 
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public final class ImageUtil {

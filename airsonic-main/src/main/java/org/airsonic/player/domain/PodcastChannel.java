@@ -20,7 +20,6 @@
 package org.airsonic.player.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 
 import java.io.Serializable;
@@ -66,7 +65,7 @@ public class PodcastChannel implements Serializable {
     private MediaFile mediaFile;
 
     @OneToMany(mappedBy = "channel")
-    private List<PodcastEpisode> episodes = new ArrayList<>();
+    private final List<PodcastEpisode> episodes = new ArrayList<>();
 
     @JsonIgnore
     public List<PodcastEpisode> getEpisodes() {
@@ -166,11 +165,10 @@ public class PodcastChannel implements Serializable {
             return true;
         }
 
-        if (other == null || !(other instanceof PodcastChannel)) {
+        if (other == null || !(other instanceof PodcastChannel otherChannel)) {
             return false;
         }
 
-        PodcastChannel otherChannel = (PodcastChannel) other;
         return Objects.equals(id, otherChannel.id);
     }
 

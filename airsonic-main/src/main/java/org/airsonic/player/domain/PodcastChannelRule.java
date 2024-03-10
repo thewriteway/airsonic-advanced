@@ -1,6 +1,9 @@
 package org.airsonic.player.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import java.util.Objects;
 
@@ -82,11 +85,10 @@ public class PodcastChannelRule {
             return true;
         }
 
-        if (other == null || !(other instanceof PodcastChannelRule)) {
+        if (other == null || !(other instanceof PodcastChannelRule otherRule)) {
             return false;
         }
 
-        PodcastChannelRule otherRule = (PodcastChannelRule) other;
         return Objects.equals(id, otherRule.id);
     }
 

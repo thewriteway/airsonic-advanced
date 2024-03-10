@@ -19,9 +19,9 @@
  */
 package org.airsonic.player.service;
 
-import de.umass.lastfm.*;
 import de.umass.lastfm.Album;
 import de.umass.lastfm.Artist;
+import de.umass.lastfm.*;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.repository.ArtistRepository;

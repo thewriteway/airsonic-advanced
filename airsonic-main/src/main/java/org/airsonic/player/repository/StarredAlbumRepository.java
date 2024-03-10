@@ -15,13 +15,13 @@ import java.util.Optional;
 @Repository
 public interface StarredAlbumRepository extends JpaRepository<StarredAlbum, Integer> {
 
-    public List<StarredAlbum> findByUsernameAndAlbumFolderInAndAlbumPresentTrue(String username, Iterable<MusicFolder> musicFolders, Sort sort);
+    List<StarredAlbum> findByUsernameAndAlbumFolderInAndAlbumPresentTrue(String username, Iterable<MusicFolder> musicFolders, Sort sort);
 
-    public List<StarredAlbum> findByUsernameAndAlbumFolderInAndAlbumPresentTrue(String username, Iterable<MusicFolder> musicFolders, Pageable pageable);
+    List<StarredAlbum> findByUsernameAndAlbumFolderInAndAlbumPresentTrue(String username, Iterable<MusicFolder> musicFolders, Pageable pageable);
 
-    public Optional<StarredAlbum> findByAlbumAndUsername(Album album, String username);
+    Optional<StarredAlbum> findByAlbumAndUsername(Album album, String username);
 
     @Transactional
-    public void deleteByAlbumAndUsername(Album album, String username);
+    void deleteByAlbumAndUsername(Album album, String username);
 
 }

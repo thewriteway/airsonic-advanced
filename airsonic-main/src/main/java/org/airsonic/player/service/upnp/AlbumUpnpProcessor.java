@@ -20,11 +20,7 @@
 package org.airsonic.player.service.upnp;
 
 import com.google.common.primitives.Ints;
-import org.airsonic.player.domain.Album;
-import org.airsonic.player.domain.CoverArtScheme;
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.MusicFolder;
-import org.airsonic.player.domain.User;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.service.AlbumService;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.SearchService;

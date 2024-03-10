@@ -20,11 +20,10 @@
 package org.airsonic.player.domain;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import jakarta.persistence.*;
 import org.airsonic.player.domain.entity.StarredAlbum;
 import org.airsonic.player.repository.AtomicDoubleConverter;
 import org.airsonic.player.repository.AtomicIntegerConverter;
-
-import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -88,7 +87,7 @@ public class Album {
     private boolean present;
 
     @OneToMany(mappedBy = "album")
-    private List<StarredAlbum> starredAlbums = new ArrayList<>();
+    private final List<StarredAlbum> starredAlbums = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "folder_id", referencedColumnName = "id")
@@ -295,11 +294,9 @@ public class Album {
     @Override
     public boolean equals(Object obj) {
 
-        if (obj == null || !(obj instanceof Album)) {
+        if (obj == null || !(obj instanceof Album other)) {
             return false;
         }
-
-        Album other = (Album) obj;
 
         return Objects.equals(path, other.path) && Objects.equals(folder, other.folder);
     }

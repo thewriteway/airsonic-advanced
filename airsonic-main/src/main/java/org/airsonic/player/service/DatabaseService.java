@@ -1,13 +1,8 @@
 package org.airsonic.player.service;
 
-import liquibase.Contexts;
-import liquibase.LabelExpression;
-import liquibase.Liquibase;
-import liquibase.command.CommandFactory;
 
-import java.sql.Connection;
-import java.sql.Statement;
-import java.util.List;
+import jakarta.annotation.PostConstruct;
+import liquibase.Contexts;
 import liquibase.database.Database;
 import liquibase.database.DatabaseConnection;
 import liquibase.database.DatabaseFactory;
@@ -15,11 +10,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.StandardObjectChangeFilter;
 import liquibase.integration.commandline.CommandLineUtils;
-import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.DirectoryResourceAccessor;
-import liquibase.resource.FileSystemResourceAccessor;
-import liquibase.resource.ResourceAccessor;
-
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.dao.DatabaseDao;
 import org.airsonic.player.util.FileUtil;
@@ -33,13 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
-
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,6 +38,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -103,7 +95,7 @@ public class DatabaseService {
         taskService.unscheduleTask("db-backup");
     }
 
-    private Runnable backupTask = () -> {
+    private final Runnable backupTask = () -> {
         LOG.info("Starting scheduled DB backup");
         backup();
         LOG.info("Completed scheduled DB backup");
@@ -135,7 +127,7 @@ public class DatabaseService {
         }
 
         String backupNamePattern = StringUtils.substringBeforeLast(backupLocation.getFileName().toString(), ".");
-        try (Stream<Path> backups = Files.list(backupLocation.getParent());) {
+        try (Stream<Path> backups = Files.list(backupLocation.getParent())) {
             backups.filter(p -> p.getFileName().toString().startsWith(backupNamePattern))
                     .sorted(Comparator.comparing(
                             LambdaUtils.<Path, FileTime, Exception>uncheckFunction(p -> Files.readAttributes(p, BasicFileAttributes.class).creationTime()),
@@ -190,7 +182,7 @@ public class DatabaseService {
         Path zipName = folder.resolve(folder.getFileName().toString() + ".zip");
         try (OutputStream fos = Files.newOutputStream(zipName);
                 ZipOutputStream zipOut = new ZipOutputStream(fos);
-                Stream<Path> files = Files.list(folder);) {
+                Stream<Path> files = Files.list(folder)) {
             files.filter(f -> !f.equals(zipName)).forEach(LambdaUtils.uncheckConsumer(f -> {
                 ZipEntry zipEntry = new ZipEntry(f.getFileName().toString());
                 zipOut.putNextEntry(zipEntry);
@@ -243,7 +235,7 @@ public class DatabaseService {
         }
     }
 
-    private static List<List<String>> TABLE_ORDER = Arrays.asList(
+    private static final List<List<String>> TABLE_ORDER = Arrays.asList(
             Arrays.asList("users", "music_folder", "transcoding", "player"),
             Arrays.asList("music_folder_user", "user_credentials", "user_settings", "player_transcoding"),
             Arrays.asList("media_file", "music_file_info"),

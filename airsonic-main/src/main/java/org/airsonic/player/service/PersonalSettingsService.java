@@ -22,12 +22,7 @@ package org.airsonic.player.service;
 
 import org.airsonic.player.command.PersonalSettingsCommand;
 import org.airsonic.player.config.AirsonicHomeConfig;
-import org.airsonic.player.domain.AlbumListType;
-import org.airsonic.player.domain.Avatar;
-import org.airsonic.player.domain.AvatarScheme;
-import org.airsonic.player.domain.TranscodeScheme;
-import org.airsonic.player.domain.UserSettingVisibility;
-import org.airsonic.player.domain.UserSettings;
+import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.entity.SystemAvatar;
 import org.airsonic.player.domain.entity.UserSetting;
 import org.airsonic.player.domain.entity.UserSettingDetail;
@@ -48,7 +43,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
-
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

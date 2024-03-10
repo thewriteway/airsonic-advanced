@@ -16,8 +16,8 @@ public class MonitoredMultipartFile implements MultipartFile {
 
     private final static Pattern DOT_SLASH_PATTERN = Pattern.compile("\\.+/");
 
-    private MultipartFile file;
-    private UploadListener listener;
+    private final MultipartFile file;
+    private final UploadListener listener;
 
     public MonitoredMultipartFile(MultipartFile file, UploadListener listener) {
         this.file = file;

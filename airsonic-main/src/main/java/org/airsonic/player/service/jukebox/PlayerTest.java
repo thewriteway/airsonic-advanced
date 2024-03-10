@@ -1,7 +1,6 @@
 package org.airsonic.player.service.jukebox;
 
 import javax.swing.*;
-
 import java.awt.*;
 import java.io.FileInputStream;
 

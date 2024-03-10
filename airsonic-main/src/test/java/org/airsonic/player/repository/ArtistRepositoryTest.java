@@ -73,7 +73,7 @@ public class ArtistRepositoryTest {
     @TempDir
     private static Path tempDir;
 
-    private List<MusicFolder> testFolders = new ArrayList<>();
+    private final List<MusicFolder> testFolders = new ArrayList<>();
 
     @BeforeAll
     public static void setup() {

@@ -67,9 +67,9 @@ class AudioScrobblerServiceTest {
     @Mock
     private UserSettings mockedUserSettings;
 
-    private UserCredential lastFmCredential = new UserCredential(new User("testUser", "test@example.com"), "lastFmUser", StringUtil.utf8HexEncode("lastFmPassword"), "hex", App.LASTFM);
+    private final UserCredential lastFmCredential = new UserCredential(new User("testUser", "test@example.com"), "lastFmUser", StringUtil.utf8HexEncode("lastFmPassword"), "hex", App.LASTFM);
 
-    private UserCredential listenBreinzCredential = new UserCredential(new User("testUser", "test@example.com"), "listenBreinz", StringUtil.utf8HexEncode("listenBrainzPassword"), "hex", App.LISTENBRAINZ);
+    private final UserCredential listenBreinzCredential = new UserCredential(new User("testUser", "test@example.com"), "listenBreinz", StringUtil.utf8HexEncode("listenBrainzPassword"), "hex", App.LISTENBRAINZ);
 
     @Test
     void registerWithNullMediaFileShouldNotDoNothing() {

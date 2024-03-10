@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.sonos.services._1.Credentials;
 import com.sonos.services._1.DeviceAuthTokenResult;
 import com.sonos.services._1.RefreshAuthTokenResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.airsonic.player.domain.SonosLink;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.repository.SonosLinkRepository;
@@ -30,12 +31,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Node;
 
-import jakarta.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
-
 import java.util.Set;
 
 import static org.airsonic.player.service.sonos.SonosServiceRegistration.AuthenticationType;
@@ -60,7 +59,7 @@ public class SonosLinkSecurityInterceptor extends AbstractSoapInterceptor {
     public static final String CLAIM_REFRESH_TOKEN = "refreshtoken";
 
     // these do not carry creds
-    private static Set<String> openMethod = Sets.newHashSet("getAppLink", "getDeviceAuthToken");
+    private static final Set<String> openMethod = Sets.newHashSet("getAppLink", "getDeviceAuthToken");
 
     public SonosLinkSecurityInterceptor() {
         super(Phase.PRE_INVOKE);
@@ -75,7 +74,7 @@ public class SonosLinkSecurityInterceptor extends AbstractSoapInterceptor {
     @Autowired
     private SonosService sonosService;
 
-    private static Unmarshaller unmarshaller = createUnmarshaller();
+    private static final Unmarshaller unmarshaller = createUnmarshaller();
 
     private static Unmarshaller createUnmarshaller() {
         try {

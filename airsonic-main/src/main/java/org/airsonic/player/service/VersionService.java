@@ -41,11 +41,7 @@ import java.io.*;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -208,7 +204,7 @@ public class VersionService {
 
     private static final String VERSION_URL = "https://api.github.com/repos/kagemomiji/airsonic-advanced/releases?per_page=100";
 
-    private static ResponseHandler<List<Map<String, Object>>> respHandler = new AbstractResponseHandler<List<Map<String,Object>>>() {
+    private static final ResponseHandler<List<Map<String, Object>>> respHandler = new AbstractResponseHandler<List<Map<String,Object>>>() {
         @Override
         public List<Map<String, Object>> handleEntity(HttpEntity entity) throws IOException {
             try (InputStream is = entity.getContent(); InputStream bis = new BufferedInputStream(is)) {
@@ -217,11 +213,11 @@ public class VersionService {
         }
     };
 
-    private static Function<Map<String,Object>, Version> releaseToVersionMapper = r ->
+    private static final Function<Map<String,Object>, Version> releaseToVersionMapper = r ->
             new Version(
                     (String) r.get("tag_name"),
                     (String) r.get("target_commitish"),
-                    (Boolean) r.get("draft") || (Boolean) r.get("prerelease"),
+                    r.get("draft") || (Boolean) r.get("prerelease"),
                     (String) r.get("html_url"),
                     Instant.parse((String) r.get("published_at")),
                     Instant.parse((String) r.get("created_at")),

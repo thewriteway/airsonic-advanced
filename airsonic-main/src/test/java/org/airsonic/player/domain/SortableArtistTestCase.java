@@ -62,7 +62,7 @@ public class SortableArtistTestCase extends TestCase {
         TestSortableArtist a5 = new TestSortableArtist("Sed");
         TestSortableArtist a6 = new TestSortableArtist("See");
 
-        assertTrue(a1.compareTo(a1) == 0);
+        assertEquals(0, a1.compareTo(a1));
         assertTrue(a1.compareTo(a2) < 0);
         assertTrue(a1.compareTo(a3) < 0);
         assertTrue(a1.compareTo(a4) < 0);
@@ -78,7 +78,7 @@ public class SortableArtistTestCase extends TestCase {
         assertTrue(a4.compareTo(a1) > 0);
         assertTrue(a4.compareTo(a2) > 0);
         assertTrue(a4.compareTo(a3) > 0);
-        assertTrue(a4.compareTo(a4) == 0);
+        assertEquals(0, a4.compareTo(a4));
         assertTrue(a4.compareTo(a5) < 0);
         assertTrue(a4.compareTo(a6) < 0);
 

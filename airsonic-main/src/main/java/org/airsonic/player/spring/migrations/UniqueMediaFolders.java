@@ -22,11 +22,7 @@ import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class UniqueMediaFolders implements CustomSqlChange {
@@ -72,7 +68,7 @@ public class UniqueMediaFolders implements CustomSqlChange {
 
         if (conn != null) {
             try (PreparedStatement st = conn.prepareStatement("select * from music_folder order by id");
-                    ResultSet result = st.executeQuery();) {
+                    ResultSet result = st.executeQuery()) {
 
                 List<MusicFolder> folders = new ArrayList<>();
                 int i = 0;

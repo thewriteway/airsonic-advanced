@@ -18,14 +18,13 @@
  */
 package org.airsonic.player.config;
 
+import jakarta.annotation.PostConstruct;
 import org.airsonic.player.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
-
-import jakarta.annotation.PostConstruct;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

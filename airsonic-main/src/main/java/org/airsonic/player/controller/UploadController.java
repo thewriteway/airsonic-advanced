@@ -27,6 +27,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.re2j.Pattern;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.airsonic.player.ajax.UploadInfo;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.TransferStatus;
@@ -57,9 +59,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -371,9 +370,9 @@ public class UploadController {
      * Receives callbacks as the file upload progresses.
      */
     private static class UploadListenerImpl implements UploadListener {
-        private TransferStatus status;
-        private SimpMessagingTemplate brokerTemplate;
-        private RateLimiter rateLimiter;
+        private final TransferStatus status;
+        private final SimpMessagingTemplate brokerTemplate;
+        private final RateLimiter rateLimiter;
         private volatile int lastBroadcastPercentage = 0;
 
         private UploadListenerImpl(TransferStatus status, RateLimiter rateLimiter,

@@ -28,8 +28,8 @@ import java.util.Optional;
 @Repository
 public interface ShareRepository extends JpaRepository<Share, Integer> {
 
-    public List<Share> findByUsername(String username);
+    List<Share> findByUsername(String username);
 
-    public Optional<Share> findByName(String name);
+    Optional<Share> findByName(String name);
 
 }

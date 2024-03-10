@@ -55,8 +55,8 @@ public class AddMediaFileIdToPodcastChannels implements CustomSqlChange {
             try (PreparedStatement st1 = conn.prepareStatement("SELECT path FROM music_folder WHERE type='PODCAST';");
                     ResultSet rs1 = st1.executeQuery();
                     PreparedStatement st2 = conn.prepareStatement("SELECT id, title FROM podcast_channel;");
-                    ResultSet rs2 = st2.executeQuery();
-                    ) {
+                    ResultSet rs2 = st2.executeQuery()
+            ) {
                 while (rs1.next()) {
                     folderPath = Paths.get(rs1.getString("path"));
                 }

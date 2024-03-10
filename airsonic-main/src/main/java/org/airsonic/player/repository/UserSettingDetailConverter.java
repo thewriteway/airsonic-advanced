@@ -21,21 +21,20 @@ package org.airsonic.player.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.persistence.AttributeConverter;
 import org.airsonic.player.domain.entity.UserSettingDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.persistence.AttributeConverter;
-
 public class UserSettingDetailConverter implements AttributeConverter<UserSettingDetail, String> {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private UserSettingDetailConverter() {
         objectMapper.registerModule(new JavaTimeModule());
     }
 
-    private static Logger LOG = LoggerFactory.getLogger(UserSettingDetailConverter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UserSettingDetailConverter.class);
 
     @Override
     public String convertToDatabaseColumn(UserSettingDetail setting) {

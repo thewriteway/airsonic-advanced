@@ -24,10 +24,12 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.RateLimiter;
+import jakarta.annotation.PostConstruct;
 import org.airsonic.player.config.AirsonicCueConfig;
 import org.airsonic.player.config.AirsonicDefaultFolderConfig;
 import org.airsonic.player.config.AirsonicHomeConfig;
-import org.airsonic.player.domain.*;
+import org.airsonic.player.domain.CoverArtSource;
+import org.airsonic.player.domain.Theme;
 import org.airsonic.player.service.sonos.SonosServiceRegistration;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -39,8 +41,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Service;
-
-import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -485,12 +485,12 @@ public class SettingsService {
         ConfigurationPropertiesService.getInstance().save();
     }
 
-    private Map<String, Object> settingsCache = new ConcurrentHashMap<>();
+    private final Map<String, Object> settingsCache = new ConcurrentHashMap<>();
     // exists for secondary derived objects based on objects in properties.
     // Can't be stored with settingsCache because ConcurrentHashMaps cannot recursively update values.
     // Example: Retrieving KEY_DERIVATIVE: If absent, retrieve KEY to derive object from. If KEY in turn is also absent: look up in env.
     // Then store KEY first, then KEY_DERIVATIVE. So one lookup ends up modifying another part of ConcurrentHashMap which is illegal by contract.
-    private Map<String, Object> derivativeSettingsCache = new ConcurrentHashMap<>();
+    private final Map<String, Object> derivativeSettingsCache = new ConcurrentHashMap<>();
 
     private void setProperty(String key, Object value) {
         if (value == null) {
@@ -799,19 +799,19 @@ public class SettingsService {
 
     public long getTranscodeEstimateTimePadding() {
         return getLong(KEY_TRANSCODE_ESTIMATE_TIME_PADDING, DEFAULT_TRANSCODE_ESTIMATE_TIME_PADDING);
-    };
+    }
 
     public void setTranscodeEstimateTimePadding(Long timeInMillis) {
         setLong(KEY_TRANSCODE_ESTIMATE_TIME_PADDING, timeInMillis);
-    };
+    }
 
     public long getTranscodeEstimateBytePadding() {
         return getLong(KEY_TRANSCODE_ESTIMATE_BYTE_PADDING, DEFAULT_TRANSCODE_ESTIMATE_BYTE_PADDING);
-    };
+    }
 
     public void setTranscodeEstimateBytePadding(Long bytes) {
         setLong(KEY_TRANSCODE_ESTIMATE_BYTE_PADDING, bytes);
-    };
+    }
 
     public int getDbBackupInterval() {
         return getInt(KEY_DB_BACKUP_INTERVAL, DEFAULT_DB_BACKUP_INTERVAL);

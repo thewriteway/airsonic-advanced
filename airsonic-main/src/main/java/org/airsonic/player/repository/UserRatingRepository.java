@@ -33,16 +33,16 @@ import java.util.Optional;
 @Repository
 public interface UserRatingRepository extends JpaRepository<UserRating, UserRatingKey> {
 
-    public Optional<UserRating> findOptByUsernameAndMediaFileId(String username, int mediaFileId);
+    Optional<UserRating> findOptByUsernameAndMediaFileId(String username, int mediaFileId);
 
-    public Integer countByUsernameAndMediaFileIdIn(String username, Iterable<Integer> mediaFileIds);
+    Integer countByUsernameAndMediaFileIdIn(String username, Iterable<Integer> mediaFileIds);
 
-    public List<UserRating> findByUsernameAndRatingBetween(String username, Integer fromRating, Integer toRating);
+    List<UserRating> findByUsernameAndRatingBetween(String username, Integer fromRating, Integer toRating);
 
     @Query("SELECT AVG(u.rating) FROM UserRating u WHERE u.mediaFileId = :mediaFileId")
-    public Double getAverageRatingByMediaFileId(@Param("mediaFileId") int mediaFileId);
+    Double getAverageRatingByMediaFileId(@Param("mediaFileId") int mediaFileId);
 
     @Transactional
-    public void deleteByUsernameAndMediaFileId(String username, int mediaFileId);
+    void deleteByUsernameAndMediaFileId(String username, int mediaFileId);
 
 }

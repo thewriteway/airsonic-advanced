@@ -67,7 +67,7 @@ public class SonosServiceRegistration {
         ANONYMOUS("Anonymous"),
         APPLICATION_LINK("AppLink");
 
-        private String fieldValue;
+        private final String fieldValue;
 
         AuthenticationType(String fieldValue) {
             this.fieldValue = fieldValue;

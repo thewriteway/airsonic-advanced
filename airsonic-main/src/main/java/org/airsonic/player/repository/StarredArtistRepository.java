@@ -31,13 +31,13 @@ import java.util.Optional;
 @Repository
 public interface StarredArtistRepository extends JpaRepository<StarredArtist, Integer> {
 
-    public Optional<StarredArtist> findByArtistIdAndUsername(Integer artistId, String username);
+    Optional<StarredArtist> findByArtistIdAndUsername(Integer artistId, String username);
 
-    public List<StarredArtist> findByUsername(String username);
+    List<StarredArtist> findByUsername(String username);
 
-    public List<StarredArtist> findByUsernameAndArtistFolderInAndArtistPresentTrue(String username, Iterable<MusicFolder> folders, Sort sort);
+    List<StarredArtist> findByUsernameAndArtistFolderInAndArtistPresentTrue(String username, Iterable<MusicFolder> folders, Sort sort);
 
     @Transactional
-    public void deleteByArtistIdAndUsername(Integer artistId, String username);
+    void deleteByArtistIdAndUsername(Integer artistId, String username);
 
 }
