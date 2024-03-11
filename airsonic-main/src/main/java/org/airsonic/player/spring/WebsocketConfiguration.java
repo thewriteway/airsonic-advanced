@@ -19,6 +19,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -124,7 +125,25 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
             return originalRequest;
         }
 
-        @Override
+          @Override
+    public String getRequestId() {
+        // Provide the implementation or return null
+        return null;
+    }
+
+    @Override
+    public String getProtocolRequestId() {
+        // Provide the implementation or return null
+        return null;
+    }
+
+    @Override
+    public ServletConnection getServletConnection() {
+        // Provide the implementation or return null
+        return null;
+    }
+
+       @Override
         public Object getAttribute(String name) {
             return Optional.ofNullable(getOriginalRequest().getServletRequest().getAttribute(name))
                     .orElse(getOriginalRequest().getHeaders().get(name));
@@ -272,11 +291,6 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
 
         @Override
-        public String getRealPath(String path) {
-            return null;
-        }
-
-        @Override
         public int getRemotePort() {
             return getAddress(() -> Optional.ofNullable(getOriginalRequest().getServletRequest().getRemotePort())
                     .orElse(getOriginalRequest().getRemoteAddress().getPort()), URI::getPort);
@@ -376,8 +390,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
         @Override
         public String getMethod() {
-            return Optional.ofNullable(getOriginalRequest().getServletRequest().getMethod())
-                    .orElse(getOriginalRequest().getMethodValue());
+            return getOriginalRequest().getServletRequest().getMethod();
         }
 
         @Override
@@ -470,11 +483,6 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         @Override
         public boolean isRequestedSessionIdFromURL() {
             return getOriginalRequest().getServletRequest().isRequestedSessionIdFromURL();
-        }
-
-        @Override
-        public boolean isRequestedSessionIdFromUrl() {
-            return isRequestedSessionIdFromURL();
         }
 
         @Override

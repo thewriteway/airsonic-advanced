@@ -113,7 +113,7 @@
               </dependency>
              <dependency>
                 <groupId>jakarta.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
+                <artifactId>jakarta.servlet-api</artifactId>
                 <version>6.0.0</version>
              </dependency>
               <dependency>
@@ -354,7 +354,7 @@
                                 <ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:tomcat-embed-core*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.apache.tomcat:tomcat-annotations-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:tomcat-embed-el*</ignoredUsedUndeclaredDependency>
-                                <ignoredUsedUndeclaredDependency>*javax*:*</ignoredUsedUndeclaredDependency>
+                                <ignoredUsedUndeclaredDependency>*jakarta*:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.hamcrest:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>com.fasterxml.jackson.*:jackson-*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.aspectj:aspectjweaver</ignoredUsedUndeclaredDependency>

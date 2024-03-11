@@ -31,9 +31,9 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Node;
 
 import jakarta.servlet.http.HttpServletRequest;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
 
 import java.util.Set;

@@ -16,7 +16,7 @@
         <chameleon.version>2.0.0-RELEASE</chameleon.version>
         <tomcat.server.scope>provided</tomcat.server.scope>
         <!-- For fixing import/export due to https://github.com/liquibase/liquibase/issues/1598 -->
-        <liquibase.version>4.8.0</liquibase.version>
+        <liquibase.version>4.26.0</liquibase.version>
         <logback.version>1.2.13</logback.version>
         <mockito.version>5.8.0</mockito.version>
         <mariadb.version>3.3.2</mariadb.version>
@@ -369,7 +369,7 @@
             <version>2.1.2</version>
             <exclusions>
                 <exclusion>
-                    <groupId>javax.servlet</groupId>
+                    <groupId>jakarta.servlet</groupId>
                     <artifactId>servlet-api</artifactId>
                 </exclusion>
             </exclusions>
@@ -397,7 +397,7 @@
                     <artifactId>commons-lang</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.activation</groupId>
+                    <groupId>jakarta.activation</groupId>
                     <artifactId>activation</artifactId>
                 </exclusion>
             </exclusions>
@@ -515,7 +515,7 @@
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.xml.stream</groupId>
+                    <groupId>jakarta.xml.stream</groupId>
                     <artifactId>stax-api</artifactId>
                 </exclusion>
                 <exclusion>
