@@ -96,15 +96,15 @@
                 <version>1.10.14</version>
                 <scope>runtime</scope>
             </dependency>
+<dependency>
+    <groupId>org.glassfish.jaxb</groupId>
+    <artifactId>jaxb-runtime</artifactId>
+<version>3.0.2</version>
+</dependency>
             <dependency>
                 <groupId>org.jvnet.staxex</groupId>
                 <artifactId>stax-ex</artifactId>
                 <version>2.1.0</version>
-            </dependency>
-            <dependency>
-                <groupId>jakarta.jws</groupId>
-                <artifactId>jakarta.jws-api</artifactId>
-                <version>3.0.0</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
@@ -116,11 +116,16 @@
                 <artifactId>jakarta.servlet-api</artifactId>
                 <version>6.0.0</version>
              </dependency>
-              <dependency>
+             <dependency>
                <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-core</artifactId>
                  <version>4.8.0</version>
                 </dependency>
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjtools</artifactId>
+    <version>1.9.21.1</version>
+</dependency>
 <dependency>
     <groupId>org.fourthline.cling</groupId>
     <artifactId>cling-core</artifactId>
@@ -136,6 +141,11 @@
     <artifactId>cling</artifactId>
     <version>2.1.2</version>
 </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+<version>2.1.1</version>
+        </dependency>
 <dependency>
     <groupId>org.fourthline.cling</groupId>
     <artifactId>cling-support</artifactId>
@@ -358,14 +368,12 @@
                                 <ignoredUsedUndeclaredDependency>org.hamcrest:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>com.fasterxml.jackson.*:jackson-*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.aspectj:aspectjweaver</ignoredUsedUndeclaredDependency>
-                                <ignoredUsedUndeclaredDependency>org.glassfish:jakarta.el</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-params:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.mockito:mockito-junit-jupiter:*</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>jakarta.persistence:jakarta.persistence-api</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>org.springframework.data:spring-data-jpa</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-params:*</ignoredUsedUndeclaredDependency>
-                                <ignoredUsedUndeclaredDependency>jakarta.transaction:jakarta.transaction-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.springframework.data:spring-data-commons:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>commons-collections:commons-collections:*</ignoredUsedUndeclaredDependency>
                             </ignoredUsedUndeclaredDependencies>
@@ -376,6 +384,13 @@
                                 <ignoredUnusedDeclaredDependency>org.seamless:seamless-http*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>taglibs:string:jar*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.seamless:seamless-http*</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.eclipse:persistence:*</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.airsonic.player:airsonic-sonos-api</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.apache.cxf:*</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.glassfish:jakarta.el</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.jsoup:jsoup</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.aspectj:aspectjrt</ignoredUnusedDeclaredDependency>
+
                                 <ignoredUnusedDeclaredDependency>org.tukaani:xz:*</ignoredUnusedDeclaredDependency>
                                 <!-- Needed for airsonic-booter to load Airsonic correctly -->
                                 <ignoredUnusedDeclaredDependency>org.springframework.security:*</ignoredUnusedDeclaredDependency>
@@ -388,6 +403,9 @@
 				                <ignoredUnusedDeclaredDependency>org.springframework:spring-aspects</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.yaml:snakeyaml</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
+                            <ignoredNonTestScopedDependencies>
+                                <ignoredNonTestScopedDependency>jakarta.transaction:*</ignoredNonTestScopedDependency>
+                            </ignoredNonTestScopedDependencies>
                         </configuration>
                     </execution>
                 </executions>

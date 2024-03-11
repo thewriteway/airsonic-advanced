@@ -117,7 +117,6 @@
                 <executions>
                     <execution>
                         <id>default-jar</id>
-                        <phase/>
                         <configuration>
                             <finalName>unwanted</finalName>
                             <classifier>unwanted</classifier>

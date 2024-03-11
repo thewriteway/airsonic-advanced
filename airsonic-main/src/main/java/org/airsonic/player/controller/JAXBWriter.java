@@ -23,8 +23,7 @@ import com.google.common.net.MediaType;
 import org.airsonic.player.controller.SubsonicRESTController.APIException;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.persistence.jaxb.JAXBContext;
-import org.eclipse.persistence.jaxb.MarshallerProperties;
+import jakarta.xml.bind.JAXBContext;
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.slf4j.Logger;
@@ -92,8 +91,8 @@ public class JAXBWriter {
             marshaller = jaxbContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_ENCODING, StringUtil.ENCODING_UTF8);
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.setProperty(MarshallerProperties.MEDIA_TYPE, "application/json");
-            marshaller.setProperty(MarshallerProperties.JSON_INCLUDE_ROOT, true);
+            //marshaller.setProperty(org.eclipse.persistence.xml.bind.Marshaller.MEDIA_TYPE, "application/json");
+            //marshaller.setProperty(MarshallerProperties.JSON_INCLUDE_ROOT, true);
             return marshaller;
         } catch (JAXBException e) {
             throw new RuntimeException(e);
