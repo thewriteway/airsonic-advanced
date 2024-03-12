@@ -141,17 +141,24 @@
     <artifactId>cling</artifactId>
     <version>2.1.2</version>
 </dependency>
+     <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.12</version>
+        </dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-simple</artifactId>
+    <version>2.0.12</version>
+    <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
 <version>2.1.1</version>
         </dependency>
-<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
-<dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>slf4j-api</artifactId>
-    <version>2.0.12</version>
-</dependency>
 <dependency>
     <groupId>org.fourthline.cling</groupId>
     <artifactId>cling-support</artifactId>
@@ -164,13 +171,6 @@
                 <version>4.0.5</version>
                 <scope>runtime</scope>
               </dependency>
-<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
-<dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>slf4j-simple</artifactId>
-    <version>2.0.12</version>
-    <scope>runtime</scope>
-</dependency>
                <dependency>
                   <groupId>org.springframework.security</groupId>
                   <artifactId>spring-security-core</artifactId>
