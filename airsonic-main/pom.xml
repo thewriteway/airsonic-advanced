@@ -20,7 +20,7 @@
         <logback.version>1.2.13</logback.version>
         <mockito.version>5.8.0</mockito.version>
         <mariadb.version>3.3.2</mariadb.version>
-        <aspectj.version>1.9.21</aspectj.version>
+        <aspectj.version>1.9.21.1</aspectj.version>
     </properties>
 
     <dependencies>
@@ -273,7 +273,7 @@
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
-            <version>4.5.13</version>
+            <version>4.5.14</version>
             <artifactId>httpclient</artifactId>
         </dependency>
 
