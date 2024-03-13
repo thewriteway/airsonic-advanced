@@ -716,7 +716,7 @@
                 <!-- Change to non-snapshot version once it is released (change groupId) -->
                 <groupId>dev.aspectj</groupId>
                 <artifactId>aspectj-maven-plugin</artifactId>
-                <version>1.13.1</version>
+                <version>1.14</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
