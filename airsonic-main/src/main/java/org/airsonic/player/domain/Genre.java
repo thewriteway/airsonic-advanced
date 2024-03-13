@@ -22,7 +22,7 @@ package org.airsonic.player.domain;
 
 import org.airsonic.player.repository.AtomicIntegerConverter;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;

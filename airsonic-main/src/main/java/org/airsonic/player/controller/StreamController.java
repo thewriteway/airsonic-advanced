@@ -30,6 +30,7 @@ import org.airsonic.player.io.PlayQueueInputStream;
 import org.airsonic.player.io.ShoutCastOutputStream;
 import org.airsonic.player.security.JWTAuthenticationToken;
 import org.airsonic.player.service.*;
+import org.airsonic.player.service.sonos.SonosHelper;
 import org.airsonic.player.spring.KnownLengthInputStreamResource;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.LambdaUtils;
@@ -53,7 +54,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 
 import java.awt.*;
 import java.io.FilterInputStream;
@@ -272,14 +273,15 @@ public class StreamController {
                 new InputStreamResource(monitoredStream) :
                 new KnownLengthInputStreamResource(monitoredStream, expectedSize);
 
-         headers.setContentType(MediaType.parseMediaType(StringUtil.getMimeType(suffix)));
+        boolean sonos = SonosHelper.AIRSONIC_CLIENT_ID.equals(player.getClientId());
+        headers.setContentType(MediaType.parseMediaType(StringUtil.getMimeType(suffix, sonos)));
 
         return ResponseEntity.ok().headers(headers).body(resource);
     }
 
     private void scrobble(MediaFile mediaFile, Player player, boolean submission) {
         // Don't scrobble REST players (except Sonos)
-        if (player.getClientId() == null) {
+        if (player.getClientId() == null || player.getClientId().equals(SonosHelper.AIRSONIC_CLIENT_ID)) {
             audioScrobblerService.register(mediaFile, player.getUsername(), submission, null);
         }
     }

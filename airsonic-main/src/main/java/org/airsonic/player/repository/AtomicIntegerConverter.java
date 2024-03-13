@@ -19,8 +19,8 @@
 
 package org.airsonic.player.repository;
 
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
+import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

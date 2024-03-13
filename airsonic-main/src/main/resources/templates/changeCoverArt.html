@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 
 <html><head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <th:block th:replace="~{head}" />
+    <th:block th:replace="head" />
     <th:block th:replace="jquery" />
 
     <script type="text/javascript" th:inline="javascript">
@@ -32,7 +29,7 @@
             $("#errorDetails").hide();
             $("#noImagesFound").hide();
             top.StompClient.send("/app/coverart/set", JSON.stringify({
-                id: /*[[${command.id}]]*/ 0,
+                id: /*[[${command.id}]]*/ 0, 
                 url: imageUrl
             }));
         }

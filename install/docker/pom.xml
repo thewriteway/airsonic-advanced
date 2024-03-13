@@ -50,7 +50,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.2.0</version>
                 <groupId>org.apache.maven.plugins</groupId>
                 <configuration>
                     <stripClassifier>true</stripClassifier>

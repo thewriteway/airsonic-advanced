@@ -22,8 +22,8 @@ import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
-import jakarta.servlet.Filter;
-import jakarta.servlet.Servlet;
+import javax.servlet.Filter;
+import javax.servlet.Servlet;
 
 import java.util.Properties;
 

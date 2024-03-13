@@ -22,7 +22,7 @@ package org.airsonic.player.domain;
 
 import org.apache.commons.lang.StringUtils;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.Instant;
 import java.util.ArrayList;

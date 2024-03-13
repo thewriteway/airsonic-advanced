@@ -57,7 +57,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;

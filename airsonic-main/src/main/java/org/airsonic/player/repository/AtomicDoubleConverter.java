@@ -2,8 +2,8 @@ package org.airsonic.player.repository;
 
 import com.google.common.util.concurrent.AtomicDouble;
 
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
+import javax.persistence.AttributeConverter;
+import javax.persistence.Converter;
 
 @Converter
 public class AtomicDoubleConverter implements AttributeConverter<AtomicDouble, Double> {

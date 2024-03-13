@@ -24,7 +24,7 @@ import org.airsonic.player.domain.entity.StarredAlbum;
 import org.airsonic.player.repository.AtomicDoubleConverter;
 import org.airsonic.player.repository.AtomicIntegerConverter;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.Instant;
 import java.util.ArrayList;

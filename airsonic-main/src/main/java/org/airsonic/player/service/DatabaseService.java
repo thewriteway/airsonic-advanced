@@ -1,13 +1,9 @@
 package org.airsonic.player.service;
 
 import liquibase.Contexts;
-import liquibase.LabelExpression;
 import liquibase.Liquibase;
-import liquibase.command.CommandFactory;
-
-import java.sql.Connection;
-import java.sql.Statement;
-import java.util.List;
+import liquibase.command.CommandScope;
+import liquibase.command.core.InternalExecuteSqlCommandStep;
 import liquibase.database.Database;
 import liquibase.database.DatabaseConnection;
 import liquibase.database.DatabaseFactory;
@@ -15,11 +11,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.StandardObjectChangeFilter;
 import liquibase.integration.commandline.CommandLineUtils;
-import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.DirectoryResourceAccessor;
-import liquibase.resource.FileSystemResourceAccessor;
-import liquibase.resource.ResourceAccessor;
-
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.dao.DatabaseDao;
 import org.airsonic.player.util.FileUtil;
@@ -33,13 +25,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.sql.Connection;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,6 +40,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -227,20 +221,16 @@ public class DatabaseService {
             }));
         }
     }
-            private static void truncateAll(Database db, Connection c) throws Exception {
-        String sql = TABLE_ORDER.stream()
-                .map(t -> "DELETE FROM " + t + ";")
-                .reduce((t1, t2) -> t1 + " " + t2)
-                .orElse("");
 
-        try (Statement statement = c.createStatement()) {
-            // Splitting SQL commands to execute one by one if your DB doesn't support executing them all at once
-            for (String sqlCommand : sql.split(";")) {
-                statement.execute(sqlCommand);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to truncate tables", e);
-        }
+    private static void truncateAll(Database db, Connection c) throws Exception {
+        String sql = TABLE_ORDER.stream().flatMap(t -> t.stream())
+                .map(t -> "delete from " + t).collect(joining("; "));
+        CommandScope commandScope = new CommandScope("internalExecuteSql");
+        commandScope.addArgumentValue(InternalExecuteSqlCommandStep.DATABASE_ARG, db);
+        commandScope.addArgumentValue(InternalExecuteSqlCommandStep.SQL_ARG, sql);
+        commandScope.addArgumentValue(InternalExecuteSqlCommandStep.DELIMITER_ARG, ";");
+
+        commandScope.execute();
     }
 
     private static List<List<String>> TABLE_ORDER = Arrays.asList(

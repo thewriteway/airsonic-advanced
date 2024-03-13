@@ -103,28 +103,26 @@ public final class AnalyzerFactory {
                     "pattern", "\\[\\]", "replacement", "\\[ \\]", "replace", "all");
     }
 
-
     private Builder createDefaultAnalyzerBuilder() throws IOException {
         Builder builder = CustomAnalyzer.builder()
-                .withTokenizer("standard") // Use the tokenizer name instead of class
-                .addTokenFilter("cjk_width")
-                .addTokenFilter("asciifolding", "preserveOriginal", "false")
-                .addTokenFilter("lowercase")
-                .addTokenFilter("stop", "words", STOP_WORDS)
-                .addTokenFilter("english_possessive_stemmer");
+                .withTokenizer(StandardTokenizerFactory.class)
+                .addTokenFilter(CJKWidthFilterFactory.class)
+                .addTokenFilter(ASCIIFoldingFilterFactory.class, "preserveOriginal", "false")
+                .addTokenFilter(LowerCaseFilterFactory.class)
+                .addTokenFilter(StopFilterFactory.class, "words", STOP_WORDS)
+                .addTokenFilter(EnglishPossessiveFilterFactory.class);
         addTokenFilterForUnderscoreRemovalAroundToken(builder);
         return builder;
     }
 
-
     private Builder createArtistAnalyzerBuilder() throws IOException {
         Builder builder = CustomAnalyzer.builder()
-                .withTokenizer("standard")
-                .addTokenFilter("cjk_width")
-                .addTokenFilter("asciifolding", "preserveOriginal", "false")
-                .addTokenFilter("lowercase")
-                .addTokenFilter("stop", "words", STOP_WORDS_ARTIST)
-                .addTokenFilter("english_possessive_stemmer");
+                .withTokenizer(StandardTokenizerFactory.class)
+                .addTokenFilter(CJKWidthFilterFactory.class)
+                .addTokenFilter(ASCIIFoldingFilterFactory.class, "preserveOriginal", "false")
+                .addTokenFilter(LowerCaseFilterFactory.class)
+                .addTokenFilter(StopFilterFactory.class, "words", STOP_WORDS_ARTIST)
+                .addTokenFilter(EnglishPossessiveFilterFactory.class);
         addTokenFilterForUnderscoreRemovalAroundToken(builder);
         return builder;
     }

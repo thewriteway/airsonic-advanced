@@ -22,7 +22,7 @@ package org.airsonic.player.domain;
 import org.airsonic.player.repository.RolesConverter;
 import org.airsonic.player.util.Util;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.util.ArrayList;
 import java.util.Collections;

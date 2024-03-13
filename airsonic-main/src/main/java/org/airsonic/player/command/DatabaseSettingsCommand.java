@@ -1,6 +1,6 @@
 package org.airsonic.player.command;
 
-import jakarta.validation.constraints.NotNull;
+import javax.validation.constraints.NotNull;
 
 public class DatabaseSettingsCommand {
 

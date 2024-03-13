@@ -79,7 +79,7 @@ th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(m
 
         // List of songs (of type PlayQueueInfo.Entry)
         songs: [],
-
+        
         bookmarks: {},
         autoBookmark: /*[(${model['autoBookmark'] ?: false})]*/ false,
         audioBookmarkFrequency: /*[[${model['audioBookmarkFrequency']}]]*/ 10,
@@ -134,15 +134,15 @@ th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(m
                 orderMulti: false,
                 pageLength: /*[[${model['initialPaginationSize']}]]*/ 10,
                 /*[+
-                lengthMenu: [
-                    [10, 20, 50, 100, -1 [(${paginationaddition})] ],
-                    [10, 20, 50, 100, "All" [(${paginationaddition})] ]
+                lengthMenu: [ 
+                    [10, 20, 50, 100, -1 [(${paginationaddition})] ], 
+                    [10, 20, 50, 100, "All" [(${paginationaddition})] ] 
                 ],
                 +]*/
                 /*[- */
-                lengthMenu: [
-                    [10, 20, 50, 100, -1],
-                    [10, 20, 50, 100, "All"]
+                lengthMenu: [ 
+                    [10, 20, 50, 100, -1], 
+                    [10, 20, 50, 100, "All"] 
                 ],
                 /* -]*/
 
@@ -943,13 +943,13 @@ th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(m
                 par.musicTable.cell(index, "starred:name").invalidate();
                 return par.songs[index].id;
             });
-
+            
             if (status) {
                 top.StompClient.send("/app/rate/mediafile/star", JSON.stringify(ids));
             } else {
                 top.StompClient.send("/app/rate/mediafile/unstar", JSON.stringify(ids));
             }
-
+            
         },
         onToggleStar(index) {
             this.onStar([index], !this.songs[index].starred);

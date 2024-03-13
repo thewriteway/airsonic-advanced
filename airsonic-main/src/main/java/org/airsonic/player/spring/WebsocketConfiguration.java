@@ -16,21 +16,20 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import jakarta.servlet.AsyncContext;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.RequestDispatcher;
-import jakarta.servlet.ServletConnection;
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletInputStream;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.HttpUpgradeHandler;
-import jakarta.servlet.http.Part;
+import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.Part;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -125,25 +124,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
             return originalRequest;
         }
 
-          @Override
-    public String getRequestId() {
-        // Provide the implementation or return null
-        return null;
-    }
-
-    @Override
-    public String getProtocolRequestId() {
-        // Provide the implementation or return null
-        return null;
-    }
-
-    @Override
-    public ServletConnection getServletConnection() {
-        // Provide the implementation or return null
-        return null;
-    }
-
-       @Override
+        @Override
         public Object getAttribute(String name) {
             return Optional.ofNullable(getOriginalRequest().getServletRequest().getAttribute(name))
                     .orElse(getOriginalRequest().getHeaders().get(name));
@@ -291,6 +272,11 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
 
         @Override
+        public String getRealPath(String path) {
+            return null;
+        }
+
+        @Override
         public int getRemotePort() {
             return getAddress(() -> Optional.ofNullable(getOriginalRequest().getServletRequest().getRemotePort())
                     .orElse(getOriginalRequest().getRemoteAddress().getPort()), URI::getPort);
@@ -390,7 +376,8 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
         @Override
         public String getMethod() {
-            return getOriginalRequest().getServletRequest().getMethod();
+            return Optional.ofNullable(getOriginalRequest().getServletRequest().getMethod())
+                    .orElse(getOriginalRequest().getMethodValue());
         }
 
         @Override
@@ -483,6 +470,11 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         @Override
         public boolean isRequestedSessionIdFromURL() {
             return getOriginalRequest().getServletRequest().isRequestedSessionIdFromURL();
+        }
+
+        @Override
+        public boolean isRequestedSessionIdFromUrl() {
+            return isRequestedSessionIdFromURL();
         }
 
         @Override

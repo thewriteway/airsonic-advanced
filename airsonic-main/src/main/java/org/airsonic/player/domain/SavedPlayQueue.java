@@ -20,7 +20,7 @@
 
 package org.airsonic.player.domain;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
