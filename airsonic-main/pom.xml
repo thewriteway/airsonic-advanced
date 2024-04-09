@@ -31,12 +31,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.airsonic.player</groupId>
-            <artifactId>airsonic-sonos-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- Metrics
              Metrics is a cool framework used here
              to compute musures and statistics during automated testing

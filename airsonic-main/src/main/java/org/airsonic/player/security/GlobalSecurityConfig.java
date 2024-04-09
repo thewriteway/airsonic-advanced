@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.service.JWTSecurityService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
-import org.airsonic.player.service.sonos.SonosLinkSecurityInterceptor.SonosJWTVerification;
 import org.apache.commons.codec.binary.Base16;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -111,7 +110,7 @@ public class GlobalSecurityConfig {
     MultipleCredsMatchingAuthenticationProvider multipleCredsProvider;
 
     @Autowired
-    SonosJWTVerification sonosJwtVerification;
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -202,7 +201,6 @@ public class GlobalSecurityConfig {
             settingsService.save();
         }
         JWTAuthenticationProvider jwtAuth = new JWTAuthenticationProvider(jwtKey);
-        jwtAuth.addAdditionalCheck("/ws/Sonos", sonosJwtVerification);
         auth.authenticationProvider(jwtAuth);
         auth.authenticationProvider(multipleCredsProvider);
     }
