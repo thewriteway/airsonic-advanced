@@ -34,7 +34,7 @@ jobs:
     # Setup Java 21
     - name: Set up JDK 21
       if: matrix.language == 'java'
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin' # You can change this to match your preferred distribution
