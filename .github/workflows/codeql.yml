@@ -31,23 +31,30 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # Setup Java 21
+    - name: Set up JDK 21
+      if: matrix.language == 'java'
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin' # You can change this to match your preferred distribution
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
 
-    # Optional: Add CodeQL Autobuild if applicable and your project is compatible with it.
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3
-      if: matrix.build-mode != 'manual'
+      if: matrix.build-mode != 'manual' && matrix.language == 'java'
 
     # Custom build step if autobuild is not suitable
-    - if: matrix.build-mode == 'manual'
+    - if: matrix.build-mode == 'manual' && matrix.language == 'java'
       run: |
         echo 'Replace this with commands to build your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
+        echo '  ./gradlew build'
+        echo '  mvn package'
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
