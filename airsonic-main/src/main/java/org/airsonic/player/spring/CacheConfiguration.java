@@ -6,6 +6,7 @@ import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Playlist;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserSettings;
+import org.airsonic.player.service.cache.PlaylistCache.PlaylistUserList;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ConfigurationBuilder;
 import org.ehcache.config.builders.ExpiryPolicyBuilder;
@@ -97,7 +98,7 @@ public class CacheConfiguration {
                                 .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofDays(10)))
                                 .withService(cacheLogging))
                 .withCache(PLAYLIST_USERS_CACHE,
-                        CacheConfigurationBuilder.newCacheConfigurationBuilder(Integer.class, Object.class, pools)
+                        CacheConfigurationBuilder.newCacheConfigurationBuilder(Integer.class, PlaylistUserList.class, pools)
                                 .withClassLoader(cl)
                                 .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofDays(10)))
                                 .withService(cacheLogging))

@@ -21,6 +21,7 @@
         <logback.version>1.4.14</logback.version>
         <mockito.version>5.10.0</mockito.version>
         <mariadb.version>3.3.2</mariadb.version>
+        <aspectj.version>1.9.22</aspectj.version>
     </properties>
 
     <dependencies>
@@ -36,7 +37,11 @@
             <artifactId>airsonic-sonos-api</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.2</version>
+        </dependency>
         <!-- Metrics
              Metrics is a cool framework used here
              to compute musures and statistics during automated testing
@@ -138,7 +143,7 @@
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
-            <version>3.15.0</version>
+            <version>3.19.4</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.ldap</groupId>
@@ -151,7 +156,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.76</version>
+            <version>1.77</version>
             <scope>runtime</scope>
         </dependency>
         <!-- END Spring -->
@@ -159,12 +164,12 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>8.9.0</version>
+            <version>8.11.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>8.9.0</version>
+            <version>8.11.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
@@ -181,7 +186,6 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.10.0</version>
         </dependency>
 
         <dependency>
@@ -196,12 +200,6 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
@@ -209,7 +207,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.26.0</version>
+            <version>1.26.1</version>
         </dependency>
         <dependency>
 <!--            compression library-->
@@ -220,7 +218,7 @@
         <dependency>
             <groupId>com.github.junrar</groupId>
             <artifactId>junrar</artifactId>
-            <version>7.5.4</version>
+            <version>7.5.5</version>
         </dependency>
 
         <dependency>
@@ -258,7 +256,7 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.7.1</version>
+            <version>2.7.2</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -283,7 +281,7 @@
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>
             <version>4.0.2</version>
-        </dependency>
+       </dependency>
 
         <dependency>
             <groupId>jakarta.servlet</groupId>
@@ -352,15 +350,10 @@
         <dependency>
             <groupId>org.seamless</groupId>
             <artifactId>seamless-util</artifactId>
-            <version>1.1.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-collections</groupId>
                     <artifactId>commons-collections</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>commons-lang</groupId>
-                    <artifactId>commons-lang</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>javax.activation</groupId>
@@ -433,17 +426,13 @@
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-text</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <!-- Fixes liquibase not using slf4j -->
         <dependency>
             <groupId>com.mattbertolini</groupId>
             <artifactId>liquibase-slf4j</artifactId>
-            <version>4.0.0</version>
+            <version>4.1.0</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -473,7 +462,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.6.0</version>
+            <version>3.9.6</version>
         </dependency>
 
         <dependency>
@@ -567,7 +556,7 @@
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
-            <version>64.2</version>
+            <version>75.1</version>
         </dependency>
         <dependency>
             <groupId>org.digitalmediaserver</groupId>
@@ -600,7 +589,7 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>8.0.33</version>
+            <version>8.3.0</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -666,7 +655,7 @@
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>buildnumber-maven-plugin</artifactId>
-              <version>3.1.0</version>
+              <version>3.2.0</version>
               <executions>
                 <execution>
                   <phase>generate-resources</phase>
@@ -696,7 +685,15 @@
                 <!-- Change to non-snapshot version once it is released (change groupId) -->
                 <groupId>dev.aspectj</groupId>
                 <artifactId>aspectj-maven-plugin</artifactId>
-                <version>1.13.1</version>
+                <version>1.14</version>
+      <dependencies>
+                  <dependency>
+                    <groupId>org.aspectj</groupId>
+                    <artifactId>aspectjtools</artifactId>
+                    <!-- AspectJ compiler version, in sync with runtime -->
+                    <version>${aspectj.version}</version>
+                  </dependency>
+                </dependencies>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -726,7 +723,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.3.2</version>
             </plugin>
         </plugins>
     </reporting>

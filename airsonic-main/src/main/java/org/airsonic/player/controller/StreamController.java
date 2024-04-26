@@ -49,10 +49,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -277,6 +279,11 @@ public class StreamController {
         headers.setContentType(MediaType.parseMediaType(StringUtil.getMimeType(suffix, sonos)));
 
         return ResponseEntity.ok().headers(headers).body(resource);
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
+        LOG.info("Client Aborted");
     }
 
     private void scrobble(MediaFile mediaFile, Player player, boolean submission) {

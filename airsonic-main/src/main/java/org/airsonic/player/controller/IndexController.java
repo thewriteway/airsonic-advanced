@@ -1,7 +1,9 @@
 package org.airsonic.player.controller;
 
+import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserSettings;
 import org.airsonic.player.service.PersonalSettingsService;
+import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +27,13 @@ public class IndexController {
     private SettingsService settingsService;
     @Autowired
     private PersonalSettingsService personalSettingsService;
+    @Autowired
+    private PlayerService playerService;
 
     @GetMapping
     public ModelAndView index(HttpServletRequest request) {
-        UserSettings userSettings = personalSettingsService.getUserSettings(securityService.getCurrentUsername(request));
+        User user = securityService.getCurrentUser(request);
+        UserSettings userSettings = personalSettingsService.getUserSettings(user.getUsername());
 
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("showRight", userSettings.getShowNowPlayingEnabled());
@@ -46,6 +51,9 @@ public class IndexController {
         map.put("autoBookmark", userSettings.getAutoBookmark());
         map.put("audioBookmarkFrequency", userSettings.getAudioBookmarkFrequency());
 
+        // add player info
+        map.put("user", user);
+        map.put("players", playerService.getPlayersForUserAndClientId(user.getUsername(), null));
 
         return new ModelAndView("index", "model", map);
     }

@@ -23,7 +23,7 @@ package org.airsonic.player.service;
 import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.TestCaseUtils;
 import org.airsonic.player.config.AirsonicCueConfig;
-import org.airsonic.player.config.AirsonicDefaultFolderConfig;
+import org.airsonic.player.config.AirsonicFolderConfig;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.apache.commons.configuration2.spring.ConfigurationPropertySource;
 import org.apache.commons.io.FileUtils;
@@ -69,7 +69,7 @@ public class SettingsServiceTestCase {
     private StandardEnvironment env;
 
     @Autowired
-    private AirsonicDefaultFolderConfig defaultFolderConfig;
+    private AirsonicFolderConfig defaultFolderConfig;
 
     @Autowired
     private AirsonicCueConfig cueConfig;
@@ -118,7 +118,7 @@ public class SettingsServiceTestCase {
         assertEquals(false, settingsService.isLdapAutoShadowing());
         assertEquals("30m", settingsService.getSessionDuration());
         assertEquals(true, settingsService.getEnableCueIndexing());
-        assertEquals(true, settingsService.getHideIndexedFiles());
+        assertEquals(true, settingsService.getHideVirtualTracks());
     }
 
     @Test
@@ -146,7 +146,7 @@ public class SettingsServiceTestCase {
         settingsService.setLdapSearchFilter("newLdapSearchFilter");
         settingsService.setLdapAutoShadowing(true);
         settingsService.setEnableCueIndexing(false);
-        settingsService.setHideIndexedFiles(false);
+        settingsService.setHideVirtualTracks(false);
 
         verifySettings(settingsService);
 
@@ -184,7 +184,7 @@ public class SettingsServiceTestCase {
         assertEquals("newLdapSearchFilter", settingsService.getLdapSearchFilter());
         assertTrue(settingsService.isLdapAutoShadowing());
         assertFalse(settingsService.getEnableCueIndexing());
-        assertFalse(settingsService.getHideIndexedFiles());
+        assertFalse(settingsService.getHideVirtualTracks());
     }
 
     @Test

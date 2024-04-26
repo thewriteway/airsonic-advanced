@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html><head>
-   <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{websocket}" />
+    <th:blodk th:replace="~{playQueue::head}"/>
     <link rel="alternate" type="application/rss+xml" title="Airsonic Podcast" th:href="@{/podcast.view(suffix=.rss)}">
     <style>
         iframe {
@@ -77,8 +78,7 @@
                         <iframe id="right" name="right" th:src="@{/right}" class="right-info"></iframe>
                     </div>
                 </div>
-                <div class="bgcolor2 playqueue-container">
-                    <th:block th:replace="~{playQueue}" />
+                <div class="bgcolor2 playqueue-container" th:replace="~{playQueue::container}">
                 </div>
            </div>
        </div>

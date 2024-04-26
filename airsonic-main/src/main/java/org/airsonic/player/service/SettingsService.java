@@ -25,7 +25,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.RateLimiter;
 import org.airsonic.player.config.AirsonicCueConfig;
-import org.airsonic.player.config.AirsonicDefaultFolderConfig;
+import org.airsonic.player.config.AirsonicFolderConfig;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.service.sonos.SonosServiceRegistration;
@@ -141,7 +141,7 @@ public class SettingsService {
     private static final String KEY_EXPORT_PLAYLIST_FORMAT = "PlaylistExportFormat";
     private static final String KEY_IGNORE_SYMLINKS = "IgnoreSymLinks";
     private static final String KEY_ENABLE_CUE_INDEXING = "EnableCueIndexing";
-    private static final String KEY_HIDE_INDEXED_FILES = "HideIndexedFiles";
+    private static final String KEY_HIDE_VIRTUAL_TRACKS = "HideIndexedFiles";
     private static final String KEY_EXCLUDE_PATTERN_STRING = "ExcludePattern";
 
     private static final String KEY_CAPTCHA_ENABLED = "CaptchaEnabled";
@@ -259,6 +259,9 @@ public class SettingsService {
     private static final String LOCALES_FILE = "/org/airsonic/player/i18n/locales.txt";
     private static final String THEMES_FILE = "/org/airsonic/player/theme/themes.txt";
 
+    // deprecated property
+    private static final String KEY_HIDE_INDEXED_FILES = "HideIndexedFiles";
+
     private static final Logger LOG = LoggerFactory.getLogger(SettingsService.class);
 
     private List<Theme> themes;
@@ -268,7 +271,7 @@ public class SettingsService {
     @Autowired
     private AirsonicHomeConfig homeConfig;
     @Autowired
-    private AirsonicDefaultFolderConfig defaultFolderConfig;
+    private AirsonicFolderConfig defaultFolderConfig;
     @Autowired
     private AirsonicCueConfig cueConfig;
 
@@ -315,6 +318,7 @@ public class SettingsService {
         keyMaps.put("IgnoreFileTimestamps", KEY_FULL_SCAN);
         keyMaps.put("MediaScannerParallelism", "AIRSONIC_SCAN_PARALLELISM");
 
+        keyMaps.put(KEY_HIDE_INDEXED_FILES, KEY_HIDE_VIRTUAL_TRACKS);
         return keyMaps;
     }
 
@@ -366,7 +370,7 @@ public class SettingsService {
             env.getProperty("libresonic.home")
         );
 
-        AirsonicDefaultFolderConfig defaultFolderConfig = new AirsonicDefaultFolderConfig();
+        AirsonicFolderConfig defaultFolderConfig = new AirsonicFolderConfig();
         defaultFolderConfig.setDefaultMusicFolder(env.getProperty("airsonic.defaultMusicFolder"));
         defaultFolderConfig.setDefaultPodcastFolder(env.getProperty("airsonic.defaultPodcastFolder"));
         defaultFolderConfig.setDefaultPlaylistFolder(env.getProperty("airsonic.defaultPlaylistFolder"));
@@ -434,6 +438,9 @@ public class SettingsService {
      */
     public String resolveTranscodeExecutable(String executable, String defaultValue) {
         try {
+            if (executable == null) {
+                return defaultValue;
+            }
             return transcodeExecutableCache.get(executable);
         } catch (Exception e) {
             return defaultValue;
@@ -1079,12 +1086,12 @@ public class SettingsService {
         setBoolean(KEY_ENABLE_CUE_INDEXING, b);
     }
 
-    public boolean getHideIndexedFiles() {
-        return getBoolean(KEY_HIDE_INDEXED_FILES, cueConfig.isHideIndexedFiles());
+    public boolean getHideVirtualTracks() {
+        return getBoolean(KEY_HIDE_VIRTUAL_TRACKS, defaultFolderConfig.isHideVirtualTracks());
     }
 
-    public void setHideIndexedFiles(boolean b) {
-        setBoolean(KEY_HIDE_INDEXED_FILES, b);
+    public void setHideVirtualTracks(boolean b) {
+        setBoolean(KEY_HIDE_VIRTUAL_TRACKS, b);
     }
 
     public String getExcludePatternString() {
@@ -1503,7 +1510,7 @@ public class SettingsService {
         this.homeConfig = homeConfig;
     }
 
-    protected void setAirsonicDefaultFolderConfig(AirsonicDefaultFolderConfig airsonicDefaultFolderConfig) {
+    protected void setAirsonicDefaultFolderConfig(AirsonicFolderConfig airsonicDefaultFolderConfig) {
         this.defaultFolderConfig = airsonicDefaultFolderConfig;
     }
 

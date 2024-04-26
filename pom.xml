@@ -86,6 +86,21 @@
                 <artifactId>asm</artifactId>
                 <version>9.6</version>
             </dependency>
+         <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.14.0</version>
+            </dependency>
+               <dependency>
+                <groupId>org.seamless</groupId>
+                <artifactId>seamless-util</artifactId>
+                <version>1.1.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-text</artifactId>
+                <version>1.11.0</version>
+            </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
@@ -144,7 +159,7 @@
             <dependency>
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
-                <version>2.24.1</version>
+                <version>2.26.1</version>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
@@ -180,7 +195,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.34.1</version>
+                    <version>0.44.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -226,7 +241,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>3.21.2</version>
                     <executions>
                         <execution>
                             <id>validate</id>
@@ -277,7 +292,7 @@
                 <plugin>
                     <groupId>net.nicoulaj.maven.plugins</groupId>
                     <artifactId>checksum-maven-plugin</artifactId>
-                    <version>1.8</version>
+                    <version>1.11</version>
                     <executions>
                         <execution>
                             <phase>package</phase>
@@ -323,6 +338,9 @@
                         <configuration>
                             <failOnWarning>${failOnDependencyWarning}</failOnWarning>
                             <ignoreNonCompile>true</ignoreNonCompile>
+  <ignoredDependencies>
+   <ignoredDependency>org.springframework:spring-aspects:*</ignoredDependency>
+                </ignoredDependencies>
                             <ignoredUsedUndeclaredDependencies>
                                 <ignoredUsedUndeclaredDependency>org.springframework:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.springframework.security:*</ignoredUsedUndeclaredDependency>
@@ -339,6 +357,7 @@
                                 <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-params:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.mockito:mockito-junit-jupiter:*</ignoredUsedUndeclaredDependency>
+                                <ignoredUsedUndeclaredDependency>commons-lang:*:*</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>jakarta.persistence:jakarta.persistence-api</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>org.springframework.data:spring-data-jpa</ignoredUsedUndeclaredDependency>
 				                <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-params:*</ignoredUsedUndeclaredDependency>

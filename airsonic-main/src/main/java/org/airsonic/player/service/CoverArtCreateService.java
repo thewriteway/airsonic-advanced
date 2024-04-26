@@ -76,9 +76,6 @@ public class CoverArtCreateService {
     private CoverArtService coverArtService;
 
     @Autowired
-    private JaudiotaggerParser jaudiotaggerParser;
-
-    @Autowired
     private PlaylistService playlistService;
 
     @Autowired
@@ -315,7 +312,7 @@ public class CoverArtCreateService {
     public Pair<InputStream, String> getImageInputStreamWithType(Path file) throws IOException {
         InputStream is;
         String mimeType;
-        if (jaudiotaggerParser.isApplicable(file)) {
+        if (JaudiotaggerParser.isImageAvailable(file)) {
             LOG.trace("Using Jaudio Tagger for reading artwork from {}", file);
             try {
                 LOG.trace("Reading artwork from file {}", file);

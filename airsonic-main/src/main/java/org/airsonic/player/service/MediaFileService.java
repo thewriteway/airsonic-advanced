@@ -20,6 +20,7 @@
  */
 package org.airsonic.player.service;
 
+import com.google.common.math.DoubleMath;
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 import org.airsonic.player.ajax.MediaFileEntry;
@@ -38,6 +39,8 @@ import org.airsonic.player.repository.MusicFileInfoRepository;
 import org.airsonic.player.repository.OffsetBasedPageRequest;
 import org.airsonic.player.repository.StarredMediaFileRepository;
 import org.airsonic.player.service.cache.MediaFileCache;
+import org.airsonic.player.service.metadata.Chapter;
+import org.airsonic.player.service.metadata.FFmpegParser;
 import org.airsonic.player.service.metadata.JaudiotaggerParser;
 import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.service.metadata.MetaDataParser;
@@ -63,6 +66,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -102,8 +108,6 @@ public class MediaFileService {
     @Autowired
     private AlbumRepository albumRepository;
     @Autowired
-    private JaudiotaggerParser parser;
-    @Autowired
     private MetaDataParserFactory metaDataParserFactory;
     @Autowired
     private CoverArtService coverArtService;
@@ -121,6 +125,10 @@ public class MediaFileService {
     private GenreRepository genreRepository;
     @Autowired
     private MediaFileCache mediaFileCache;
+    @Autowired
+    private FFmpegParser ffmpegParser;
+
+    private final double DURATION_EPSILON = 1e-2;
 
     public MediaFile getMediaFile(String pathName) {
         return getMediaFile(Paths.get(pathName));
@@ -722,128 +730,142 @@ public class MediaFileService {
         mediaFile.setStarredDate(starredDate);
     }
 
-    private List<MediaFile> updateChildren(MediaFile parent) {
+    @Nullable
+    private List<MediaFile> updateChildren(@Nonnull MediaFile parent) {
 
         // Check timestamps.
         if (parent.getChildrenLastUpdated().compareTo(parent.getChanged()) >= 0) {
             return null;
         }
 
-        Map<Pair<String, Double>, MediaFile> storedChildrenMap = mediaFileRepository.findByFolderAndParentPath(parent.getFolder(), parent.getPath(), Sort.by("startPosition")).parallelStream()
-            .collect(Collectors.toConcurrentMap(i -> Pair.of(i.getPath(), i.getStartPosition()), i -> i));
         MusicFolder folder = parent.getFolder();
+        Map<Pair<String, Double>, MediaFile> storedChildrenMap = mediaFileRepository.findByFolderAndParentPath(folder, parent.getPath(), Sort.by("startPosition")).parallelStream()
+            .collect(Collectors.toConcurrentMap(i -> Pair.of(i.getPath(), i.getStartPosition()), i -> i));
 
         boolean isEnableCueIndexing = settingsService.getEnableCueIndexing();
 
+        // cue sheets
         Map<String, CueSheet> cueSheets = new ConcurrentHashMap<>();
+        // media files that are not indexed
+        Map<String, MediaFile> bareFiles = new ConcurrentHashMap<>();
+        // m4b files are treated as audio books
+        Map<String, MediaFile> audioBooks = new ConcurrentHashMap<>();
 
-        if (isEnableCueIndexing) {
-            LOG.debug("Cue indexing enabled");
-            try (Stream<Path> children = Files.list(parent.getFullPath())) {
-                children.parallel()
-                    .filter(x -> {
-                        return "cue".equalsIgnoreCase(FilenameUtils.getExtension(x.toString())) || "flac".equalsIgnoreCase(FilenameUtils.getExtension(x.toString()));
-                    })
-                    .forEach(x -> {
-                        CueSheet cueSheet = getCueSheet(x);
-                        if (cueSheet != null && cueSheet.getFileData() != null && cueSheet.getFileData().size() > 0) {
-                            cueSheets.put(folder.getPath().relativize(x).toString(), cueSheet);
-                        }
-                    });
-            } catch (IOException e) {
-                LOG.warn("Error reading FLAC embedded cue sheets (ignored)", e);
-                // ignore
-            }
-        }
-
-        // collect files, if any
+        // Collect all children.
         try (Stream<Path> children = Files.list(parent.getFullPath())) {
-            Map<String, MediaFile> bareFiles = children.parallel()
-                .filter(this::includeMediaFileByPath)
+            children.parallel()
                 .filter(x -> mediaFolderService.getMusicFolderForFile(x, true, true).map(f -> f.equals(folder)).orElse(false))
-                .map(x -> folder.getPath().relativize(x))
-                .map(x -> {
-                    MediaFile media = storedChildrenMap.remove(Pair.of(x.toString(), MediaFile.NOT_INDEXED));
-                    if (media == null) {
-                        media = createMediaFileByFile(x, folder);
+                .forEach(x -> {
+                    Path relativePath = folder.getPath().relativize(x);
+                    if (includeMediaFileByPath(x)) {
+                        MediaFile mediaFile = storedChildrenMap.remove(Pair.of(relativePath.toString(), MediaFile.NOT_INDEXED));
+                        if (mediaFile == null) { // Not found in database, must read from disk.
+                            mediaFile = createMediaFileByFile(relativePath, folder);
+                            if (mediaFile != null) {
+                                updateMediaFile(mediaFile);
+                            }
+                        } else if (!mediaFile.hasIndex()) {
+                            mediaFile = checkLastModified(mediaFile, false); // has to be false, only time it's called
+                        }
                         // Add children that are not already stored.
-                        if (media != null) {
-                            updateMediaFile(media);
+                        if (mediaFile != null) {
+                            if ("m4b".equals(mediaFile.getFormat())) {
+                                audioBooks.put(relativePath.toString(), mediaFile);
+                            } else {
+                                bareFiles.put(FilenameUtils.getName(mediaFile.getPath()), mediaFile);
+                            }
                         }
-                    } else {
-                        if (!media.hasIndex()) {
-                            media = checkLastModified(media, false); // has to be false, only time it's called
+                        return;
+                    } else if (isEnableCueIndexing) {
+                        LOG.debug("Cue indexing enabled");
+                        CueSheet cueSheet = getCueSheet(x);
+                        if (cueSheet != null) {
+                            cueSheets.put(relativePath.toString(), cueSheet);
                         }
+                        return;
                     }
-                    return media;
-                })
-                .collect(Collectors.toConcurrentMap(m -> FilenameUtils.getName(m.getPath()), m -> m));
-
-            // collect indexed tracks, if any
-            List<MediaFile> result = new ArrayList<>();
-
-            if (isEnableCueIndexing) {
-                List<MediaFile> indexedTracks = cueSheets.entrySet().parallelStream().flatMap(e -> {
-                    String indexPath = e.getKey();
-                    CueSheet cueSheet = e.getValue();
-
-                    String filePath = cueSheet.getFileData().get(0).getFile();
-                    MediaFile base = bareFiles.remove(FilenameUtils.getName(filePath));
-
-                    if (Objects.nonNull(base)) {
-                        base.setIndexPath(indexPath); // update indexPath in mediaFile
-                        Instant mediaChanged = FileUtil.lastModified(base.getFullPath());
-                        Instant cueChanged = FileUtil.lastModified(base.getFullIndexPath());
-                        base.setChanged(mediaChanged.compareTo(cueChanged) >= 0 ? mediaChanged : cueChanged);
-                        updateMediaFile(base);
-                        List<MediaFile> tracks = createIndexedTracks(base, cueSheet);
-                        // remove stored children that are now indexed
-                        tracks.forEach(t -> storedChildrenMap.remove(Pair.of(t.getPath(), t.getStartPosition())));
-                        tracks.add(base);
-                        return tracks.stream();
-                    } else {
-                        LOG.warn("Cue sheet file {} not found", filePath);
-                        return Stream.empty();
-                    }
-                }).collect(Collectors.toList());
-                result.addAll(indexedTracks);
-            }
-
-            // remove indexPath for deleted cuesheets, if any
-            List<MediaFile> nonIndexedTracks = bareFiles.values().stream().parallel()
-                .map(m -> {
-                    if (m.hasIndex()) {
-                        m.setIndexPath(null);
-                        updateMediaFile(m);
-                    }
-                    return m;
-                })
-                .collect(Collectors.toList());
-            result.addAll(nonIndexedTracks);
-
-            // Delete children that no longer exist on disk.
-            storedChildrenMap.values().forEach(f -> delete(f));
-
-            // Update timestamp in parent.
-            parent.setChildrenLastUpdated(parent.getChanged());
-            parent.setPresent(true);
-            updateMediaFile(parent);
-
-            return result;
-
-        } catch (Exception e) {
+                });
+        } catch (IOException e) {
             LOG.warn("Could not retrieve and update all the children for {} in folder {}. Will skip", parent.getPath(), folder.getId(), e);
-
             return null;
         }
+
+        // collect indexed tracks, if any
+        List<MediaFile> result = new ArrayList<>();
+
+        // cue tracks
+        if (isEnableCueIndexing) {
+            List<MediaFile> indexedTracks = cueSheets.entrySet().parallelStream().flatMap(e -> {
+                String indexPath = e.getKey();
+                CueSheet cueSheet = e.getValue();
+
+                String filePath = cueSheet.getFileData().get(0).getFile();
+                MediaFile base = bareFiles.remove(FilenameUtils.getName(filePath));
+
+                if (Objects.nonNull(base)) {
+                    base.setIndexPath(indexPath); // update indexPath in mediaFile
+                    Instant mediaChanged = FileUtil.lastModified(base.getFullPath());
+                    Instant cueChanged = FileUtil.lastModified(base.getFullIndexPath());
+                    base.setChanged(mediaChanged.compareTo(cueChanged) >= 0 ? mediaChanged : cueChanged);
+                    updateMediaFile(base);
+                    List<MediaFile> tracks = createIndexedTracks(base, cueSheet);
+                    // remove stored children that are now indexed
+                    tracks.forEach(t -> storedChildrenMap.remove(Pair.of(t.getPath(), t.getStartPosition())));
+                    tracks.add(base);
+                    return tracks.stream();
+                } else {
+                    LOG.warn("Cue sheet file {} not found", filePath);
+                    return Stream.empty();
+                }
+            }).collect(Collectors.toList());
+            result.addAll(indexedTracks);
+        }
+
+        // m4b audio books
+        List<MediaFile> audioBookTracks = audioBooks.entrySet().parallelStream().flatMap(e -> {
+            String basePath = e.getKey();
+            MediaFile base = e.getValue();
+            List<MediaFile> tracks = createAudioBookTracks(base);
+            if (!CollectionUtils.isEmpty(tracks)) {
+                base.setIndexPath(basePath); // update indexPath in mediaFile
+                updateMediaFile(base);
+            }
+            tracks.forEach(t -> storedChildrenMap.remove(Pair.of(t.getPath(), t.getStartPosition())));
+            tracks.add(base);
+            return tracks.stream();
+        }).collect(Collectors.toList());
+        result.addAll(audioBookTracks);
+
+        // remove indexPath for deleted cuesheets, if any
+        List<MediaFile> nonIndexedTracks = bareFiles.values().stream().parallel()
+            .map(m -> {
+                if (m.hasIndex()) {
+                    m.setIndexPath(null);
+                    updateMediaFile(m);
+                }
+                return m;
+            })
+            .collect(Collectors.toList());
+        result.addAll(nonIndexedTracks);
+
+        // Delete children that no longer exist on disk.
+        storedChildrenMap.values().forEach(f -> delete(f));
+
+        // Update timestamp in parent.
+        parent.setChildrenLastUpdated(parent.getChanged());
+        parent.setPresent(true);
+        updateMediaFile(parent);
+
+        return result;
     }
 
     /**
      * hide specific file types in player and API
      */
     public boolean showMediaFile(MediaFile media) {
-        return (settingsService.getEnableCueIndexing() || media.getStartPosition() == MediaFile.NOT_INDEXED) &&
-            !(settingsService.getHideIndexedFiles() && media.hasIndex());
+        boolean isRealMedia = !(media.hasIndex() || media.isIndexedTrack());
+        boolean isHidden = settingsService.getHideVirtualTracks() ^ media.isIndexedTrack();
+        return isRealMedia || isHidden;
     }
 
     private boolean includeMediaFile(MediaFile candidate) {
@@ -1028,6 +1050,100 @@ public class MediaFileService {
 
     }
 
+    /**
+     * Returns m4b audio book tracks from the given audio book file.
+     *
+     * @param base The audio book file.
+     * @return The audio book tracks.
+     */
+    @Nonnull
+    private List<MediaFile> createAudioBookTracks(@Nonnull MediaFile base) {
+        List<MediaFile> children = new ArrayList<>();
+        Path audioFile = base.getFullPath();
+        Map<Long, MediaFile> storedChildrenMap = new ConcurrentHashMap<>();
+
+        try {
+            List<Chapter> chapters = ffmpegParser.getMetaData(audioFile).getChapters();
+            if (CollectionUtils.isEmpty(chapters)) {
+                return children;
+            }
+            // get existing children
+            MusicFolder baseFolder = base.getFolder();
+            String basePath = base.getPath();
+            storedChildrenMap = mediaFileRepository.findByFolderAndPath(baseFolder, basePath).parallelStream()
+                    .filter(MediaFile::isIndexedTrack)
+                    .collect(Collectors.toConcurrentMap(i -> Math.round(i.getStartPosition() * 10), i -> i));
+
+            boolean update = needsUpdate(base, settingsService.isFastCacheEnabled());
+
+            // get base properties
+            Instant lastModified = FileUtil.lastModified(audioFile);
+            Instant childrenLastUpdated = Instant.now().plusSeconds(100 * 365 * 24 * 60 * 60); // now + 100 years,
+                                                                                               // tracks do not have
+                                                                                               // children
+
+            for (Chapter chapter : chapters) {
+                if (chapter.getStartTimeSeconds() == null || chapter.getEndTimeSeconds() == null) {
+                    continue;
+                }
+                Double duration = chapter.getEndTimeSeconds() - chapter.getStartTimeSeconds();
+                MediaFile existingFile = storedChildrenMap.remove(Math.round(chapter.getStartTimeSeconds() * 10));
+                if (existingFile != null
+                        && !DoubleMath.fuzzyEquals(existingFile.getDuration(), duration, DURATION_EPSILON)) {
+                    existingFile = null;
+                }
+                MediaFile track = existingFile;
+                if (update || existingFile == null) {
+                    track = existingFile != null ? existingFile : new MediaFile();
+                    track.setPath(basePath);
+                    track.setAlbumArtist(base.getAlbumArtist());
+                    track.setAlbumName(base.getAlbumName());
+                    track.setTitle(chapter.getTitle());
+                    track.setArtist(base.getArtist());
+                    track.setParentPath(base.getParentPath());
+                    track.setFolder(baseFolder);
+                    track.setChanged(lastModified);
+                    track.setLastScanned(Instant.now());
+                    track.setChildrenLastUpdated(childrenLastUpdated);
+                    track.setCreated(lastModified);
+                    track.setPresent(true);
+                    track.setStartPosition(chapter.getStartTimeSeconds());
+                    track.setDuration(duration);
+                    track.setTrackNumber(chapter.getId());
+                    track.setDiscNumber(base.getDiscNumber());
+                    track.setGenre(base.getGenre());
+                    track.setYear(base.getYear());
+                    track.setBitRate(base.getBitRate());
+                    track.setVariableBitRate(base.isVariableBitRate());
+                    track.setHeight(base.getHeight());
+                    track.setWidth(base.getWidth());
+                    track.setFormat(base.getFormat());
+                    track.setMusicBrainzRecordingId(base.getMusicBrainzRecordingId());
+                    track.setMusicBrainzReleaseId(base.getMusicBrainzReleaseId());
+                    long estimatedSize = (long) (duration / base.getDuration() * Files.size(audioFile));
+                    if (estimatedSize > 0 && estimatedSize < Files.size(audioFile)) {
+                        track.setFileSize(estimatedSize);
+                    } else {
+                        track.setFileSize(Files.size(audioFile) / chapters.size());
+                    }
+                    track.setPlayCount((existingFile == null) ? 0 : existingFile.getPlayCount());
+                    track.setLastPlayed((existingFile == null) ? null : existingFile.getLastPlayed());
+                    track.setComment((existingFile == null) ? null : existingFile.getComment());
+                    track.setMediaType(base.getMediaType());
+
+                    updateMediaFile(track);
+                }
+                children.add(track);
+            }
+            return children;
+        } catch (Exception e) {
+            LOG.warn("Could not retrieve chapters for {}.", audioFile.toString(), e);
+            return new ArrayList<>();
+        } finally {
+            storedChildrenMap.values().forEach(this::delete);
+        }
+    }
+
     private List<MediaFile> createIndexedTracks(MediaFile base, CueSheet cueSheet) {
 
         Map<Pair<String, Double>, MediaFile> storedChildrenMap = mediaFileRepository.findByFolderAndPath(base.getFolder(), base.getPath()).parallelStream()
@@ -1206,6 +1322,7 @@ public class MediaFileService {
      */
     private CueSheet getCueSheet(Path cueFile) {
         try {
+            CueSheet cueSheet = null;
             switch (FilenameUtils.getExtension(cueFile.toString()).toLowerCase()) {
                 case "cue":
                     Charset cs = Charset.forName("UTF-8"); // default to UTF-8
@@ -1222,18 +1339,24 @@ public class MediaFileService {
                     } catch (IOException e) {
                         LOG.warn("Defaulting to UTF-8 for cuesheet {}", cueFile);
                     }
-                    CueSheet cueSheet = CueParser.parse(cueFile, cs);
+                    cueSheet = CueParser.parse(cueFile, cs);
                     if (cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning")).findFirst().isPresent()) {
                         LOG.warn("Error parsing cuesheet {}", cueFile);
                         return null;
                     }
-                    return cueSheet;
+                    break;
                 case "flac":
-                    return FLACReader.getCueSheet(cueFile);
-
+                    cueSheet = FLACReader.getCueSheet(cueFile);
+                    break;
                 default:
                     return null;
             }
+            // validation
+            if (cueSheet == null || cueSheet.getFileData() == null || cueSheet.getFileData().size() == 0) {
+                LOG.warn("Error parsing cuesheet {}", cueFile);
+                return null;
+            }
+            return cueSheet;
         } catch (IOException e) {
             LOG.warn("Error getting cuesheet for {} ", cueFile);
             return null;
@@ -1293,7 +1416,6 @@ public class MediaFileService {
     private Path findTagCover(Collection<Path> candidates) {
         // Look for embedded images in audiofiles.
         return candidates.stream()
-                .filter(parser::isApplicable)
                 .filter(JaudiotaggerParser::isImageAvailable)
                 .findFirst()
                 .orElse(null);
@@ -1330,10 +1452,7 @@ public class MediaFileService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public void updateMediaFile(MediaFile mediaFile) {
-        if (mediaFile == null) {
-            throw new IllegalArgumentException("mediaFile must not be null");
-        }
+    public void updateMediaFile(@Nonnull MediaFile mediaFile) {
         mediaFileCache.removeMediaFile(mediaFile);
         if (mediaFile.getId() != null && mediaFileRepository.existsById(mediaFile.getId())) {
             mediaFileRepository.save(mediaFile);

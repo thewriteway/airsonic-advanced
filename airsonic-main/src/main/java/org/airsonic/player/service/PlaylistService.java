@@ -153,7 +153,7 @@ public class PlaylistService {
                 LOG.warn("Playlist {} not found", id);
                 return new ArrayList<>();
             }
-        ).stream().filter(x -> includeNotPresent || x.isPresent()).collect(Collectors.toList());
+        ).stream().filter(x -> x.isPresent() || includeNotPresent).collect(Collectors.toList());
     }
 
     @Transactional

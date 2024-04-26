@@ -25,7 +25,7 @@ import org.springframework.util.StringUtils;
 
 @Component
 @ConfigurationProperties(prefix = "airsonic")
-public class AirsonicDefaultFolderConfig {
+public class AirsonicFolderConfig {
 
     // constants
     private static final String DEFAULT_MUSIC_FOLDER_WINDOWS = "c:\\music";
@@ -41,6 +41,10 @@ public class AirsonicDefaultFolderConfig {
     private String defaultPodcastFolder = Util.isWindows() ? DEFAULT_PODCAST_FOLDER_WINDOWS : DEFAULT_PODCAST_FOLDER_OTHER;
     // airsonic.defaultPlaylistFolder
     private String defaultPlaylistFolder = Util.isWindows() ? DEFAULT_PLAYLIST_FOLDER_WINDOWS : DEFAULT_PLAYLIST_FOLDER_OTHER;
+    // airsonic.hideVirtualTracks
+    private boolean hideVirtualTracks = true;
+
+
 
     /**
      * Returns the directory
@@ -69,6 +73,10 @@ public class AirsonicDefaultFolderConfig {
         return defaultPlaylistFolder;
     }
 
+    public boolean isHideVirtualTracks() {
+        return hideVirtualTracks;
+    }
+
     public void setDefaultMusicFolder(String defaultMusicFolder) {
         this.defaultMusicFolder = getFolderProperty(defaultMusicFolder, DEFAULT_MUSIC_FOLDER_WINDOWS, DEFAULT_MUSIC_FOLDER_OTHER);
     }
@@ -79,5 +87,9 @@ public class AirsonicDefaultFolderConfig {
 
     public void setDefaultPlaylistFolder(String defaultPlaylistFolder) {
         this.defaultPlaylistFolder = getFolderProperty(defaultPlaylistFolder, DEFAULT_PLAYLIST_FOLDER_WINDOWS, DEFAULT_PLAYLIST_FOLDER_OTHER);
+    }
+
+    public void setHideVirtualTracks(boolean hideVirtualTracks) {
+        this.hideVirtualTracks = hideVirtualTracks;
     }
 }

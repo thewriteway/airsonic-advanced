@@ -14,12 +14,10 @@
                 parent.frames.left.location.href="left";
             }
 
-            updateEnableCueIndexing();
             updateClearFullScan();
 
             /*[+
             $([[|#${#ids.next('fullScan')}|]]).change(function() {updateClearFullScan();});
-            $([[|#${#ids.next('enableCueIndexing')}|]]).change(function() {updateEnableCueIndexing();});
             +]*/
         }
 
@@ -30,17 +28,6 @@
                 $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("checked", false);
             } else {
                 $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("disabled", false);
-            }
-            +]*/
-        }
-
-        function updateEnableCueIndexing() {
-            /*[+
-            if (!$([[|#${#ids.next('enableCueIndexing')}|]]).prop("checked")) {
-                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("disabled", true)
-                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("checked", false)
-            } else {
-                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("disabled", false)
             }
             +]*/
         }
@@ -132,7 +119,7 @@
 
 </table>
 
-    <p class="forward"><a href="userSettings" th:text="#{musicfoldersettings.access}"></a></p>
+    <p class="forward"><a th:href="@{/userSettings}" th:text="#{musicfoldersettings.access}"></a></p>
     <p class="detail" style="width:60%;white-space:normal;margin-top:-10px;" th:text="#{musicfoldersettings.access.description}"></p>
     
     <div>
@@ -157,10 +144,10 @@
         <label th:for="${#ids.prev('enableCueIndexing')}" th:text="#{musicfoldersettings.enablecueindexing}"></label>
         <th:block th:replace="~{helpToolTip((topic=enablecueindexing))}" />
     </div>
-    <div style="margin-left:1em;">
-        <input type="checkbox" th:field="*{hideIndexedFiles}" size="70"/>
-        <label th:for="${#ids.prev('hideIndexedFiles')}" th:text="#{musicfoldersettings.hideindexedfiles}"></label>
-        <th:block th:replace="~{helpToolTip((topic=hideindexedfiles))}" />
+    <div>
+        <input type="checkbox" th:field="*{hideVirtualTracks}" size="70"/>
+        <label th:for="${#ids.prev('hideVirtualTracks')}" th:text="#{musicfoldersettings.hidevirtualtracks}"></label>
+        <th:block th:replace="~{helpToolTip((topic=hidevirtualtracks))}" />
     </div>
 
     <div>

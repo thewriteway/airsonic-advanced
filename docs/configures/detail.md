@@ -56,6 +56,22 @@ Docker image does not support this option. Docker image will use the `$AIRSONIC_
 | configurable by | Java options, environment variables |
 | environment variable | AIRSONIC_DEFAULTPLAYLISTFOLDER |
 
+## airsonic.hide-virtual-tracks
+
+If enabled, Airsonic will hide virtual tracks media file list.
+This is only used when initializing the database for the first time.
+
+| item | description |
+| --- | --- |
+| type | boolean |
+| default | true |
+| example | airsonic.hide-virtual-tracks=false |
+| configurable by | Java options, environment variables, airsonic.properties, web interface|
+| environment variable | AIRSONIC_HIDEVIRTUALTRACKS |
+| airsonic.properties | HIDE_VIRTUAL_TRACKS |
+| web interface | Settings > Music Folder > Hide virtual tracks |
+| support version | `>= v11.1.4` |
+
 ## airsonic.cue.enabled
 
 If enabled, airsonic-advanced will look for cue sheets in the same directory as the audio file and automatically split the audio file into tracks.
@@ -88,6 +104,7 @@ Configuration by Java options, environment variables are working as default valu
 | environment variable | AIRSONIC_CUE_HIDEINDEXEDFILES |
 | airsonic.properties | HIDE_INDEXED_FILES |
 | web interface | Settings > Music Folder > Hide cue-indexed files |
+| support version | `<= v11.1.3` |
 
 
 ## airsonic.scan.full-timeout
