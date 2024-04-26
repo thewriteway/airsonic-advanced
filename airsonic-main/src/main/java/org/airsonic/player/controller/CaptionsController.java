@@ -12,7 +12,7 @@ import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.service.metadata.MetaDataParser;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;
 import org.airsonic.player.util.NetworkUtil;
-import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Controller
-@RequestMapping({ "/captions", "/ext/captions" })
+@RequestMapping({ "/captions", "/ext/captions", "/captions.view", "/ext/captions.view" })
 public class CaptionsController {
     private static final Logger LOG = LoggerFactory.getLogger(CaptionsController.class);
 
@@ -74,8 +74,8 @@ public class CaptionsController {
     @GetMapping
     public ResponseEntity<Resource> handleRequest(
             Authentication authentication,
-            @RequestParam int id,
-            @RequestParam(required = false) String captionId,
+            @RequestParam("id") int id,
+            @RequestParam(required = false, name = "captionId") String captionId,
             @RequestParam(required = false, name = "format") String requiredFormat,
             HttpServletRequest request)
             throws Exception {
@@ -184,7 +184,7 @@ public class CaptionsController {
     }
 
     @GetMapping("/list")
-    public @ResponseBody List<CaptionInfo> listCaptions(Authentication authentication, @RequestParam int id, HttpServletRequest request) {
+    public @ResponseBody List<CaptionInfo> listCaptions(Authentication authentication, @RequestParam("id") int id, HttpServletRequest request) {
         MediaFile video = mediaFileService.getMediaFile(id);
         if (!(authentication instanceof JWTAuthenticationToken)
                 && !securityService.isFolderAccessAllowed(video, authentication.getName())) {
@@ -225,7 +225,7 @@ public class CaptionsController {
         Stream<CaptionInfo> externalCaptions = findExternalCaptionsForVideo(video).stream()
                 .map(c -> new CaptionInfo(c.toString(), // leaks internal structure for now
                         CaptionInfo.Location.external,
-                        FileNameUtils.getExtension(c),
+                        FilenameUtils.getExtension(c.toString()),
                         c.getFileName().toString(),
                         getUrl(basePath, externalUser, externalExpiration, video.getId(),
                                 URLEncoder.encode(c.toString(), StandardCharsets.UTF_8))));
@@ -270,7 +270,7 @@ public class CaptionsController {
         try (Stream<Path> children = Files.walk(parentPath)) {
             return children.parallel()
                     .filter(c -> Files.isRegularFile(c))
-                    .filter(c -> CAPTIONS_FORMATS.contains(FileNameUtils.getExtension(c)))
+                    .filter(c -> CAPTIONS_FORMATS.contains(FilenameUtils.getExtension(c.toString())))
                     .collect(Collectors.toList());
         } catch (IOException e) {
             LOG.warn("Could not retrieve directory list for {} to find subtitle files for {}", parentPath, video, e);

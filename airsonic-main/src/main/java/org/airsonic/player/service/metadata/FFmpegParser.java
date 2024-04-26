@@ -21,6 +21,7 @@
 package org.airsonic.player.service.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
@@ -56,7 +57,7 @@ public class FFmpegParser extends MetaDataParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(FFmpegParser.class);
     private static final String[] FFPROBE_OPTIONS = {
-        "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams"
+        "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", "-show_chapters"
     };
 
     @Autowired
@@ -123,6 +124,11 @@ public class FFmpegParser extends MetaDataParser {
                     metaData.setWidth(stream.get("width").asInt());
                     metaData.setHeight(stream.get("height").asInt());
                 }
+            }
+            ObjectMapper mapper = Util.getObjectMapper();
+            for (JsonNode chapterJson : result.at("/chapters")) {
+                Chapter chapter = mapper.convertValue(chapterJson, Chapter.class);
+                metaData.addChapter(chapter);
             }
         } catch (Throwable x) {
             LOG.warn("Error when parsing metadata in {}", file, x);

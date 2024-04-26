@@ -20,8 +20,8 @@
   -->
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 
     <script type="text/javascript" th:inline="javascript">
         function init() {
@@ -119,7 +119,7 @@
 <body class="mainframe bgcolor1" onload="init()">
 
 <div style="float:left;margin-right:1.5em;margin-bottom:1.5em">
-    <th:block th:replace="coverArt::art(podcastChannelId=${model.channel.id}, coverArtSize=${160})" />
+    <th:block th:replace="~{coverArt::art(podcastChannelId=${model.channel.id}, coverArtSize=${160})}" />
 </div>
 
 <h1 id="name"><a th:href="@{/podcastChannels.view}" th:text="#{podcastreceiver.title}"></a> &raquo; <span th:text="${model.channel.title}"></span></h1>
@@ -160,13 +160,13 @@
                 <td colspan="4"></td>
             </th:block>
             <th:block th:if="${!#strings.isEmpty(episode.mediaFile?.id) && episode.status.name eq 'COMPLETED'}">
-                    <th:block th:replace="playButtons::buttons(
+                    <th:block th:replace="~{playButtons::buttons(
                         id=${episode.mediaFile.id},
                         playEnabled=${model.user.streamRole and model['partyModeEnabled'] != true},
                         addEnabled=${model.user.streamRole and model['partyModeEnabled'] != true},
                         asTable=true,
                         podcastId=${episode.id}
-                    )" />
+                    )}" />
             </th:block>
 
             <td class="truncate">

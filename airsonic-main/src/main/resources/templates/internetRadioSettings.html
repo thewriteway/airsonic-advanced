@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 </head>
 <body class="mainframe bgcolor1">
 
-<th:block th:replace="settingsHeader::header(cat='internetRadio',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='internetRadio',toast=${settings_toast})}" />
 
 <form method="post" th:action="@{/internetRadioSettings.view}" th:object="${command}">
 <table class="indent">

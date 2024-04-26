@@ -20,10 +20,10 @@
             <groupId>jakarta.xml.ws</groupId>
             <artifactId>jakarta.xml.ws-api</artifactId>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>jakarta.jws</groupId>
             <artifactId>jakarta.jws-api</artifactId>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <build>
@@ -31,6 +31,7 @@
             <plugin>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-codegen-plugin</artifactId>
+                <version>${cxf.version}</version><!-- 4.x is not compatible with eclispse MoXY-->
                 <executions>
                     <execution>
                         <id>generate-sources</id>
@@ -49,6 +50,29 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                  <execution>
+                    <phase>generate-sources</phase>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                    <configuration>
+                      <target>
+                        <fileset dir="${project.build.directory}/generated-sources/cxf" includes="**/*.java">
+                            <filename name="**/*.java"/>
+                        </fileset>
+                        <replace dir="${project.build.directory}/generated-sources/cxf" includes="**/*.java" token="javax.xml.ws" value="jakarta.xml.ws"/>
+                        <replace dir="${project.build.directory}/generated-sources/cxf" includes="**/*.java" token="javax.xml.bind" value="jakarta.xml.bind"/>
+                        <replace dir="${project.build.directory}/generated-sources/cxf" includes="**/*.java" token="javax.jws" value="jakarta.jws"/>
+                      </target>
+                    </configuration>
+                  </execution>
+                </executions>
+            </plugin>-->
         </plugins>
     </build>
 </project>

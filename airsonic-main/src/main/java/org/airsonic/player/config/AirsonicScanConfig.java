@@ -22,15 +22,15 @@ package org.airsonic.player.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
+import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.Positive;
+import jakarta.validation.constraints.Positive;
 
 import java.util.Objects;
 
+@Component
 @ConfigurationProperties(prefix = "airsonic.scan")
-@ConstructorBinding
 @Validated
 public class AirsonicScanConfig {
 
@@ -41,27 +41,13 @@ public class AirsonicScanConfig {
     private static final int DEFAULT_FULLSCAN = 4 * 60 * 60;
 
     @Positive
-    private final Integer fullTimeout;
+    private Integer fullTimeout = DEFAULT_FULLSCAN;
 
     @Positive
-    private final Integer timeout;
+    private Integer timeout = DEFAULT_SCAN;
 
     @Positive
-    private final Integer parallelism;
-
-    /**
-     *
-     * @param fullscan full scan timeout in seconds. null means default value
-     * @param scan scan timeout in seconds. null means default value
-     */
-    public AirsonicScanConfig(
-        Integer fullTimeout,
-        Integer timeout,
-        Integer parallelism) {
-        this.fullTimeout = Objects.nonNull(fullTimeout) ? fullTimeout : DEFAULT_FULLSCAN;
-        this.timeout = Objects.nonNull(timeout) ? timeout : DEFAULT_SCAN;
-        this.parallelism = parallelism;
-    }
+    private Integer parallelism;
 
     public Integer getFullTimeout() {
         return fullTimeout;
@@ -86,5 +72,17 @@ public class AirsonicScanConfig {
             return Integer.parseInt(deprecatedParallelism);
         }
         return Runtime.getRuntime().availableProcessors() + 1;
+    }
+
+    public void setFullTimeout(Integer fullTimeout) {
+        this.fullTimeout = fullTimeout;
+    }
+
+    public void setTimeout(Integer timeout) {
+        this.timeout = timeout;
+    }
+
+    public void setParallelism(Integer parallelism) {
+        this.parallelism = parallelism;
     }
 }

@@ -17,11 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.comparator.NullSafeComparator;
 
 import java.nio.file.Path;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Set;
@@ -174,18 +172,8 @@ public class UserRepositoryTest {
         UserSetting setting = new UserSetting(TEST_USER_NAME);
         userSettingRepository.save(setting);
         UserSetting userSetting = userSettingRepository.findById(TEST_USER_NAME).orElse(null);
-        assertThat(userSetting).usingComparatorForType(new NullSafeComparator<Instant>(new Comparator<Instant>() {
-            // use a custom comparator to account for micro second differences
-            // (Mysql only stores floats in json to a certain value)
-            @Override
-            public int compare(Instant o1, Instant o2) {
-                if (o1.equals(o2) || Math.abs(ChronoUnit.MICROS.between(o1, o2)) <= 2) {
-                    return 0;
-                }
-                return o1.compareTo(o2);
-            }
-        }, true), Instant.class)
-                .usingRecursiveComparison().isEqualTo(setting);
+        assertThat(userSetting).usingComparatorForType(Comparator.comparing(Instant::toEpochMilli), Instant.class)
+            .usingRecursiveComparison().isEqualTo(setting);
 
         UserSettingDetail detail = userSetting.getSettings();
         detail.setLocale(Locale.SIMPLIFIED_CHINESE);

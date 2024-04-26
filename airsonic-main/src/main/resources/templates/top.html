@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 
     <script type="text/javascript" th:inline="javascript">
         var previousQuery = "";

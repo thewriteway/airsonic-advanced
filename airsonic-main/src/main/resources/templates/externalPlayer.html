@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <meta name="og:type" content="album"/>
     <script type="text/javascript" th:src="@{/script/mediaelement/mediaelement-and-player.min.js}"></script>
     <script type="text/javascript" th:src="@{/script/mediaelement/plugins/playlist/playlist.js}"></script>

@@ -19,7 +19,8 @@
 
 package org.airsonic.player.domain;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -27,15 +28,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-public class SortableArtistTestCase extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    private Collator collator;
+public class SortableArtistTestCase {
 
-    @Override
-    public void setUp() {
+    private static Collator collator;
+
+    @BeforeAll
+    public static void setUp() {
         collator = Collator.getInstance(Locale.US);
     }
 
+    @Test
     public void testSorting() {
         List<TestSortableArtist> artists = new ArrayList<TestSortableArtist>();
 
@@ -52,6 +57,7 @@ public class SortableArtistTestCase extends TestCase {
         assertEquals("[abba, Abba, ABBA, abc, ABC, acdc, ACDC, ACDC]", artists.toString());
     }
 
+    @Test
     public void testSortingWithAccents() {
         List<TestSortableArtist> artists = new ArrayList<TestSortableArtist>();
 
@@ -94,6 +100,7 @@ public class SortableArtistTestCase extends TestCase {
         assertEquals("[Sea, Seb, SEB, S\u00e9b, Sed, See]", artists.toString());
     }
 
+    @Test
     public void testCollation() {
         List<TestSortableArtist> artists = new ArrayList<TestSortableArtist>();
 

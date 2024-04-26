@@ -2,8 +2,8 @@
 
 <html><head>
 
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript">
         function init() {
@@ -40,7 +40,7 @@
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='user',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='user',toast=${settings_toast})}" />
 
 <table class="indent">
     <tr>
@@ -125,7 +125,7 @@
                             th:value="${transcodeSchemeHolder.name}" th:text="${transcodeSchemeHolder.description}"></option>
                 </select>
             </td>
-            <td><th:block th:replace="helpToolTip(topic=transcode)" /></td>
+            <td><th:block th:replace="~{helpToolTip((topic=transcode))}" /></td>
             <td th:if="*{!transcodingSupported}" class="warning" th:text="#{playersettings.notranscoder}"></td>
         </tr>
     </table>
@@ -143,7 +143,7 @@
             <td><input type="checkbox" name="ldapAuthenticated" id="ldapAuthenticated" class="checkbox"
                        onclick="enablePasswordChangeFields()"/></td>
             <td><label for="ldapAuthenticated" th:text="#{usersettings.ldap}"></label></td>
-            <td><th:block th:replace="helpToolTip(topic=ldap)" /></td>
+            <td><th:block th:replace="~{helpToolTip((topic=ldap))}" /></td>
         </tr>
     </table>
 
@@ -179,7 +179,7 @@
             <tr>
                 <td><input type="checkbox" name="passwordChange" id="passwordChange" onclick="enablePasswordChangeFields();" class="checkbox"/></td>
                 <td><label for="passwordChange" th:text="|#{credentialsettings.addcredentials} #{credentialsettings.credentialsnotremoved}|"></label></td>
-                <td><th:block th:replace="helpToolTip(topic=credentialsadd)" /></td>
+                <td><th:block th:replace="~{helpToolTip((topic=credentialsadd))}" /></td>
             </tr>
         </table>
 

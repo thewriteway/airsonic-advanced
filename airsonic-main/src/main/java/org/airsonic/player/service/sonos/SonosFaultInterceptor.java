@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
  *
+ *  Copyright 2024 (C) Y.Tory
  *  Copyright 2015 (C) Sindre Mehus
  */
 
@@ -31,9 +32,9 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 
 /**
@@ -47,7 +48,7 @@ public class SonosFaultInterceptor extends AbstractSoapInterceptor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SonosFaultInterceptor.class);
 
-    private static Marshaller marshaller = createMarshaller();
+    private Marshaller marshaller = createMarshaller();
 
     private static Marshaller createMarshaller() {
         try {

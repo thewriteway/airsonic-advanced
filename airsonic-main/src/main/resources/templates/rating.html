@@ -10,13 +10,13 @@ PARAMETERS
     <th:block th:each="i: ${#numbers.sequence(1, 5)}">
 
         <th:block th:if="${rating ge (i * 10)}">
-            <th:block th:replace="::star(${#themes.code('ratingOnImage')}, ${i})" />
+            <th:block th:replace="~{::star(${#themes.code('ratingOnImage')}, ${i})}" />
         </th:block>
         <th:block th:if="${rating ge (i*10) - 7 and rating le (i*10) - 3}">
-            <th:block th:replace="::star(${#themes.code('ratingHalfImage')}, ${i})" />
+            <th:block th:replace="~{::star(${#themes.code('ratingHalfImage')}, ${i})}" />
         </th:block>
         <th:block th:if="${rating le (i * 10) -3}">
-              <th:block th:replace="::star(${#themes.code('ratingOffImage')}, ${i})" />
+              <th:block th:replace="~{::star(${#themes.code('ratingOffImage')}, ${i})}" />
         </th:block>
 
         <th:block remove="all">

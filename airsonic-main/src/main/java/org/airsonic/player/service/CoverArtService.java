@@ -8,6 +8,7 @@ import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.repository.CoverArtRepository;
 import org.airsonic.player.repository.MediaFileRepository;
+import org.airsonic.player.service.cache.CoverArtCache;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -17,9 +18,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@CacheConfig(cacheNames = "coverArtCache")
 public class CoverArtService {
     @Autowired
     MediaFolderService mediaFolderService;
@@ -42,55 +40,103 @@ public class CoverArtService {
     private MediaFileRepository mediaFileRepository;
     @Autowired
     private SecurityService securityService;
+    @Autowired
+    private CoverArtCache coverArtCache;
 
     private static final Logger LOG = LoggerFactory.getLogger(CoverArtService.class);
 
-    @CacheEvict(key = "#art.entityType.toString().concat('-').concat(#art.entityId)")
     @Transactional
     public void upsert(CoverArt art) {
+        coverArtCache.removeCoverArt(art);
         coverArtRepository.save(art);
     }
 
+    /**
+     * Persists the cover art of the media file if it is not already persisted.
+     *
+     * @param mediaFile the media file
+     */
     public void persistIfNeeded(MediaFile mediaFile) {
-        if (mediaFile.getArt() != null && !CoverArt.NULL_ART.equals(mediaFile.getArt())) {
-            CoverArt art = get(EntityType.MEDIA_FILE, mediaFile.getId());
+        CoverArt mediaFileArt = mediaFile.getArt();
+        if (mediaFileArt != null && !CoverArt.NULL_ART.equals(mediaFileArt)) {
+            CoverArt art = getMediaFileArt(mediaFile.getId());
             if (CoverArt.NULL_ART.equals(art) || !art.getOverridden()) {
-                mediaFile.getArt().setEntityId(mediaFile.getId());
-                upsert(mediaFile.getArt());
+                mediaFileArt.setEntityId(mediaFile.getId());
+                mediaFileArt.setEntityType(EntityType.MEDIA_FILE);
+                upsert(mediaFileArt);
             }
             mediaFile.setArt(null);
         }
     }
 
+    /**
+     * Persists the cover art of the album if it is not already persisted.
+     *
+     * @param album the album
+     */
     public void persistIfNeeded(Album album) {
-        if (album.getArt() != null && !CoverArt.NULL_ART.equals(album.getArt())) {
-            CoverArt art = get(EntityType.ALBUM, album.getId());
+        CoverArt albumArt = album.getArt();
+        if (albumArt != null && !CoverArt.NULL_ART.equals(albumArt)) {
+            CoverArt art = getAlbumArt(album.getId());
             if (CoverArt.NULL_ART.equals(art) || !art.getOverridden()) {
-                album.getArt().setEntityId(album.getId());
-                upsert(album.getArt());
+                albumArt.setEntityId(album.getId());
+                albumArt.setEntityType(EntityType.ALBUM);
+                upsert(albumArt);
             }
             album.setArt(null);
         }
     }
 
+    /**
+     * Persists the cover art of the artist if it is not already persisted.
+     *
+     * @param artist
+     */
     public void persistIfNeeded(Artist artist) {
-        if (artist.getArt() != null && !CoverArt.NULL_ART.equals(artist.getArt())) {
-            CoverArt art = get(EntityType.ARTIST, artist.getId());
+        CoverArt artistArt = artist.getArt();
+        if (artistArt != null && !CoverArt.NULL_ART.equals(artistArt)) {
+            CoverArt art = getArtistArt(artist.getId());
             if (CoverArt.NULL_ART.equals(art) || !art.getOverridden()) {
-                artist.getArt().setEntityId(artist.getId());
-                upsert(artist.getArt());
+                artistArt.setEntityId(artist.getId());
+                artistArt.setEntityType(EntityType.ARTIST);
+                upsert(artistArt);
             }
             artist.setArt(null);
         }
     }
 
-    @Cacheable(key = "#type.toString().concat('-').concat(#id)", unless = "#result == null") // 'unless' condition should never happen, because of null-object pattern
-    public CoverArt get(EntityType type, int id) {
-        return coverArtRepository.findByEntityTypeAndEntityId(type, id).orElse(CoverArt.NULL_ART);
+    public CoverArt getAlbumArt(Integer id) {
+        CoverArt art = coverArtCache.getCoverArt(EntityType.ALBUM, id);
+        if (art != null) {
+            return art;
+        }
+        art = coverArtRepository.findByEntityTypeAndEntityId(EntityType.ALBUM, id).orElse(CoverArt.NULL_ART);
+        coverArtCache.putCoverArt(art);
+        return art;
     }
 
-    public Path getFullPath(EntityType type, int id) {
-        CoverArt art = get(type, id);
+    public CoverArt getArtistArt(Integer id) {
+        CoverArt art = coverArtCache.getCoverArt(EntityType.ARTIST, id);
+        if (art != null) {
+            return art;
+        }
+        art = coverArtRepository.findByEntityTypeAndEntityId(EntityType.ARTIST, id).orElse(CoverArt.NULL_ART);
+        coverArtCache.putCoverArt(art);
+        return art;
+    }
+
+    public CoverArt getMediaFileArt(@Param("id") int id) {
+        CoverArt art = coverArtCache.getCoverArt(EntityType.MEDIA_FILE, id);
+        if (art != null) {
+            return art;
+        }
+        art = coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, id).orElse(CoverArt.NULL_ART);
+        coverArtCache.putCoverArt(art);
+        return art;
+    }
+
+    public Path getMediaFileArtPath(int id) {
+        CoverArt art = getMediaFileArt(id);
         return getFullPath(art);
     }
 
@@ -110,15 +156,15 @@ public class CoverArtService {
         return null;
     }
 
-    @CacheEvict(key = "#type.toString().concat('-').concat(#id)")
     @Transactional
-    public void delete(EntityType type, int id) {
+    public void delete(EntityType type, Integer id) {
+        coverArtCache.removeCoverArt(type, id);
         coverArtRepository.deleteByEntityTypeAndEntityId(type, id);
     }
 
-    @CacheEvict(allEntries = true)
     @Transactional
     public void expunge() {
+        coverArtCache.clear();
         List<CoverArt> expungeCoverArts = coverArtRepository.findAll().stream()
             .filter(art ->
                 (art.getEntityType() == EntityType.ALBUM && art.getAlbum() == null) ||

@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -33,16 +34,15 @@ import org.airsonic.player.repository.UserCredentialRepository;
 import org.airsonic.player.repository.UserRepository;
 import org.airsonic.player.security.GlobalSecurityConfig;
 import org.airsonic.player.security.PasswordDecoder;
+import org.airsonic.player.service.cache.UserCache;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.RandomStringGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.repository.query.Param;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,7 +52,7 @@ import org.springframework.security.web.servletapi.SecurityContextHolderAwareReq
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -79,7 +79,6 @@ import java.util.stream.Stream;
  * @author Sindre Mehus
  */
 @Service
-@CacheConfig(cacheNames = "userCache")
 public class SecurityService implements UserDetailsService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SecurityService.class);
@@ -92,6 +91,8 @@ public class SecurityService implements UserDetailsService {
     private UserRepository userRepository;
     @Autowired
     private UserCredentialRepository userCredentialRepository;
+    @Autowired
+    private UserCache userCache;
 
     /**
      * Locates the user based on the username.
@@ -222,13 +223,13 @@ public class SecurityService implements UserDetailsService {
      * @param password The password to create the credential for
      * @param comment  The comment to add to the credential
      */
-    @CacheEvict(key = "#username", condition = "#username != null")
     @Transactional
     public void recoverCredential(String username, String password, String comment) {
         if (StringUtils.isBlank(username)) {
             LOG.warn("Can't recover credential for a blank username");
             return;
         }
+        userCache.removeUser(username);
         userRepository.findByUsername(username).ifPresentOrElse(u -> {
             u.setLdapAuthenticated(false);
             userRepository.save(u);
@@ -432,13 +433,17 @@ public class SecurityService implements UserDetailsService {
      * @param caseSensitive If false, will do a case insensitive search
      * @return The corresponding User
      */
-    @Cacheable(key = "#username", condition = "#caseSensitive", unless = "#result == null")
-    public User getUserByName(String username, boolean caseSensitive) {
+    public User getUserByName(@Param("username") String username, boolean caseSensitive) {
         if (StringUtils.isBlank(username)) {
             return null;
         }
         if (caseSensitive) {
-            return userRepository.findByUsername(username).orElse(null);
+            User user = userCache.getUser(username);
+            if (user == null) {
+                user = userRepository.findByUsername(username).orElse(null);
+                userCache.putUser(username, user);
+            }
+            return user;
         } else {
             return userRepository.findByUsernameIgnoreCase(username).orElse(null);
         }
@@ -452,7 +457,6 @@ public class SecurityService implements UserDetailsService {
      * @return updated user.
      */
     // TODO: This is not security related. Move to a different service.
-    @Cacheable(key = "#username", unless = "#result == null")
     @Transactional
     public User incrementBytesStreamed(String username, long deltaBytesStreamed) {
         User user = getUserByName(username);
@@ -471,7 +475,6 @@ public class SecurityService implements UserDetailsService {
      * @return updated user.
      */
     // TODO: This is not security related. Move to a different service.
-    @Cacheable(key = "#username", unless = "#result == null")
     @Transactional
     public User incrementBytesDownloaded(String username, long deltaBytesDownloaded) {
         User user = getUserByName(username);
@@ -490,7 +493,6 @@ public class SecurityService implements UserDetailsService {
      * @return updated user.
      */
     // TODO: This is not security related. Move to a different service.
-    @Cacheable(key = "#username", unless = "#result == null")
     @Transactional
     public User incrementBytesUploaded(String username, long deltaBytesUploaded) {
         User user = getUserByName(username);
@@ -507,12 +509,12 @@ public class SecurityService implements UserDetailsService {
      * @param username        user name.
      * @param currentUsername current user name.
      */
-    @CacheEvict(key = "#username", condition = "#username != null")
     @Transactional
     public void deleteUser(String username, String currentUsername) {
         if (StringUtils.isNotBlank(username) && username.equals(currentUsername)) {
             throw new SelfDeletionException();
         }
+        userCache.removeUser(username);
         userRepository.deleteById(username);
         LOG.info("User {} deleted by {}", username, currentUsername);
     }
@@ -583,9 +585,8 @@ public class SecurityService implements UserDetailsService {
     /**
      *
      */
-    @CacheEvict(key = "#command.username", condition = "#command != null and #command.username != null")
     @Transactional
-    public User updateUserByUserSettingsCommand(UserSettingsCommand command) {
+    public User updateUserByUserSettingsCommand(@Param("command") UserSettingsCommand command) {
         // check
         if (Objects.isNull(command)) {
             LOG.warn("Can't update a null command");
@@ -625,6 +626,7 @@ public class SecurityService implements UserDetailsService {
             if (command.isPasswordChange())
                 createAirsonicCredentialToUser(user, command.getPassword(), "Created by admin");
         }
+        userCache.removeUser(command.getUsername());
         return user;
     }
 

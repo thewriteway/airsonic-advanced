@@ -57,7 +57,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -67,7 +67,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @Controller
-@RequestMapping("/databaseSettings")
+@RequestMapping({"/databaseSettings", "/databaseSettings.view"})
 public class DatabaseSettingsController {
     private static final Logger LOG = LoggerFactory.getLogger(DatabaseSettingsController.class);
 

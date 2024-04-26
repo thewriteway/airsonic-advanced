@@ -53,7 +53,7 @@ public class MusicFolderSettingsCommand {
     private String excludePatternString;
     private boolean ignoreSymLinks;
     private boolean enableCueIndexing;
-    private boolean hideIndexedFiles;
+    private boolean hideVirtualTracks;
     private Boolean fullScan;
     private Boolean clearFullScanSettingAfterScan;
 
@@ -149,12 +149,12 @@ public class MusicFolderSettingsCommand {
         this.enableCueIndexing = enableCueIndexing;
     }
 
-    public boolean getHideIndexedFiles() {
-        return hideIndexedFiles;
+    public boolean isHideVirtualTracks() {
+        return hideVirtualTracks;
     }
 
-    public void setHideIndexedFiles(boolean hideIndexedFiles) {
-        this.hideIndexedFiles = hideIndexedFiles;
+    public void setHideVirtualTracks(boolean hideVirtualTracks) {
+        this.hideVirtualTracks = hideVirtualTracks;
     }
 
     public void setIgnoreSymLinks(boolean ignoreSymLinks) {

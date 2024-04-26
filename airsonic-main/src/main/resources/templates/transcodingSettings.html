@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 </head>
 <body class="mainframe bgcolor1">
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='transcoding',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='transcoding',toast=${settings_toast})}" />
 
 <form method="post" th:action="@{/transcodingSettings.view}" th:object="${command}">
 <table class="indent">
@@ -58,7 +58,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.downsamplecommand}"></span>
-                <th:block th:replace="helpToolTip(topic=downsamplecommand)" />
+                <th:block th:replace="~{helpToolTip((topic=downsamplecommand))}" />
             </td>
             <td>
                 <input class="monospace" type="text" th:field="*{downsampleCommand}" size="100" />
@@ -67,7 +67,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.splitoptions}"></span>
-                <th:block th:replace="helpToolTip(topic=splitoptions)" />
+                <th:block th:replace="~{helpToolTip((topic=splitoptions))}" />
             </td>
             <td>
                 <input class="monospace" type="text" th:field="*{splitOptions}" size="100" />
@@ -76,7 +76,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.splitcommand}"></span>
-                <th:block th:replace="helpToolTip(topic=splitcommand)" />
+                <th:block th:replace="~{helpToolTip((topic=splitcommand))}" />
             </td>
             <td>
                 <input class="monospace" type="text" th:field="*{splitCommand}" size="100" />
@@ -85,7 +85,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.hlscommand}"></span>
-                <th:block th:replace="helpToolTip(topic=hlscommand)" />
+                <th:block th:replace="~{helpToolTip((topic=hlscommand))}" />
             </td>
             <td>
                 <input class="monospace" type="text" th:field="*{hlsCommand}" size="100" />
@@ -94,7 +94,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.jukeboxcommand}"></span>
-                <th:block th:replace="helpToolTip(topic=jukeboxcommand)" />
+                <th:block th:replace="~{helpToolTip((topic=jukeboxcommand))}" />
             </td>
             <td>
                 <input class="monospace" type="text" th:field="*{jukeboxCommand}" size="100" />
@@ -103,7 +103,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.videoimagecommand}"></span>
-                <th:block th:replace="helpToolTip(topic=videoimagecommand)" />
+                <th:block th:replace="~{helpToolTip((topic=videoimagecommand))}" />
             </td>
             <td>
                 <input class="monospace" type="text" th:field="*{videoImageCommand}" size="100" />
@@ -112,7 +112,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.subtitlesextractioncommand}"></span>
-                <th:block th:replace="helpToolTip(topic=subtitlesextractioncommand)" />
+                <th:block th:replace="~{helpToolTip((topic=subtitlesextractioncommand))}" />
             </td>
             <td>
                 <input class="monospace" type="text" th:field="*{subtitlesExtractionCommand}" size="100" />
@@ -124,7 +124,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.transcodeestimatetimepadding}"></span>
-                <th:block th:replace="helpToolTip(topic=transcodeestimatetimepadding)" />
+                <th:block th:replace="~{helpToolTip((topic=transcodeestimatetimepadding))}" />
             </td>
             <td>
                 <input class="monospace" th:field="*{transcodeEstimateTimePadding}" size="8" />
@@ -133,7 +133,7 @@
         <tr>
             <td style="font-weight: bold;">
                 <span th:text="#{advancedsettings.transcodeestimatebytepadding}"></span>
-                <th:block th:replace="helpToolTip(topic=transcodeestimatebytepadding)" />
+                <th:block th:replace="~{helpToolTip((topic=transcodeestimatebytepadding))}" />
             </td>
             <td>
                 <input class="monospace" th:field="*{transcodeEstimateBytePadding}" size="8" />

@@ -1,5 +1,6 @@
 package org.airsonic.player.spring;
 
+import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,20 +17,21 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpUpgradeHandler;
-import javax.servlet.http.Part;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.Part;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,6 +51,9 @@ import java.util.function.Supplier;
 @EnableWebSocketMessageBroker
 public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer {
     public static final String UNDERLYING_SERVLET_REQUEST = "servletRequest";
+    public static final String USER_AGENT = "userAgent";
+    public static final String UNDERLYING_HTTP_SESSION = "httpSession";
+    public static final String BASE_URL = "baseUrl";
 
     private TaskScheduler messageBrokerTaskScheduler;
     private String contextPath;
@@ -95,11 +100,14 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         @Override
         public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                 WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-
             // Set servlet request attribute to WebSocket session
-            if (request instanceof ServletServerHttpRequest) {
+            if (request instanceof ServletServerHttpRequest sshr) {
                 attributes.put(UNDERLYING_SERVLET_REQUEST,
-                        new WebsocketInterceptedServletRequest((ServletServerHttpRequest) request, contextPath));
+                        new WebsocketInterceptedServletRequest(sshr, contextPath));
+                attributes.put(USER_AGENT, request.getHeaders().getFirst("User-Agent"));
+                attributes.put(UNDERLYING_HTTP_SESSION,
+                        ((ServletServerHttpRequest) request).getServletRequest().getSession(false));
+                attributes.put(BASE_URL, NetworkUtil.getBaseUrl(sshr.getServletRequest()));
             }
 
             return true;
@@ -272,11 +280,6 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
 
         @Override
-        public String getRealPath(String path) {
-            return null;
-        }
-
-        @Override
         public int getRemotePort() {
             return getAddress(() -> Optional.ofNullable(getOriginalRequest().getServletRequest().getRemotePort())
                     .orElse(getOriginalRequest().getRemoteAddress().getPort()), URI::getPort);
@@ -377,7 +380,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         @Override
         public String getMethod() {
             return Optional.ofNullable(getOriginalRequest().getServletRequest().getMethod())
-                    .orElse(getOriginalRequest().getMethodValue());
+                    .orElse(getOriginalRequest().getMethod().name());
         }
 
         @Override
@@ -473,11 +476,6 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         }
 
         @Override
-        public boolean isRequestedSessionIdFromUrl() {
-            return isRequestedSessionIdFromURL();
-        }
-
-        @Override
         public boolean authenticate(HttpServletResponse response) throws IOException, ServletException {
             return getOriginalRequest().getServletRequest().authenticate(response);
         }
@@ -503,6 +501,24 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         @Override
         public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
             return null;
+        }
+
+        @Override
+        public String getProtocolRequestId() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getProtocolRequestId'");
+        }
+
+        @Override
+        public String getRequestId() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getRequestId'");
+        }
+
+        @Override
+        public ServletConnection getServletConnection() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'getServletConnection'");
         }
 
     }

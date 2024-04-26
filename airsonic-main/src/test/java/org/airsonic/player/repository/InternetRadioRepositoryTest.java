@@ -25,13 +25,11 @@ import org.airsonic.player.domain.InternetRadio;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Path;
@@ -49,7 +47,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Sindre Mehus
  */
 @Transactional
-@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @EnableConfigurationProperties({AirsonicHomeConfig.class})
 public class InternetRadioRepositoryTest {

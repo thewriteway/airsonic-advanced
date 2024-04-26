@@ -56,9 +56,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-@EnableConfigurationProperties({ AirsonicHomeConfig.class })
+@EnableConfigurationProperties({ AirsonicHomeConfig.class})
 @Transactional
 public class AlbumRepositoryTest {
+
 
     @Autowired
     private AlbumRepository albumRepository;
@@ -79,7 +80,6 @@ public class AlbumRepositoryTest {
     public static void setup() {
         System.setProperty("airsonic.home", tempDir.toString());
     }
-
 
     private List<MusicFolder> testFolders = new ArrayList<>();
 

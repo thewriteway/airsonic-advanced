@@ -67,9 +67,9 @@ public class AlbumServiceTest {
 
     @ParameterizedTest
     @CsvSource({
-            ",",
-            "artist,",
-            ",album"
+        ",",
+        "artist,",
+        ",album"
     })
     public void testGetAlbumByMediaFileShouldReturnNull(String artist, String album) {
 
@@ -146,9 +146,9 @@ public class AlbumServiceTest {
 
     @ParameterizedTest
     @CsvSource({
-            "1900, 2000",
-            "2000, 1900",
-            "2000 ,2000"
+        "1900, 2000",
+        "2000, 1900",
+        "2000 ,2000"
     })
     public void testGetAlbumsByYear(int startYear, int endYear) {
 

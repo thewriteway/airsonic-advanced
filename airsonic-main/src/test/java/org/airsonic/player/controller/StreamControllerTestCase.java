@@ -1,10 +1,4 @@
-/*
- This file is part of Airsonic.
-
- Airsonic is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
+/* This file is part of Airsonic.  Airsonic is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
  Airsonic is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,45 +13,49 @@
  */
 package org.airsonic.player.controller;
 
-import junit.framework.TestCase;
 import org.airsonic.player.service.TranscodingService;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Dimension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Sindre Mehus
  * @version $Id$
  */
-public class StreamControllerTestCase extends TestCase {
+public class StreamControllerTestCase {
 
+    @Test
     public void testGetRequestedVideoSize() {
         StreamController controller = new StreamController();
 
         // Valid spec.
-        assertEquals("Wrong size.", new Dimension(123, 456), controller.getRequestedVideoSize("123x456"));
-        assertEquals("Wrong size.", new Dimension(456, 123), controller.getRequestedVideoSize("456x123"));
-        assertEquals("Wrong size.", new Dimension(1, 1), controller.getRequestedVideoSize("1x1"));
-
+        assertEquals(new Dimension(123, 456), controller.getRequestedVideoSize("123x456"), "Wrong size.");
+        assertEquals(new Dimension(456, 123), controller.getRequestedVideoSize("456x123"), "Wrong size.");
+        assertEquals(new Dimension(1, 1), controller.getRequestedVideoSize("1x1"), "Wrong size.");
         // Missing spec.
-        assertNull("Wrong size.", controller.getRequestedVideoSize(null));
+        assertNull(controller.getRequestedVideoSize(null), "Wrong size.");
 
         // Invalid spec.
-        assertNull("Wrong size.", controller.getRequestedVideoSize("123"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("123x"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("x123"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("x"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("foo123x456bar"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("foo123x456"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("123x456bar"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("fooxbar"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("-1x1"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("1x-1"));
+        assertNull(controller.getRequestedVideoSize("123"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("123x"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("x123"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("x"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("foo123x456bar"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("foo123x456"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("123x456bar"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("fooxbar"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("-1x1"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("1x-1"), "Wrong size.");
 
         // Too large.
-        assertNull("Wrong size.", controller.getRequestedVideoSize("3000x100"));
-        assertNull("Wrong size.", controller.getRequestedVideoSize("100x3000"));
+        assertNull(controller.getRequestedVideoSize("3000x100"), "Wrong size.");
+        assertNull(controller.getRequestedVideoSize("100x3000"), "Wrong size.");
     }
 
+    @Test
     public void testGetSuitableVideoSize() {
 
         // 4:3 aspect rate
@@ -113,9 +111,10 @@ public class StreamControllerTestCase extends TestCase {
         doTestGetSuitableVideoSize(464, 853, 1500, 464, 854);
     }
 
-    private void doTestGetSuitableVideoSize(Integer existingWidth, Integer existingHeight, Integer maxBitRate, int expectedWidth, int expectedHeight) {
+    private void doTestGetSuitableVideoSize(Integer existingWidth, Integer existingHeight, Integer maxBitRate,
+            int expectedWidth, int expectedHeight) {
         Dimension dimension = TranscodingService.getSuitableVideoSize(existingWidth, existingHeight, maxBitRate);
-        assertEquals("Wrong width.", expectedWidth, dimension.width);
-        assertEquals("Wrong height.", expectedHeight, dimension.height);
+        assertEquals(expectedWidth, dimension.width, "Wrong Width");
+        assertEquals(expectedHeight, dimension.height, "Wrong Height");
     }
 }

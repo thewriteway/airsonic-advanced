@@ -3,7 +3,7 @@ package org.airsonic.player.service.search;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -13,8 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test case for Analyzer.
@@ -55,7 +55,7 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.FOLDER:
                 case FieldNames.MEDIA_TYPE:
                 case FieldNames.GENRE:
-                    assertEquals("oneTokenFields : " + n, 7, terms.size());
+                    assertEquals(7, terms.size(), "oneTokenFields : " + n);
                     break;
 
                 /*
@@ -64,14 +64,14 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.ARTIST:
                 case FieldNames.ALBUM:
                 case FieldNames.TITLE:
-                    assertEquals("multiTokenFields : " + n, 7, terms.size());
+                    assertEquals(7, terms.size(), "oneTokenFields : " + n);
                     break;
                 /*
                  * ID, FOLDER_ID, YEAR
                  * This is not a problem because the input value does not contain a delimiter.
                  */
                 default:
-                    assertEquals("oneTokenFields : " + n, 7, terms.size());
+                    assertEquals(7, terms.size(), "oneTokenFields : " + n);
                     break;
             }
         });
@@ -104,8 +104,8 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.FOLDER:
                 case FieldNames.GENRE:
                 case FieldNames.MEDIA_TYPE:
-                    assertEquals("tokenized : " + n, 1, terms.size());
-                    assertEquals("tokenized : " + n, expected, terms.get(0));
+                    assertEquals(1, terms.size(), "tokenized : " + n);
+                    assertEquals(expected, terms.get(0), "tokenized : " + n);
                     break;
 
                 /*
@@ -115,15 +115,15 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.ARTIST:
                 case FieldNames.ALBUM:
                 case FieldNames.TITLE:
-                    assertEquals("tokenized : " + n, 1, terms.size());
-                    assertEquals("tokenized : " + n, expected, terms.get(0));
+                    assertEquals(1, terms.size(), "tokenized : " + n);
+                    assertEquals(expected, terms.get(0), "tokenized : " + n);
                     break;
                 /*
                  * ID, FOLDER_ID, YEAR
                  * This is not a problem because the input value does not contain a delimiter.
                  */
                 default:
-                    assertEquals("tokenized : " + n, 2, terms.size());
+                    assertEquals(2, terms.size(), "tokenized : " + n);
                     break;
             }
         });
@@ -146,10 +146,10 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.ARTIST:
                 case FieldNames.ALBUM:
                 case FieldNames.TITLE:
-                    assertEquals("removed : " + n, 0, terms.size());
+                    assertEquals(0, terms.size(), "removed : " + n);
                     break;
                 default:
-                    assertEquals("removed : " + n, 0, terms.size());
+                    assertEquals(0, terms.size(), "removed : " + n);
             }
         });
     }
@@ -205,25 +205,25 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.TITLE:
 
                     // Deleted because it is a stopword.
-                    assertEquals("article : " + n, 0, articleTerms.size());
+                    assertEquals(0, articleTerms.size(), "article : " + n);
                     // "la los" is not deleted(#1235).
-                    assertEquals("sonic server index article: " + n, 2, indexArticleTerms.size());
+                    assertEquals(2, indexArticleTerms.size(), "sonic server index article: " + n);
                     // Not deleted because it is not a stopword.
-                    assertEquals("non-article stop words : " + n, 30, stopedTerms.size());
+                    assertEquals(30, stopedTerms.size(), "non-article stop words : " + n);
                     // Not deleted because it is not a stopword.
-                    assertEquals("stop words for artsist : " + n, 5, artistTerms.size());
+                    assertEquals(5, artistTerms.size(), "stop words for artsist : " + n);
                     break;
 
                 case FieldNames.ARTIST:
 
                     // Deleted because it is a stopword.
-                    assertEquals("article : " + n, 0, articleTerms.size());
+                    assertEquals(0, articleTerms.size(), "article : " + n);
                     // "la los" is not deleted(#1235).
-                    assertEquals("sonic server index article: " + n, 2, indexArticleTerms.size());
+                    assertEquals(2, indexArticleTerms.size(), "sonic server index article: " + n);
                     // Not deleted because it is not a stopword(Except by and with).
-                    assertEquals("non-article stop words : " + n, 28, stopedTerms.size());
+                    assertEquals(28, stopedTerms.size(), "non-article stop words : " + n);
                     // Deleted because it is a stopword.
-                    assertEquals("stop words for artsist : " + n, 0, artistTerms.size());
+                    assertEquals(0, artistTerms.size(), "stop words for artsist : " + n);
                     break;
 
                 default:
@@ -318,18 +318,18 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.ARTIST:
                 case FieldNames.ALBUM:
                 case FieldNames.TITLE:
-                    assertEquals("Cæsar : " + n, 1, termsLigature.size());
-                    assertEquals("Cæsar : " + n, expectedLigature, termsLigature.get(0));
-                    assertEquals("Café : " + n, 1, termsDiacritical.size());
-                    assertEquals("Café : " + n, expectedDiacritical, termsDiacritical.get(0));
+                    assertEquals(1, termsLigature.size(), "Cæsar : " + n);
+                    assertEquals(expectedLigature, termsLigature.get(0), "Cæsar : " + n);
+                    assertEquals(1, termsDiacritical.size(), "Café : " + n);
+                    assertEquals(expectedDiacritical, termsDiacritical.get(0), "Café : " + n);
                     break;
 
                 // Legacy has common behavior for all fields.
                 default:
-                    assertEquals("Cæsar : " + n, 1, termsLigature.size());
-                    assertEquals("Cæsar : " + n, expectedLigature, termsLigature.get(0));
-                    assertEquals("Café : " + n, 1, termsDiacritical.size());
-                    assertEquals("Café : " + n, expectedDiacritical, termsDiacritical.get(0));
+                    assertEquals(1, termsLigature.size(), "Cæsar : " + n);
+                    assertEquals(expectedLigature, termsLigature.get(0), "Cæsar : " + n);
+                    assertEquals(1, termsDiacritical.size(), "Café : " + n);
+                    assertEquals(expectedDiacritical, termsDiacritical.get(0), "Café : " + n);
                     break;
 
             }
@@ -356,8 +356,8 @@ public class AnalyzerFactoryTestCase {
                  */
                 case FieldNames.FOLDER:
                 case FieldNames.MEDIA_TYPE:
-                    assertEquals("lower : " + n, 1, terms.size());
-                    assertEquals("lower : " + n, expected, terms.get(0));
+                    assertEquals(1, terms.size(), "lower : " + n);
+                    assertEquals(expected, terms.get(0), "lower : " + n);
                     break;
 
                 /*
@@ -367,14 +367,14 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.ARTIST:
                 case FieldNames.ALBUM:
                 case FieldNames.TITLE:
-                    assertEquals("lower : " + n, 1, terms.size());
-                    assertEquals("lower : " + n, expected, terms.get(0));
+                    assertEquals(1, terms.size(), "lower : " + n);
+                    assertEquals(expected, terms.get(0), "lower : " + n);
                     break;
 
                 // Legacy has common behavior for all fields.
                 default:
-                    assertEquals("lower : " + n, 1, terms.size());
-                    assertEquals("lower : " + n, expected, terms.get(0));
+                    assertEquals(1, terms.size(), "lower : " + n);
+                    assertEquals(expected, terms.get(0), "lower : " + n);
                     break;
 
             }
@@ -401,9 +401,9 @@ public class AnalyzerFactoryTestCase {
                  * Will be removed. (Can not distinguish the directory of a particular pattern?)
                  */
                 case FieldNames.FOLDER:
-                    assertEquals("escape : " + n, 0, terms.size());
+                    assertEquals(0, terms.size(), "escape : " + n);
                     terms = toTermString(n, queryFileUsable);
-                    assertEquals("escape : " + n, 0, terms.size());
+                    assertEquals(0, terms.size(), "escape : " + n);
                     break;
 
                 /*
@@ -414,12 +414,12 @@ public class AnalyzerFactoryTestCase {
                 case FieldNames.ARTIST:
                 case FieldNames.ALBUM:
                 case FieldNames.TITLE:
-                    assertEquals("escape : " + n, 0, terms.size());
+                    assertEquals(0, terms.size(), "escape : " + n);
                     break;
 
                 // Will be removed.
                 default:
-                    assertEquals("escape : " + n, 0, terms.size());
+                    assertEquals(0, terms.size(), "escape : " + n);
                     break;
 
             }

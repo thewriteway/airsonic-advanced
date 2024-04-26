@@ -44,9 +44,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.ServletRequestUtils;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -124,6 +124,10 @@ public class PlayerService {
         return getPlayer(request, response, null, username, remoteControlEnabled, isStreamRequest);
     }
 
+    public synchronized Player getPlayer(HttpServletRequest request, HttpServletResponse response,
+            Integer playerId, String username, boolean remoteControlEnabled, boolean isStreamRequest) throws Exception {
+        return getPlayer(request, response, playerId, username, request.getHeader("user-agent"), remoteControlEnabled, isStreamRequest, false);
+    }
 
     /**
      * Returns the player associated with the given HTTP request.  If no such player exists, a new
@@ -133,22 +137,24 @@ public class PlayerService {
      * @param response             The HTTP response.
      * @param playerId             The ID of the player to return. May be <code>null</code>.
      * @param username             The name of the current user. May be <code>null</code>.
+     * @param userAgent            The user agent of the HTTP request.
      * @param remoteControlEnabled Whether this method should return a remote-controlled player.
      * @param isStreamRequest      Whether the HTTP request is a request for streaming data.
+     * @param isWebSocketRequest   Whether the HTTP request is a request for a WebSocket.
      * @return The player associated with the given HTTP request. Never <code>null</code>.
      */
     public synchronized Player getPlayer(HttpServletRequest request, HttpServletResponse response,
-            Integer playerId, String username, boolean remoteControlEnabled, boolean isStreamRequest) throws Exception {
+            Integer playerId, String username, String userAgent, boolean remoteControlEnabled, boolean isStreamRequest, boolean isWebSocketRequest) throws Exception {
 
         Player player = getPlayerById(playerId);
 
         // Find by 'player' request parameter.
-        if (player == null) {
+        if (!isWebSocketRequest && player == null) {
             player = getPlayerById(ServletRequestUtils.getIntParameter(request, "player"));
         }
 
         // Find in session context.
-        if (player == null && remoteControlEnabled) {
+        if (!isWebSocketRequest && player == null && remoteControlEnabled) {
             playerId = (Integer) request.getSession().getAttribute("player");
             if (playerId != null) {
                 player = getPlayerById(playerId);
@@ -156,7 +162,7 @@ public class PlayerService {
         }
 
         // Find by cookie.
-        if (player == null && remoteControlEnabled) {
+        if (!isWebSocketRequest && player == null && remoteControlEnabled) {
             player = getPlayerById(getPlayerIdFromCookie(request, username));
         }
 
@@ -174,9 +180,9 @@ public class PlayerService {
         if (player == null) {
             player = new Player();
             player.setLastSeen(Instant.now());
-            populatePlayer(player, username, request, isStreamRequest);
+            populatePlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest);
             player = createPlayer(player);
-        } else if (populatePlayer(player, username, request, isStreamRequest)) {
+        } else if (populatePlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest)) {
             updatePlayer(player);
         }
 
@@ -194,26 +200,25 @@ public class PlayerService {
         }
 
         // Save player in session context.
-        if (remoteControlEnabled && request.getSession() != null) {
+        if (!isWebSocketRequest && remoteControlEnabled && request.getSession() != null) {
             request.getSession().setAttribute("player", player.getId());
         }
 
         return player;
     }
 
-    private boolean populatePlayer(Player player, String username, HttpServletRequest request, boolean isStreamRequest) {
+    private boolean populatePlayer(Player player, String username, String remoteAddress, String userAgent, boolean isStreamRequest) {
         // Update player data.
         boolean isUpdate = false;
         if (username != null && player.getUsername() == null) {
             player.setUsername(username);
             isUpdate = true;
         }
-        if (!StringUtils.equals(request.getRemoteAddr(), player.getIpAddress()) &&
+        if (!StringUtils.equals(remoteAddress, player.getIpAddress()) &&
                 (player.getIpAddress() == null || isStreamRequest || (!isPlayerConnected(player) && player.getDynamicIp()))) {
-            player.setIpAddress(request.getRemoteAddr());
+            player.setIpAddress(remoteAddress);
             isUpdate = true;
         }
-        String userAgent = request.getHeader("user-agent");
         if (isStreamRequest) {
             player.setType(userAgent);
             player.setLastSeen(Instant.now());

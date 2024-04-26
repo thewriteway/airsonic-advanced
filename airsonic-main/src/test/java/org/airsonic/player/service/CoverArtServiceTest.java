@@ -26,6 +26,7 @@ import org.airsonic.player.domain.CoverArt.EntityType;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.repository.CoverArtRepository;
+import org.airsonic.player.service.cache.CoverArtCache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -53,6 +54,9 @@ public class CoverArtServiceTest {
     @Mock
     private CoverArtRepository coverArtRepository;
 
+    @Mock
+    private CoverArtCache coverArtCache;
+
     @InjectMocks
     private CoverArtService coverArtService;
 
@@ -79,7 +83,7 @@ public class CoverArtServiceTest {
     public void testGetReturnsCachedCoverArt() {
         CoverArt coverArt = new CoverArt(1, EntityType.MEDIA_FILE, "path/to/image.jpg", null, false);
         when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1)).thenReturn(Optional.of(coverArt));
-        CoverArt result = coverArtService.get(EntityType.MEDIA_FILE, 1);
+        CoverArt result = coverArtService.getMediaFileArt(1);
         assertEquals(coverArt, result);
         verify(coverArtRepository, times(1)).findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1);
     }
@@ -87,7 +91,7 @@ public class CoverArtServiceTest {
     @Test
     public void testGetReturnsNullForNonexistentCoverArt() {
         when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1)).thenReturn(Optional.ofNullable(null));
-        CoverArt result = coverArtService.get(EntityType.MEDIA_FILE, 1);
+        CoverArt result = coverArtService.getMediaFileArt(1);
         assertEquals(CoverArt.NULL_ART, result);
         verify(coverArtRepository, times(1)).findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1);
     }
@@ -119,7 +123,7 @@ public class CoverArtServiceTest {
         CoverArt coverArt = new CoverArt(1, EntityType.MEDIA_FILE, "path/to/image.jpg", mockedFolder, false);
         when(mockedFolder.getPath()).thenReturn(Paths.get("music"));
         when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1)).thenReturn(Optional.of(coverArt));
-        Path result = coverArtService.getFullPath(EntityType.MEDIA_FILE, 1);
+        Path result = coverArtService.getMediaFileArtPath(1);
         assertEquals(Paths.get("music/path/to/image.jpg"), result);
     }
 

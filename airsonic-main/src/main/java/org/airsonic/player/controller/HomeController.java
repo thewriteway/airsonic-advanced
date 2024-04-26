@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -51,7 +51,7 @@ import static org.springframework.web.bind.ServletRequestUtils.getStringParamete
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/home")
+@RequestMapping({"/home", "/home.view"})
 public class HomeController {
 
     private static final int LIST_SIZE = 40;

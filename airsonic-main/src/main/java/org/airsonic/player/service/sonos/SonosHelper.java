@@ -21,8 +21,6 @@
 package org.airsonic.player.service.sonos;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.sonos.services._1.*;
 import org.airsonic.player.controller.CoverArtController;
 import org.airsonic.player.domain.*;
@@ -35,7 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Nonnull;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -581,7 +580,6 @@ public class SonosHelper {
         result.setItemType(ItemType.TRACK);
         result.setMimeType(StringUtil.getMimeType(suffix, true));
         result.setTitle(song.getTitle());
-        result.setGenre(song.getGenre());
         result.setIsFavorite(song.getStarredDate() != null);
 //        result.setDynamic();// TODO: For starred songs
 
@@ -595,6 +593,7 @@ public class SonosHelper {
         trackMetadata.setAlbumArtURI(albumArtURI);
         trackMetadata.setDuration((int) Math.round(song.getDuration()));
         trackMetadata.setTrackNumber(song.getTrackNumber());
+        trackMetadata.setGenre(song.getGenre());
 
         MediaFile parent = mediaFileService.getParentOf(song);
         if (parent != null && parent.isAlbum()) {
@@ -635,8 +634,8 @@ public class SonosHelper {
         return result;
     }
 
-    private List<MediaFile> filterMusic(List<MediaFile> files) {
-        return Lists.newArrayList(Iterables.filter(files, input -> input.getMediaType() == MediaFile.MediaType.MUSIC));
+    private List<MediaFile> filterMusic(@Nonnull List<MediaFile> files) {
+        return files.stream().filter(input -> input.getMediaType() == MediaFile.MediaType.MUSIC).toList();
     }
 
     public void setPlaylistService(PlaylistService playlistService) {

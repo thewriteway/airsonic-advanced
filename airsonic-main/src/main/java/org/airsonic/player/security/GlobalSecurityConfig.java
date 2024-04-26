@@ -1,18 +1,16 @@
 package org.airsonic.player.security;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.common.io.BaseEncoding;
 import org.airsonic.player.service.JWTSecurityService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.service.sonos.SonosLinkSecurityInterceptor.SonosJWTVerification;
+import org.apache.commons.codec.binary.Base16;
+import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -21,10 +19,11 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -42,8 +41,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import javax.servlet.ServletContext;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,8 +50,7 @@ import java.util.stream.Collectors;
 import static org.airsonic.player.security.MultipleCredsMatchingAuthenticationProvider.SALT_TOKEN_MECHANISM_SPECIALIZATION;
 
 @Configuration
-@Order(SecurityProperties.BASIC_AUTH_ORDER - 2)
-@EnableMethodSecurity(securedEnabled = true)
+@EnableWebSecurity
 public class GlobalSecurityConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(GlobalSecurityConfig.class);
@@ -68,38 +64,38 @@ public class GlobalSecurityConfig {
             .put("ldap", new org.springframework.security.crypto.password.LdapShaPasswordEncoder())
             .put("MD4", new org.springframework.security.crypto.password.Md4PasswordEncoder())
             .put("MD5", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("MD5"))
-            .put("pbkdf2", new Pbkdf2PasswordEncoder())
-            .put("scrypt", new SCryptPasswordEncoder())
+            .put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8())
+            .put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8())
             .put("SHA-1", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-1"))
             .put("SHA-256", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-256"))
             .put("sha256", new org.springframework.security.crypto.password.StandardPasswordEncoder())
-            .put("argon2", new Argon2PasswordEncoder())
+            .put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8())
 
             // base decodable encoders
             .put("noop", new PasswordEncoderDecoderWrapper(org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(), p -> p))
-            .put("hex", HexPasswordEncoder.getInstance())
+            .put("hex", new HexPasswordEncoder())
             .put("encrypted-AES-GCM", new AesGcmPasswordEncoder()) // placeholder (real instance created below)
 
             // base decodable encoders that rely on salt+token being passed in (not stored in db with this type)
             .put("noop" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(p -> p))
-            .put("hex" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(HexPasswordEncoder.getInstance()))
+            .put("hex" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(new HexPasswordEncoder()))
             .put("encrypted-AES-GCM" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(new AesGcmPasswordEncoder())) // placeholder (real instance created below)
 
             // TODO: legacy marked base encoders, to be upgraded to one-way formats at breaking version change
             .put("legacynoop", new PasswordEncoderDecoderWrapper(org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(), p -> p))
-            .put("legacyhex", HexPasswordEncoder.getInstance())
+            .put("legacyhex", new HexPasswordEncoder())
 
             .put("legacynoop" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(p -> p))
-            .put("legacyhex" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(HexPasswordEncoder.getInstance()))
+            .put("legacyhex" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(new HexPasswordEncoder()))
             .build());
 
-    public static final Set<String> OPENTEXT_ENCODERS = ImmutableSet.of("noop", "hex", "legacynoop", "legacyhex");
-    public static final Set<String> DECODABLE_ENCODERS = ImmutableSet.<String>builder().addAll(OPENTEXT_ENCODERS).add("encrypted-AES-GCM").build();
+    public static final Set<String> OPENTEXT_ENCODERS = Set.of("noop", "hex", "legacynoop", "legacyhex");
+    public static final Set<String> DECODABLE_ENCODERS = Set.of("noop", "hex", "logacynoop", "encrypted-AES-GCM");
     public static final Set<String> NONLEGACY_ENCODERS = ENCODERS.keySet().stream()
             .filter(e -> !StringUtils.containsAny(e, "legacy", SALT_TOKEN_MECHANISM_SPECIALIZATION))
             .collect(Collectors.toSet());
-    public static final Set<String> NONLEGACY_DECODABLE_ENCODERS = Sets.intersection(DECODABLE_ENCODERS, NONLEGACY_ENCODERS);
-    public static final Set<String> NONLEGACY_NONDECODABLE_ENCODERS = Sets.difference(NONLEGACY_ENCODERS, DECODABLE_ENCODERS);
+    public static final Set<String> NONLEGACY_DECODABLE_ENCODERS = SetUtils.intersection(DECODABLE_ENCODERS, NONLEGACY_ENCODERS);
+    public static final Set<String> NONLEGACY_NONDECODABLE_ENCODERS = SetUtils.difference(NONLEGACY_ENCODERS, DECODABLE_ENCODERS);
 
     @Autowired
     private CsrfSecurityRequestMatcher csrfSecurityRequestMatcher;
@@ -117,9 +113,6 @@ public class GlobalSecurityConfig {
     @Autowired
     SonosJWTVerification sonosJwtVerification;
 
-    @Autowired
-    private ServletContext servletContext;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         boolean generatedKeys = false;
@@ -135,7 +128,8 @@ public class GlobalSecurityConfig {
         String encryptionKeySalt = settingsService.getEncryptionSalt();
         if (StringUtils.isBlank(encryptionKeySalt)) {
             LOG.warn("Generating new encryption key salt");
-            encryptionKeySalt = BaseEncoding.base16().encode(KeyGenerators.secureRandom(16).generateKey());
+            Base16 base16 = new Base16();
+            encryptionKeySalt = base16.encodeToString(KeyGenerators.secureRandom(16).generateKey());
             settingsService.setEncryptionSalt(encryptionKeySalt);
             generatedKeys = true;
         }
@@ -208,7 +202,7 @@ public class GlobalSecurityConfig {
             settingsService.save();
         }
         JWTAuthenticationProvider jwtAuth = new JWTAuthenticationProvider(jwtKey);
-        jwtAuth.addAdditionalCheck(servletContext.getContextPath() + "/ws/Sonos", sonosJwtVerification);
+        jwtAuth.addAdditionalCheck("/ws/Sonos", sonosJwtVerification);
         auth.authenticationProvider(jwtAuth);
         auth.authenticationProvider(multipleCredsProvider);
     }
@@ -230,25 +224,22 @@ public class GlobalSecurityConfig {
             , UsernamePasswordAuthenticationFilter.class);
 
         http
-            .antMatcher("/ext/**")
-            .csrf()
-            // .disable()
-            .requireCsrfProtectionMatcher(csrfSecurityRequestMatcher).and()
-            .headers().frameOptions().sameOrigin().and()
-            .authorizeRequests()
-            .antMatchers(
-                    "/ext/stream/**",
-                    "/ext/coverArt*",
-                    "/ext/share/**",
-                    "/ext/hls/**",
-                    "/ext/captions**")
-            .hasAnyRole("TEMP", "USER").and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).sessionFixation().none().and()
-            .exceptionHandling().and()
-            .securityContext().and()
-            .requestCache().and()
-            .anonymous().and()
-            .servletApi();
+                .securityMatcher("/ext/**")
+                .csrf((csrf) -> csrf
+                        .requireCsrfProtectionMatcher(csrfSecurityRequestMatcher))
+                .headers(header -> header.frameOptions(fp -> fp.sameOrigin()))
+                .authorizeHttpRequests((authorize) -> authorize
+                        .requestMatchers("/ext/stream/**", "/ext/coverArt*", "/ext/share/**", "/ext/hls/**",
+                                "/ext/captions**")
+                        .hasAnyRole("TEMP", "USER")
+                        .anyRequest().authenticated())
+                .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionFixation().none())
+                .exceptionHandling(Customizer.withDefaults())
+                .securityContext(Customizer.withDefaults())
+                .requestCache(Customizer.withDefaults())
+                .anonymous(Customizer.withDefaults())
+                .servletApi(Customizer.withDefaults());
         return http.build();
     }
 
@@ -275,64 +266,47 @@ public class GlobalSecurityConfig {
         }
 
         http
-            .cors()
-            .and()
+            .cors((cors) -> cors.configurationSource(corsConfigurationSource()))
             //.addFilterBefore(restAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .httpBasic()
-            .and()
+            .httpBasic(Customizer.withDefaults())
             .addFilterAfter(restAuthenticationFilter, BasicAuthenticationFilter.class)
-            .csrf()
-            .ignoringAntMatchers("/ws/Sonos/**")
-            .requireCsrfProtectionMatcher(csrfSecurityRequestMatcher)
-            .and()
-            .headers()
-            .frameOptions()
-            .sameOrigin()
-            .and().authorizeRequests()
-            .antMatchers("/recover*", "/accessDenied*", "/style/**", "/icons/**", "/flash/**", "/script/**",
-                    "/login", "/error", "/sonos/**", "/sonoslink/**", "/ws/Sonos/**")
-            .permitAll()
-            .antMatchers("/personalSettings*",
-                    "/playerSettings*", "/shareSettings*", "/credentialsSettings*")
-            .hasRole("SETTINGS")
-            .antMatchers("/generalSettings*", "/advancedSettings*", "/userSettings*",
-                    "/musicFolderSettings*", "/databaseSettings*", "/transcodeSettings*", "/rest/startScan*")
-            .hasRole("ADMIN")
-            .antMatchers("/deletePlaylist*", "/savePlaylist*")
-            .hasRole("PLAYLIST")
-            .antMatchers("/download*")
-            .hasRole("DOWNLOAD")
-            .antMatchers("/upload*")
-            .hasRole("UPLOAD")
-            .antMatchers("/createShare*")
-            .hasRole("SHARE")
-            .antMatchers("/changeCoverArt*", "/editTags*")
-            .hasRole("COVERART")
-            .antMatchers("/setMusicFileInfo*")
-            .hasRole("COMMENT")
-            .antMatchers("/podcastReceiverAdmin*")
-            .hasRole("PODCAST")
-            .antMatchers("/**")
-            .hasRole("USER")
-            .anyRequest().authenticated()
-            .and().formLogin()
-            .loginPage("/login")
-            .permitAll()
-            .defaultSuccessUrl("/index", true)
-            .failureUrl(FAILURE_URL)
-            .usernameParameter("j_username")
-            .passwordParameter("j_password")
-            .and()
-            .logout(logout -> logout
-                    .deleteCookies("JSESSIONID", "XSRF-TOKEN")
-                    .clearAuthentication(true)
-                    .invalidateHttpSession(true)
-                    .logoutSuccessUrl("/login?logout"))
-            .rememberMe().key(rememberMeKey).userDetailsService(securityService);
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/Sonos/**").requireCsrfProtectionMatcher(csrfSecurityRequestMatcher))
+            .headers(header -> header.frameOptions(fo -> fo.sameOrigin()))
+            .authorizeHttpRequests((authorize) -> authorize.requestMatchers("/recover*", "/accessDenied*", "/style/**", "/icons/**", "/flash/**", "/script/**",
+                    "/login", "/error", "/sonos/**", "/sonoslink/**", "/ws/Sonos/**").permitAll().requestMatchers("/personalSettings*",
+                    "/playerSettings*", "/shareSettings*", "/credentialsSettings*").hasRole("SETTINGS")
+                    .requestMatchers("/generalSettings*", "/advancedSettings*", "/userSettings*", "/musicFolderSettings*",
+                            "/databaseSettings*", "/transcodeSettings*", "/rest/startScan*").hasRole("ADMIN")
+                    .requestMatchers("/deletePlaylist*", "/savePlaylist*").hasRole("PLAYLIST").requestMatchers("/download*").hasRole("DOWNLOAD")
+                    .requestMatchers("/upload*").hasRole("UPLOAD").requestMatchers("/createShare*").hasRole("SHARE")
+                    .requestMatchers("/changeCoverArt*", "/editTags*").hasRole("COVERART").requestMatchers("/setMusicFileInfo*").hasRole("COMMENT")
+                    .requestMatchers("/podcastReceiverAdmin*").hasRole("PODCAST")
+                    .requestMatchers("/**").hasRole("USER").anyRequest().authenticated())
+            .formLogin((login) -> login
+                    .loginPage("/login")
+                    .permitAll()
+                    .defaultSuccessUrl("/index", true)
+                    .failureUrl(FAILURE_URL)
+                    .usernameParameter("j_username")
+                    .passwordParameter("j_password"))
+            .logout((logout) -> logout
+                .deleteCookies("JSESSIONID", "XSRF-TOKEN")
+                .clearAuthentication(true)
+                .invalidateHttpSession(true)
+                .logoutSuccessUrl("/login?logout"))
+            .rememberMe((rememberMe) -> rememberMe
+                .key(rememberMeKey)
+                .userDetailsService(securityService));
         return http.build();
     }
 
-    @Bean
+    /*
+    @Bean(name = "mvcHandlerMappingIntrospector")
+    public HandlerMappingIntrospector mvcHandlerMappingIntrospector() {
+        return new HandlerMappingIntrospector();
+    }
+    */
+
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Collections.singletonList("*"));

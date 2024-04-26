@@ -39,7 +39,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/internetRadioSettings")
+@RequestMapping({"/internetRadioSettings", "/internetRadioSettings.view"})
 public class InternetRadioSettingsController {
 
     @Autowired

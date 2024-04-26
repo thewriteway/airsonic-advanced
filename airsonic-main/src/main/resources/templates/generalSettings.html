@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 </head>
 
@@ -9,7 +9,7 @@
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='general',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='general',toast=${settings_toast})}" />
 
 <form method="post" th:action="@{/generalSettings.view}" th:object="${command}">
 
@@ -18,7 +18,7 @@
             <td th:text="#{generalsettings.musicmask}"></td>
             <td>
                 <input th:field="*{musicFileTypes}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=musicmask)" />
+                <th:block th:replace="~{helpToolTip((topic=musicmask))}" />
             </td>
         </tr>
 
@@ -26,7 +26,7 @@
             <td th:text="#{generalsettings.videomask}"><</td>
             <td>
                 <input th:field="*{videoFileTypes}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=videomask)" />
+                <th:block th:replace="~{helpToolTip((topic=videomask))}" />
             </td>
         </tr>
 
@@ -34,7 +34,7 @@
             <td th:text="#{generalsettings.coverartmask}"></td>
             <td>
                 <input th:field="*{coverArtFileTypes}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=coverartmask)" />
+                <th:block th:replace="~{helpToolTip((topic=coverartmask))}" />
             </td>
         </tr>
 
@@ -42,7 +42,7 @@
             <td th:text="#{generalsettings.playlistfolder}"></td>
             <td>
                 <input th:field="*{playlistFolder}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=playlistfolder)" />
+                <th:block th:replace="~{helpToolTip((topic=playlistfolder))}" />
             </td>
         </tr>
 
@@ -52,7 +52,7 @@
             <td th:text="#{generalsettings.index}"></td>
             <td>
                 <input th:field="*{index}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=index)" />
+                <th:block th:replace="~{helpToolTip((topic=index))}" />
             </td>
         </tr>
 
@@ -60,7 +60,7 @@
             <td th:text="#{generalsettings.ignoredarticles}"></td>
             <td>
                 <input th:field="*{ignoredArticles}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=ignoredarticles)" />
+                <th:block th:replace="~{helpToolTip((topic=ignoredarticles))}" />
             </td>
         </tr>
         
@@ -68,7 +68,7 @@
             <td th:text="#{generalsettings.genreseparators}"></td>
             <td>
                 <input th:field="*{genreSeparators}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=genreseparators)" />
+                <th:block th:replace="~{helpToolTip((topic=genreseparators))}" />
             </td>
         </tr>
 
@@ -76,7 +76,7 @@
             <td th:text="#{generalsettings.shortcuts}"></td>
             <td>
                 <input th:field="*{shortcuts}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=shortcuts)" />
+                <th:block th:replace="~{helpToolTip((topic=shortcuts))}" />
             </td>
         </tr>
 
@@ -89,7 +89,7 @@
                     <option th:each="locale,loopStatus: *{locales}"
                             th:value="${loopStatus.count - 1}" th:text="${locale}"></option>
                 </select>
-                <th:block th:replace="helpToolTip(topic=language)" />
+                <th:block th:replace="~{helpToolTip((topic=language))}" />
             </td>
         </tr>
 
@@ -100,7 +100,7 @@
                     <option th:each="theme,loopStatus: *{themes}"
                             th:value="${loopStatus.count - 1}" th:text="${theme.name}"></option>
                 </select>
-                <th:block th:replace="helpToolTip(topic=theme)" />
+                <th:block th:replace="~{helpToolTip((topic=theme))}" />
             </td>
         </tr>
 
@@ -114,7 +114,7 @@
                     <option th:value="${T(org.airsonic.player.domain.CoverArtSource).FILE}" th:text="#{generalsettings.coverartsource.option.file}"></option>
                     <option th:value="${T(org.airsonic.player.domain.CoverArtSource).TAG}" th:text="#{generalsettings.coverartsource.option.tag}"></option>
                 </select>
-                <th:block th:replace="helpToolTip(topic=coverartsource)" />
+                <th:block th:replace="~{helpToolTip((topic=coverartsource))}" />
             </td>
         </tr>
 
@@ -122,7 +122,7 @@
             <td th:text="#{generalsettings.coverartquality}"></td>
             <td>
                 <input th:field="*{coverArtQuality}" size="15em"/>
-                <th:block th:replace="helpToolTip(topic=coverartquality)" />
+                <th:block th:replace="~{helpToolTip((topic=coverartquality))}" />
             </td>
         </tr>
 
@@ -130,7 +130,7 @@
             <td th:text="#{generalsettings.coverartconcurrency}"></td>
             <td>
                 <input th:field="*{coverArtConcurrency}" size="15em"/>
-                <th:block th:replace="helpToolTip(topic=coverartconcurrency)" />
+                <th:block th:replace="~{helpToolTip((topic=coverartconcurrency))}" />
             </td>
         </tr>
 
@@ -159,35 +159,35 @@
             <td th:text="#{generalsettings.welcometitle}"></td>
             <td>
                 <input th:field="*{welcomeTitle}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=welcomemessage)" />
+                <th:block th:replace="~{helpToolTip((topic=welcomemessage))}" />
             </td>
         </tr>
         <tr>
             <td th:text="#{generalsettings.welcomesubtitle}"></td>
             <td>
                 <input th:field="*{welcomeSubtitle}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=welcomemessage)" />
+                <th:block th:replace="~{helpToolTip((topic=welcomemessage))}" />
             </td>
         </tr>
         <tr>
             <td style="vertical-align:top;" th:text="#{generalsettings.welcomemessage}"></td>
             <td>
                 <textarea th:field="*{welcomeMessage}" rows="5" cols="70" ></textarea>
-                <th:block th:replace="helpToolTip(topic=welcomemessage)" />
+                <th:block th:replace="~{helpToolTip((topic=welcomemessage))}" />
             </td>
         </tr>
         <tr>
             <td style="vertical-align:top;" th:text="#{generalsettings.loginmessage}"></td>
             <td>
                 <textarea rows="5" cols="70" th:field="*{loginMessage}"></textarea>
-                <th:block th:replace="helpToolTip(topic=loginmessage)" />
+                <th:block th:replace="~{helpToolTip((topic=loginmessage))}" />
             </td>
         </tr>
         <tr>
             <td th:text="#{generalsettings.sessionduration}"></td>
             <td>
                 <input th:field="*{sessionDuration}" size="15em"/>
-                <th:block th:replace="helpToolTip(topic=sessionduration)" />
+                <th:block th:replace="~{helpToolTip((topic=sessionduration))}" />
             </td>
         </tr>
 

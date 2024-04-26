@@ -21,17 +21,14 @@ package org.airsonic.player.controller;
 import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.CoverArt;
-import org.airsonic.player.domain.CoverArt.EntityType;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.domain.Playlist;
-import org.airsonic.player.domain.PodcastChannel;
-import org.airsonic.player.service.AlbumService;
-import org.airsonic.player.service.ArtistService;
-import org.airsonic.player.service.CoverArtService;
-import org.airsonic.player.service.MediaFileService;
-import org.airsonic.player.service.PlaylistService;
-import org.airsonic.player.service.PodcastPersistenceService;
+import org.airsonic.player.domain.dto.AlbumCoverArtRequest;
+import org.airsonic.player.domain.dto.ArtistCoverArtRequest;
+import org.airsonic.player.domain.dto.MediaFileCoverArtRequest;
+import org.airsonic.player.domain.dto.PlaylistCoverArtRequest;
+import org.airsonic.player.service.CoverArtCreateService;
 import org.airsonic.player.util.ImageUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -41,7 +38,6 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -56,12 +52,11 @@ import java.io.InputStream;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,22 +72,7 @@ public class CoverArtControllerTest {
     private MockMvc mvc;
 
     @SpyBean
-    private MediaFileService mediaFileService;
-
-    @MockBean
-    private AlbumService albumService;
-
-    @MockBean
-    private ArtistService artistService;
-
-    @MockBean
-    private PlaylistService playlistService;
-
-    @MockBean
-    private PodcastPersistenceService podcastService;
-
-    @SpyBean
-    private CoverArtService coverArtService;
+    private CoverArtCreateService coverArtService;
 
     @Mock
     private CoverArt mockedCoverArt;
@@ -108,7 +88,8 @@ public class CoverArtControllerTest {
     private final String AIRSONIC_PASSWORD = "admin";
 
     /** resource */
-    private final ClassPathResource IMAGE_RESOURCE = new ClassPathResource("MEDIAS/Music2/_DIR_ chrome hoof - 2004/Folder.jpg");
+    private final ClassPathResource IMAGE_RESOURCE = new ClassPathResource(
+            "MEDIAS/Music2/_DIR_ chrome hoof - 2004/Folder.jpg");
     private final ClassPathResource PLAYLIST_RESOURCE = new ClassPathResource("COVERARTS/playlist.png");
     private final ClassPathResource PODCAST_RESOURCE = new ClassPathResource("COVERARTS/podcast.png");
 
@@ -178,12 +159,11 @@ public class CoverArtControllerTest {
         mockedMediaFile.setMediaType(MediaType.ALBUM);
 
         // set up mocked cover art
-        CoverArt mockedCoverArt = new CoverArt(MEDIA_ID, EntityType.ALBUM, IMAGE_RESOURCE.getFile().getAbsolutePath(), null, false);
+        MediaFileCoverArtRequest request = new MediaFileCoverArtRequest(mockedCoverArt, mockedMediaFile);
 
         // set up mock bean
-        doReturn(mockedMediaFile).when(mediaFileService).getMediaFile(anyInt());
-        doReturn(mockedCoverArt).when(coverArtService).get(any(EntityType.class), anyInt());
-        doReturn(IMAGE_RESOURCE.getFile().toPath()).when(coverArtService).getFullPath(any());
+        doReturn(request).when(coverArtService).createMediaFileCoverArtRequest(anyInt(), anyInt());
+        doReturn(IMAGE_RESOURCE.getFile().toPath()).when(mockedCoverArt).getFullPath();
 
         // prepare expected
         byte[] expected = IMAGE_RESOURCE.getInputStream().readAllBytes();
@@ -196,7 +176,9 @@ public class CoverArtControllerTest {
 
         // assertion
         assertArrayEquals(expected, actual);
-        verify(coverArtService).get(eq(EntityType.MEDIA_FILE), eq(MEDIA_ID));
+        verify(coverArtService).createMediaFileCoverArtRequest(eq(MEDIA_ID), eq(60));
+        verify(coverArtService).getImageInputStreamWithType(eq(IMAGE_RESOURCE.getFile().toPath()));
+        verifyNoMoreInteractions(coverArtService);
 
     }
 
@@ -207,17 +189,16 @@ public class CoverArtControllerTest {
 
         final int ALBUM_ID = 100;
 
-        // set up mocked cover art
-        CoverArt mockedCoverArt = new CoverArt(1, EntityType.ALBUM, IMAGE_RESOURCE.getFile().getAbsolutePath(),null, false);
-
         // set up mocked album
         Album mockedAlbum = new Album();
         mockedAlbum.setId(ALBUM_ID);
 
+        // setup result
+        AlbumCoverArtRequest request = new AlbumCoverArtRequest(mockedCoverArt, mockedAlbum);
+
         // set up mock
-        doReturn(mockedAlbum).when(albumService).getAlbum(anyInt());
-        doReturn(mockedCoverArt).when(coverArtService).get(any(EntityType.class), anyInt());
-        doReturn(IMAGE_RESOURCE.getFile().toPath()).when(coverArtService).getFullPath(any());
+        doReturn(request).when(coverArtService).createAlbumCoverArtRequest(anyInt());
+        doReturn(IMAGE_RESOURCE.getFile().toPath()).when(mockedCoverArt).getFullPath();
 
         // prepare expected
         byte[] expected = IMAGE_RESOURCE.getInputStream().readAllBytes();
@@ -230,8 +211,9 @@ public class CoverArtControllerTest {
 
         // assertion
         assertArrayEquals(expected, actual);
-        verify(albumService).getAlbum(eq(ALBUM_ID));
-        verify(coverArtService).get(eq(EntityType.ALBUM), eq(ALBUM_ID));
+        verify(coverArtService).createAlbumCoverArtRequest(eq(ALBUM_ID));
+        verify(coverArtService).getImageInputStreamWithType(eq(IMAGE_RESOURCE.getFile().toPath()));
+        verifyNoMoreInteractions(coverArtService);
     }
 
     /** get cover art by id with artist prerix "ar-" */
@@ -246,9 +228,9 @@ public class CoverArtControllerTest {
         mockedArtist.setId(ARTIST_ID);
 
         // set up mock
-        doReturn(mockedArtist).when(artistService).getArtist(anyInt());
-        doReturn(mockedCoverArt).when(coverArtService).get(any(EntityType.class), anyInt());
-        doReturn(IMAGE_RESOURCE.getFile().toPath()).when(coverArtService).getFullPath(any());
+        ArtistCoverArtRequest request = new ArtistCoverArtRequest(mockedCoverArt, mockedArtist);
+        doReturn(IMAGE_RESOURCE.getFile().toPath()).when(mockedCoverArt).getFullPath();
+        doReturn(request).when(coverArtService).createArtistCoverArtRequest(anyInt());
 
         // prepare expected
         byte[] expected = IMAGE_RESOURCE.getInputStream().readAllBytes();
@@ -262,7 +244,9 @@ public class CoverArtControllerTest {
 
         // assertion
         assertArrayEquals(expected, actual);
-        verify(coverArtService).get(eq(EntityType.ARTIST), eq(ARTIST_ID));
+        verify(coverArtService).createArtistCoverArtRequest(eq(ARTIST_ID));
+        verify(coverArtService).getImageInputStreamWithType(eq(IMAGE_RESOURCE.getFile().toPath()));
+        verifyNoMoreInteractions(coverArtService);
     }
 
     /** get cover art by id with playlist prerix "pl-" */
@@ -277,7 +261,9 @@ public class CoverArtControllerTest {
         mockedPlaylist.setName("playlist");
 
         // set up mock
-        when(playlistService.getPlaylist(anyInt())).thenReturn(mockedPlaylist);
+        PlaylistCoverArtRequest request = new PlaylistCoverArtRequest(mockedCoverArt, mockedPlaylist);
+        doReturn(request).when(coverArtService).createPlaylistCoverArtRequest(anyInt());
+        doReturn(PLAYLIST_RESOURCE.getFile().toPath()).when(mockedCoverArt).getFullPath();
 
         // prepare expected
         byte[] expected = PLAYLIST_RESOURCE.getInputStream().readAllBytes();
@@ -291,6 +277,9 @@ public class CoverArtControllerTest {
 
         // assertion
         assertArrayEquals(expected, actual);
+        verify(coverArtService).createPlaylistCoverArtRequest(eq(PLAYLIST_ID));
+        verify(coverArtService).getImageInputStreamWithType(eq(PLAYLIST_RESOURCE.getFile().toPath()));
+        verifyNoMoreInteractions(coverArtService);
     }
 
     /** get cover art by id with podcast prerix "pod-" */
@@ -298,14 +287,16 @@ public class CoverArtControllerTest {
     @WithMockUser(username = AIRSONIC_USER, password = AIRSONIC_PASSWORD)
     public void getCoverArtWithPodcastIdTest() throws Exception {
 
-
         // set up mocked playlist
         final Integer PODCAST_ID = 100;
-        PodcastChannel mockedPodcast =
-            new PodcastChannel(PODCAST_ID, "http://example.com", "podcast", "description", "http://example.com", null, "errorMessage", null);
+        final Integer PODCAST_MEDIA_FILE_ID = 101;
+        MediaFile mockedMediaFile = new MediaFile();
+        mockedMediaFile.setId(PODCAST_MEDIA_FILE_ID);
 
         // set up mock
-        when(podcastService.getChannel(anyInt())).thenReturn(mockedPodcast);
+        MediaFileCoverArtRequest request = new MediaFileCoverArtRequest(mockedCoverArt, mockedMediaFile);
+        doReturn(request).when(coverArtService).createPodcastCoverArtRequest(anyInt(), anyInt());
+        doReturn(PODCAST_RESOURCE.getFile().toPath()).when(mockedCoverArt).getFullPath();
 
         // prepare expected
         byte[] expected = PODCAST_RESOURCE.getInputStream().readAllBytes();
@@ -319,7 +310,9 @@ public class CoverArtControllerTest {
 
         // assertion
         assertArrayEquals(expected, actual);
+        verify(coverArtService).createPodcastCoverArtRequest(eq(PODCAST_ID), eq(60));
+        verify(coverArtService).getImageInputStreamWithType(eq(PODCAST_RESOURCE.getFile().toPath()));
+        verifyNoMoreInteractions(coverArtService);
     }
-
 
 }

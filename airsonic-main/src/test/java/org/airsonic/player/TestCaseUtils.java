@@ -1,11 +1,10 @@
 package org.airsonic.player;
 
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
 import org.airsonic.player.controller.JAXBWriter;
 import org.airsonic.player.service.MediaScannerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.FileSystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,7 +49,7 @@ public class TestCaseUtils {
      */
     public static void cleanAirsonicHomeForTest() throws IOException {
         Path airsonicHomeDir = Paths.get(airsonicHomePathForTest());
-        MoreFiles.deleteDirectoryContents(airsonicHomeDir, RecursiveDeleteOption.ALLOW_INSECURE);
+        FileSystemUtils.deleteRecursively(airsonicHomeDir);
     }
 
     public static void waitForScanFinish(MediaScannerService mediaScannerService) {

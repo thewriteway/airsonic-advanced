@@ -62,8 +62,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.awt.*;
 import java.io.InputStream;
@@ -90,7 +90,7 @@ import java.util.stream.Collectors;
  * @author Sindre Mehus
  */
 @Controller("hlsController")
-@RequestMapping({ "/hls", "/ext/hls" })
+@RequestMapping({ "/hls", "/ext/hls", "/hls.view", "/ext/hls.view"})
 public class HLSController {
 
     private static final Logger LOG = LoggerFactory.getLogger(HLSController.class);
@@ -130,7 +130,7 @@ public class HLSController {
 
     @GetMapping("/hls.m3u8")
     public void handleHlsRequest(Authentication authentication,
-            @RequestParam Integer id,
+            @RequestParam("id") Integer id,
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
         MediaFile mediaFile = mediaFileService.getMediaFile(id);
@@ -292,13 +292,13 @@ public class HLSController {
 
     @GetMapping("/segment/**")
     public ResponseEntity<Resource> handleSegmentRequest(Authentication auth,
-            @RequestParam int id,
-            @RequestParam int segmentIndex,
+            @RequestParam(name = "id") int id,
+            @RequestParam(name = "segmentIndex") int segmentIndex,
             @RequestParam(name = "player") String playerId,
-            @RequestParam int maxBitRate,
-            @RequestParam String size,
-            @RequestParam(required = false) @DefaultValue("10") Integer duration,
-            @RequestParam(required = false) Integer audioTrack,
+            @RequestParam(name = "maxBitRate") int maxBitRate,
+            @RequestParam(name = "size") String size,
+            @RequestParam(required = false, name = "duration") @DefaultValue("10") Integer duration,
+            @RequestParam(required = false, name = "audioTrack") Integer audioTrack,
             ServletWebRequest swr) throws Exception {
         MediaFile mediaFile = this.mediaFileService.getMediaFile(id);
         if (mediaFile == null) {

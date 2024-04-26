@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
-    <th:block th:replace="table" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
+    <th:block th:replace="~{table}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript"
         th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(model.initialPaginationSize ?: '') ) ?
@@ -498,7 +498,7 @@
 <body class="mainframe bgcolor1" onload="init()">
 
 <div style="float:left;margin-right:1.5em;margin-bottom:1.5em">
-    <th:block th:replace="coverArt::art(playlistId=${model.playlist.id}, coverArtSize=${160})" />
+    <th:block th:replace="~{coverArt::art(playlistId=${model.playlist.id}, coverArtSize=${160})}" />
 </div>
 
 <h1><a th:href="@{/playlists}" th:text="#{left.playlists}"></a> &raquo; <span id="name"></span></h1>

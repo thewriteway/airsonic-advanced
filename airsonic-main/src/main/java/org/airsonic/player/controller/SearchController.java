@@ -39,8 +39,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
 import java.util.Objects;
@@ -57,7 +57,7 @@ import static java.util.stream.Collectors.toSet;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/search")
+@RequestMapping({"/search", "/search.view"})
 public class SearchController {
 
     @Autowired

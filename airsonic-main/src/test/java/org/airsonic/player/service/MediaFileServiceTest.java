@@ -22,6 +22,7 @@ import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.repository.MediaFileRepository;
+import org.airsonic.player.service.cache.MediaFileCache;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,8 @@ public class MediaFileServiceTest {
     private MediaFileRepository mediaFileRepository;
     @Mock
     private CoverArtService coverArtService;
+    @Mock
+    private MediaFileCache mediaFileCache;
     @Mock
     private MediaFolderService mediaFolderService;
 

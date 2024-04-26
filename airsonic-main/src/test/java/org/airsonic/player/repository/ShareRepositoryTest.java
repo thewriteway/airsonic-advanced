@@ -37,7 +37,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 import java.nio.file.Path;
 import java.time.Instant;

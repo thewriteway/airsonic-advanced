@@ -126,8 +126,8 @@ PARAMETERS
         </th:block>
     </th:block>
 
-    <th:block th:if="${!#strings.isEmpty(albumId)}"><th:block th:replace="::album(${albumId}, @{/main(id=${albumId})}, @{/coverArt(id=${albumId}, size=${coverArtSize})})" /></th:block>
-    <th:block th:if="${!#strings.isEmpty(playlistId)}"><th:block th:replace="::album(${playlistId}, @{/playlist(id=${playlistId})}, @{/coverArt(id=${'pl-'+playlistId}, size=${coverArtSize})})" /></th:block>
-    <th:block th:if="${!#strings.isEmpty(podcastChannelId)}"><th:block th:replace="::album(${podcastChannelId}, @{/podcastChannel(id=${podcastChannelId})},  @{/coverArt(id=${'pod-'+podcastChannelId}, size=${coverArtSize})})" /></th:block>
+    <th:block th:if="${!#strings.isEmpty(albumId)}"><th:block th:replace="~{::album(${albumId}, @{/main(id=${albumId})}, @{/coverArt(id=${albumId}, size=${coverArtSize})})}" /></th:block>
+    <th:block th:if="${!#strings.isEmpty(playlistId)}"><th:block th:replace="~{::album(${playlistId}, @{/playlist(id=${playlistId})}, @{/coverArt(id=${'pl-'+playlistId}, size=${coverArtSize})})}" /></th:block>
+    <th:block th:if="${!#strings.isEmpty(podcastChannelId)}"><th:block th:replace="~{::album(${podcastChannelId}, @{/podcastChannel(id=${podcastChannelId})},  @{/coverArt(id=${'pod-'+podcastChannelId}, size=${coverArtSize})})}" /></th:block>
 
 </th:block>

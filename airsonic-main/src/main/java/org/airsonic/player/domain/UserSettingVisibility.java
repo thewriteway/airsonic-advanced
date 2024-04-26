@@ -47,7 +47,7 @@ public class UserSettingVisibility {
 
     public UserSettingVisibility() {}
 
-    public boolean getTrackNumberVisible() {
+    public boolean isTrackNumberVisible() {
         return trackNumberVisible;
     }
 
@@ -55,7 +55,7 @@ public class UserSettingVisibility {
         this.trackNumberVisible = trackNumberVisible;
     }
 
-    public boolean getDiscNumberVisible() {
+    public boolean isDiscNumberVisible() {
         return discNumberVisible;
     }
 
@@ -63,7 +63,7 @@ public class UserSettingVisibility {
         this.discNumberVisible = discNumberVisible;
     }
 
-    public boolean getArtistVisible() {
+    public boolean isArtistVisible() {
         return artistVisible;
     }
 
@@ -71,7 +71,7 @@ public class UserSettingVisibility {
         this.artistVisible = artistVisible;
     }
 
-    public boolean getAlbumArtistVisible() {
+    public boolean isAlbumArtistVisible() {
         return albumArtistVisible;
     }
 
@@ -79,7 +79,7 @@ public class UserSettingVisibility {
         this.albumArtistVisible = albumArtistVisible;
     }
 
-    public boolean getAlbumVisible() {
+    public boolean isAlbumVisible() {
         return albumVisible;
     }
 
@@ -87,7 +87,7 @@ public class UserSettingVisibility {
         this.albumVisible = albumVisible;
     }
 
-    public boolean getGenreVisible() {
+    public boolean isGenreVisible() {
         return genreVisible;
     }
 
@@ -95,7 +95,7 @@ public class UserSettingVisibility {
         this.genreVisible = genreVisible;
     }
 
-    public boolean getYearVisible() {
+    public boolean isYearVisible() {
         return yearVisible;
     }
 
@@ -103,7 +103,7 @@ public class UserSettingVisibility {
         this.yearVisible = yearVisible;
     }
 
-    public boolean getBitRateVisible() {
+    public boolean isBitRateVisible() {
         return bitRateVisible;
     }
 
@@ -111,7 +111,7 @@ public class UserSettingVisibility {
         this.bitRateVisible = bitRateVisible;
     }
 
-    public boolean getDurationVisible() {
+    public boolean isDurationVisible() {
         return durationVisible;
     }
 
@@ -119,7 +119,7 @@ public class UserSettingVisibility {
         this.durationVisible = durationVisible;
     }
 
-    public boolean getFormatVisible() {
+    public boolean isFormatVisible() {
         return formatVisible;
     }
 
@@ -127,7 +127,7 @@ public class UserSettingVisibility {
         this.formatVisible = formatVisible;
     }
 
-    public boolean getFileSizeVisible() {
+    public boolean isFileSizeVisible() {
         return fileSizeVisible;
     }
 
@@ -135,7 +135,7 @@ public class UserSettingVisibility {
         this.fileSizeVisible = fileSizeVisible;
     }
 
-    public boolean getHeaderVisible() {
+    public boolean isHeaderVisible() {
         return headerVisible;
     }
 
@@ -143,7 +143,7 @@ public class UserSettingVisibility {
         this.headerVisible = headerVisible;
     }
 
-    public boolean getPlayCountVisible() {
+    public boolean isPlayCountVisible() {
         return playCountVisible;
     }
 
@@ -151,7 +151,7 @@ public class UserSettingVisibility {
         this.playCountVisible = playCountVisible;
     }
 
-    public boolean getLastPlayedVisible() {
+    public boolean isLastPlayedVisible() {
         return lastPlayedVisible;
     }
 
@@ -159,7 +159,7 @@ public class UserSettingVisibility {
         this.lastPlayedVisible = lastPlayedVisible;
     }
 
-    public boolean getCreatedVisible() {
+    public boolean isCreatedVisible() {
         return createdVisible;
     }
 
@@ -167,7 +167,7 @@ public class UserSettingVisibility {
         this.createdVisible = createdVisible;
     }
 
-    public boolean getChangedVisible() {
+    public boolean isChangedVisible() {
         return changedVisible;
     }
 
@@ -175,7 +175,7 @@ public class UserSettingVisibility {
         this.changedVisible = changedVisible;
     }
 
-    public boolean getLastScannedVisible() {
+    public boolean isLastScannedVisible() {
         return lastScannedVisible;
     }
 
@@ -183,7 +183,7 @@ public class UserSettingVisibility {
         this.lastScannedVisible = lastScannedVisible;
     }
 
-    public boolean getEntryTypeVisible() {
+    public boolean isEntryTypeVisible() {
         return entryTypeVisible;
     }
 

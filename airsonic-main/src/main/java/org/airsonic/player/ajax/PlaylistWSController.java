@@ -204,13 +204,13 @@ public class PlaylistWSController {
     }
 
     @SubscribeMapping("/{id}")
-    public Playlist getPlaylist(Principal p, @DestinationVariable int id) {
+    public Playlist getPlaylist(Principal p, @DestinationVariable("id") int id) {
         return new PlaylistService.BroadcastedPlaylist(playlistService.getPlaylist(id), true);
     }
 
     @MessageMapping("/files/{id}")
     @SendToUser(broadcast = false)
-    public List<MediaFileEntry> getPlaylistEntries(Principal p, @DestinationVariable int id) {
+    public List<MediaFileEntry> getPlaylistEntries(Principal p, @DestinationVariable("id") int id) {
         return mediaFileService.toMediaFileEntryList(playlistService.getFilesInPlaylist(id, true), p.getName(), true, true, null, null, null);
     }
 

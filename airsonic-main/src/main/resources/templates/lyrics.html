@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
-    <th:block th:replace="websocket" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
+    <th:block th:replace="~{websocket}" />
     <title th:text="#{lyrics.title}"></title>
 
     <script type="text/javascript" th:inline="javascript">

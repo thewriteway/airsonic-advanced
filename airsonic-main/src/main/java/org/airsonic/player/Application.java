@@ -1,5 +1,6 @@
 package org.airsonic.player;
 
+import org.airsonic.player.config.AirsonicHomeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.WebApplicationType;
@@ -7,7 +8,7 @@ import org.springframework.boot.actuate.autoconfigure.endpoint.jmx.JmxEndpointAu
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
@@ -22,8 +23,9 @@ import java.lang.reflect.Method;
     JmxEndpointAutoConfiguration.class
 })
 @EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
-@ConfigurationPropertiesScan
+@EnableConfigurationProperties({AirsonicHomeConfig.class})
 public class Application extends SpringBootServletInitializer implements WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> {
+
 
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
 

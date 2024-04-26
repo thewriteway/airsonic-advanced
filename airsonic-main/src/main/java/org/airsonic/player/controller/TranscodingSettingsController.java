@@ -41,7 +41,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/transcodingSettings")
+@RequestMapping({"/transcodingSettings", "/transcodingSettings.view"})
 public class TranscodingSettingsController {
 
     @Autowired

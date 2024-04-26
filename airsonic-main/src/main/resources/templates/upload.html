@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
+    <th:block th:replace="~{head :: common_head}" />
 </head><body>
 
 <h1 th:text="#{upload.title}"></h1>
@@ -14,7 +14,7 @@
 </th:block>
 
 <th:block th:each="exception:${model.exceptions}">
-    <p th:utext="#{upload.failed(${#strings.escapeXml(exception.message)})}"></p>
+    <p th:utext="#{upload.failed(${#strings.escapeXml(exception)})}"></p>
 </th:block>
 
     <th:block th:if="${#lists.isEmpty(model.uploadedFiles)}">

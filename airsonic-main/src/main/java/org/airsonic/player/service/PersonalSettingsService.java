@@ -34,6 +34,7 @@ import org.airsonic.player.domain.entity.UserSettingDetail;
 import org.airsonic.player.repository.CustomAvatarRepository;
 import org.airsonic.player.repository.SystemAvatarRepository;
 import org.airsonic.player.repository.UserSettingRepository;
+import org.airsonic.player.service.cache.UserSettingsCache;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.ImageUtil;
 import org.airsonic.player.util.StringUtil;
@@ -41,8 +42,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,18 +67,16 @@ public class PersonalSettingsService {
     private static final Logger LOG = LoggerFactory.getLogger(PersonalSettingsService.class);
     private static final int MAX_AVATAR_SIZE = 64;
 
-    private final SystemAvatarRepository systemAvatarRepository;
-    private final CustomAvatarRepository customAvatarRepository;
-    private final UserSettingRepository userSettingRepository;
-    private final AirsonicHomeConfig homeConfig;
-
-    public PersonalSettingsService(SystemAvatarRepository systemAvatarRepository,
-            CustomAvatarRepository customAvatarRepository, AirsonicHomeConfig homeConfig, UserSettingRepository userSettingRepository) {
-        this.systemAvatarRepository = systemAvatarRepository;
-        this.customAvatarRepository = customAvatarRepository;
-        this.homeConfig = homeConfig;
-        this.userSettingRepository = userSettingRepository;
-    }
+    @Autowired
+    private SystemAvatarRepository systemAvatarRepository;
+    @Autowired
+    private CustomAvatarRepository customAvatarRepository;
+    @Autowired
+    private UserSettingRepository userSettingRepository;
+    @Autowired
+    private AirsonicHomeConfig homeConfig;
+    @Autowired
+    private UserSettingsCache userSettingsCache;
 
     public List<Avatar> getSystemAvatars() {
         return systemAvatarRepository.findAll().stream().map(SystemAvatar::toAvatar).toList();
@@ -188,11 +186,15 @@ public class PersonalSettingsService {
      * @param username The username.
      * @return User-specific settings. Never <code>null</code>.
      */
-    @Cacheable(cacheNames = "userSettingsCache")
     public UserSettings getUserSettings(String username) {
 
-        UserSetting userSetting = getUserSetting(username);
-        return new UserSettings(username, userSetting.getSettings());
+        UserSettings userSettings = userSettingsCache.getUserSettings(username);
+        if (userSettings == null) {
+            UserSetting userSetting = getUserSetting(username);
+            userSettings = new UserSettings(username, userSetting.getSettings());
+            userSettingsCache.putUserSettings(username, userSettings);
+        }
+        return userSettings;
     }
 
     /**
@@ -242,7 +244,6 @@ public class PersonalSettingsService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = "userSettingsCache", key = "#username")
     public void updateByCommand(String username, Locale locale, String themeId, PersonalSettingsCommand command) {
 
         UserSetting userSetting = getUserSetting(username);
@@ -283,6 +284,7 @@ public class PersonalSettingsService {
         settingDetail.setChanged(Instant.now());
 
         userSettingRepository.save(userSetting);
+        userSettingsCache.removeUserSettings(username);
     }
 
     private AvatarScheme getAvatarScheme(PersonalSettingsCommand command) {
@@ -312,7 +314,6 @@ public class PersonalSettingsService {
      * @param scheme The transcode scheme.
      */
     @Transactional
-    @CacheEvict(cacheNames = "userSettingsCache", key = "#username")
     public void updateTranscodeScheme(String username, TranscodeScheme scheme) {
 
         UserSetting userSetting = getUserSetting(username);
@@ -323,6 +324,7 @@ public class PersonalSettingsService {
         settingDetail.setTranscodeScheme(scheme);
         settingDetail.setChanged(Instant.now());
         userSettingRepository.save(userSetting);
+        userSettingsCache.removeUserSettings(username);
     }
 
     /**
@@ -332,7 +334,6 @@ public class PersonalSettingsService {
      * @param musicFolderId The music folder id.
      */
     @Transactional
-    @CacheEvict(cacheNames = "userSettingsCache", key = "#username")
     public void updateSelectedMusicFolderId(String username, Integer musicFolderId) {
 
         UserSetting userSetting = getUserSetting(username);
@@ -342,6 +343,7 @@ public class PersonalSettingsService {
         }
         settingDetail.setSelectedMusicFolderId(musicFolderId);
         userSettingRepository.save(userSetting);
+        userSettingsCache.removeUserSettings(username);
     }
 
     /**
@@ -350,7 +352,6 @@ public class PersonalSettingsService {
      * @param showSideBar The show side bar status.
      */
     @Transactional
-    @CacheEvict(cacheNames = "userSettingsCache", key = "#username")
     public void updateShowSideBarStatus(String username, boolean showSideBar) {
 
         UserSetting userSetting = getUserSetting(username);
@@ -362,6 +363,7 @@ public class PersonalSettingsService {
         // Note: setChanged() is intentionally not called. This would break browser caching
         // of the left frame.
         userSettingRepository.save(userSetting);
+        userSettingsCache.removeUserSettings(username);
     }
 
     /**
@@ -370,7 +372,6 @@ public class PersonalSettingsService {
      * @parama viewAsList The view as list status.
      */
     @Transactional
-    @CacheEvict(cacheNames = "userSettingsCache", key = "#username")
     public void updateViewAsListStatus(String username, boolean viewAsList) {
 
         UserSetting userSetting = getUserSetting(username);
@@ -381,7 +382,7 @@ public class PersonalSettingsService {
         settingDetail.setViewAsList(viewAsList);
         settingDetail.setChanged(Instant.now());
         userSettingRepository.save(userSetting);
+        userSettingsCache.removeUserSettings(username);
     }
-
 
 }

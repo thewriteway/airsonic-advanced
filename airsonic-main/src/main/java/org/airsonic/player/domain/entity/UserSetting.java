@@ -21,11 +21,7 @@ package org.airsonic.player.domain.entity;
 
 import org.airsonic.player.repository.UserSettingDetailConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user_settings")

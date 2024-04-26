@@ -3,7 +3,7 @@
 <html>
 
 <head>
-    <th:block th:replace="head" />
+    <th:block th:replace="~{head :: common_head}" />
 </head>
 
 <body class="mainframe bgcolor1">
@@ -61,14 +61,12 @@
                 th:text="|Used ${@runtimeService.getUsedMemory()/1024/1024} of ${@runtimeService.getTotalMemory()/1024/1024} MB|">
             </td>
         </tr>
-        <c:if test="${not empty trace}">
-            <tr>
-                <td class="ruleTableHeader" style="vertical-align:top;">Stack trace</td>
-                <td class="ruleTableCell" style="white-space:pre">
-                    <pre th:text="${#strings.escapeXml(trace)}"></pre>
-                </td>
-            </tr>
-        </c:if>
+        <tr>
+            <td class="ruleTableHeader" style="vertical-align:top;">Stack trace</td>
+            <td class="ruleTableCell" style="white-space:pre">
+                <pre th:if=${!#strings.isEmpty(trace)} th:text="${#strings.escapeXml(trace)}"></pre>
+            </td>
+        </tr>
     </table>
 
 </body>

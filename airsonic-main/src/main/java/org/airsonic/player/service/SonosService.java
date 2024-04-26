@@ -31,9 +31,9 @@ import org.airsonic.player.domain.SonosLink;
 import org.airsonic.player.repository.SonosLinkRepository;
 import org.airsonic.player.service.search.IndexType;
 import org.airsonic.player.service.sonos.SonosHelper;
-import org.airsonic.player.service.sonos.SonosLinkSecurityInterceptor;
 import org.airsonic.player.service.sonos.SonosServiceRegistration;
 import org.airsonic.player.service.sonos.SonosSoapFault;
+import org.airsonic.player.service.sonos.SonosUtilComponent;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,13 +46,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+import jakarta.xml.ws.Holder;
+import jakarta.xml.ws.WebServiceContext;
+import jakarta.xml.ws.handler.MessageContext;
 import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.ws.Holder;
-import javax.xml.ws.WebServiceContext;
-import javax.xml.ws.handler.MessageContext;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -117,6 +117,8 @@ public class SonosService implements SonosSoap {
     private SonosServiceRegistration registration;
     @Autowired
     private SonosLinkRepository sonosLinkRepository;
+    @Autowired
+    private SonosUtilComponent sonosUtil;
 
     /**
      * The context for the request. This is used to get the Auth information
@@ -672,7 +674,7 @@ public class SonosService implements SonosSoap {
     @Override
     public DeviceAuthTokenResult refreshAuthToken() throws CustomFault {
         try {
-            Credentials expiredCreds = SonosLinkSecurityInterceptor.getCredentials(getMessage());
+            Credentials expiredCreds = sonosUtil.getCredentials(getMessage());
             return refreshAuthToken(expiredCreds, getRequest());
         } catch (Exception e) {
             throw new SonosSoapFault.LoginInvalid();

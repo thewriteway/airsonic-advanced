@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
-    <th:block th:replace="table" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
+    <th:block th:replace="~{table}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript"
         th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(model.initialPaginationSize ?: '') ) ?

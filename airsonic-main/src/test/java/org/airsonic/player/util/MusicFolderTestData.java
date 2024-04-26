@@ -59,6 +59,10 @@ public class MusicFolderTestData {
         return resolveBaseMediaPath().resolve("mpc");
     }
 
+    public static Path resolveM4bAudioPath() {
+        return resolveBaseMediaPath().resolve("m4baudiobook");
+    }
+
     public static Path resolveMusicLoopFolderPath() {
         return resolveBaseMediaPath().resolve("loop");
     }

@@ -2,31 +2,24 @@ package org.airsonic.player.security;
 
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.file.Path;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
+@SpringBootTest
 @EnableConfigurationProperties({AirsonicHomeConfig.class})
 public class RESTAuthTest {
 
@@ -38,23 +31,11 @@ public class RESTAuthTest {
     private static Path tempDir;
 
     @Autowired
-    private WebApplicationContext wac;
-
     private MockMvc mvc;
 
     @BeforeAll
     public static void beforeAll() {
         System.setProperty("airsonic.home", tempDir.toString());
-    }
-
-    @BeforeEach
-    public void beforeEach() {
-        mvc = MockMvcBuilders
-                .webAppContextSetup(wac)
-                .apply(springSecurity())
-                .dispatchOptions(true)
-                .alwaysDo(print())
-                .build();
     }
 
     @Test
@@ -104,5 +85,4 @@ public class RESTAuthTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
-
 }

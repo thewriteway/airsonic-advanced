@@ -39,8 +39,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.nio.file.Files;
 import java.time.Instant;
@@ -58,7 +58,7 @@ import static java.util.stream.Collectors.toList;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/ext/share")
+@RequestMapping({"/ext/share", "/ext/share.view"})
 public class ExternalPlayerController {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExternalPlayerController.class);

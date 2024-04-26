@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -46,6 +47,7 @@ public class MetaData {
     private String musicBrainzReleaseId;
     private String musicBrainzRecordingId;
     private final List<Track> tracks = new ArrayList<>();
+    private final List<Chapter> chapters = new ArrayList<>();
 
     public Integer getDiscNumber() {
         return discNumber;
@@ -185,5 +187,13 @@ public class MetaData {
 
     public List<Track> getSubtitleTracks() {
         return this.getTracks().stream().filter(i -> i.isSubtitle()).collect(Collectors.toList());
+    }
+
+    public List<Chapter> getChapters() {
+        return Collections.unmodifiableList(this.chapters);
+    }
+
+    public void addChapter(Chapter chapter) {
+        this.chapters.add(chapter);
     }
 }

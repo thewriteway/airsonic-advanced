@@ -1,25 +1,31 @@
 
 package org.airsonic.player.service.search;
 
+import org.airsonic.player.TestCaseUtils;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.MusicFolder.Type;
+import org.airsonic.player.service.MediaFolderService;
+import org.airsonic.player.service.MediaScannerService;
 import org.airsonic.player.service.SearchService;
 import org.airsonic.player.util.MusicFolderTestData;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 /*
@@ -32,15 +38,16 @@ import static org.springframework.util.ObjectUtils.isEmpty;
  * This test case is a FalsePattern for search,
  * but there may be problems with the data flow prior to creating the search index.
  */
-public class SearchServiceSpecialPathTestCase extends AbstractAirsonicHomeTest {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@EnableConfigurationProperties
+public class SearchServiceSpecialPathTestCase {
 
     private List<MusicFolder> musicFolders;
 
     @Autowired
     private SearchService searchService;
 
-    @Override
-    public List<MusicFolder> getMusicFolders() {
+    private List<MusicFolder> getMusicFolders() {
         if (isEmpty(musicFolders)) {
             musicFolders = new ArrayList<>();
 
@@ -56,20 +63,35 @@ public class SearchServiceSpecialPathTestCase extends AbstractAirsonicHomeTest {
         return musicFolders;
     }
 
-    private static UUID cleanupId = null;
+    @Autowired
+    private MediaFolderService mediaFolderService;
 
-    @Before
-    public void setup() {
-        UUID id = populateDatabaseOnlyOnce();
-        if (id != null) {
-            cleanupId = id;
-        }
+    @Autowired
+    private MediaScannerService mediaScannerService;
+
+    @TempDir
+    private static Path airsonicHome;
+
+    @BeforeAll
+    public static void setupAll() {
+        System.setProperty("airsonic.home", airsonicHome.toString());
     }
 
-    @AfterClass
-    public static void cleanup() {
-        AbstractAirsonicHomeTest.cleanup(cleanupId);
-        cleanupId = null;
+    @BeforeEach
+    public void setup() {
+        for (MusicFolder musicFolder : getMusicFolders()) {
+            mediaFolderService.createMusicFolder(musicFolder);
+        }
+        TestCaseUtils.execScan(mediaScannerService);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        for (MusicFolder musicFolder : getMusicFolders()) {
+            mediaFolderService.deleteMusicFolder(musicFolder.getId());
+        }
+        musicFolders.clear();
+        mediaFolderService.expunge();
     }
 
     @Test
@@ -79,28 +101,28 @@ public class SearchServiceSpecialPathTestCase extends AbstractAirsonicHomeTest {
 
         // ALL Songs
         List<MediaFile> randomAlbums = searchService.getRandomAlbums(Integer.MAX_VALUE, folders);
-        Assert.assertEquals("ALL Albums ", 3, randomAlbums.size());
+        assertEquals(3, randomAlbums.size(), "ALL Albums ");
 
         // dir - accessible
         List<MusicFolder> folder01 = folders.stream()
                 .filter(m -> "accessible".equals(m.getName()))
                 .collect(Collectors.toList());
         randomAlbums = searchService.getRandomAlbums(Integer.MAX_VALUE, folder01);
-        Assert.assertEquals("Albums in \"accessible\" ", 1, randomAlbums.size());
+        assertEquals(1, randomAlbums.size(), "Albums in \"accessible\" ");
 
         // dir - accessible's
         List<MusicFolder> folder02 = folders.stream()
                 .filter(m -> "accessible's".equals(m.getName()))
                 .collect(Collectors.toList());
         randomAlbums = searchService.getRandomAlbums(Integer.MAX_VALUE, folder02);
-        Assert.assertEquals("Albums in \"accessible's\" ", 1, randomAlbums.size());
+        assertEquals(1, randomAlbums.size(), "Albums in \"accessible's\" ");
 
         // dir - accessible+s
         List<MusicFolder> folder03 = folders.stream()
                 .filter(m -> "accessible+s".equals(m.getName()))
                 .collect(Collectors.toList());
         randomAlbums = searchService.getRandomAlbums(Integer.MAX_VALUE, folder03);
-        Assert.assertEquals("Albums in \"accessible+s\" ", 1, folder03.size());
+        assertEquals(1, folder03.size(), "Albums in \"accessible+s\" ");
 
     }
 

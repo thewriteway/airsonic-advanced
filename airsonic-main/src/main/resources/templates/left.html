@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
         function init() {
@@ -190,12 +190,12 @@
 
 <p th:each="song : ${model.singleSongs}" class="dense truncate" style="padding-left:2px">
     <span class="songTitle" th:title="${song.title}">
-        <th:block th:replace="playButtons :: buttons(
+        <th:block th:replace="~{playButtons :: buttons(
         id=${song.id},
         playEnabled=${model.user.streamRole and not model.partyMode},
         addEnabled=${model.user.streamRole},
         downloadEnabled=${model.user.downloadRole and not model.partyMode},
-        video=${song.video and model.player.web})" />
+        video=${song.video and model.player.web})}" />
         <th:block th:text="${#strings.abbreviate(song.title, 35)}"></th:block>
     </span>
 </p>

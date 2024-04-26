@@ -2,9 +2,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>airsonic-main</artifactId>
-    <packaging>war</packaging>
-    <name>Airsonic Main</name>
 
     <parent>
         <groupId>org.airsonic.player</groupId>
@@ -12,15 +9,19 @@
         <version>11.1.4-SNAPSHOT</version>
     </parent>
 
+    <artifactId>airsonic-main</artifactId>
+    <packaging>war</packaging>
+    <name>Airsonic Main</name>
+
     <properties>
         <chameleon.version>2.0.0-RELEASE</chameleon.version>
         <tomcat.server.scope>provided</tomcat.server.scope>
         <!-- For fixing import/export due to https://github.com/liquibase/liquibase/issues/1598 -->
         <liquibase.version>4.22.0</liquibase.version>
-        <logback.version>1.2.13</logback.version>
-        <mockito.version>5.8.0</mockito.version>
+        <logback.version>1.4.14</logback.version>
+        <mockito.version>5.10.0</mockito.version>
         <mariadb.version>3.3.2</mariadb.version>
-        <aspectj.version>1.9.21.1</aspectj.version>
+        <aspectj.version>1.9.22</aspectj.version>
     </properties>
 
     <dependencies>
@@ -41,7 +42,6 @@
             <artifactId>snakeyaml</artifactId>
             <version>2.2</version>
         </dependency>
-
         <!-- Metrics
              Metrics is a cool framework used here
              to compute musures and statistics during automated testing
@@ -60,12 +60,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.yaml</groupId>
-                    <artifactId>snakeyaml</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -122,6 +116,7 @@
         <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
+            <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -135,17 +130,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.hamcrest</groupId>
-                    <artifactId>hamcrest-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
@@ -202,7 +186,6 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.11.0</version>
         </dependency>
 
         <dependency>
@@ -268,6 +251,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
         </dependency>
 
         <dependency>
@@ -297,20 +281,12 @@
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>
-            <version>2.7.14</version>
-        </dependency>
-
+            <version>4.0.2</version>
+       </dependency>
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.glassfish.web</groupId>
-            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
-            <version>1.2.6</version>
-            <scope>runtime</scope>
         </dependency>
 
         <dependency>
@@ -323,12 +299,6 @@
             <groupId>com.hoodcomputing</groupId>
             <artifactId>natpmp</artifactId>
             <version>0.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -363,7 +333,7 @@
             <version>2.0.1</version>
             <exclusions>
                 <exclusion>
-                    <groupId>javax.servlet</groupId>
+                    <groupId>jakarta.servlet</groupId>
                     <artifactId>servlet-api</artifactId>
                 </exclusion>
             </exclusions>
@@ -380,7 +350,6 @@
         <dependency>
             <groupId>org.seamless</groupId>
             <artifactId>seamless-util</artifactId>
-            <version>1.1.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-collections</groupId>
@@ -435,6 +404,12 @@
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-databinding-jaxb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-spring-boot-autoconfigure</artifactId>
+            <version>4.0.3</version>
         </dependency>
 
         <dependency>
@@ -516,6 +491,10 @@
                     <groupId>commons-collections</groupId>
                     <artifactId>commons-collections</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -577,17 +556,12 @@
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
-            <version>64.2</version>
+            <version>75.1</version>
         </dependency>
         <dependency>
             <groupId>org.digitalmediaserver</groupId>
             <artifactId>cuelib-core</artifactId>
             <version>2.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>jakarta.mail</artifactId>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
@@ -645,6 +619,13 @@
                     <mainClass>org.airsonic.player.Application</mainClass>
                     <layout>WAR</layout>
                 </configuration>
+                <executions>
+                  <execution>
+                    <goals>
+                      <goal>repackage</goal>
+                    </goals>
+                  </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

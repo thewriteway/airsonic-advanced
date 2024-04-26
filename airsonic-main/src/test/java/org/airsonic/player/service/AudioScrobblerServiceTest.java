@@ -103,10 +103,10 @@ class AudioScrobblerServiceTest {
 
     @ParameterizedTest
     @CsvSource({
-            "true, true",
-            "true, false",
-            "false, true",
-            "false, false"
+        "true, true",
+        "true, false",
+        "false, true",
+        "false, false"
     })
     void registerShouldRegister(boolean lastFmEnabled, boolean listenBrainzEnabled) {
         // Arrange
@@ -137,10 +137,10 @@ class AudioScrobblerServiceTest {
 
     @ParameterizedTest
     @CsvSource({
-            "true, true",
-            "true, false",
-            "false, true",
-            "false, false"
+        "true, true",
+        "true, false",
+        "false, true",
+        "false, false"
     })
     void registerWithoutCredsShouldNotRegister(boolean lastFmEnabled, boolean listenBrainzEnabled) {
         // Arrange

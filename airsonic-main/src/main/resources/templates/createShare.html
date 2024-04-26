@@ -2,7 +2,7 @@
 
 <html>
 <head>
-    <th:block th:replace="head" />
+    <th:block th:replace="~{head :: common_head}" />
 </head>
 <body class="mainframe bgcolor1">
 
@@ -26,7 +26,7 @@
 <div style="padding-top:1em">
     <th:block th:if="${!#lists.isEmpty(model.dir)}">
         <div class="back" style="float:left;padding-right:10pt">
-            <a th:href="@{/main.view(path=${model.dir.path})}" th:text="#{common.back}"></a>
+            <a th:href="@{/main.view(path=${model.dir.folder.id + ':' + model.dir.path})}" th:text="#{common.back}"></a>
         </div>
     </th:block>
     <th:block th:if="${model.user.settingsRole}">

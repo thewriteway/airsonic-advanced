@@ -21,11 +21,11 @@ package org.airsonic.player.service.metadata;
 
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit test of {@link MetaDataParser}.

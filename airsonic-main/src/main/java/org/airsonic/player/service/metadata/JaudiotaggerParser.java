@@ -14,15 +14,16 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
 package org.airsonic.player.service.metadata;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.MoreFiles;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
@@ -195,7 +196,7 @@ public class JaudiotaggerParser extends MetaDataParser {
      */
     @Override
     public boolean isApplicable(Path path) {
-        return Files.isRegularFile(path) && applicableFormats.contains(MoreFiles.getFileExtension(path).toLowerCase());
+        return Files.isRegularFile(path) && applicableFormats.contains(FilenameUtils.getExtension(path.toString()).toLowerCase());
     }
 
     /**
@@ -206,7 +207,9 @@ public class JaudiotaggerParser extends MetaDataParser {
      */
     public static boolean isImageAvailable(Path file) {
         try {
-            return getArtwork(file) != null;
+            return Files.isRegularFile(file)
+                    && imageAvailableFormats.contains(FilenameUtils.getExtension(file.toString()).toLowerCase())
+                    && getArtwork(file) != null;
         } catch (Throwable x) {
             LOG.info("Failed to find cover art tag in {}", file, x);
             return false;

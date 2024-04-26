@@ -5,7 +5,6 @@ import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.repository.BookmarkRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ public class BookmarkService {
     private final MediaFileService mediaFileService;
     private final SimpMessagingTemplate brokerTemplate;
 
-    @Autowired
     public BookmarkService(BookmarkRepository repository, MediaFileService mediaFileService, SimpMessagingTemplate brokerTemplate) {
         this.repository = repository;
         this.mediaFileService = mediaFileService;

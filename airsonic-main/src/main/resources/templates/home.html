@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 
     <script type="text/javascript" th:inline="javascript">
         function init() {
@@ -48,7 +48,7 @@
     </th:block>
 </p>
 
-<th:block th:replace="homePager" />
+<th:block th:replace="~{homePager}" />
 
 <div th:if="${!#strings.isEmpty(model.welcomeMessage)}"
      th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid #${#themes.code('detailColor')}|"
@@ -56,7 +56,7 @@
 ></div>
 <th:block th:each="album, loopStatus : ${model.albums}">
     <div class="albumThumb">
-        <th:block th:replace="coverArt:: art(albumId=${album.id},
+        <th:block th:replace="~{coverArt:: art(albumId=${album.id},
             caption1=${album.albumTitle},
             caption2=${album.artist},
             caption3=${@mediaFileService.calcAlbumThirdCaption(album,#locale)},
@@ -65,14 +65,14 @@
             appearAfter=${loopStatus.count * 30},
             showLink=${true},
             coverArtSize=${model.coverArtSize}
-        )" />
+        )}" />
 
-        <th:block th:if="${!#strings.isEmpty(album.rating)}"><th:block th:replace="rating::rating(${album.id},true,${album.rating})"></th:block></th:block>
+        <th:block th:if="${!#strings.isEmpty(album.rating)}"><th:block th:replace="~{rating::rating(${album.id},true,${album.rating})}"></th:block></th:block>
 
     </div>
 </th:block>
 <th:block th:if="${model.listSize eq #lists.size(model.albums)}">
-    <th:block th:replace="homePager"></th:block>
+    <th:block th:replace="~{homePager}"></th:block>
 </th:block>
 
 </body></html>

@@ -2,17 +2,17 @@ package org.airsonic.player.domain;
 
 import org.airsonic.player.domain.entity.CoverArtKey;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,7 +36,7 @@ public class CoverArt {
     @Column(name = "path", nullable = false)
     private String path;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "folder_id", referencedColumnName = "id")
     private MusicFolder folder;
 
@@ -111,6 +111,14 @@ public class CoverArt {
 
     public Path getRelativePath() {
         return Paths.get(path);
+    }
+
+    public Path getFullPath() {
+        if (folder == null) {
+            return getRelativePath();
+        } else {
+            return folder.getPath().resolve(path);
+        }
     }
 
     public Path getFullPath(Path relativeMediaFolderPath) {

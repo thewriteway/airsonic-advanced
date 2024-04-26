@@ -30,9 +30,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 
 import java.util.Set;
 
@@ -72,7 +72,10 @@ public class AirsonicScanConfigTest {
 
         @Test
         public void testInvalidProperties() {
-            AirsonicScanConfig invalidConfig = new AirsonicScanConfig(-100, -100, -100);
+            AirsonicScanConfig invalidConfig = new AirsonicScanConfig();
+            invalidConfig.setFullTimeout(-100);
+            invalidConfig.setTimeout(-100);
+            invalidConfig.setParallelism(-100);
 
             Set<ConstraintViolation<AirsonicScanConfig>> violations = validator.validate(invalidConfig);
             assertEquals(3, violations.size());
@@ -114,7 +117,14 @@ public class AirsonicScanConfigTest {
     @Nested
     public class AirsonicScanConfigTestWithCustomValue {
 
-        private AirsonicScanConfig scanConfig = new AirsonicScanConfig(100, 10, 5);
+        private AirsonicScanConfig scanConfig = new AirsonicScanConfig();
+
+        @BeforeEach
+        public void setup() {
+            scanConfig.setFullTimeout(100);
+            scanConfig.setTimeout(10);
+            scanConfig.setParallelism(5);
+        }
 
         @Test
         public void testFullTimeoutProperty() {

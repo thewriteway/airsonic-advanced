@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <style th:inline="text">
         .progress-bar {width: 350px; height: 10px; border: 1px solid black; display:block;}
         .progress-bar-content {width: 0; height: 10px; background: url("[(@{/icons/default_light/progress.png})]") repeat;}

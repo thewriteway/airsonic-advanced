@@ -6,7 +6,6 @@ import org.airsonic.player.service.PlayQueueService;
 import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.spring.WebsocketConfiguration;
-import org.airsonic.player.util.NetworkUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -15,7 +14,8 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.util.List;
 
@@ -30,178 +30,178 @@ public class PlayQueueWSController {
     private SecurityService securityService;
 
     @SubscribeMapping("/get")
-    public PlayQueueInfo getPlayQueue(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public PlayQueueInfo getPlayQueue(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
-        String baseUrl = NetworkUtil.getBaseUrl(headers);
+        String baseUrl = (String)headers.getSessionAttributes().get(WebsocketConfiguration.BASE_URL);
         return playQueueService.getPlayQueueInfo(player, baseUrl);
     }
 
     @MessageMapping("/start")
-    public void start(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void start(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.start(player);
     }
 
     @MessageMapping("/stop")
-    public void stop(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void stop(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.stop(player);
     }
 
     @MessageMapping("/toggleStartStop")
-    public void toggleStartStop(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void toggleStartStop(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.toggleStartStop(player);
     }
 
     @MessageMapping("/skip")
-    public void skip(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void skip(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.skip(player, req.getIndex(), req.getOffset());
     }
 
     @MessageMapping("/reloadsearch")
-    public void reloadSearchCriteria(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void reloadSearchCriteria(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.reloadSearchCriteria(player, headers.getSessionId());
     }
 
     @MessageMapping("/save")
     @SendToUser
-    public int savePlayQueue(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public int savePlayQueue(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         return playQueueService.savePlayQueue(player, req.getIndex(), req.getOffset());
     }
 
     @MessageMapping("/play/saved")
-    public void loadSavedPlayQueue(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void loadSavedPlayQueue(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.loadSavedPlayQueue(player, headers.getSessionId());
     }
 
     @MessageMapping("/play/mediafile")
-    public void playMediaFile(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playMediaFile(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playMediaFile(player, req.getId(), headers.getSessionId());
     }
 
     @MessageMapping("/play/radio")
-    public void playInternetRadio(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playInternetRadio(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playInternetRadio(player, req.getId(), req.getIndex(), headers.getSessionId());
     }
 
     @MessageMapping("/play/playlist")
-    public void playPlaylist(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playPlaylist(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playPlaylist(player, req.getId(), req.getIndex(), headers.getSessionId());
     }
 
     @MessageMapping("/play/topsongs")
-    public void playTopSong(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playTopSong(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playTopSong(player, req.getId(), req.getIndex(), headers.getSessionId());
     }
 
     @MessageMapping("/play/podcastchannel")
-    public void playPodcastChannel(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playPodcastChannel(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playPodcastChannel(player, req.getId(), headers.getSessionId());
     }
 
     @MessageMapping("/play/podcastepisode")
-    public void playPodcastEpisode(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playPodcastEpisode(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playPodcastEpisode(player, req.getId(), headers.getSessionId());
     }
 
     @MessageMapping("/play/starred")
-    public void playStarred(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playStarred(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playStarred(player, headers.getSessionId());
     }
 
     @MessageMapping("/play/shuffle")
-    public void playShuffle(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playShuffle(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playShuffle(player, req.getAlbumListType(), (int) req.getOffset(), req.getCount(),
                 req.getGenre(), req.getDecade(), headers.getSessionId());
     }
 
     @MessageMapping("/play/random")
-    public void playRandom(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playRandom(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playRandom(player, req.getId(), req.getCount(), headers.getSessionId());
     }
 
     @MessageMapping("/play/similar")
-    public void playSimilar(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void playSimilar(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.playSimilar(player, req.getId(), req.getCount(), headers.getSessionId());
     }
 
     @MessageMapping("/add")
-    public void add(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void add(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.add(player, req.getIds(), req.getIndex(), player.isWeb(), true);
     }
 
     @MessageMapping("/add/playlist")
-    public void addPlaylist(@DestinationVariable int playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
+    public void addPlaylist(@DestinationVariable("playerId") Integer playerId, PlayQueueRequest req, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.addPlaylist(player, req.getId(), player.isWeb());
     }
 
     @MessageMapping("/clear")
-    public void clear(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void clear(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.clear(player);
     }
 
     @MessageMapping("/shuffle")
-    public void shuffle(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void shuffle(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.shuffle(player);
     }
 
     @MessageMapping("/remove")
-    public void remove(@DestinationVariable int playerId, List<Integer> indices, SimpMessageHeaderAccessor headers) throws Exception {
+    public void remove(@DestinationVariable("playerId") Integer playerId, List<Integer> indices, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.remove(player, indices);
     }
 
     @MessageMapping("/rearrange")
-    public void rearrange(@DestinationVariable int playerId, List<Integer> indices, SimpMessageHeaderAccessor headers) throws Exception {
+    public void rearrange(@DestinationVariable("playerId") Integer playerId, List<Integer> indices, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.rearrange(player, indices);
     }
 
     @MessageMapping("/up")
-    public void up(@DestinationVariable int playerId, int index, SimpMessageHeaderAccessor headers) throws Exception {
+    public void up(@DestinationVariable("playerId") Integer playerId, int index, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.up(player, index);
     }
 
     @MessageMapping("/down")
-    public void down(@DestinationVariable int playerId, int index, SimpMessageHeaderAccessor headers) throws Exception {
+    public void down(@DestinationVariable("playerId") Integer playerId, int index, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.down(player, index);
     }
 
     @MessageMapping("/toggleRepeat")
-    public void toggleRepeat(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void toggleRepeat(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.toggleRepeat(player);
     }
 
     @MessageMapping("/undo")
-    public void undo(@DestinationVariable int playerId, SimpMessageHeaderAccessor headers) throws Exception {
+    public void undo(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.undo(player);
     }
 
     @MessageMapping("/sort")
-    public void sort(@DestinationVariable int playerId, PlayQueue.SortOrder order, SimpMessageHeaderAccessor headers) throws Exception {
+    public void sort(@DestinationVariable("playerId") Integer playerId, PlayQueue.SortOrder order, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.sort(player, order);
     }
@@ -210,13 +210,13 @@ public class PlayQueueWSController {
     // Methods dedicated to jukebox
     //
     @MessageMapping("/jukebox/gain")
-    public void setJukeboxGain(@DestinationVariable int playerId, float gain, SimpMessageHeaderAccessor headers) throws Exception {
+    public void setJukeboxGain(@DestinationVariable("playerId") Integer playerId, float gain, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.setJukeboxGain(player, gain);
     }
 
     @MessageMapping("/jukebox/position")
-    public void setJukeboxPosition(@DestinationVariable int playerId, int positionInSeconds, SimpMessageHeaderAccessor headers) throws Exception {
+    public void setJukeboxPosition(@DestinationVariable("playerId") Integer playerId, int positionInSeconds, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);
         playQueueService.setJukeboxPosition(player, positionInSeconds);
     }
@@ -227,8 +227,14 @@ public class PlayQueueWSController {
 
     private Player getPlayer(int playerId, SimpMessageHeaderAccessor headers) throws Exception {
         HttpServletRequest request = (HttpServletRequest) headers.getSessionAttributes().get(WebsocketConfiguration.UNDERLYING_SERVLET_REQUEST);
+        String userAgent = (String) headers.getSessionAttributes().get(WebsocketConfiguration.USER_AGENT);
         String username = securityService.getCurrentUsername(request);
-        return playerService.getPlayer(request, null, playerId, username, true, false);
+        HttpSession session = (HttpSession) headers.getSessionAttributes().get(WebsocketConfiguration.UNDERLYING_HTTP_SESSION);
+        Player player = playerService.getPlayer(request, null, playerId, username, userAgent, true, false, true);
+        if (player != null) {
+            session.setAttribute("player", player.getId());
+        }
+        return player;
     }
 
     public static class PlayQueueRequest {

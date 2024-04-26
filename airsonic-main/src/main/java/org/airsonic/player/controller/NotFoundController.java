@@ -5,14 +5,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Spring MVC Controller that serves the login page.
  */
 @Controller
-@RequestMapping("/notFound")
+@RequestMapping({"/notFound", "/notFound.view"})
 public class NotFoundController {
 
     @GetMapping

@@ -52,7 +52,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,7 +68,7 @@ import static java.util.stream.Collectors.toSet;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/userSettings")
+@RequestMapping({"/userSettings", "/userSettings.view"})
 public class UserSettingsController {
 
     @Autowired

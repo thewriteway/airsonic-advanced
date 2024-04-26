@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
 
@@ -52,7 +52,7 @@
 <div style="padding-top:0.5em">
     <th:block th:each="album, loopStatus: ${model.albums}">
         <div class="albumThumb">
-            <th:block th:replace="coverArt::art(
+            <th:block th:replace="~{coverArt::art(
             albumId=${album.id},
             unknownAlbumName=#{common.unknown},
             caption1=${#strings.isEmpty(album.name) ? #strings.escapeXml(album.name) : unknownAlbumName},
@@ -61,7 +61,7 @@
             showLink=${true},
             appearAfter=${loopStatus.count * 30},
             hideOverflow=${true}
-            )" />
+            )}" />
         </div>
     </th:block>
 </div>
@@ -73,14 +73,14 @@
     <table class="music indent">
         <th:block th:each="artist:${model.artists}">
             <tr>
-                <th:block th:replace="playButtons::buttons(
+                <th:block th:replace="~{playButtons::buttons(
                     id=${artist.id},
                     playEnabled=${model.user.streamRole and !model.partyModeEnabled},
                     addEnabled=${model.user.streamRole and (!model.partyModeEnabled or !artist.directory)},
                     starEnabled=${true},
                     starred=${!#strings.isEmpty(artist.starredDate)},
                     asTable=true
-                )" />
+                )}" />
                 <td class="truncate">
                     <a th:href="@{/main(id=${artist.id})}" th:text="${artist.name}"></a>
                 </td>
@@ -95,7 +95,7 @@
         <th:block th:each="song:${model.songs}">
 
             <tr>
-                <th:block th:replace="playButtons::buttons(
+                <th:block th:replace="~{playButtons::buttons(
                     id=${song.id},
                     playEnabled=${model.user.streamRole and !model.partyModeEnabled},
                     addEnabled=${model.user.streamRole and !model.partyModeEnabled},
@@ -103,7 +103,7 @@
                     starred=${!#strings.isEmpty(song.starredDate)},
                     video=${false},
                     asTable=true
-                )" /> 
+                )}" /> 
                 <td class="truncate" th:text="${song.title}"></td>
                 <td class="truncate">
                     <a th:href="@{/main(path=|${song.folder.id}:${song.parentPath}|)}"><span class="detail" th:text="${song.albumName}"></span></a>
@@ -132,7 +132,7 @@
     <table class="music indent">
         <th:block th:each="video:${model.videos}">
             <tr>
-                <th:block th:replace="playButtons::buttons(
+                <th:block th:replace="~{playButtons::buttons(
                     id=${video.id},
                     playEnabled=${model.user.streamRole and !model.partyModeEnabled},
                     addEnabled=${model.user.streamRole and !model.partyModeEnabled},
@@ -140,7 +140,7 @@
                     starred=${!#strings.isEmpty(video.starredDate)},
                     video=${model.player.web},
                     asTable=true
-                )" /> 
+                )}" /> 
                 <td class="truncate">
                     <a th:href="@{/videoPlayer(id=${video.id})}">${#strings.escapeXml(video.name)}</a>
                 </td>

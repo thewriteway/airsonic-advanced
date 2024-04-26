@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 </head>
 <body class="mainframe bgcolor1">
@@ -37,7 +37,7 @@ $(document).ready(function() {
 
 </script>
 
-<th:block th:replace="settingsHeader::header(cat='player',toast=${settings_toast}, restricted=${!command.admin})" />
+<th:block th:replace="~{settingsHeader::header(cat='player',toast=${settings_toast}, restricted=${!command.admin})}" />
 
 
     <p th:if="${#lists.isEmpty(command.players)}" th:text="#{playersettings.noplayers}"></p>
@@ -98,7 +98,7 @@ $(document).ready(function() {
                 <tr>
                     <td th:text="#{playersettings.name}"></td>
                     <td><input th:field="*{name}" size="16"/></td>
-                    <td colspan="2"><th:block th:replace="helpToolTip(topic=playername)" /></td>
+                    <td colspan="2"><th:block th:replace="~{helpToolTip((topic=playername))}" /></td>
                 </tr>
 
                 <tr class="technologyDepends WEB EXTERNAL EXTERNAL_WITH_PLAYLIST JUKEBOX">
@@ -110,7 +110,7 @@ $(document).ready(function() {
                         </select>
                     </td>
                     <td>
-                        <th:block th:replace="helpToolTip(topic=transcode)" />
+                        <th:block th:replace="~{helpToolTip((topic=transcode))}" />
                     </td>
                     <td class="warning">
                         <span  th:if="*{!transcodingSupported}" th:text="#{playersettings.notranscoder}">
@@ -125,7 +125,7 @@ $(document).ready(function() {
                         <input type="checkbox" th:field="*{dynamicIp}" class="checkbox"/>
                         <label th:for="${#ids.prev('dynamicIp')}" th:text="#{playersettings.dynamicip}"></label>
                     </td>
-                    <td><th:block th:replace="helpToolTip(topic=dynamicip)" /></td>
+                    <td><th:block th:replace="~{helpToolTip((topic=dynamicip))}" /></td>
                 </tr>
 
                 <tr>
@@ -133,7 +133,7 @@ $(document).ready(function() {
                         <input type="checkbox" th:field="*{autoControlEnabled}" class="checkbox"/>
                         <label th:for="${#ids.prev('autoControlEnabled')}" th:text="#{playersettings.autocontrol}"></label>
                     </td>
-                    <td><th:block th:replace="helpToolTip(topic=autocontrol)" /></td>
+                    <td><th:block th:replace="~{helpToolTip((topic=autocontrol))}" /></td>
                 </tr>
 
                 <tr>
@@ -141,7 +141,7 @@ $(document).ready(function() {
                         <input type="checkbox" th:field="*{m3uBomEnabled}" class="checkbox"/>
                         <label th:for="${#ids.prev('m3uBomEnabled')}" th:text="#{playersettings.m3ubom}"></label>
                     </td>
-                    <td><th:block th:replace="helpToolTip(topic=m3ubom)" /></td>
+                    <td><th:block th:replace="~{helpToolTip((topic=m3ubom))}" /></td>
                 </tr>
             </table>
 

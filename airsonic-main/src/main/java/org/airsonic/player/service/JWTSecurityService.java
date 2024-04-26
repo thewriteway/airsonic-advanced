@@ -27,7 +27,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.airsonic.player.security.JWTAuthenticationToken;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -54,7 +53,6 @@ public class JWTSecurityService {
 
     private final SettingsService settingsService;
 
-    @Autowired
     public JWTSecurityService(SettingsService settingsService) {
         this.settingsService = settingsService;
     }

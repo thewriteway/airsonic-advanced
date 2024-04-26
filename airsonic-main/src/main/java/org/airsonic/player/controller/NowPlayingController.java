@@ -32,8 +32,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -44,7 +44,7 @@ import java.util.Optional;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/nowPlaying")
+@RequestMapping({"/nowPlaying", "/nowPlaying.view"})
 public class NowPlayingController {
 
     @Autowired
@@ -57,7 +57,7 @@ public class NowPlayingController {
     private SecurityService securityService;
 
     @GetMapping
-    protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    protected ModelAndView get(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String username = securityService.getCurrentUsername(request);
 
         Player player = playerService.getPlayer(request, response, username);

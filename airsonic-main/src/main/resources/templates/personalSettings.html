@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 
     <script th:inline="javascript">
@@ -36,7 +36,7 @@
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='personal',toast=${settings_toast},restricted=${!command.user.adminRole})" />
+<th:block th:replace="~{settingsHeader::header(cat='personal',toast=${settings_toast},restricted=${!command.user.adminRole})}" />
 
 <h2 th:text="#{personalsettings.title(${command.user.username})}"></h2>
 
@@ -51,7 +51,7 @@
                     <option th:value="-1" th:text="#{common.default}"></option>
                     <option th:each="locale,loopStatus: *{locales}" th:value="${loopStatus.count - 1}" th:text="${locale}"></option>
                 </select>
-                <th:block th:replace="helpToolTip(topic=language)" />
+                <th:block th:replace="~{helpToolTip((topic=language))}" />
             </td>
         </tr>
 
@@ -62,7 +62,7 @@
                     <option th:value="-1" th:text="#{common.default}"></option>
                     <option th:each="theme,loopStatus: *{themes}" th:value="${loopStatus.count - 1}" th:text="${theme.name}"></option>
                 </select>
-                <th:block th:replace="helpToolTip(topic=theme)" />
+                <th:block th:replace="~{helpToolTip((topic=theme))}" />
             </td>
         </tr>
 
@@ -83,7 +83,7 @@
             <th style="padding:0 0 0.5em 0.5em;text-align:center;" th:text="#{personalsettings.playlist}"></th>
             <th style="padding:0 0 0.5em 0.5em;text-align:center;" th:text="#{personalsettings.playqueue}"></th>
             <th style="padding:0 0 0.5em 0.5em">
-                <th:block th:replace="helpToolTip(topic=visibility)" />
+                <th:block th:replace="~{helpToolTip((topic=visibility))}" />
             </th>
         </tr>
         <tr>
@@ -210,7 +210,7 @@
             <td><label for="autoHidePlayQueue" th:text="#{personalsettings.autohideplayqueue}"></label></td>
             <td style="padding-left:2em"><input type="checkbox" th:field="*{partyModeEnabled}" id="partyModeEnabled" class="checkbox"/></td>
             <td><label for="partyModeEnabled" th:text="#{personalsettings.partymode}"></label>
-                <th:block th:replace="helpToolTip(topic=partymode)" />
+                <th:block th:replace="~{helpToolTip((topic=partymode))}" />
             </td>
         </tr>
         <tr>
@@ -291,7 +291,7 @@
         <tr>
             <td><input type="checkbox" th:field="*{autoBookmark}" id="autoBookmark" class="checkbox"/></td>
             <td><label for="autoBookmark" th:text="#{personalsettings.autobookmark}"></label>
-                <th:block th:replace="helpToolTip(topic=autobookmark)" /></td>
+                <th:block th:replace="~{helpToolTip((topic=autobookmark))}" /></td>
         </tr>
         <tr>
             <td colspan="2" th:text="#{personalsettings.audiobookmarkfrequency}"></td>

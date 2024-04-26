@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
         function enableLdapFields() {
@@ -16,7 +16,7 @@
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='advanced',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='advanced',toast=${settings_toast})}" />
 
 <form method="post" th:action="@{/advancedSettings.view}" th:object="${command}">
 
@@ -25,7 +25,7 @@
             <td th:utext="#{advancedsettings.downloadlimit}"></td>
             <td>
                 <input th:field="*{downloadLimit}" size="8"/>
-                <th:block th:replace="helpToolTip(topic=downloadlimit)" />
+                <th:block th:replace="~{helpToolTip(topic=downloadlimit)}" />
             </td>
         </tr>
 
@@ -33,7 +33,7 @@
             <td th:utext="#{advancedsettings.uploadlimit}"></td>
             <td>
                 <input th:field="*{uploadLimit}" size="8"/>
-                <th:block th:replace="helpToolTip(topic=uploadlimit)" />
+                <th:block th:replace="~{helpToolTip(topic=uploadlimit)}" />
             </td>
         </tr>
     </table>
@@ -43,7 +43,7 @@
             <td th:text="#{advancedsettings.smtpFrom}"></td>
             <td>
                 <input th:field="*{smtpFrom}" size="50"/>
-                <th:block th:replace="helpToolTip(topic=smtpFrom)" />
+                <th:block th:replace="~{helpToolTip(topic=smtpFrom)}" />
             </td>
         </tr>
 
@@ -51,7 +51,7 @@
             <td th:text="#{advancedsettings.smtpServer}"></td>
             <td>
                 <input th:field="*{smtpServer}" size="50"/>
-                <th:block th:replace="helpToolTip(topic=smtpServer)" />
+                <th:block th:replace="~{helpToolTip(topic=smtpServer)}" />
             </td>
         </tr>
 
@@ -59,7 +59,7 @@
             <td th:text="#{advancedsettings.smtpPort}"></td>
             <td>
                 <input th:field="*{smtpPort}" size="5"/>
-                <th:block th:replace="helpToolTip(topic=smtpPort)" />
+                <th:block th:replace="~{helpToolTip(topic=smtpPort)}" />
             </td>
         </tr>
 
@@ -71,7 +71,7 @@
                     <option value="STARTTLS" th:text="#{advancedsettings.smtpEncryption.starttls}"></option>
                     <option value="SSL/TLS" th:text="#{advancedsettings.smtpEncryption.ssl}"></option>
                 </select>
-                <th:block th:replace="helpToolTip(topic=smtpEncryption)" />
+                <th:block th:replace="~{helpToolTip(topic=smtpEncryption)}" />
             </td>
         </tr>
 
@@ -81,7 +81,7 @@
                 <input th:value="*{smtpUser}" size="20"/>
                 <label th:text="#{advancedsettings.smtpPassword}"></label>
                 <input type="password"  th:value="*{smtpPassword}" size="20"/>
-                <th:block th:replace="helpToolTip(topic=smtpCredentials)" />
+                <th:block th:replace="~{helpToolTip(topic=smtpCredentials)}" />
             </td>
         </tr>
     </table>
@@ -91,7 +91,7 @@
             <td colspan="2">
                 <input type="checkbox" th:field="*{captchaEnabled}"/>
                 <label th:for="${#ids.prev('captchaEnabled')}" th:text="#{advancedsettings.enableCaptcha}"></label>
-                <th:block th:replace="helpToolTip(topic=captcha)" />
+                <th:block th:replace="~{helpToolTip(topic=captcha)}" />
             </td>
         </tr>
 
@@ -99,7 +99,7 @@
             <td th:text="#{advancedsettings.recaptchaSiteKey}"></td>
             <td>
                 <input th:field="*{recaptchaSiteKey}" size="50"/>
-                <th:block th:replace="helpToolTip(topic=recaptchaSiteKey)" />
+                <th:block th:replace="~{helpToolTip(topic=recaptchaSiteKey)}" />
             </td>
         </tr>
 
@@ -107,7 +107,7 @@
             <td th:text="#{advancedsettings.recaptchaSecretKey}"></td>
             <td>
                 <input th:field="*{recaptchaSecretKey}" size="50"/>
-                <th:block th:replace="helpToolTip(topic=recaptchaSecretKey)" />
+                <th:block th:replace="~{helpToolTip(topic=recaptchaSecretKey)}" />
             </td>
         </tr>
     </table>
@@ -115,7 +115,7 @@
     <table class="indent"><tr><td>
         <input type="checkbox" th:field="*{ldapEnabled}" onclick="enableLdapFields()"/>
         <label th:for="${#ids.prev('ldapEnabled')}" th:text="#{advancedsettings.ldapenabled}"></label>
-        <th:block th:replace="helpToolTip(topic=ldap)" />
+        <th:block th:replace="~{helpToolTip(topic=ldap)}" />
     </td></tr></table>
 
     <table class="indent" id="ldapTable" style="padding-left:2em;padding-bottom: 1em">
@@ -123,7 +123,7 @@
             <td th:text="#{advancedsettings.ldapurl}"></td>
             <td colspan="3">
                 <input th:field="*{ldapUrl}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=ldapurl)" />
+                <th:block th:replace="~{helpToolTip(topic=ldapurl)}" />
             </td>
         </tr>
 
@@ -131,7 +131,7 @@
             <td th:text="#{advancedsettings.ldapsearchfilter}"></td>
             <td colspan="3">
                 <input th:value="*{ldapSearchFilter}" size="70"/>
-                <th:block th:replace="helpToolTip(topic=ldapsearchfilter)" />
+                <th:block th:replace="~{helpToolTip(topic=ldapsearchfilter)}" />
             </td>
         </tr>
 
@@ -143,7 +143,7 @@
             <td th:text="#{advancedsettings.ldapmanagerpassword}"></td>
             <td>
                 <input type="password" th:field="*{ldapManagerPassword}" size="20"/>
-                <th:block th:replace="helpToolTip(topic=ldapmanagerdn)" />
+                <th:block th:replace="~{helpToolTip(topic=ldapmanagerdn)}" />
             </td>
         </tr>
 
@@ -151,7 +151,7 @@
             <td colspan="5">
                 <input type="checkbox" th:field="*{ldapAutoShadowing}" cssClass="checkbox"/>
                 <label th:for="${#ids.prev('ldapAutoShadowing')}" th:text="#{advancedsettings.ldapautoshadowing(*{brand})}"></label>
-                <th:block th:replace="helpToolTip(topic=ldapautoshadowing)" />
+                <th:block th:replace="~{helpToolTip(topic=ldapautoshadowing)}" />
             </td>
         </tr>
     </table>

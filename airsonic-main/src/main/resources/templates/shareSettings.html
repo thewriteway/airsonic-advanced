@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 </head>
 <body class="mainframe bgcolor1">
 
-<th:block th:replace="settingsHeader::header(cat='share',toast=${settings_toast}, restricted=${!model.user.adminRole})" />
+<th:block th:replace="~{settingsHeader::header(cat='share',toast=${settings_toast}, restricted=${!model.user.adminRole})}" />
 
 <form method="post" th:action="@{/shareSettings.view}">
     <table class="music indent">

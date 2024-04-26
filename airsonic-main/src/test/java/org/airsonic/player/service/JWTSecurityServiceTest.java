@@ -5,41 +5,26 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Arrays;
-import java.util.Collection;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import static org.junit.Assert.assertEquals;
-
-@RunWith(Parameterized.class)
+@ExtendWith(SpringExtension.class)
 public class JWTSecurityServiceTest {
 
     private final String key = "someKey";
     private final JWTSecurityService service = new JWTSecurityService(settingsWithKey(key));
-    private final String uriString;
     private final Algorithm algorithm = JWTSecurityService.getAlgorithm(key);
     private final JWTVerifier verifier = JWT.require(algorithm).build();
-    private final String expectedClaimString;
 
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-                { "http://localhost:8080/airsonic/stream?id=4", "/airsonic/stream?id=4" },
-                { "/airsonic/stream?id=4", "/airsonic/stream?id=4" },
-        });
-    }
-
-    public JWTSecurityServiceTest(String uriString, String expectedClaimString) {
-        this.uriString = uriString;
-        this.expectedClaimString = expectedClaimString;
-    }
-
-    @Test
-    public void addJWTToken() {
+    @ParameterizedTest
+    @CsvSource({ "http://localhost:8080/airsonic/stream?id=4, /airsonic/stream?id=4",
+        "/airsonic/stream?id=4, /airsonic/stream?id=4" })
+    public void addJWTToken(String uriString, String expectedClaimString) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(uriString);
         String actualUri = service.addJWTToken("xyz", builder).build().toUriString();
         String jwtToken = UriComponentsBuilder.fromUriString(actualUri).build().getQueryParams().getFirst(

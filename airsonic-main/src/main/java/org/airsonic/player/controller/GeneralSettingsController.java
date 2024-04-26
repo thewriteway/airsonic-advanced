@@ -40,7 +40,7 @@ import java.util.Locale;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/generalSettings")
+@RequestMapping({"/generalSettings", "/generalSettings.view"})
 public class GeneralSettingsController {
 
     @Autowired

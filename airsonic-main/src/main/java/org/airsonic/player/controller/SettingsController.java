@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Controller for the main settings page.
@@ -36,7 +36,7 @@ import javax.servlet.http.HttpServletRequest;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/settings")
+@RequestMapping({"/settings", "/settings.view"})
 public class SettingsController {
 
     @Autowired

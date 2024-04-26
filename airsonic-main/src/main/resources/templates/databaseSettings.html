@@ -2,8 +2,8 @@
 <html>
 <head>
 
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script>
         function updateShownOptions() {
             $(".hideawayDatabaseOptions").hide();
@@ -106,7 +106,7 @@
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='database',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='database',toast=${settings_toast})}" />
 
 <form th:action="@{/databaseSettings.view}" th:object="${command}" method="post">
     <p th:utext="#{databasesettings.moreinfo}"></p>
@@ -120,7 +120,7 @@
                     <option value="EXTERNAL" th:text="External"></option>
                     <option value="JNDI" th:text="JNDI"></option>
                 </select>
-                <th:block th:replace="helpToolTip(topic=databaseConfigType)" />
+                <th:block th:replace="~{helpToolTip((topic=databaseConfigType))}" />
             </td>
         </tr>
     </table>
@@ -132,7 +132,7 @@
                     <td th:text="#{databasesettings.driver}"></td>
                     <td>
                         <input th:field="*{driver}" size="30"/>
-                        <th:block th:replace="helpToolTip(topic=jdbcdriver)" />
+                        <th:block th:replace="~{helpToolTip((topic=jdbcdriver))}" />
                     </td>
                 </tr>
                 <tr>
@@ -163,7 +163,7 @@
                 <td th:text="#{databasesettings.jndiname}"></td>
                 <td>
                     <input type="text" th:field="*{JNDIName}" size="36"/>
-                    <th:block th:replace="helpToolTip(topic=jndiname)" />
+                    <th:block th:replace="~{helpToolTip((topic=jndiname))}" />
                 </td>
             </tr>
         </table>
@@ -174,7 +174,7 @@
                 <td th:text="#{databasesettings.mysqlvarcharmaxlength}"></td>
                 <td>
                     <input th:field="*{mysqlVarcharMaxlength}" size="8"/>
-                    <th:block th:replace="helpToolTip(topic=mysqlvarcharmaxlength)" />
+                    <th:block th:replace="~{helpToolTip((topic=mysqlvarcharmaxlength))}" />
                 </td>
             </tr>
         </table>
@@ -231,7 +231,7 @@
     <div th:if="${command.backuppable}" style="display:table-cell; padding:0.5em;">
       <button id="backupdb" onclick="backupDB()">
         <span th:text="#{databasesettings.backup}"></span>
-          <th:block th:replace="helpToolTip(topic=backupdb)" />
+          <th:block th:replace="~{helpToolTip((topic=backupdb))}" />
       </button>
     </div>
 
@@ -239,7 +239,7 @@
       <button id="exportdb" onclick="exportDB()">
         <img th:src="${#themes.code('downloadImage')}" alt=""/>
         <span th:text="#{databasesettings.export}"></span>
-          <th:block th:replace="helpToolTip(topic=exportdb)" />
+          <th:block th:replace="~{helpToolTip((topic=exportdb))}" />
       </button>
     </div>
 
@@ -252,7 +252,7 @@
           <button id="importdb" type="submit">
             <img th:src="${#themes.code('uploadImage')}" alt=""/>
             <span style="vertical-align: middle" th:text="#{databasesettings.import}"></span>
-              <th:block th:replace="helpToolTip(topic=importdb)" />
+              <th:block th:replace="~{helpToolTip((topic=importdb))}" />
           </button>
         </div>
     </form>

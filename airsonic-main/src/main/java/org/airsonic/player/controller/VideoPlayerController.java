@@ -20,7 +20,6 @@
 package org.airsonic.player.controller;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.MoreFiles;
 import org.airsonic.player.domain.Bookmark;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.User;
@@ -34,6 +33,7 @@ import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +43,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -60,7 +60,7 @@ import java.util.stream.Stream;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/videoPlayer")
+@RequestMapping({"/videoPlayer", "/videoPlayer.view"})
 public class VideoPlayerController {
 
     public static final int DEFAULT_BIT_RATE = 1500;
@@ -115,7 +115,7 @@ public class VideoPlayerController {
         map.put("captions", captions);
         map.put("streamUrls", streamUrls.getRight());
         map.put("contentType", !streamable ? "application/x-mpegurl"
-                : StringUtil.getMimeType(MoreFiles.getFileExtension(file.getRelativePath())));
+                : StringUtil.getMimeType(FilenameUtils.getExtension(file.getPath())));
         map.put("remoteStreamUrl", streamUrls.getRight().get("remoteStreamUrl"));
         map.put("remoteCoverArtUrl", url + jwtSecurityService.addJWTToken(user.getUsername(), "ext/coverArt.view?id=" + file.getId()));
         map.put("remoteCaptionsUrl", url + jwtSecurityService.addJWTToken(user.getUsername(), "ext/captions/list?id=" + file.getId()));

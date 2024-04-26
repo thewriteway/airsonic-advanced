@@ -49,7 +49,7 @@ import static java.util.stream.Collectors.toMap;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/podcastSettings")
+@RequestMapping({"/podcastSettings", "/podcastSettings.view"})
 public class PodcastSettingsController {
 
     @Autowired

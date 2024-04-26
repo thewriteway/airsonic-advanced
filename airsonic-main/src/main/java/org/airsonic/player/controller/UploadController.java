@@ -58,8 +58,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -82,7 +82,7 @@ import java.util.function.Consumer;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/upload")
+@RequestMapping({"/upload", "/upload.view"})
 public class UploadController {
 
     private static final Logger LOG = LoggerFactory.getLogger(UploadController.class);
@@ -127,7 +127,7 @@ public class UploadController {
         Map<String, Object> map = new HashMap<>();
         List<Path> uploadedFiles = new ArrayList<>();
         List<Path> unzippedFiles = new ArrayList<>();
-        List<Exception> exceptions = new ArrayList<>();
+        List<String> exceptions = new ArrayList<>();
         User user = securityService.getCurrentUser(request);
         TransferStatus status = null;
         Path dir = null;
@@ -167,7 +167,7 @@ public class UploadController {
                         try {
                             checkUploadAllowed(user, targetFile, true);
                         } catch (IOException e) {
-                            exceptions.add(e);
+                            exceptions.add(e.getMessage());
                             continue;
                         }
                         monitoredFile.transferTo(targetFile.toFile());
@@ -182,7 +182,7 @@ public class UploadController {
             }
         } catch (Exception x) {
             LOG.warn("Uploading failed.", x);
-            exceptions.add(x);
+            exceptions.add(x.getMessage());
         } finally {
             if (status != null) {
                 statusService.removeUploadStatus(status);
@@ -195,7 +195,7 @@ public class UploadController {
                     registeredCallbacks.getOrDefault(callback, p -> {}).accept(dir);
                 } catch (Exception e) {
                     LOG.warn("Callback failed", e);
-                    exceptions.add(e);
+                    exceptions.add(e.getMessage());
                 }
             }
         }
@@ -207,7 +207,7 @@ public class UploadController {
         return new ModelAndView("upload", "model", map);
     }
 
-    private void unzip(Path file, List<Path> unzippedFiles, List<Exception> exceptions) {
+    private void unzip(Path file, List<Path> unzippedFiles, List<String> exceptions) {
         LOG.info("Unzipping {}", file);
         boolean unzipped = false;
 
@@ -255,7 +255,7 @@ public class UploadController {
                 }
             } catch (Exception e) {
                 LOG.warn("Something went wrong unzipping {}", file, e);
-                exceptions.add(e);
+                exceptions.add(e.getMessage());
             } finally {
                 unzipped = true;
                 FileUtil.delete(file);
@@ -283,7 +283,7 @@ public class UploadController {
                 }
             } catch (Exception e) {
                 LOG.warn("Something went wrong unzipping {}", file, e);
-                exceptions.add(e);
+                exceptions.add(e.getMessage());
             } finally {
                 unzipped = true;
                 FileUtil.delete(file);
@@ -309,7 +309,7 @@ public class UploadController {
                 }
             } catch (Exception e) {
                 LOG.warn("Something went wrong unzipping {}", file, e);
-                exceptions.add(e);
+                exceptions.add(e.getMessage());
             } finally {
                 unzipped = true;
                 FileUtil.delete(file);
@@ -331,7 +331,7 @@ public class UploadController {
                 }
             } catch (Exception e) {
                 LOG.warn("Something went wrong unzipping {}", file, e);
-                exceptions.add(e);
+                exceptions.add(e.getMessage());
             } finally {
                 FileUtil.delete(file);
             }
@@ -339,7 +339,7 @@ public class UploadController {
     }
 
     private void copyEntry(Path file, ArchiveEntry entry, LambdaUtils.ThrowingConsumer<Path, IOException> copier,
-            List<Path> unzippedFiles, List<Exception> exceptions) {
+            List<Path> unzippedFiles, List<String> exceptions) {
         final Path toPath = file.resolveSibling(entry.getName().replaceAll("\\\\", "/"));
         try {
             if (!toPath.normalize().startsWith(file.getParent())) {
@@ -360,7 +360,7 @@ public class UploadController {
 
             }
         } catch (IOException e) {
-            exceptions.add(e);
+            exceptions.add(e.getMessage());
             LOG.debug("Could not unzip {}", toPath, e);
         }
 

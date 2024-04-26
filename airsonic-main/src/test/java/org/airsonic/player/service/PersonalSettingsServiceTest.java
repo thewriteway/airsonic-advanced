@@ -31,7 +31,7 @@ import org.airsonic.player.repository.CustomAvatarRepository;
 import org.airsonic.player.repository.SystemAvatarRepository;
 import org.airsonic.player.repository.UserSettingRepository;
 import org.airsonic.player.util.StringUtil;
-import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -296,7 +296,7 @@ public class PersonalSettingsServiceTest {
         assertEquals(fileName, actual.getName());
         assertEquals(50, actual.getWidth());
         assertEquals(50, actual.getHeight());
-        String mimeType = StringUtil.getMimeType(FileNameUtils.getExtension(fileName));
+        String mimeType = StringUtil.getMimeType(FilenameUtils.getExtension(fileName));
         assertEquals(mimeType, actual.getMimeType());
         Path persistedPath = (Paths.get("$[AIRSONIC_HOME]", "avatars", USER_NAME,
                 fileName + "." + StringUtils.substringAfter(mimeType, "/")));

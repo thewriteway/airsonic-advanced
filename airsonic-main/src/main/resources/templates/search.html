@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 
     <script type="text/javascript" th:inline="javascript">
 
@@ -36,8 +36,8 @@
         <th:block th:each="match, loopStatus:${command.artists}">
 
             <tr class="artistRow" th:stayle="${loopStatus.count > 5 ? 'display:none' : ''}">
-                <th:block th:replace="playButtons :: buttons(id=${match.value}, playEnabled=${command.user.streamRole and !command.partyModeEnabled},
-                    addEnabled=${command.user.downloadRole and !command.partyModeEnabled}, asTable=true)" />
+                <th:block th:replace="~{playButtons :: buttons(id=${match.value}, playEnabled=${command.user.streamRole and !command.partyModeEnabled},
+                    addEnabled=${command.user.downloadRole and !command.partyModeEnabled}, asTable=true)}" />
                 <td class="truncate"><a th:href="@{/main.view(id=${match.value})}" th:text="${match.key}"></a></td>
             </tr>
 
@@ -54,11 +54,11 @@
         <th:block th:each="match,loopStatus:${command.albums}">
 
             <tr class="albumRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" >
-                <th:block th:replace="playButtons :: buttons(
+                <th:block th:replace="~{playButtons :: buttons(
                         id=${match.value},
                         playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                         addEnabled=${command.user.downloadRole and !command.partyModeEnabled},
-                        asTable=true)" />
+                        asTable=true)}" />
 
                 <td class="truncate"><a th:href="@{/main.view(id=${match.value})}" th:text="${match.key.key}"></a></td>
                 <td class="truncate"><span class="detail" th:text="${match.key.value}"></span></td>
@@ -78,11 +78,11 @@
         <th:block th:each="match,loopStatus:${command.songs}">
 
             <tr class="songRow" th:style="${loopStatus.count > 15 ? 'display:none' : ''}">
-                    <th:block th:replace="playButtons :: buttons(id=${match.id},
+                    <th:block th:replace="~{playButtons :: buttons(id=${match.id},
                             playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                             addEnabled=${command.user.downloadRole and !command.partyModeEnabled},
                             video=${match.video and command.player.web},
-                            asTable=true)" />
+                            asTable=true)}" />
 
                 <td class="truncate"><span class="songTitle" th:text="${match.title}"></span></td>
                 <td class="truncate"><a th:href="@{/main.view(path=${match.folder.id+':'+match.parentPath})}">

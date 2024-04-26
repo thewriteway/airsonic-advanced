@@ -7,13 +7,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.Principal;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/bookmarks")
+@RequestMapping({"/bookmarks", "/bookmarks.view"})
 public class BookmarksController {
     @Autowired
     private PersonalSettingsService personalSettingsService;

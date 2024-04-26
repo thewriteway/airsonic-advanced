@@ -20,8 +20,8 @@
   -->
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 </head>
 
@@ -29,7 +29,7 @@
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='dlna',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='dlna',toast=${settings_toast})}" />
 
 <form method="post" th:action="@{/dlnaSettings.view}" th:object="${command}">
 

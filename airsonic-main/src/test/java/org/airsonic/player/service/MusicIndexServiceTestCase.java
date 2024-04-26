@@ -19,20 +19,23 @@
  */
 package org.airsonic.player.service;
 
-import junit.framework.TestCase;
 import org.airsonic.player.domain.MusicIndex;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Unit test of {@link MusicIndex}.
  *
  * @author Sindre Mehus
  */
-public class MusicIndexServiceTestCase extends TestCase {
+public class MusicIndexServiceTestCase {
 
     private final MusicIndexService musicIndexService = new MusicIndexService();
 
+    @Test
     public void testCreateIndexFromExpression() {
         MusicIndex index = musicIndexService.createIndexFromExpression("A");
         assertEquals("A", index.getIndex());
@@ -52,6 +55,7 @@ public class MusicIndexServiceTestCase extends TestCase {
         assertEquals("Z", index.getPrefixes().get(2));
     }
 
+    @Test
     public void testCreateIndexesFromExpression() {
         List<MusicIndex> indexes = musicIndexService.createIndexesFromExpression("A B  The X-Z(XYZ)");
         assertEquals(4, indexes.size());

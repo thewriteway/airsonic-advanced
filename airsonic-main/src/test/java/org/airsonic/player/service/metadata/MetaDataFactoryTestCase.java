@@ -1,13 +1,13 @@
 package org.airsonic.player.service.metadata;
 
 import org.airsonic.player.service.SettingsService;
-import org.airsonic.player.util.HomeRule;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -15,15 +15,30 @@ import java.nio.file.Path;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
+@EnableConfigurationProperties
 public class MetaDataFactoryTestCase {
 
-    @ClassRule
-    public static final HomeRule airsonicRule = new HomeRule();
+    @TempDir
+    private static Path airsonicHome;
 
-    @ClassRule
-    public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    private static Path tempDir;
+
+    @BeforeAll
+    public static void setupAll() throws IOException {
+        System.setProperty("airsonic.home", airsonicHome.toString());
+        someMp3 = tempDir.resolve("some.mp3");
+        someFlv = tempDir.resolve("some.flv");
+        someJunk = tempDir.resolve("some.junk");
+        someMpc = tempDir.resolve("some.mpc");
+        someMpPlus = tempDir.resolve("some.mp+");
+        FileUtils.touch(someMp3.toFile());
+        FileUtils.touch(someFlv.toFile());
+        FileUtils.touch(someJunk.toFile());
+        FileUtils.touch(someMpc.toFile());
+        FileUtils.touch(someMpPlus.toFile());
+    }
 
     private static Path someMp3;
     private static Path someFlv;
@@ -31,20 +46,11 @@ public class MetaDataFactoryTestCase {
     private static Path someMpc;
     private static Path someMpPlus;
 
-    @BeforeClass
-    public static void createTestFiles() throws IOException {
-        someMp3 = temporaryFolder.newFile("some.mp3").toPath();
-        someFlv = temporaryFolder.newFile("some.flv").toPath();
-        someJunk = temporaryFolder.newFile("some.junk").toPath();
-        someMpc = temporaryFolder.newFile("some.mpc").toPath();
-        someMpPlus = temporaryFolder.newFile("some.mp+").toPath();
-    }
+    @Autowired
+    private MetaDataParserFactory metaDataParserFactory;
 
     @Autowired
-    MetaDataParserFactory metaDataParserFactory;
-
-    @Autowired
-    SettingsService settingsService;
+    private SettingsService settingsService;
 
     @Test
     public void testorder() {

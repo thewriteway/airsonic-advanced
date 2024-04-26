@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -44,7 +44,7 @@ import java.util.Map;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/sonoslink")
+@RequestMapping({"/sonoslink", "/sonoslink.view"})
 public class SonosLinkController {
 
     @Autowired

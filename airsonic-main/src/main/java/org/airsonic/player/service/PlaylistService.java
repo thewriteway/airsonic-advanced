@@ -25,16 +25,18 @@ import org.airsonic.player.domain.Playlist;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.repository.PlaylistRepository;
 import org.airsonic.player.repository.UserRepository;
+import org.airsonic.player.service.cache.PlaylistCache;
 import org.airsonic.player.service.websocket.AsyncWebSocketClient;
 import org.airsonic.player.util.LambdaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+import jakarta.annotation.Nonnull;
 
 import java.time.Instant;
 import java.util.*;
@@ -52,19 +54,15 @@ public class PlaylistService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlaylistService.class);
 
-    private final UserRepository userRepository;
-    private final PlaylistRepository playlistRepository;
-    private final AsyncWebSocketClient asyncWebSocketClient;
-
     @Autowired
-    public PlaylistService(UserRepository userRepository,
-                           PlaylistRepository playlistRepository,
-                           AsyncWebSocketClient asyncWebSocketClient) {
+    private UserRepository userRepository;
+    @Autowired
+    private PlaylistRepository playlistRepository;
+    @Autowired
+    private AsyncWebSocketClient asyncWebSocketClient;
+    @Autowired
+    private PlaylistCache playlistCache;
 
-        this.userRepository = userRepository;
-        this.playlistRepository = playlistRepository;
-        this.asyncWebSocketClient = asyncWebSocketClient;
-    }
 
     /**
      * Returns all playlists.
@@ -121,16 +119,26 @@ public class PlaylistService {
 
     }
 
-    @Cacheable(cacheNames = "playlistCache", unless = "#result == null")
-    public Playlist getPlaylist(int id) {
-        return playlistRepository.findById(id).orElse(null);
+    public Playlist getPlaylist(Integer id) {
+        Playlist playlist = playlistCache.getPlaylistById(id);
+        if (playlist == null) {
+            playlist = playlistRepository.findById(id).orElse(null);
+            playlistCache.putPlaylistById(id, playlist);
+        }
+        return playlist;
     }
 
-    @Cacheable(cacheNames = "playlistUsersCache", unless = "#result == null")
     @Transactional
-    public List<String> getPlaylistUsers(int playlistId) {
-        List<User> users = playlistRepository.findById(playlistId).map(Playlist::getSharedUsers).orElse(Collections.emptyList());
-        return users.stream().map(User::getUsername).filter(Objects::nonNull).toList();
+    public List<String> getPlaylistUsers(Integer playlistId) {
+
+        List<String> result = playlistCache.getUsersForPlaylist(playlistId);
+
+        if (CollectionUtils.isEmpty(result)) {
+            List<User> users = playlistRepository.findById(playlistId).map(Playlist::getSharedUsers).orElse(Collections.emptyList());
+            result = users.stream().map(User::getUsername).filter(Objects::nonNull).toList();
+            playlistCache.putUsersForPlaylist(playlistId, result);
+        }
+        return result;
     }
 
     public List<MediaFile> getFilesInPlaylist(int id) {
@@ -145,7 +153,7 @@ public class PlaylistService {
                 LOG.warn("Playlist {} not found", id);
                 return new ArrayList<>();
             }
-        ).stream().filter(x -> includeNotPresent || x.isPresent()).collect(Collectors.toList());
+        ).stream().filter(x -> x.isPresent() || includeNotPresent).collect(Collectors.toList());
     }
 
     @Transactional
@@ -169,9 +177,9 @@ public class PlaylistService {
         return playlist;
     }
 
-    @CacheEvict(cacheNames = "playlistCache", key = "#id")
     @Transactional
-    public void removeFilesInPlaylistByIndices(int id, List<Integer> indices) {
+    public void removeFilesInPlaylistByIndices(Integer id, List<Integer> indices) {
+        playlistCache.removePlaylistById(id);
         playlistRepository.findById(id).ifPresentOrElse(p -> {
             List<MediaFile> files = p.getMediaFiles();
             List<MediaFile> newFiles = new ArrayList<>();
@@ -242,9 +250,9 @@ public class PlaylistService {
         return playlist;
     }
 
-    @CacheEvict(cacheNames = "playlistUsersCache", key = "#playlist.id")
     @Transactional
-    public void addPlaylistUser(Playlist playlist, String username) {
+    public void addPlaylistUser(@Nonnull Playlist playlist, @Nonnull String username) {
+        playlistCache.removeUsersForPlaylist(playlist.getId());
         userRepository.findByUsername(username).ifPresentOrElse(user -> {
             playlistRepository.findById(playlist.getId()).ifPresentOrElse(p -> {
                 if (!p.getSharedUsers().contains(user)) {
@@ -265,9 +273,9 @@ public class PlaylistService {
         );
     }
 
-    @CacheEvict(cacheNames = "playlistUsersCache", key = "#playlist.id")
     @Transactional
-    public void deletePlaylistUser(Playlist playlist, String username) {
+    public void deletePlaylistUser(@Nonnull Playlist playlist, @Nonnull String username) {
+        playlistCache.removeUsersForPlaylist(playlist.getId());
         playlistRepository.findByIdAndSharedUsersUsername(playlist.getId(), username).ifPresentOrElse(p -> {
             p.removeSharedUserByUsername(username);
             playlistRepository.save(p);
@@ -309,9 +317,10 @@ public class PlaylistService {
         return username != null && username.equals(playlist.getUsername());
     }
 
-    @CacheEvict(cacheNames = "playlistCache")
     @Transactional
-    public void deletePlaylist(int id) {
+    public void deletePlaylist(@Nonnull Integer id) {
+        playlistCache.removePlaylistById(id);
+        playlistCache.removeUsersForPlaylist(id);
         playlistRepository.deleteById(id);
         asyncWebSocketClient.send("/topic/playlists/deleted", id);
     }
@@ -330,9 +339,9 @@ public class PlaylistService {
         updatePlaylist(id, name, null, null);
     }
 
-    @CacheEvict(cacheNames = "playlistCache", key = "#id")
     @Transactional
     public void updatePlaylist(Integer id, String name, String comment, Boolean shared) {
+        playlistCache.removePlaylistById(id);
         playlistRepository.findById(id).ifPresentOrElse(p -> {
             if (name != null) p.setName(name);
             if (comment != null) p.setComment(comment);

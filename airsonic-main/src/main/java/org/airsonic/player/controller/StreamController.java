@@ -49,12 +49,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.awt.*;
 import java.io.FilterInputStream;
@@ -75,7 +77,7 @@ import java.util.function.Supplier;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping({ "/stream/**", "/ext/stream/**" })
+@RequestMapping({ "/stream", "/ext/stream" })
 public class StreamController {
 
     private static final Logger LOG = LoggerFactory.getLogger(StreamController.class);
@@ -103,13 +105,13 @@ public class StreamController {
 
     @GetMapping
     public ResponseEntity<Resource> handleRequest(Authentication authentication,
-            @RequestParam(required = false) Integer playlist,
-            @RequestParam(required = false) String format,
-            @RequestParam(required = false) String suffix,
-            @RequestParam Optional<Integer> maxBitRate,
-            @RequestParam Optional<Integer> id,
-            @RequestParam Optional<String> path,
-            @RequestParam(required = false) Double offsetSeconds,
+            @RequestParam(required = false, name = "playlist") Integer playlist,
+            @RequestParam(required = false, name = "format") String format,
+            @RequestParam(required = false, name = "suffix") String suffix,
+            @RequestParam("maxBitRate") Optional<Integer> maxBitRate,
+            @RequestParam("id") Optional<Integer> id,
+            @RequestParam("path") Optional<String> path,
+            @RequestParam(required = false, name = "offsetSeconds") Double offsetSeconds,
             ServletWebRequest swr) throws Exception {
 
         User user = securityService.getCurrentUser(swr.getRequest());
@@ -277,6 +279,11 @@ public class StreamController {
         headers.setContentType(MediaType.parseMediaType(StringUtil.getMimeType(suffix, sonos)));
 
         return ResponseEntity.ok().headers(headers).body(resource);
+    }
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
+        LOG.info("Client Aborted");
     }
 
     private void scrobble(MediaFile mediaFile, Player player, boolean submission) {

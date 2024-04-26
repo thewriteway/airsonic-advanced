@@ -18,7 +18,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -27,7 +26,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,12 +54,11 @@ import static org.mockito.Mockito.when;
  * At runtime, the subsonic_home dir is set to target/test-classes/org/airsonic/player/service/mediaScannerServiceTestCase.
  * An empty database is created on the fly.
  */
-@ExtendWith(SpringExtension.class)
 @TestPropertySource(properties = {
     "airsonic.cue.enabled=true"
 })
 @SpringBootTest
-@EnableConfigurationProperties({ AirsonicHomeConfig.class })
+@EnableConfigurationProperties({AirsonicHomeConfig.class})
 public class MediaScannerServiceTestCase {
 
     @TempDir
@@ -133,6 +130,7 @@ public class MediaScannerServiceTestCase {
         Timer.Context globalTimerContext = globalTimer.time();
         testFolders = MusicFolderTestData.getTestMusicFolders();
         musicFolderRepository.saveAll(testFolders);
+        mediaFolderService.clearMusicFolderCache();
         TestCaseUtils.execScan(mediaScannerService);
 
         globalTimerContext.stop();
@@ -498,5 +496,43 @@ public class MediaScannerServiceTestCase {
         assertEquals(1, listMusicChildren.size());
 
         assertTrue(listMusicChildren.get(0).getDuration() > 0.0);
+    }
+
+    @Test
+    public void testM4bAudioTest() {
+
+        Path m4bAudioFile = MusicFolderTestData.resolveM4bAudioPath();
+        MusicFolder musicFolder = new MusicFolder(m4bAudioFile, "m4b", Type.MEDIA, true,
+                Instant.now().truncatedTo(ChronoUnit.MICROS));
+        testFolders.add(musicFolder);
+        musicFolderRepository.saveAll(testFolders);
+        TestCaseUtils.execScan(mediaScannerService);
+
+        musicFolder = musicFolderRepository.findById(musicFolder.getId()).get();
+        List<MusicFolder> folders = new ArrayList<>();
+        folders.add(musicFolder);
+
+        List<MediaFile> listMusicChildren = mediaFileRepository.findByFolderAndParentPath(musicFolder, "",
+                Sort.by("startPosition"));
+        assertEquals(3, listMusicChildren.size());
+        MediaFile base = listMusicChildren.get(0);
+        assertEquals(-1.0d, base.getStartPosition(), 0.01);
+        assertEquals("m4btestbook", base.getTitle());
+        assertEquals("m4btestartist", base.getArtist());
+        assertEquals("m4btestartist", base.getAlbumArtist());
+        assertEquals("m4btest", base.getAlbumName());
+
+        MediaFile chapter1 = listMusicChildren.get(1);
+        assertEquals(0.0d, chapter1.getStartPosition(), 0.01);
+        assertEquals(2.665d, chapter1.getDuration(), 0.01);
+        assertEquals(" Chapter 001  - 00:00:02", chapter1.getTitle());
+        assertEquals("m4btest", chapter1.getAlbumName());
+
+        MediaFile chapter2 = listMusicChildren.get(2);
+        assertEquals(2.665d, chapter2.getStartPosition(), 0.01);
+        assertEquals(3.715d, chapter2.getDuration(), 0.01);
+        assertEquals(" Chapter 002  - 00:00:03", chapter2.getTitle());
+        assertEquals("m4btest", chapter2.getAlbumName());
+
     }
 }

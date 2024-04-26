@@ -1,16 +1,13 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.config.AirsonicHomeConfig;
-import org.airsonic.player.util.EmbeddedTestCategory;
 import org.airsonic.player.util.FileUtils;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.sql.DataSource;
 
@@ -20,8 +17,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Category(EmbeddedTestCategory.class)
-@ExtendWith(SpringExtension.class)
+@Tag("EmbeddedTestCategory")
 @SpringBootTest
 public class LegacyDatabaseStartupTestCase {
 

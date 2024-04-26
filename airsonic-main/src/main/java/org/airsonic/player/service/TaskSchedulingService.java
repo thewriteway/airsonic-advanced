@@ -1,6 +1,5 @@
 package org.airsonic.player.service;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.WebEndpointResponse;
-import org.springframework.boot.task.TaskSchedulerBuilder;
+import org.springframework.boot.task.ThreadPoolTaskSchedulerBuilder;
 import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.FixedDelayTask;
@@ -27,10 +26,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -44,11 +43,10 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
     private final ScheduledTaskRegistrar registrar;
 
     private final Map<String, ScheduledTask> tasks = new ConcurrentHashMap<>();
-    private final Map<ScheduledTask, Map<String, Object>> taskMetadata = new ConcurrentHashMap<>();
+    private final Map<ScheduledTask, TaskMetaData> taskMetadata = new ConcurrentHashMap<>();
 
 
-    @Autowired
-    public TaskSchedulingService(TaskSchedulerBuilder builder) throws IOException {
+    public TaskSchedulingService(ThreadPoolTaskSchedulerBuilder builder) throws IOException {
         ThreadPoolTaskScheduler taskScheduler = builder.build();
         taskScheduler.setDaemon(true);
         taskScheduler.afterPropertiesSet();
@@ -61,12 +59,15 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
     }
 
     public void scheduleTask(String name, Function<ScheduledTaskRegistrar, ScheduledTask> scheduledTask, boolean cancelIfExists) {
+        if (name == null) {
+            return;
+        }
         tasks.compute(name, (k, v) -> {
             if (cancelIfExists && v != null) {
                 v.cancel();
             }
             ScheduledTask task = scheduledTask.apply(registrar);
-            taskMetadata.put(task, ImmutableMap.of("name", k, "created", Instant.now()));
+            taskMetadata.put(task, new TaskMetaData(k, Instant.now()));
             LOG.info("Task {} scheduled", k);
             return task;
         });
@@ -74,19 +75,19 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
 
     public void scheduleFixedDelayTask(String name, Runnable task, Instant firstTime, Duration period, boolean cancelIfExists) {
         scheduleTask(name,
-            r -> r.scheduleFixedDelayTask(new FixedDelayTask(task, period.toMillis(), ChronoUnit.MILLIS.between(Instant.now(), firstTime))),
+            r -> r.scheduleFixedDelayTask(new FixedDelayTask(task, period, Duration.ofMillis(ChronoUnit.MILLIS.between(Instant.now(), firstTime)))),
             cancelIfExists);
     }
 
     public void scheduleAtFixedRate(String name, Runnable task, Instant firstTime, Duration period, boolean cancelIfExists) {
         scheduleTask(name,
-            r -> r.scheduleFixedRateTask(new FixedRateTask(task, period.toMillis(), ChronoUnit.MILLIS.between(Instant.now(), firstTime))),
+            r -> r.scheduleFixedRateTask(new FixedRateTask(task, period, Duration.ofMillis(ChronoUnit.MILLIS.between(Instant.now(), firstTime)))),
             cancelIfExists);
     }
 
     public void scheduleOnce(String name, Runnable task, Instant firstTime, boolean cancelIfExists) {
         scheduleTask(name,
-            r -> r.scheduleTriggerTask(new TriggerTask(task, new RunOnceTrigger(ChronoUnit.MILLIS.between(Instant.now(), firstTime)))),
+            r -> r.scheduleTriggerTask(new TriggerTask(task, new RunOnceTrigger(Duration.ofMillis(ChronoUnit.MILLIS.between(Instant.now(), firstTime))))),
             cancelIfExists);
     }
 
@@ -107,15 +108,15 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
     }
 
     public static class RunOnceTrigger extends PeriodicTrigger {
-        public RunOnceTrigger(long initialDelay) {
-            super(0);
+        public RunOnceTrigger(Duration initialDelay) {
+            super(Duration.ZERO);
             setInitialDelay(initialDelay);
         }
 
         @Override
-        public Date nextExecutionTime(TriggerContext triggerContext) {
-            if (triggerContext.lastCompletionTime() == null) { // hasn't executed yet
-                return super.nextExecutionTime(triggerContext);
+        public Instant nextExecution(TriggerContext triggerContext) {
+            if (triggerContext.lastCompletion() == null) { // hasn't executed yet
+                return super.nextExecution(triggerContext);
             }
             return null;
         }
@@ -130,10 +131,12 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
         @ReadOperation
         public WebEndpointResponse<Map<String, Map<String, Object>>> info() {
             Map<String, Map<String, Object>> map = taskService.tasks.entrySet().stream().map(e -> {
-                Map<String, Object> metadata = new HashMap<>(taskService.taskMetadata.getOrDefault(e.getValue(), Collections.emptyMap()));
+                Map<String, Object> metadata = Optional.ofNullable(taskService.taskMetadata.get(e.getValue()))
+                        .map(TaskMetaData::toMap).orElse(Collections.emptyMap());
                 metadata.put("scheduledTask", e.getValue());
                 metadata.put("scheduledBy", e.getValue().getTask().getRunnable().getClass().getName());
-                metadata.put("runMetadata", getRunMetadata((Instant) metadata.get("created"), e.getValue(), Instant.now()));
+                metadata.put("runMetadata",
+                        getRunMetadata((Instant) metadata.get("created"), e.getValue(), Instant.now()));
                 return Pair.of(e.getKey(), metadata);
             }).collect(toMap(p -> p.getKey(), p -> p.getValue()));
             return new WebEndpointResponse<>(map);
@@ -144,7 +147,7 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
                 TriggerTask task = (TriggerTask) scheduledTask.getTask();
                 if (task.getTrigger() instanceof RunOnceTrigger) {
                     RunOnceTrigger trigger = (RunOnceTrigger) task.getTrigger();
-                    Instant firstRun = created.plusMillis(trigger.getInitialDelay());
+                    Instant firstRun = created.plusMillis(trigger.getInitialDelayDuration().toMillis());
                     if (firstRun.isAfter(now)) {
                         return new RunMetadata(firstRun, null, firstRun, RunMetadata.Type.RUN_ONCE);
                     } else {
@@ -153,7 +156,7 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
                 }
             } else if (scheduledTask.getTask() instanceof IntervalTask) {
                 IntervalTask task = (IntervalTask) scheduledTask.getTask();
-                Instant firstRun = created.plusMillis(task.getInitialDelay());
+                Instant firstRun = created.plusMillis(task.getInitialDelayDuration().toMillis());
                 long millis = ChronoUnit.MILLIS.between(firstRun, now);
                 if (millis < 0) {
                     // firstRun will happen in the future
@@ -161,10 +164,10 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
                             task instanceof FixedRateTask ? RunMetadata.Type.FIXED_RATE : RunMetadata.Type.FIXED_DELAY);
                 } else {
                     // firstRun happened in the past
-                    long runs = millis / task.getInterval();
+                    long runs = millis / task.getIntervalDuration().toMillis();
                     if (task instanceof FixedRateTask) {
-                        Instant lastRun = firstRun.plusMillis(task.getInterval() * runs);
-                        Instant nextRun = lastRun.plusMillis(task.getInterval());
+                        Instant lastRun = firstRun.plusMillis(task.getIntervalDuration().toMillis() * runs);
+                        Instant nextRun = lastRun.plusMillis(task.getIntervalDuration().toMillis());
                         return new RunMetadata(firstRun, lastRun, nextRun, RunMetadata.Type.FIXED_RATE);
                     } else if (task instanceof FixedDelayTask) {
                         if (runs < 1) {
@@ -216,4 +219,23 @@ public class TaskSchedulingService implements ScheduledTaskHolder {
             }
         }
     }
+
+    private static class TaskMetaData {
+        private final String name;
+        private final Instant created;
+
+        public TaskMetaData(String name, Instant created) {
+            super();
+            this.name = name;
+            this.created = created;
+        }
+
+        public Map<String, Object> toMap() {
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("name", name);
+            map.put("created", created);
+            return map;
+        }
+    }
+
 }

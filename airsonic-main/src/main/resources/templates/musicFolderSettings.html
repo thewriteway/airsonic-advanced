@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 
 <html><head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 
     <script th:inline="javascript">
         function init() {
@@ -14,12 +14,10 @@
                 parent.frames.left.location.href="left";
             }
 
-            updateEnableCueIndexing();
             updateClearFullScan();
 
             /*[+
             $([[|#${#ids.next('fullScan')}|]]).change(function() {updateClearFullScan();});
-            $([[|#${#ids.next('enableCueIndexing')}|]]).change(function() {updateEnableCueIndexing();});
             +]*/
         }
 
@@ -30,17 +28,6 @@
                 $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("checked", false);
             } else {
                 $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("disabled", false);
-            }
-            +]*/
-        }
-
-        function updateEnableCueIndexing() {
-            /*[+
-            if (!$([[|#${#ids.next('enableCueIndexing')}|]]).prop("checked")) {
-                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("disabled", true)
-                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("checked", false)
-            } else {
-                $([[|#${#ids.next('hideIndexedFiles')}|]]).prop("disabled", false)
             }
             +]*/
         }
@@ -56,7 +43,7 @@
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
 
-<th:block th:replace="settingsHeader::header(cat='musicFolder',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='musicFolder',toast=${settings_toast})}" />
 
 <form th:action="@{/musicFolderSettings}" th:object="${command}" method="post">
 <table class="indent">
@@ -132,19 +119,19 @@
 
 </table>
 
-    <p class="forward"><a href="userSettings" th:text="#{musicfoldersettings.access}"></a></p>
+    <p class="forward"><a th:href="@{/userSettings}" th:text="#{musicfoldersettings.access}"></a></p>
     <p class="detail" style="width:60%;white-space:normal;margin-top:-10px;" th:text="#{musicfoldersettings.access.description}"></p>
     
     <div>
         <span th:text="#{musicfoldersettings.uploadsfolder}"></span>
 	    <input th:field="*{uploadsFolder}" size="70"/>
-        <th:block th:replace="helpToolTip(topic=uploadsfolderpattern)" />
+        <th:block th:replace="~{helpToolTip((topic=uploadsfolderpattern))}" />
     </div>
 
     <div>
         <span th:text="#{musicfoldersettings.excludepattern}"></span>
         <input th:field="*{excludePatternString}" size="70"/>
-        <th:block th:replace="helpToolTip(topic=excludepattern)" />
+        <th:block th:replace="~{helpToolTip((topic=excludepattern))}" />
     </div>
 
     <div>
@@ -155,23 +142,23 @@
     <div>
         <input type="checkbox" th:field="*{enableCueIndexing}" size="70" class="checkbox"/>
         <label th:for="${#ids.prev('enableCueIndexing')}" th:text="#{musicfoldersettings.enablecueindexing}"></label>
-        <th:block th:replace="helpToolTip(topic=enablecueindexing)" />
+        <th:block th:replace="~{helpToolTip((topic=enablecueindexing))}" />
     </div>
-    <div style="margin-left:1em;">
-        <input type="checkbox" th:field="*{hideIndexedFiles}" size="70"/>
-        <label th:for="${#ids.prev('hideIndexedFiles')}" th:text="#{musicfoldersettings.hideindexedfiles}"></label>
-        <th:block th:replace="helpToolTip(topic=hideindexedfiles)" />
+    <div>
+        <input type="checkbox" th:field="*{hideVirtualTracks}" size="70"/>
+        <label th:for="${#ids.prev('hideVirtualTracks')}" th:text="#{musicfoldersettings.hidevirtualtracks}"></label>
+        <th:block th:replace="~{helpToolTip((topic=hidevirtualtracks))}" />
     </div>
 
     <div>
         <input type="checkbox" th:field="*{fullScan}" size="70"/>
         <label th:for="${#ids.prev('fullScan')}" th:text="#{musicfoldersettings.fullscan}"></label>
-        <th:block th:replace="helpToolTip(topic=fullscan)" />
+        <th:block th:replace="~{helpToolTip((topic=fullscan))}" />
     </div>
     <div style="margin-left:1em;">
         <input type="checkbox" th:field="*{clearFullScanSettingAfterScan}" size="70"/>
         <label th:for="${#ids.prev('clearFullScanSettingAfterScan')}" th:text="#{musicfoldersettings.fullscanclear}"></label>
-        <th:block th:replace="helpToolTip(topic=clearfullscan)" />
+        <th:block th:replace="~{helpToolTip((topic=clearfullscan))}" />
     </div>
 
     <div style="padding-top: 0.5em;padding-bottom: 0.3em">
@@ -194,7 +181,7 @@
     <table>
         <tr>
             <td><div class="forward"><a href="musicFolderSettings?scanNow" th:text="#{musicfoldersettings.scannow}"></a></div></td>
-            <td><th:block th:replace="helpToolTip(topic=scanMediaFolders)" /></td>
+            <td><th:block th:replace="~{helpToolTip((topic=scanMediaFolders))}" /></td>
         </tr>
     </table>
 

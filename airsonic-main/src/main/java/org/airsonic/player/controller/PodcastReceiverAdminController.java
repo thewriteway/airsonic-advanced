@@ -41,7 +41,7 @@ import java.util.List;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/podcastReceiverAdmin")
+@RequestMapping({"/podcastReceiverAdmin", "/podcastReceiverAdmin.view"})
 public class PodcastReceiverAdminController {
 
     @Autowired
@@ -55,12 +55,12 @@ public class PodcastReceiverAdminController {
 
     @RequestMapping(method = { RequestMethod.POST, RequestMethod.GET })
     protected ModelAndView handleRequestInternal(
-            @RequestParam(required = false) Integer channelId,
-            @RequestParam(required = false) String add,
-            @RequestParam(required = false) List<Integer> downloadEpisode,
-            @RequestParam(required = false) String deleteChannel,
-            @RequestParam(required = false) List<Integer> deleteEpisode,
-            @RequestParam(required = false) String refresh) throws Exception {
+            @RequestParam(required = false, name = "channelId") Integer channelId,
+            @RequestParam(required = false, name = "add") String add,
+            @RequestParam(required = false, name = "downloadEpisode") List<Integer> downloadEpisode,
+            @RequestParam(required = false, name = "deleteChannel") String deleteChannel,
+            @RequestParam(required = false, name = "deleteEpisode") List<Integer> deleteEpisode,
+            @RequestParam(required = false, name = "refresh") String refresh) throws Exception {
 
         if (add != null) {
             String url = StringUtils.trim(add);

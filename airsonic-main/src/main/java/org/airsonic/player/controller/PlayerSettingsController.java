@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -47,7 +47,7 @@ import java.util.List;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/playerSettings")
+@RequestMapping({"/playerSettings", "/playerSettings.view"})
 public class PlayerSettingsController {
 
     @Autowired

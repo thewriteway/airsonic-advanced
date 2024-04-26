@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -22,22 +23,22 @@ package org.airsonic.player.service;
 import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.TestCaseUtils;
 import org.airsonic.player.config.AirsonicCueConfig;
-import org.airsonic.player.config.AirsonicDefaultFolderConfig;
+import org.airsonic.player.config.AirsonicFolderConfig;
 import org.airsonic.player.config.AirsonicHomeConfig;
-import org.airsonic.player.util.HomeRule;
 import org.apache.commons.configuration2.spring.ConfigurationPropertySource;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -46,46 +47,46 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit test of {@link SettingsService}.
  *
  * @author Sindre Mehus
  */
-@RunWith(SpringRunner.class)
-@EnableConfigurationProperties({AirsonicHomeConfig.class, AirsonicDefaultFolderConfig.class, AirsonicCueConfig.class})
-@TestPropertySource(properties = {
-        "airsonic.cue.enabled=true",
-        "airsonic.cue.hide-indexed-files=true"
-})
+@SpringBootTest
 public class SettingsServiceTestCase {
 
-    @ClassRule
-    public static HomeRule home = new HomeRule();
+    @TempDir
+    private static Path airsonicHome;
 
     private SettingsService settingsService;
 
     @Autowired
-    StandardEnvironment env;
+    private StandardEnvironment env;
 
     @Autowired
-    AirsonicHomeConfig homeConfig;
+    private AirsonicFolderConfig defaultFolderConfig;
 
     @Autowired
-    AirsonicDefaultFolderConfig defaultFolderConfig;
+    private AirsonicCueConfig cueConfig;
 
-    @Autowired
-    AirsonicCueConfig cueConfig;
+    @BeforeAll
+    public static void setup() {
+        System.setProperty("airsonic.home", airsonicHome.toString());
+    }
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    public void setUpEach() throws IOException {
         TestCaseUtils.cleanAirsonicHomeForTest();
+        FileUtils.deleteDirectory(airsonicHome.toFile());
+        Files.createDirectories(airsonicHome);
         ConfigurationPropertiesService.reset();
-
+        cueConfig.setEnabled(true);
+        cueConfig.setHideIndexedFiles(true);
         settingsService = newSettingsService();
     }
 
@@ -93,7 +94,7 @@ public class SettingsServiceTestCase {
         SettingsService settingsService = new SettingsService();
         env.getPropertySources().addFirst(new ConfigurationPropertySource("airsonic-pre-init-configs", ConfigurationPropertiesService.getInstance().getConfiguration()));
         settingsService.setEnvironment(env);
-        settingsService.setAirsonicConfig(homeConfig);
+        settingsService.setAirsonicConfig(new AirsonicHomeConfig(airsonicHome.toString(), null));
         settingsService.setAirsonicDefaultFolderConfig(defaultFolderConfig);
         settingsService.setAirsonicCueConfig(cueConfig);
         return settingsService;
@@ -101,23 +102,23 @@ public class SettingsServiceTestCase {
 
     @Test
     public void testDefaultValues() {
-        assertEquals("Wrong default language.", "en", settingsService.getLocale().getLanguage());
-        assertEquals("Wrong default index creation interval.", 1, settingsService.getIndexCreationInterval());
-        assertEquals("Wrong default index creation hour.", 3, settingsService.getIndexCreationHour());
-        assertTrue("Wrong default playlist folder.", settingsService.getPlaylistFolder().endsWith("playlists"));
-        assertEquals("Wrong default theme.", "default", settingsService.getThemeId());
-        assertEquals("Wrong default Podcast episode retention count.", 10, settingsService.getPodcastEpisodeRetentionCount());
-        assertEquals("Wrong default Podcast episode download count.", 1, settingsService.getPodcastEpisodeDownloadCount());
-        assertEquals("Wrong default Podcast update interval.", 24, settingsService.getPodcastUpdateInterval());
-        assertEquals("Wrong default LDAP enabled.", false, settingsService.isLdapEnabled());
-        assertEquals("Wrong default LDAP URL.", "ldap://host.domain.com:389/cn=Users,dc=domain,dc=com", settingsService.getLdapUrl());
-        assertNull("Wrong default LDAP manager DN.", settingsService.getLdapManagerDn());
-        assertNull("Wrong default LDAP manager password.", settingsService.getLdapManagerPassword());
-        assertEquals("Wrong default LDAP search filter.", "(sAMAccountName={0})", settingsService.getLdapSearchFilter());
-        assertEquals("Wrong default LDAP auto-shadowing.", false, settingsService.isLdapAutoShadowing());
+        assertEquals("en", settingsService.getLocale().getLanguage());
+        assertEquals(1, settingsService.getIndexCreationInterval());
+        assertEquals(3, settingsService.getIndexCreationHour());
+        assertTrue(settingsService.getPlaylistFolder().endsWith("playlists"));
+        assertEquals("default", settingsService.getThemeId());
+        assertEquals(10, settingsService.getPodcastEpisodeRetentionCount());
+        assertEquals(1, settingsService.getPodcastEpisodeDownloadCount());
+        assertEquals(24, settingsService.getPodcastUpdateInterval());
+        assertEquals(false, settingsService.isLdapEnabled());
+        assertEquals("ldap://host.domain.com:389/cn=Users,dc=domain,dc=com", settingsService.getLdapUrl());
+        assertNull(settingsService.getLdapManagerDn());
+        assertNull(settingsService.getLdapManagerPassword());
+        assertEquals("(sAMAccountName={0})", settingsService.getLdapSearchFilter());
+        assertEquals(false, settingsService.isLdapAutoShadowing());
         assertEquals("30m", settingsService.getSessionDuration());
-        assertEquals("Wrong default enableCueIndexing", true, settingsService.getEnableCueIndexing());
-        assertEquals("Wrong default hideIndexedFile.", true, settingsService.getHideIndexedFiles());
+        assertEquals(true, settingsService.getEnableCueIndexing());
+        assertEquals(true, settingsService.getHideVirtualTracks());
     }
 
     @Test
@@ -145,7 +146,7 @@ public class SettingsServiceTestCase {
         settingsService.setLdapSearchFilter("newLdapSearchFilter");
         settingsService.setLdapAutoShadowing(true);
         settingsService.setEnableCueIndexing(false);
-        settingsService.setHideIndexedFiles(false);
+        settingsService.setHideVirtualTracks(false);
 
         verifySettings(settingsService);
 
@@ -156,34 +157,34 @@ public class SettingsServiceTestCase {
     }
 
     private void verifySettings(SettingsService ss) {
-        assertEquals("Wrong index string.", "indexString", ss.getIndexString());
-        assertEquals("Wrong ignored articles.", "a the foo bar", ss.getIgnoredArticles());
-        assertEquals("Wrong shortcuts.", "new incoming \"rock 'n' roll\"", ss.getShortcuts());
-        assertTrue("Wrong ignored articles array.", Arrays.equals(new String[] {"a", "the", "foo", "bar"}, ss.getIgnoredArticlesAsArray()));
-        assertTrue("Wrong shortcut array.", Arrays.equals(new String[] {"new", "incoming", "rock 'n' roll"}, ss.getShortcutsAsArray()));
-        assertEquals("Wrong playlist folder.", "playlistFolder", ss.getPlaylistFolder());
-        assertEquals("Wrong music mask.", "mp3 ogg  aac", ss.getMusicFileTypes());
+        assertEquals("indexString", ss.getIndexString());
+        assertEquals("a the foo bar", ss.getIgnoredArticles());
+        assertEquals("new incoming \"rock 'n' roll\"", ss.getShortcuts());
+        assertTrue(Arrays.equals(new String[] {"a", "the", "foo", "bar"}, ss.getIgnoredArticlesAsArray()));
+        assertTrue(Arrays.equals(new String[] {"new", "incoming", "rock 'n' roll"}, ss.getShortcutsAsArray()));
+        assertEquals("playlistFolder", ss.getPlaylistFolder());
+        assertEquals("mp3 ogg  aac", ss.getMusicFileTypes());
         assertThat(ss.getMusicFileTypesSet()).containsOnly("mp3", "ogg", "aac");
-        assertEquals("Wrong cover art mask.", "jpeg gif  png", ss.getCoverArtFileTypes());
+        assertEquals("jpeg gif  png", ss.getCoverArtFileTypes());
         assertThat(ss.getCoverArtFileTypesSet()).containsOnly("jpeg", "gif", "png");
-        assertEquals("Wrong welcome message.", "welcomeMessage", ss.getWelcomeMessage());
-        assertEquals("Wrong login message.", "loginMessage", ss.getLoginMessage());
-        assertEquals("Wrong session duration.", "60m", settingsService.getSessionDuration());
-        assertEquals("Wrong locale.", Locale.CANADA_FRENCH, ss.getLocale());
-        assertEquals("Wrong theme.", "dark", ss.getThemeId());
-        assertEquals("Wrong index creation interval.", 4, ss.getIndexCreationInterval());
-        assertEquals("Wrong index creation hour.", 9, ss.getIndexCreationHour());
-        assertEquals("Wrong Podcast episode retention count.", 5, settingsService.getPodcastEpisodeRetentionCount());
-        assertEquals("Wrong Podcast episode download count.", -1, settingsService.getPodcastEpisodeDownloadCount());
-        assertEquals("Wrong Podcast update interval.", -1, settingsService.getPodcastUpdateInterval());
-        assertTrue("Wrong LDAP enabled.", settingsService.isLdapEnabled());
-        assertEquals("Wrong LDAP URL.", "newLdapUrl", settingsService.getLdapUrl());
-        assertEquals("Wrong LDAP manager DN.", "admin", settingsService.getLdapManagerDn());
-        assertEquals("Wrong LDAP manager password.", "secret", settingsService.getLdapManagerPassword());
-        assertEquals("Wrong LDAP search filter.", "newLdapSearchFilter", settingsService.getLdapSearchFilter());
-        assertTrue("Wrong LDAP auto-shadowing.", settingsService.isLdapAutoShadowing());
-        assertFalse("Wrong default enableCueIndexing", settingsService.getEnableCueIndexing());
-        assertFalse("Wrong default hideIndexedFile.", settingsService.getHideIndexedFiles());
+        assertEquals("welcomeMessage", ss.getWelcomeMessage());
+        assertEquals("loginMessage", ss.getLoginMessage());
+        assertEquals("60m", settingsService.getSessionDuration());
+        assertEquals(Locale.CANADA_FRENCH, ss.getLocale());
+        assertEquals("dark", ss.getThemeId());
+        assertEquals(4, ss.getIndexCreationInterval());
+        assertEquals(9, ss.getIndexCreationHour());
+        assertEquals(5, settingsService.getPodcastEpisodeRetentionCount());
+        assertEquals(-1, settingsService.getPodcastEpisodeDownloadCount());
+        assertEquals(-1, settingsService.getPodcastUpdateInterval());
+        assertTrue(settingsService.isLdapEnabled());
+        assertEquals("newLdapUrl", settingsService.getLdapUrl());
+        assertEquals("admin", settingsService.getLdapManagerDn());
+        assertEquals("secret", settingsService.getLdapManagerPassword());
+        assertEquals("newLdapSearchFilter", settingsService.getLdapSearchFilter());
+        assertTrue(settingsService.isLdapAutoShadowing());
+        assertFalse(settingsService.getEnableCueIndexing());
+        assertFalse(settingsService.getHideVirtualTracks());
     }
 
     @Test

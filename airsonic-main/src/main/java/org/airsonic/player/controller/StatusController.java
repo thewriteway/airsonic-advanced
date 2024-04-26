@@ -24,8 +24,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Controller for the status page.
@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/status")
+@RequestMapping({"/status", "/status.view"})
 public class StatusController {
     @GetMapping
     protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) {

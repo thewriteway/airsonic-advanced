@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -46,7 +46,7 @@ import java.util.*;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping("/randomPlayQueue.view")
+@RequestMapping({"/randomPlayQueue.view", "/randomPlayQueue"})
 public class RandomPlayQueueController {
 
     @Autowired

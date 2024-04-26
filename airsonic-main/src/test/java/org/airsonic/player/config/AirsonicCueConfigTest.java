@@ -66,7 +66,9 @@ public class AirsonicCueConfigTest {
             "false, false, false, false"
         })
         public void testAirsonicCueConfig(boolean enabled, boolean hideIndexedFiles, boolean expectedEnabled, boolean expectedHideIndexedFiles) {
-            AirsonicCueConfig airsonicCueConfig = new AirsonicCueConfig(enabled, hideIndexedFiles);
+            AirsonicCueConfig airsonicCueConfig = new AirsonicCueConfig();
+            airsonicCueConfig.setEnabled(enabled);
+            airsonicCueConfig.setHideIndexedFiles(hideIndexedFiles);
             assertEquals(expectedEnabled, airsonicCueConfig.isEnabled());
             assertEquals(expectedHideIndexedFiles, airsonicCueConfig.isHideIndexedFiles());
         }

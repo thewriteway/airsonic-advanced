@@ -21,15 +21,15 @@
 
 <html>
 <head>
-    <th:block th:replace="head" />
-    <th:block th:replace="jquery" />
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
 </head>
 
 <body class="mainframe bgcolor1">
 <script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
 <script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
 
-<th:block th:replace="settingsHeader::header(cat='sonos',toast=${settings_toast})" />
+<th:block th:replace="~{settingsHeader::header(cat='sonos',toast=${settings_toast})}" />
 
 <form method="post" action="sonosSettings.view">
     <input

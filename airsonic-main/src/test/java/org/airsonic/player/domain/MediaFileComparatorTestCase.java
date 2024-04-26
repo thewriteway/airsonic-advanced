@@ -19,16 +19,19 @@
  */
 package org.airsonic.player.domain;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Sindre Mehus
  * @version $Id$
  */
-public class MediaFileComparatorTestCase extends TestCase {
+public class MediaFileComparatorTestCase {
 
     private final MediaFileComparator comparator = new MediaFileComparator(true);
 
+    @Test
     public void testCompareAlbums() {
 
         MediaFile albumA2012 = new MediaFile();
@@ -65,6 +68,7 @@ public class MediaFileComparatorTestCase extends TestCase {
         assertEquals(1, comparator.compare(albumB2012, albumA2012));
     }
 
+    @Test
     public void testCompareDiscNumbers() {
 
         MediaFile discXtrack1 = new MediaFile();
