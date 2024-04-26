@@ -2,53 +2,60 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ 'main' ]
-    paths-ignore:
-      - "**.md"
-      - "*.txt"
-      - ".github/**" 
+    branches: [ "main" ]
   pull_request:
-    branches: [ 'main' ]
-    paths-ignore:
-      - "**.md"
-      - "*.txt"
-      - ".github/**" 
+    branches: [ "main" ]
   schedule:
-    - cron: '0 19 * * 6'
+    - cron: '25 13 * * 6'
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     permissions:
+      security-events: write
+      packages: read
       actions: read
       contents: read
-      security-events: write
 
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript', 'java' ]
+        include:
+        - language: java
+        - language: javascript
+          build-mode: none
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    
-    - name: Setup Java
+
+    # Setup Java 21
+    - name: Set up JDK 21
+      if: matrix.language == 'java'
       uses: actions/setup-java@v4
       with:
-        java-version: 17
-        distribution: 'temurin'
-          
+        java-version: '21'
+        distribution: 'temurin' # You can change this to match your preferred distribution
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
 
-    - if: matrix.language == 'java'
-      name: Build
-      run: mvn package -DskipTests -Dcheckstyle.skip=true
-        
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+      if: matrix.build-mode != 'manual' && matrix.language == 'java'
+
+    # Custom build step if autobuild is not suitable
+    - if: matrix.build-mode == 'manual' && matrix.language == 'java'
+      run: |
+        echo 'Replace this with commands to build your code, for example:'
+        echo '  ./gradlew build'
+        echo '  mvn package'
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
