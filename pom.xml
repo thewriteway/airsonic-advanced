@@ -363,6 +363,9 @@
                         <configuration>
                             <failOnWarning>${failOnDependencyWarning}</failOnWarning>
                             <ignoreNonCompile>true</ignoreNonCompile>
+  <ignoredDependencies>
+   <ignoredDependency>org.springframework:spring-aspects:*</ignoredDependency>
+                </ignoredDependencies>
                             <ignoredUsedUndeclaredDependencies>
                                 <ignoredUsedUndeclaredDependency>org.springframework:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.springframework.security:*</ignoredUsedUndeclaredDependency>
