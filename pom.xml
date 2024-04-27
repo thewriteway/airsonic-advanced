@@ -61,7 +61,6 @@
 
     <modules>
         <module>subsonic-rest-api</module>
-        <module>airsonic-sonos-api</module>
         <module>airsonic-main</module>
     </modules>
 
@@ -380,16 +379,18 @@
                                 <ignoredUnusedDeclaredDependency>jakarta.xml.ws:jakarta.xml.ws-api</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>jakarta.xml.bind:jakarta.xml.bind-api*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>jakarta.mail:jakarta.mail*</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>org.apache.cxf:cxf-rt-frontend-jaxws</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>org.apache.cxf:cxf-rt-databinding-jaxb</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>org.apache.cxf:cxf-spring-boot-autoconfigure</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.apache.cxf:*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>jakarta.annotation:jakarta.annotation-api</ignoredUnusedDeclaredDependency>
 				                <ignoredUnusedDeclaredDependency>org.springframework:spring-aspects</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.yaml:snakeyaml</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>org.eclipse.persistence:org.eclipse.persistence.moxy</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>org.apache.cxf:cxf-tools-wsdlto-databinding-jaxb</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.jsoup:jsoup</ignoredUnusedDeclaredDependency>
+                               <ignoredUnusedDeclaredDependency>org.eclipse.persistence:org.eclipse.persistence.moxy</ignoredUnusedDeclaredDependency>
+
                                 <ignoredUsedUndeclaredDependency>org.glassfish.jaxb:jaxb-runtime</ignoredUsedUndeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
+                     <ignoredNonTestScopedDependencies>
+                                <ignoredNonTestScopedDependency>jakarta.transaction:*</ignoredNonTestScopedDependency>
+                            </ignoredNonTestScopedDependencies>
                         </configuration>
                     </execution>
                 </executions>
@@ -420,7 +421,6 @@
             <id>docker</id>
             <modules>
                 <module>subsonic-rest-api</module>
-                <module>airsonic-sonos-api</module>
                 <module>airsonic-main</module>
                 <module>install/docker</module>
             </modules>
@@ -429,7 +429,6 @@
             <id>integration-test</id>
             <modules>
                 <module>subsonic-rest-api</module>
-                <module>airsonic-sonos-api</module>
                 <module>airsonic-main</module>
                 <module>install/docker</module>
                 <module>integration-test</module>
