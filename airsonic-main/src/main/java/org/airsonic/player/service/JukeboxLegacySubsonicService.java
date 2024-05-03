@@ -174,7 +174,7 @@ public class JukeboxLegacySubsonicService implements AudioPlayer.Listener {
         status = statusService.createStreamStatus(player);
         status.setMediaFile(file);
         status.addBytesTransferred(file.getFileSize());
-        mediaFileService.incrementPlayCount(file);
+        mediaFileService.incrementPlayCount(status.getPlayer(), file);
         playStatus = new PlayStatus(status.getId(), file, status.getPlayer(), status.getMillisSinceLastUpdate());
         statusService.addActiveLocalPlay(playStatus);
         scrobble(file, false);

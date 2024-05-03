@@ -77,6 +77,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -129,6 +130,8 @@ public class MediaFileService {
     private FFmpegParser ffmpegParser;
 
     private final double DURATION_EPSILON = 1e-2;
+
+    private final Map<Integer, Pair<Integer, Instant>> lastPlayed = new ConcurrentHashMap<>();
 
     public MediaFile getMediaFile(String pathName) {
         return getMediaFile(Paths.get(pathName));
@@ -1482,8 +1485,16 @@ public class MediaFileService {
      * directory and album.
      */
     @Transactional
-    public void incrementPlayCount(MediaFile file) {
+    public void incrementPlayCount(Player player, MediaFile file) {
         Instant now = Instant.now();
+
+        Pair<Integer, Instant> lastPlayedInfo = lastPlayed.computeIfAbsent(player.getId(), k -> Pair.of(file.getId(), now));
+        if (lastPlayedInfo.getLeft() == file.getId()) {
+            Double threshold = Math.max(1.0, file.getDuration() / 2);
+            if (Duration.between(lastPlayedInfo.getRight(), now).getSeconds() < threshold) {
+                return;
+            }
+        }
         file.setLastPlayed(now);
         file.setPlayCount(file.getPlayCount() + 1);
         updateMediaFile(file);
@@ -1501,6 +1512,8 @@ public class MediaFileService {
                 albumRepository.save(album);
             }
         );
+
+        lastPlayed.put(player.getId(), Pair.of(file.getId(), now));
     }
 
     public List<MediaFileEntry> toMediaFileEntryList(List<MediaFile> files, String username, boolean calculateStarred, boolean calculateFolderAccess,

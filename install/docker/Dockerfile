@@ -1,4 +1,5 @@
-FROM eclipse-temurin:17.0.10_7-jdk AS builder
+ARG IMAGE_JAVA_VERSION=17.0.10_7
+FROM eclipse-temurin:${IMAGE_JAVA_VERSION}-jdk AS builder
 WORKDIR /target
 
 COPY run.sh /usr/local/bin/run.sh
@@ -13,7 +14,7 @@ RUN mv WEB-INF/lib lib
 RUN mv WEB-INF/classes/META-INF cMETA-INF
 RUN mv WEB-INF/classes/liquibase cliquibase
 
-FROM eclipse-temurin:17.0.10_7-jre-jammy
+FROM eclipse-temurin:${IMAGE_JAVA_VERSION}-jre-jammy
 
 LABEL description="Airsonic-Advanced is a free, web-based media streamer, providing ubiquitous access to your music." \
       url="https://github.com/kagemomiji/airsonic-advanced"

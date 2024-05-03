@@ -135,6 +135,8 @@ public class InternetRadioService {
         return sources;
     }
 
+    private static final Set<String> DIRECT_PLAYABLE_TYPES = Set.of("audio/mpeg", "audio/aac", "audio/aacp");
+
     /**
      * Retrieve a list of sources from the given internet radio
      *
@@ -151,8 +153,6 @@ public class InternetRadioService {
             PLAYLIST_REMOTE_MAX_REDIRECTS
         );
     }
-
-    private static final Set<String> DIRECT_PLAYABLE_TYPES = Set.of("audio/mpeg", "audio/aac", "audio/aacp");
 
     /**
      * Retrieve a list of sources from the given internet radio.

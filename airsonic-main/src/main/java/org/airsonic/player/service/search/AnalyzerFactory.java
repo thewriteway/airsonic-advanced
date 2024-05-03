@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -69,9 +70,9 @@ public final class AnalyzerFactory {
      */
     private void addTokenFilterForUnderscoreRemovalAroundToken(Builder builder) throws IOException {
         builder
-            .addTokenFilter(PatternReplaceFilterFactory.class,
+            .addTokenFilter(PatternReplaceFilterFactory.NAME,
                     "pattern", "^\\_", "replacement", "", "replace", "all")
-            .addTokenFilter(PatternReplaceFilterFactory.class,
+            .addTokenFilter(PatternReplaceFilterFactory.NAME,
                     "pattern", "\\_$", "replacement", "", "replace", "all");
     }
 
@@ -91,45 +92,45 @@ public final class AnalyzerFactory {
      */
     private void addTokenFilterForTokenToDomainValue(Builder builder) throws IOException {
         builder
-            .addTokenFilter(PatternReplaceFilterFactory.class,
+            .addTokenFilter(PatternReplaceFilterFactory.NAME,
                     "pattern", "\\(", "replacement", "", "replace", "all")
-            .addTokenFilter(PatternReplaceFilterFactory.class,
+            .addTokenFilter(PatternReplaceFilterFactory.NAME,
                     "pattern", "\\)$", "replacement", "", "replace", "all")
-            .addTokenFilter(PatternReplaceFilterFactory.class,
+            .addTokenFilter(PatternReplaceFilterFactory.NAME,
                     "pattern", "\\)", "replacement", " ", "replace", "all")
-            .addTokenFilter(PatternReplaceFilterFactory.class,
+            .addTokenFilter(PatternReplaceFilterFactory.NAME,
                     "pattern", "\\{\\}", "replacement", "\\{ \\}", "replace", "all")
-            .addTokenFilter(PatternReplaceFilterFactory.class,
+            .addTokenFilter(PatternReplaceFilterFactory.NAME,
                     "pattern", "\\[\\]", "replacement", "\\[ \\]", "replace", "all");
     }
 
     private Builder createDefaultAnalyzerBuilder() throws IOException {
         Builder builder = CustomAnalyzer.builder()
-                .withTokenizer(StandardTokenizerFactory.class)
-                .addTokenFilter(CJKWidthFilterFactory.class)
-                .addTokenFilter(ASCIIFoldingFilterFactory.class, "preserveOriginal", "false")
-                .addTokenFilter(LowerCaseFilterFactory.class)
-                .addTokenFilter(StopFilterFactory.class, "words", STOP_WORDS)
-                .addTokenFilter(EnglishPossessiveFilterFactory.class);
+                .withTokenizer(StandardTokenizerFactory.NAME)
+                .addTokenFilter(CJKWidthFilterFactory.NAME)
+                .addTokenFilter(ASCIIFoldingFilterFactory.NAME, "preserveOriginal", "false")
+                .addTokenFilter(LowerCaseFilterFactory.NAME)
+                .addTokenFilter(StopFilterFactory.NAME, "words", STOP_WORDS)
+                .addTokenFilter(EnglishPossessiveFilterFactory.NAME);
         addTokenFilterForUnderscoreRemovalAroundToken(builder);
         return builder;
     }
 
     private Builder createArtistAnalyzerBuilder() throws IOException {
         Builder builder = CustomAnalyzer.builder()
-                .withTokenizer(StandardTokenizerFactory.class)
-                .addTokenFilter(CJKWidthFilterFactory.class)
-                .addTokenFilter(ASCIIFoldingFilterFactory.class, "preserveOriginal", "false")
-                .addTokenFilter(LowerCaseFilterFactory.class)
-                .addTokenFilter(StopFilterFactory.class, "words", STOP_WORDS_ARTIST)
-                .addTokenFilter(EnglishPossessiveFilterFactory.class);
+                .withTokenizer(StandardTokenizerFactory.NAME)
+                .addTokenFilter(CJKWidthFilterFactory.NAME)
+                .addTokenFilter(ASCIIFoldingFilterFactory.NAME, "preserveOriginal", "false")
+                .addTokenFilter(LowerCaseFilterFactory.NAME)
+                .addTokenFilter(StopFilterFactory.NAME, "words", STOP_WORDS_ARTIST)
+                .addTokenFilter(EnglishPossessiveFilterFactory.NAME);
         addTokenFilterForUnderscoreRemovalAroundToken(builder);
         return builder;
     }
 
     private Builder createKeywordAnalyzerBuilder() throws IOException {
         return CustomAnalyzer.builder()
-                .withTokenizer(KeywordTokenizerFactory.class);
+                .withTokenizer(KeywordTokenizerFactory.NAME);
     }
 
     private Builder createGenreAnalyzerBuilder() throws IOException {

@@ -25,6 +25,8 @@ import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.Nonnull;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,6 +86,14 @@ public class PlayQueueService {
         }
         webSocketClient.sendToUser(player.getUsername(), "/queue/playqueues/" + player.getId() + "/playstatus",
                 PlayQueue.Status.STOPPED);
+    }
+
+    public void endMedia(Player player, @Nonnull Integer mediaFileId) {
+        MediaFile file = mediaFileService.getMediaFile(mediaFileId);
+        if (file == null) {
+            return;
+        }
+        mediaFileService.incrementPlayCount(player, file);
     }
 
     public void toggleStartStop(Player player) {

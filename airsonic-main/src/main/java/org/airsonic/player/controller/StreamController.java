@@ -213,13 +213,17 @@ public class StreamController {
 
         Consumer<MediaFile> fileStartListener = mediaFile -> {
             LOG.info("{}: {} listening to {} in folder {}", player.getIpAddress(), player.getUsername(), FileUtil.getShortPath(mediaFile.getRelativePath()), mediaFile.getFolder().getId());
-            mediaFileService.incrementPlayCount(mediaFile);
             scrobble(mediaFile, player, false);
             status.setMediaFile(mediaFile);
             statusService.addActiveLocalPlay(
                     new PlayStatus(status.getId(), mediaFile, player, status.getMillisSinceLastUpdate()));
         };
-        Consumer<MediaFile> fileEndListener = mediaFile -> {
+        BiConsumer<Integer, MediaFile> fileEndListener = (readCount, mediaFile) -> {
+            if (readCount != null && readCount > 0 && player.getTechnology() != PlayerTechnology.WEB) {
+                // Increment play count if the file was actually played
+                // WEB player increments play count on the client side
+                mediaFileService.incrementPlayCount(player, mediaFile);
+            }
             scrobble(mediaFile, player, true);
             statusService.removeActiveLocalPlay(
                     new PlayStatus(status.getId(), mediaFile, player, status.getMillisSinceLastUpdate()));
@@ -382,6 +386,8 @@ public class StreamController {
                     + "source is corrupted or has grown larger", threshold);
         }
 
+        private static byte[] zeros = new byte[4096];
+
         @Override
         public int read() throws IOException {
             int read = super.read();
@@ -395,8 +401,6 @@ public class StreamController {
 
             return read;
         }
-
-        private static byte[] zeros = new byte[4096];
 
         @Override
         public int read(byte b[], int off, int len) throws IOException {

@@ -48,6 +48,15 @@ public class PlayQueueWSController {
         playQueueService.stop(player);
     }
 
+    @MessageMapping("/endMedia")
+    public void endMedia(@DestinationVariable("playerId") Integer playerId, Integer mediaFileId, SimpMessageHeaderAccessor headers) throws Exception {
+        if (mediaFileId == null) {
+            return;
+        }
+        Player player = getPlayer(playerId, headers);
+        playQueueService.endMedia(player, mediaFileId);
+    }
+
     @MessageMapping("/toggleStartStop")
     public void toggleStartStop(@DestinationVariable("playerId") Integer playerId, SimpMessageHeaderAccessor headers) throws Exception {
         Player player = getPlayer(playerId, headers);

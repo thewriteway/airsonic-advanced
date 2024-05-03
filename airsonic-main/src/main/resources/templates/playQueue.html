@@ -664,6 +664,8 @@
             
                 onEnded() {
                     this.setBookmark();
+                    var song = this.songs[this.currentSongIndex];
+                    top.StompClient.send("/app/playqueues/" + this.player.id + "/endMedia", song.id);
                     this.onNext(this.repeatStatus);
                 },
             
@@ -711,7 +713,7 @@
                         castAppID: "4FBFE470",
                         features: ["speed", "chromecast"],
                         defaultSpeed: "1.00",
-                        speeds: ["8.00", "2.00", "1.50", "1.25", "1.00", "0.75", "0.5"],
+                        speeds: ["2.00", "1.50", "1.25", "1.00", "0.75", "0.5"],
                         success(mediaElement, originalNode, instance) {
                             // "hack" html5 renderer and reinitialize speed
                             instance.media.rendererName = "html5";

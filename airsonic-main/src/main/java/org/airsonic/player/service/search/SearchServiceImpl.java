@@ -23,6 +23,7 @@ package org.airsonic.player.service.search;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.service.SearchService;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,9 +78,9 @@ public class SearchServiceImpl implements SearchService {
             result.setTotalHits(totalHits);
             int start = Math.min(offset, totalHits);
             int end = Math.min(start + count, totalHits);
-
+            StoredFields storedFields = searcher.storedFields();
             for (int i = start; i < end; i++) {
-                util.addIfAnyMatch(result, indexType, searcher.doc(topDocs.scoreDocs[i].doc));
+                util.addIfAnyMatch(result, indexType, storedFields.document(topDocs.scoreDocs[i].doc));
             }
 
         } catch (IOException e) {
@@ -106,9 +107,10 @@ public class SearchServiceImpl implements SearchService {
                 .collect(Collectors.toList());
 
         List<D> result = new ArrayList<>();
+        StoredFields storedFields = searcher.storedFields();
         while (!docs.isEmpty() && result.size() < count) {
             int randomPos = random.nextInt(docs.size());
-            Document document = searcher.doc(docs.get(randomPos));
+            Document document = storedFields.document(docs.get(randomPos));
             id2ListCallBack.accept(result, util.getId.apply(document));
             docs.remove(randomPos);
         }
@@ -221,9 +223,10 @@ public class SearchServiceImpl implements SearchService {
             result.setTotalHits(totalHits);
             int start = Math.min(offset, totalHits);
             int end = Math.min(start + count, totalHits);
+            StoredFields storedFields = searcher.storedFields();
 
             for (int i = start; i < end; i++) {
-                Document doc = searcher.doc(topDocs.scoreDocs[i].doc);
+                Document doc = storedFields.document(topDocs.scoreDocs[i].doc);
                 util.addIgnoreNull(result, indexType, util.getId.apply(doc), assignableClass);
             }
 

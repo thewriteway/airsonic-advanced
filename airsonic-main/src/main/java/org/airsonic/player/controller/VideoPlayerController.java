@@ -122,6 +122,7 @@ public class VideoPlayerController {
         // map.put("bitRates", BIT_RATES);
         map.put("defaultBitRate", streamUrls.getLeft());
         map.put("user", user);
+        map.put("playerId", playerId);
 
         return new ModelAndView("videoPlayer", "model", map);
     }

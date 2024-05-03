@@ -231,11 +231,10 @@ public class MediaScannerService {
                 })
                 .thenRunAsync(() -> playlistFileService.importPlaylists(), pool)
                 .whenComplete((r,e) -> {
-                    pool.shutdown();
-                })
-                .whenComplete((r,e) -> {
                     indexManager.stopIndexing(statistics);
+                    LOG.info("Indexing complete.");
                     setScanning(false);
+                    pool.shutdown();
                 });
     }
 

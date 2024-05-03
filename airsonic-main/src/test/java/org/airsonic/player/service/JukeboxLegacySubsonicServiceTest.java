@@ -132,7 +132,7 @@ public class JukeboxLegacySubsonicServiceTest {
 
             // onSongStart
             verify(statusService).createStreamStatus(mockedPlayer);
-            verify(mediaFileService).incrementPlayCount(mockedMediaFile);
+            verify(mediaFileService).incrementPlayCount(mockedPlayer, mockedMediaFile);
             verify(statusService).addActiveLocalPlay(any());
 
             // scrobble
@@ -254,7 +254,7 @@ public class JukeboxLegacySubsonicServiceTest {
             verify(secondAudioPlayer).setGain(eq(0.75f)); // default gain
             verify(secondAudioPlayer).play();
             verify(statusService).createStreamStatus(secondPlayer);
-            verify(mediaFileService).incrementPlayCount(secondMediaFile);
+            verify(mediaFileService).incrementPlayCount(secondPlayer, secondMediaFile);
             verify(audioScrobblerService).register(eq(secondMediaFile), eq("test"), eq(false), isNull());
         }
 
@@ -292,7 +292,7 @@ public class JukeboxLegacySubsonicServiceTest {
             verify(mockedAudioPlayer, times(2)).setGain(eq(0.75f)); // default gain
             verify(mockedAudioPlayer, times(2)).play();
             verify(statusService, times(2)).createStreamStatus(mockedPlayer);
-            verify(mediaFileService).incrementPlayCount(secondMediaFile);
+            verify(mediaFileService).incrementPlayCount(mockedPlayer, secondMediaFile);
             verify(audioScrobblerService).register(eq(secondMediaFile), eq("test"), eq(false), isNull());
 
         }

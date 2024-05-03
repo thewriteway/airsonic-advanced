@@ -332,7 +332,7 @@ public class HLSController {
         BiConsumer<InputStream, TransferStatus> inputStreamInit = (i, s) -> {
             LOG.info("{}: {} listening to {}", player.getIpAddress(), player.getUsername(), FileUtil.getShortPath(mediaFile.getRelativePath()));
             if (segmentIndex == 0)
-                this.mediaFileService.incrementPlayCount(mediaFile);
+                this.mediaFileService.incrementPlayCount(player, mediaFile);
         };
 
         Resource resource = new MonitoredResource(new PathResource(segmentFile),

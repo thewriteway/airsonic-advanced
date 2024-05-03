@@ -5,19 +5,21 @@ import org.airsonic.player.domain.PlayQueue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class PlayQueueInputStream extends InputStream {
     private final PlayQueue queue;
     private final Consumer<MediaFile> fileStartListener;
-    private final Consumer<MediaFile> fileEndListener;
+    private final BiConsumer<Integer, MediaFile> fileEndListener;
     private final Function<MediaFile, InputStream> streamGenerator;
     private InputStream currentStream;
     private MediaFile currentFile;
+    private Integer readCount = 0;
 
     public PlayQueueInputStream(PlayQueue queue, Consumer<MediaFile> fileStartListener,
-            Consumer<MediaFile> fileEndListener, Function<MediaFile, InputStream> streamGenerator) {
+            BiConsumer<Integer, MediaFile> fileEndListener, Function<MediaFile, InputStream> streamGenerator) {
         this.queue = queue;
         this.fileStartListener = fileStartListener;
         this.fileEndListener = fileEndListener;
@@ -71,6 +73,8 @@ public class PlayQueueInputStream extends InputStream {
             currentFile = file;
             fileStartListener.accept(currentFile);
             currentStream = streamGenerator.apply(currentFile);
+        } else {
+            readCount++;
         }
     }
 
@@ -80,9 +84,10 @@ public class PlayQueueInputStream extends InputStream {
             currentStream = null;
         }
         if (currentFile != null) {
-            fileEndListener.accept(currentFile);
+            fileEndListener.accept(readCount, currentFile);
             currentFile = null;
         }
+        readCount = 0;
     }
 
     @Override

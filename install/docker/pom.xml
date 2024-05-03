@@ -41,6 +41,9 @@
                                     <build>
                                         <dockerFile>${project.basedir}/Dockerfile</dockerFile>
                                         <tags>latest</tags>
+                                        <args>
+                                            <IMAGE_JAVA_VERSION>${docker.java.version}</IMAGE_JAVA_VERSION>
+                                        </args>
                                     </build>
                                 </image>
                             </images>

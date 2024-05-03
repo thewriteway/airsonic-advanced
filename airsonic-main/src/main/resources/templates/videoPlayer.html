@@ -62,7 +62,8 @@
           videoBookmarkFrequency: /*[(${model.videoBookmarkFrequency})]*/ 30,
           contentType: "[(${model.contentType})]",
           hideShare: /*[(${model.user.shareRole ? 'true': 'false'})]*/ false,
-          hideDownload: /*[(${model.user.downloadRole ? 'true': 'false'})]*/ false
+          hideDownload: /*[(${model.user.downloadRole ? 'true': 'false'})]*/ false,
+          playerId: /*[(${model.playerId})]*/ 0
         }
 
         function setBookmark() {
@@ -74,6 +75,11 @@
                 }
             }
         }
+        function onEnded() {
+            this.setBookmark();
+            top.StompClient.send("/app/playqueues/" + videoModel.playerId + "/endMedia", videoModel.videoId);
+        }
+ 
 
         function init() {
             $.get(videoModel.remoteCaptionsListUrl, data => {
@@ -95,7 +101,7 @@
                     path: "[(@{/script/mediaelement/renderers/dash.all-4.6.0.min.js})]"
                 },
                 defaultSpeed: "1.00",
-                speeds: ["8.00", "2.00", "1.50", "1.25", "1.00", "0.75", "0.5"],
+                speeds: ["2.00", "1.50", "1.25", "1.00", "0.75", "0.5"],
                 defaultQuality: "[(${model.defaultBitRate})]",
                 videoWidth: "100%",
                 videoHeight: "100%",
@@ -123,7 +129,7 @@
                     instance.setCurrentTime(videoModel.position/1000);
 
                     // Once playback reaches the end, go to the next song, if any.
-                    $(mediaElement).on("ended", () => vpr.setBookmark());
+                    $(mediaElement).on("ended", () => vpr.onEnded());
                     $(mediaElement).on("timeupdate", () => vpr.setBookmark());
                     $(mediaElement).on("seeked", () => vpr.setBookmark());
                     $(mediaElement).on("paused", () => vpr.setBookmark());

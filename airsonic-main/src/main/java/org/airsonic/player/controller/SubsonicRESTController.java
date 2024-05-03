@@ -1442,7 +1442,7 @@ public class SubsonicRESTController {
             Instant time = times.length == 0 ? null : Instant.ofEpochMilli(times[i]);
 
             statusService.addRemotePlay(new PlayStatus(UUID.randomUUID(), file, player, time == null ? Instant.now() : time));
-            mediaFileService.incrementPlayCount(file);
+            mediaFileService.incrementPlayCount(player, file);
             audioScrobblerService.register(file, player.getUsername(), submission, time);
         }
 

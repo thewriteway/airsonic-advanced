@@ -19,6 +19,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,6 +62,8 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @EnableConfigurationProperties({AirsonicHomeConfig.class})
 public class MediaScannerServiceTestCase {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MediaScannerServiceTestCase.class);
 
     @TempDir
     private static Path tempDir;
@@ -125,6 +129,7 @@ public class MediaScannerServiceTestCase {
      */
     @Test
     public void testScanLibrary() {
+        LOG.info("start testScanLibrary");
         Timer globalTimer = metrics.timer(MetricRegistry.name(MediaScannerServiceTestCase.class, "Timer.global"));
 
         Timer.Context globalTimerContext = globalTimer.time();
@@ -171,6 +176,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testSpecialCharactersInFilename() throws Exception {
+        LOG.info("start testSpecialCharactersInFilename");
         String directoryName = "Muff1nman\u2019s \uFF0FMusic";
         String fileName = "Muff1nman\u2019s\uFF0FPiano.mp3";
         Path artistDir = temporaryFolder.resolve(directoryName);
@@ -192,11 +198,13 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testNeverScanned() {
+        LOG.info("start testNeverScanned");
         mediaScannerService.neverScanned();
     }
 
     @Test
     public void testMusicBrainzReleaseIdTag() {
+        LOG.info("start testMusicBrainzReleaseIdTag");
 
         // Add the "Music3" folder to the database
         Path musicFolderFile = MusicFolderTestData.resolveMusic3FolderPath();
@@ -249,6 +257,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testMusicCue() {
+        LOG.info("start testMusicCue");
 
         // Add the "cue" folder to the database
         Path musicFolderFile = MusicFolderTestData.resolveMusicCueFolderPath();
@@ -312,6 +321,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testMusicCueWithDisableCueIndexing() {
+        LOG.info("start testMusicCueWithDisableCueIndexing");
 
         when(settingsService.getEnableCueIndexing()).thenReturn(false);
 
@@ -359,6 +369,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testMusicInvalidCueWithLengthError() {
+        LOG.info("start testMusicInvalidCueWithLengthError");
 
         when(settingsService.getEnableCueIndexing()).thenReturn(true);
 
@@ -405,6 +416,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testMusicInvalidCueWithWarning() {
+        LOG.info("start testMusicInvalidCueWithWarning");
 
         // Add the "cue" folder to the database
         Path musicFolderFile = MusicFolderTestData.resolveMusicInvalidCue3FolderPath();
@@ -451,7 +463,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testMusicWithCommmaFolderAndDuplicateBasenameAudio() {
-
+        LOG.info("start testMusicWithCommmaFolderAndDuplicateBasenameAudio");
         // Add the "Music4" folder to the database
         Path musicFolderFile = MusicFolderTestData.resolveMusic4FolderPath();
         MusicFolder musicFolder = new MusicFolder(musicFolderFile, "Music4", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS));
@@ -477,6 +489,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testMpcAudioTest() {
+        LOG.info("start testMpcAudioTest");
 
         // Add the "MusicMpc" folder to the database
         Path musicFolderFile = MusicFolderTestData.resolveMusicMpcFolderPath();
@@ -500,6 +513,7 @@ public class MediaScannerServiceTestCase {
 
     @Test
     public void testM4bAudioTest() {
+        LOG.info("start testM4bAudioTest");
 
         Path m4bAudioFile = MusicFolderTestData.resolveM4bAudioPath();
         MusicFolder musicFolder = new MusicFolder(m4bAudioFile, "m4b", Type.MEDIA, true,
