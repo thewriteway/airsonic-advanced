@@ -563,3 +563,33 @@ img {
 #zoom_img { display: block; cursor: pointer; width: 100%; border: 0; margin: 0; padding: 0; }
 #zoom_close { position: absolute; display: none; cursor: pointer; left: -15px; top: -15px; width: 30px; height: 30px; background: url(../script/closebox.png) no-repeat; }
 #zoom_spin { position: absolute; display: none; z-index: 525; width: 50px; height: 50px; background: url(../script/spin.png) no-repeat; }
+
+/* Feather icons */
+.feather {
+    vertical-align: middle;
+    width: 24px;
+    height: 24px;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+.feather-filled {
+    fill: currentColor;
+}
+
+.feather-xs {
+    width: 12px;
+    height: 12px;
+}
+
+.feather-sm {
+    width: 16px;
+    height: 16px;
+}
+
+.feather-lg {
+    width: 32px;
+    height: 32px;
+}   

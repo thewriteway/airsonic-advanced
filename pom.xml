@@ -121,7 +121,7 @@
             <dependency>
                 <groupId>org.glassfish.jaxb</groupId>
                 <artifactId>jaxb-runtime</artifactId>
-                <version>4.0.4</version>
+                <version>4.0.5</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.ant</groupId>
@@ -258,7 +258,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.21.2</version>
+                    <version>3.22.0</version>
                     <executions>
                         <execution>
                             <id>validate</id>

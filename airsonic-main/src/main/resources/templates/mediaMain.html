@@ -30,6 +30,31 @@
             padding-right:3px;
             padding-left:3px;
         }
+        #ancestors {
+            margin-bottom: 0.1em;
+        }
+        #ancestors svg, #mediaDirTitle svg{
+            margin-right: 0.2em;
+            vertical-align: text-top;
+        }
+        #mediaDirController {
+            margin-top: 0.8em;
+            padding: 0.5em 0;
+            border-top: 1px solid gray;
+        }
+        #mediaDirTitle {
+            font-size: 150%;
+            padding: 0;
+            border: 0;
+            margin: 0;
+        } 
+        #mediaDirController span {
+            margin-right: 0.3em;
+        }
+        #avgRating {
+            height: 20px;
+            margin-top: 0.5em;
+        }
     </style>
 <script type="text/javascript" th:inline="javascript"
         th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(model['initialPaginationSizeFiles'] ?: '') ) ?
@@ -90,6 +115,9 @@
 
         // ancestors
         populateAncestors();
+
+        // media dir title
+        populateMediaDirTitle();
 
         // comments
         updateComments();
@@ -205,7 +233,8 @@
         var urlBase = '[(@{/ratingJsp})]';
         if (mediaDir.averageRating && mediaDir.averageRating > 0) {
             $.get(urlBase + '?readOnly=true&rating=' + mediaDir.averageRating, data => {
-                $('#avgRating').html('&nbsp;&nbsp;'+data).show();
+                $('#avgRating').html(data);
+                $('#avgRating').prepend(feather.icons.users.toSvg({class: 'feather-sm'})).show();
             });
         } else {
             $('#avgRating').html('').hide();
@@ -768,6 +797,12 @@
                 getMediaDirectories(initialIds, initialPaths);
             }
         });
+
+        feather.replace();
+        <!-- add title to feather icons-->
+        Array.from(document.querySelectorAll('svg.feather[title]')).forEach((element) => {
+           element.insertAdjacentHTML('afterbegin', `<title>${element.attributes.title.value}</title>`);
+        });
     }
 
     function loadArtistInfo() {
@@ -824,10 +859,20 @@
         var ancestors = $("#ancestors").empty();
         for (var len = mediaDir.ancestors.length, i = len - 1; i >= 0; i--) {
             var ancestor = mediaDir.ancestors[i];
+            ancestors.append(feather.icons.folder.toSvg({class: 'feather-sm'}));
             ancestors.append($("<a>").attr("href", "#").attr("onclick", "getMediaDirectory(" + ancestor.id + ")").text(ancestor.title));
             ancestors.append(" » ");
         }
-        ancestors.append(mediaDir.title);
+    }
+
+    function populateMediaDirTitle() {
+        $("#mediaDirTitle").empty();
+        if (mediaDir.contentType == 'album') {
+            $("#mediaDirTitle").append(feather.icons.disc.toSvg());
+        } else {
+            $("#mediaDirTitle").append(feather.icons.folder.toSvg());
+        }
+        $("#mediaDirTitle").append(mediaDir.title);
     }
 
     function toggleMediaDirStar(status) {
@@ -845,10 +890,15 @@
 
     function updateStarImage() {
         if (mediaDir.starred) {
-            $("#starImage").attr("src", /*[[${#themes.code('ratingOnImage')}]]*/ "icons\/default\/ratingOn.svg");
+            const svgTitle = /*[[#{playlist.more.unstar}]]*/ "Unstar";
+            $("#starMediaDir").empty().append(feather.icons.star.toSvg({class: 'feather-filled', title: svgTitle}));
         } else {
-            $("#starImage").attr("src", /*[[${#themes.code('ratingOffImage')}]]*/ "icons\/default\/ratingOff.svg");
+            const svgTitle = /*[[#{playlist.more.star}]]*/ "Star";
+            $("#starMediaDir").empty().append(feather.icons.star.toSvg({title: svgTitle}));
         }
+        Array.from(document.querySelectorAll('#starMediaDir svg.feather[title]')).forEach((element) => {
+           element.insertAdjacentHTML('afterbegin', `<title>${element.attributes.title.value}</title>`);
+        });
     }
 
     function onStar(table, indices, status) {
@@ -1096,33 +1146,10 @@
 </script>
 </head>
 <body class="mainframe bgcolor1" onload="init();">
-<div style="float:left">
-    <h1>
-        <img id="starImage" th:src="${#themes.code('ratingOffImage')}"
-             onclick="toggleMediaDirStar(!mediaDir.starred); return false;" style="cursor:pointer;height:18px;" alt="">
-
-        <span id="ancestors" style="vertical-align: middle"></span>
-
-        <div id="avgRating" style="display: inline-block"></div>
-    </h1>
-
-    <h2 th:if="${model.partyMode != true}">
-        <div th:if="${model.user.streamRole}" class="pagetype-dependent type-album type-artist" style="display: inline-block;">
-            <span class="header"><a href="javascript:playAll()" th:text="#{main.playall}"></a></span> |
-            <span class="header"><a href="javascript:playRandom()" th:text="#{main.playrandom}"></a></span> |
-            <span class="header"><a href="javascript:addAll()" th:text="#{main.addall}"></a></span> |
-        </div>
-
-        <div th:if="${model.user.downloadRole}" class="pagetype-dependent type-album" style="display: inline-block;">
-            <span class="header"><a href="javascript:downloadAll()" th:text="#{main.downloadall}"></a></span> |
-        </div>
-
-        <div th:if="${model.user.coverArtRole}" class="pagetype-dependent type-album" style="display: inline-block;">
-            <span class="header"><a href="javascript:editTagsPage()" th:text="#{main.tags}"></a></span> |
-        </div>
-
-        <span th:if="${model.user.commentRole}" class="header"><a href="javascript:toggleComment()" th:text="#{main.comment}"></a></span> |
-    </h2>
+<div style="float:left" id="mediaInfo">
+    <p id="ancestors" style="vertical-align: middle"></p>
+    <p id="mediaDirTitle"></p>
+    <div id="avgRating"></div>
 </div>
 
 <div style="float:right;padding-right:1em">
@@ -1130,21 +1157,39 @@
     <img id="viewAsGrid" th:src="${#themes.code('viewAsGridImage')}" alt="" class="headerNotSelected" onclick="setViewAsList(false)"/>
 </div>
 <div style="clear:both"></div>
+<div id="mediaDirController">
+    <div style="display: inline-block">
+        <span><a href="javascript:toggleMediaDirStar(!mediaDir.starred);" id="starMediaDir"></a></span>
+    </div>
+    <th:block th:if="${model.partyMode != true}"> 
+        <div th:if="${model.user.streamRole}" class="pagetype-dependent type-album type-artist" style="display: inline-block;">
+            <span><a href="javascript:playAll()"><i data-feather="play" role="img" th:aria-label="#{main.playall}" th:title="#{main.playall}"></i></a></span> 
+            <span><a href="javascript:playRandom()"><i data-feather="shuffle" role="img" th:aria-label="#{main.playrandom}" th:title="#{main.playrandom}"></i></a></span>
+            <span><a href="javascript:addAll()"><i data-feather="plus-square" role="img" th:aria-label="#{main.addall}" th:title="#{main.addall}"></i></a></span>
+        </div>
+        <div th:if="${model.user.downloadRole}" class="pagetype-dependent type-album" style="display: inline-block;">
+            <span><a href="javascript:downloadAll()"><i data-feather="download" role="img" th:aria-label="#{main.downloadall}" th:title="#{main.downloadall}"></i></a></span>
+        </div>
+
+        <div th:if="${model.user.coverArtRole}" class="pagetype-dependent type-album" style="display: inline-block;">
+            <span><a href="javascript:editTagsPage()"><i data-feather="edit" role="img" th:aria-label="#{main.tags}" th:title="#{main.tags}"></i></a></span>
+        </div>
+
+        <span th:if="${model.user.commentRole}"><a href="javascript:toggleComment()"><i data-feather="message-square" role="img" th:aria-label="#{main.comment}" th:title="#{main.comment}"></i></a></span>
+    </th:block>
+    <div th:if=${model.user.shareRole} class="detail pagetype-dependent type-album" style="display: inline-block;">
+        <span><a href="javascript:shareAlbum()"><i data-feather="share-2" role="img" th:aria-label="#{main.sharealbum}" th:title=#{main.sharealbum}></i></a></span>
+    </div>
+</div>
 
 <div class="detail pagetype-dependent type-album">
     <div th:if="${model.user.commentRole}" id="userRating" style="display: inline-block;"></div>
-
-    <th:block th:if="${model.user.shareRole}">
-        <span class="header"><a href="javascript:shareAlbum()"><img th:src="${#themes.code('shareSmallImage')}" style="height:18px;" alt=""></a>
-            <a href="javascript:shareAlbum()" th:text="#{main.sharealbum}"></a> </span> |
-    </th:block>
-
-        <span class="header external-search"><span th:text="#{top.search}"></span>: <a href="#" onclick="searchExternally('google')">Google</a> |</span>
-        <span class="header external-search"><a href="#" onclick="searchExternally('wikipedia')">Wikipedia</a> |</span>
-        <span class="header external-search"><a href="#" onclick="searchExternally('allmusic')">allmusic</a> |</span>
-        <span class="header external-search"><a href="#" onclick="searchExternally('lastfm')">Last.fm</a> |</span>
-        <span class="header external-search"><a href="#" onclick="searchExternally('discogs')">Discogs</a> |</span>
-        <span class="header external-search musicbrainz"><a href="#" onclick="searchExternally('musicbrainz')">MusicBrainz</a> |</span>
+    <span class="header external-search"><span th:text="#{top.search}"></span>: <a href="#" onclick="searchExternally('google')">Google</a> |</span>
+    <span class="header external-search"><a href="#" onclick="searchExternally('wikipedia')">Wikipedia</a> |</span>
+    <span class="header external-search"><a href="#" onclick="searchExternally('allmusic')">allmusic</a> |</span>
+    <span class="header external-search"><a href="#" onclick="searchExternally('lastfm')">Last.fm</a> |</span>
+    <span class="header external-search"><a href="#" onclick="searchExternally('discogs')">Discogs</a> |</span>
+    <span class="header external-search musicbrainz"><a href="#" onclick="searchExternally('musicbrainz')">MusicBrainz</a> |</span>
 </div>
 
 <div id="playCountData" class="detail pagetype-dependent type-album"></div>
@@ -1219,6 +1264,5 @@
     <p th:text="#{main.addtoplaylist.text}"></p>
     <div id="dialog-select-playlist-list"></div>
 </div>
-
 </body>
 </html>
