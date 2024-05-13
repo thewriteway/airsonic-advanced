@@ -67,6 +67,13 @@ public class MusicFolderTestData {
         return resolveBaseMediaPath().resolve("loop");
     }
 
+    public static Path resolveMusicCueAndFlacFolderPath() {
+        return resolveBaseMediaPath().resolve("cueAndFlac");
+    }
+
+    public static Path resolveMusicFlacWithCueFolderPath() {
+        return resolveBaseMediaPath().resolve("flacWithCue");
+    }
 
 
     public static List<MusicFolder> getTestMusicFolders() {

@@ -549,4 +549,131 @@ public class MediaScannerServiceTestCase {
         assertEquals("m4btest", chapter2.getAlbumName());
 
     }
+
+    @Test
+    public void testMusicCueAndFlac() {
+        LOG.info("start testMusicCueAndFlac");
+
+        // Add the "cue" folder to the database
+        Path musicFolderFile = MusicFolderTestData.resolveMusicCueAndFlacFolderPath();
+        MusicFolder musicFolder = new MusicFolder(musicFolderFile, "CueAndFlac", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS));
+        testFolders.add(musicFolder);
+        musicFolderRepository.saveAll(testFolders);
+        TestCaseUtils.execScan(mediaScannerService);
+
+        // Retrieve the "Cue" folder from the database to make
+        // sure that we don't accidentally operate on other folders
+        // from previous tests.
+        musicFolder = musicFolderRepository.findById(musicFolder.getId()).get();
+        List<MusicFolder> folders = new ArrayList<>();
+        folders.add(musicFolder);
+
+        // Test that the artist is correctly imported
+        List<Artist> allArtists = artistService.getAlphabeticalArtists(folders);
+        Artist artist = allArtists.get(0);
+        assertEquals("TestCueArtist", artist.getName());
+        assertEquals(1, artist.getAlbumCount());
+
+
+        // Test that the album is correctly imported
+        List<Album> allAlbums = albumService.getAlphabeticalAlbums(true, true, folders);
+        assertEquals(1, allAlbums.size());
+        Album album = allAlbums.get(0);
+        assertEquals("AirsonicTest", album.getName());
+        assertEquals("TestCueArtist", album.getArtist());
+        assertEquals(2, album.getSongCount());
+
+        // Test that the music file is correctly imported
+        List<MediaFile> albumFiles = mediaFileRepository.findByFolderAndParentPath(allAlbums.get(0).getFolder(), allAlbums.get(0).getPath(), Sort.by("startPosition"));
+        assertEquals(3, albumFiles.size());
+        MediaFile file = albumFiles.get(0);
+        assertEquals("airsonic-test", file.getTitle());
+        assertEquals("flac", file.getFormat());
+        assertNull(file.getAlbumName());
+        assertNull(file.getArtist());
+        assertNull(file.getAlbumArtist());
+        assertNull(file.getTrackNumber());
+        assertNull(file.getYear());
+        assertEquals(album.getPath(), file.getParentPath());
+        assertEquals(Paths.get(album.getPath()).resolve("airsonic-test.flac").toString(), file.getPath());
+        assertTrue(file.getIndexPath().contains("airsonic-test.cue"));
+        assertEquals(-1.0d, file.getStartPosition(), 0.0d);
+
+        MediaFile track1 = albumFiles.get(1);
+        assertEquals("Handel", track1.getTitle());
+        assertEquals("flac", track1.getFormat());
+        assertEquals(track1.getAlbumName(), "AirsonicTest");
+        assertEquals("Beecham", track1.getArtist());
+        assertEquals("TestCueArtist", track1.getAlbumArtist());
+        assertEquals(1L, (long)track1.getTrackNumber());
+        assertNull(track1.getYear());
+        assertEquals(album.getPath(), track1.getParentPath());
+        assertEquals(Paths.get(album.getPath()).resolve("airsonic-test.flac").toString(), track1.getPath());
+        assertNull(track1.getIndexPath());
+        assertEquals(0.0d, track1.getStartPosition(), 0.0d);
+    }
+
+    @Test
+    public void testMusicFlacWithCue() {
+        LOG.info("start testMusicFlacWithCue");
+
+        // Add the "cue" folder to the database
+        Path musicFolderFile = MusicFolderTestData.resolveMusicFlacWithCueFolderPath();
+        MusicFolder musicFolder = new MusicFolder(musicFolderFile, "FlacWithCue", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS));
+        testFolders.add(musicFolder);
+        musicFolderRepository.saveAll(testFolders);
+        TestCaseUtils.execScan(mediaScannerService);
+
+        // Retrieve the "Cue" folder from the database to make
+        // sure that we don't accidentally operate on other folders
+        // from previous tests.
+        musicFolder = musicFolderRepository.findById(musicFolder.getId()).get();
+        List<MusicFolder> folders = new ArrayList<>();
+        folders.add(musicFolder);
+
+        // Test that the artist is correctly imported
+        List<Artist> allArtists = artistService.getAlphabeticalArtists(folders);
+        Artist artist = allArtists.get(0);
+        assertEquals("TestCueArtist", artist.getName());
+        assertEquals(1, artist.getAlbumCount());
+
+
+        // Test that the album is correctly imported
+        List<Album> allAlbums = albumService.getAlphabeticalAlbums(true, true, folders);
+        assertEquals(1, allAlbums.size());
+        Album album = allAlbums.get(0);
+        assertEquals("AirsonicTest", album.getName());
+        assertEquals("TestCueArtist", album.getArtist());
+        assertEquals(2, album.getSongCount());
+
+        // Test that the music file is correctly imported
+        List<MediaFile> albumFiles = mediaFileRepository.findByFolderAndParentPath(allAlbums.get(0).getFolder(), allAlbums.get(0).getPath(), Sort.by("startPosition"));
+        assertEquals(3, albumFiles.size());
+        MediaFile file = albumFiles.get(0);
+        assertEquals("airsonic-test", file.getTitle());
+        assertEquals("flac", file.getFormat());
+        assertNull(file.getAlbumName());
+        assertNull(file.getArtist());
+        assertNull(file.getAlbumArtist());
+        assertNull(file.getTrackNumber());
+        assertNull(file.getYear());
+        assertEquals(album.getPath(), file.getParentPath());
+        assertEquals(Paths.get(album.getPath()).resolve("airsonic-test.flac").toString(), file.getPath());
+        assertTrue(file.getIndexPath().contains("airsonic-test.flac"));
+        assertEquals(-1.0d, file.getStartPosition(), 0.0d);
+
+        MediaFile track1 = albumFiles.get(1);
+        assertEquals("Handel", track1.getTitle());
+        assertEquals("flac", track1.getFormat());
+        assertEquals(track1.getAlbumName(), "AirsonicTest");
+        assertEquals("Beecham", track1.getArtist());
+        assertEquals("TestCueArtist", track1.getAlbumArtist());
+        assertEquals(1L, (long)track1.getTrackNumber());
+        assertNull(track1.getYear());
+        assertEquals(album.getPath(), track1.getParentPath());
+        assertEquals(Paths.get(album.getPath()).resolve("airsonic-test.flac").toString(), track1.getPath());
+        assertNull(track1.getIndexPath());
+        assertEquals(0.0d, track1.getStartPosition(), 0.0d);
+    }
+
 }
