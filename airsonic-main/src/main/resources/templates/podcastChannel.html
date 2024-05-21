@@ -99,7 +99,7 @@
             var result = [];
             for (var i = 0; i < /*[(${#lists.size(model.episodes)})]*/ 3; i++) {
                 var checkbox = $("#episode" + i);
-                if (checkbox.is(":checked")) {
+                if (checkbox.is(":checked") && checkbox.val() && !isNaN(parseInt(checkbox.val()))) {
                     result.push(checkbox.val());
                 }
             }

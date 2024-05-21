@@ -21,7 +21,7 @@
         <logback.version>1.4.14</logback.version>
         <mockito.version>5.10.0</mockito.version>
         <mariadb.version>3.3.2</mariadb.version>
-        <aspectj.version>1.9.22</aspectj.version>
+        <aspectj.version>1.9.22.1</aspectj.version>
     </properties>
 
     <dependencies>

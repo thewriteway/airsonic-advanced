@@ -24,7 +24,7 @@
         <td class="ruleTableCell" th:text="|${model.serverInfo} (${model.usedMemory} / ${model.totalMemory})|"></td>
     </tr>
     <tr>
-        <td class="ruleTableHeader" th:text="#{help.license.title}"></td>
+        <td class="ruleTableHeader" th:utext="#{help.license.title}"></td>
         <td class="ruleTableCell">
         <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank"><img style="float:right;margin-left: 10px" alt="GPL 3.0" th:src="@{/icons/default_light/gpl.png}"></a>
         <span th:utext="#{help.license.text(${model.brand})}"></span></td></tr>

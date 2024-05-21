@@ -170,7 +170,7 @@ public class InternetRadioService {
         SpecificPlaylist inputPlaylist = null;
         HttpURLConnection urlConnection = connectToURLWithRedirects(new URL(streamUrl), maxRedirects);
         try (InputStream in = urlConnection.getInputStream();
-                BoundedInputStream bin = new BoundedInputStream(in, maxByteSize);) {
+                BoundedInputStream bin = BoundedInputStream.builder().setInputStream(in).setMaxCount(maxByteSize).get();) {
             String contentType = urlConnection.getContentType();
             if (contentType != null && DIRECT_PLAYABLE_TYPES.contains(contentType)) {
                 //for direct binary streams, just return a collection with a single internet radio source
