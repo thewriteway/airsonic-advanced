@@ -138,6 +138,18 @@
         updatePlayCountData();
 
         getRatings();
+
+        if (mediaDir.contentType == 'artist') {
+            populateArtistImage();
+        }
+    }
+
+    function populateArtistImage() {
+        var covertArtUrlBase = '[(@{/coverArt})]';
+        $("#artistImage").attr({
+            "src": covertArtUrlBase + '?size=[(${model.coverArtSizeLarge})]&id=' + mediaDir.id,
+            "class": "fancy"
+        });
     }
 
     function refreshViewDependentComponents() {
@@ -827,18 +839,6 @@
 
         if (artistInfo.artistBio && artistInfo.artistBio.biography) {
             $("#artistBio").html(artistInfo.artistBio.biography);
-            if (artistInfo.artistBio.largeImageUrl) {
-                $("#artistImage").attr({
-                      "src": artistInfo.artistBio.largeImageUrl,
-                      "class": "fancy"
-                });
-                $("#artistImageZoom").attr("href", artistInfo.artistBio.largeImageUrl);
-                $("#artistImageZoom").show();
-            } else {
-                $("#artistImage").attr("href", '');
-                $("#artistImageZoom").attr("href", '');
-                $("#artistImageZoom").hide();
-            }
         }
 
         this.topSongs = artistInfo.topSongs;

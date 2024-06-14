@@ -58,10 +58,11 @@ public class CoverArtService {
      *
      * @param mediaFile the media file
      */
+    @Transactional
     public void persistIfNeeded(MediaFile mediaFile) {
         CoverArt mediaFileArt = mediaFile.getArt();
         if (mediaFileArt != null && !CoverArt.NULL_ART.equals(mediaFileArt)) {
-            CoverArt art = getMediaFileArt(mediaFile.getId());
+            CoverArt art = coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, mediaFile.getId()).orElse(CoverArt.NULL_ART);
             if (CoverArt.NULL_ART.equals(art) || !art.getOverridden()) {
                 mediaFileArt.setEntityId(mediaFile.getId());
                 mediaFileArt.setEntityType(EntityType.MEDIA_FILE);
@@ -76,10 +77,11 @@ public class CoverArtService {
      *
      * @param album the album
      */
+    @Transactional
     public void persistIfNeeded(Album album) {
         CoverArt albumArt = album.getArt();
         if (albumArt != null && !CoverArt.NULL_ART.equals(albumArt)) {
-            CoverArt art = getAlbumArt(album.getId());
+            CoverArt art = coverArtRepository.findByEntityTypeAndEntityId(EntityType.ALBUM, album.getId()).orElse(CoverArt.NULL_ART);
             if (CoverArt.NULL_ART.equals(art) || !art.getOverridden()) {
                 albumArt.setEntityId(album.getId());
                 albumArt.setEntityType(EntityType.ALBUM);
@@ -94,10 +96,11 @@ public class CoverArtService {
      *
      * @param artist
      */
+    @Transactional
     public void persistIfNeeded(Artist artist) {
         CoverArt artistArt = artist.getArt();
         if (artistArt != null && !CoverArt.NULL_ART.equals(artistArt)) {
-            CoverArt art = getArtistArt(artist.getId());
+            CoverArt art = coverArtRepository.findByEntityTypeAndEntityId(EntityType.ARTIST, artist.getId()).orElse(CoverArt.NULL_ART);
             if (CoverArt.NULL_ART.equals(art) || !art.getOverridden()) {
                 artistArt.setEntityId(artist.getId());
                 artistArt.setEntityType(EntityType.ARTIST);

@@ -1,3 +1,22 @@
+/*
+ This file is part of Airsonic.
+
+ Airsonic is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ Airsonic is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
+
+ Copyright 2024 (C) Y.Tory
+ */
+
 package org.airsonic.player.service;
 
 import de.umass.lastfm.Album;
@@ -40,6 +59,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 
@@ -323,12 +343,6 @@ public class LastFmServiceTest {
         when(mockedInfoArtist.getWikiSummary()).thenReturn("testSummary");
         when(mockedInfoArtist.getMbid()).thenReturn("testMbid");
         when(mockedInfoArtist.getUrl()).thenReturn("testUrl");
-        when(mockedInfoArtist.getImageURL(eq(ImageSize.MEGA))).
-            thenReturn("testMegaImageURL");
-        when(mockedInfoArtist.getImageURL(eq(ImageSize.LARGE))).
-            thenReturn("testLargeImageURL");
-        when(mockedInfoArtist.getImageURL(eq(ImageSize.MEDIUM))).
-            thenReturn("testMediumImageURL");
 
         try (MockedStatic<Artist> mockedStaticArtist = org.mockito.Mockito.mockStatic(Artist.class)) {
             mockedStaticArtist.when(() -> Artist.getInfo(eq("testArtist"), eq(Locale.ENGLISH), isNull(), anyString())).thenReturn(mockedInfoArtist);
@@ -338,9 +352,7 @@ public class LastFmServiceTest {
             assertEquals("testSummary", artistBio.getBiography());
             assertEquals("testMbid", artistBio.getMusicBrainzId());
             assertEquals("testUrl", artistBio.getLastFmUrl());
-            assertEquals("testMegaImageURL", artistBio.getLargeImageUrl());
-            assertEquals("testLargeImageURL", artistBio.getMediumImageUrl());
-            assertEquals("testMediumImageURL", artistBio.getSmallImageUrl());
+            verifyNoMoreInteractions(mockedInfoArtist);
         }
     }
 
@@ -354,12 +366,6 @@ public class LastFmServiceTest {
         when(mockedInfoArtist.getWikiSummary()).thenReturn("testSummary");
         when(mockedInfoArtist.getMbid()).thenReturn("testMbid");
         when(mockedInfoArtist.getUrl()).thenReturn("testUrl");
-        when(mockedInfoArtist.getImageURL(eq(ImageSize.MEGA))).
-            thenReturn("testMegaImageURL");
-        when(mockedInfoArtist.getImageURL(eq(ImageSize.LARGE))).
-            thenReturn("testLargeImageURL");
-        when(mockedInfoArtist.getImageURL(eq(ImageSize.MEDIUM))).
-            thenReturn("testMediumImageURL");
 
         try (MockedStatic<Artist> mockedStaticArtist = org.mockito.Mockito.mockStatic(Artist.class)) {
             mockedStaticArtist.when(() -> Artist.getInfo(eq("testArtist"), eq(Locale.ENGLISH), isNull(), anyString())).thenReturn(mockedInfoArtist);
@@ -369,9 +375,7 @@ public class LastFmServiceTest {
             assertEquals("testSummary", artistBio.getBiography());
             assertEquals("testMbid", artistBio.getMusicBrainzId());
             assertEquals("testUrl", artistBio.getLastFmUrl());
-            assertEquals("testMegaImageURL", artistBio.getLargeImageUrl());
-            assertEquals("testLargeImageURL", artistBio.getMediumImageUrl());
-            assertEquals("testMediumImageURL", artistBio.getSmallImageUrl());
+            verifyNoMoreInteractions(mockedInfoArtist);
         }
     }
 
@@ -558,9 +562,5 @@ public class LastFmServiceTest {
             assertEquals("testImageURL", cache.get(0).getImageUrl());
         }
     }
-
-
-
-
 
 }

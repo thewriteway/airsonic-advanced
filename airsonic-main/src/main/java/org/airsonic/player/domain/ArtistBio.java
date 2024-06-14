@@ -54,14 +54,17 @@ public class ArtistBio {
         return lastFmUrl;
     }
 
+    @Deprecated
     public String getSmallImageUrl() {
         return smallImageUrl;
     }
 
+    @Deprecated
     public String getMediumImageUrl() {
         return mediumImageUrl;
     }
 
+    @Deprecated
     public String getLargeImageUrl() {
         return largeImageUrl;
     }

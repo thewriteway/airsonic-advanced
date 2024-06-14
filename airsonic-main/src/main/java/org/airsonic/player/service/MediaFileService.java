@@ -1051,15 +1051,14 @@ public class MediaFileService {
                             mediaFile.setYear(metaData.getYear());
                             mediaFile.setGenre(metaData.getGenre());
                         }
-
-                        // Look for cover art.
-                        Path coverArt = findCoverArt(children);
-                        if (coverArt != null) {
-                            // placeholder to be persisted later
-                            mediaFile.setArt(new CoverArt(-1, EntityType.MEDIA_FILE, folder.getPath().relativize(coverArt).toString(), folder, false));
-                        }
                     } else {
                         mediaFile.setArtist(file.getFileName().toString());
+                    }
+                    // Look for cover art.
+                    Path coverArt = findCoverArt(children);
+                    if (coverArt != null) {
+                        // placeholder to be persisted later
+                        mediaFile.setArt(new CoverArt(-1, EntityType.MEDIA_FILE, folder.getPath().relativize(coverArt).toString(), folder, false));
                     }
 
                 } catch (IOException e) {

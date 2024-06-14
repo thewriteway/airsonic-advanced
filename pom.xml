@@ -111,7 +111,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>33.2.0-jre</version>
+                <version>33.2.1-jre</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
@@ -151,7 +151,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.43.0</version>
+                <version>3.44.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.j2objc</groupId>

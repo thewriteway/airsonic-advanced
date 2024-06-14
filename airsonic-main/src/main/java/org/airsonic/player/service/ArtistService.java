@@ -19,7 +19,9 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.domain.Artist;
+import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
+import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.entity.StarredArtist;
 import org.airsonic.player.repository.ArtistRepository;
 import org.airsonic.player.repository.OffsetBasedPageRequest;
@@ -31,10 +33,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ArtistService {
@@ -43,19 +50,30 @@ public class ArtistService {
 
     private final StarredArtistRepository starredArtistRepository;
 
-    private static final Logger LOG = LoggerFactory.getLogger(ArtistService.class);
+    private final JWTSecurityService jwtSecurityService;
 
-    public ArtistService(ArtistRepository artistRepository, StarredArtistRepository starredArtistRepository) {
+    private final SecurityService securityService;
+
+    private final MediaFileService mediaFileService;
+
+    public ArtistService(ArtistRepository artistRepository, StarredArtistRepository starredArtistRepository,
+            JWTSecurityService jwtSecurityService, SecurityService securityService, MediaFileService mediaFileService) {
         this.artistRepository = artistRepository;
         this.starredArtistRepository = starredArtistRepository;
+        this.jwtSecurityService = jwtSecurityService;
+        this.securityService = securityService;
+        this.mediaFileService = mediaFileService;
     }
+
+    private static final Logger LOG = LoggerFactory.getLogger(ArtistService.class);
 
     public List<Artist> getArtists(List<MusicFolder> musicFolders, int count, int offset) {
         if (CollectionUtils.isEmpty(musicFolders)) {
             LOG.warn("getArtists: musicFolders is null");
             return Collections.emptyList();
         }
-        return artistRepository.findByFolderInAndPresentTrue(musicFolders, new OffsetBasedPageRequest(offset, count, Sort.by("id")));
+        return artistRepository.findByFolderInAndPresentTrue(musicFolders,
+                new OffsetBasedPageRequest(offset, count, Sort.by("id")));
     }
 
     /**
@@ -66,7 +84,7 @@ public class ArtistService {
      */
     public Artist getArtist(Integer id) {
         if (id == null) {
-            LOG.warn("getArtist: id is null");
+            LOG.debug("getArtist: id is null");
             return null;
         }
         return artistRepository.findById(id).orElse(null);
@@ -80,7 +98,7 @@ public class ArtistService {
      */
     public Artist getArtist(String artistName) {
         if (!StringUtils.hasLength(artistName)) {
-            LOG.warn("getArtist: artistName is null");
+            LOG.debug("getArtist: artistName is null");
             return null;
         }
         return artistRepository.findByName(artistName).orElse(null);
@@ -89,13 +107,13 @@ public class ArtistService {
     /**
      * Get artist by name and music folders
      *
-     * @param artistName artist name
+     * @param artistName   artist name
      * @param musicFolders music folders. If null or empty, return null
      * @return artist dto or null
      */
     public Artist getArtist(String artistName, List<MusicFolder> musicFolders) {
         if (CollectionUtils.isEmpty(musicFolders) || !StringUtils.hasLength(artistName)) {
-            LOG.warn("getArtist: musicFolders is null or artistName is null");
+            LOG.debug("getArtist: musicFolders is null or artistName is null");
             return null;
         }
         return artistRepository.findByNameAndFolderIn(artistName, musicFolders).orElse(null);
@@ -119,9 +137,10 @@ public class ArtistService {
     /**
      * Get starred artists by username and music folders
      *
-     * @param username username to check. If null or empty, return empty list
+     * @param username     username to check. If null or empty, return empty list
      * @param musicFolders music folders. If null or empty, return empty list
-     * @return list of starred artists or empty list. Sorted by starred date descending.
+     * @return list of starred artists or empty list. Sorted by starred date
+     *         descending.
      */
     @Transactional
     public List<Artist> getStarredArtists(String username, List<MusicFolder> musicFolders) {
@@ -129,7 +148,8 @@ public class ArtistService {
             LOG.warn("getStarredArtists: musicFolders or username is null");
             return Collections.emptyList();
         }
-        return starredArtistRepository.findByUsernameAndArtistFolderInAndArtistPresentTrue(username, musicFolders, Sort.by(Sort.Direction.DESC, "created")).stream().map(StarredArtist::getArtist).toList();
+        return starredArtistRepository.findByUsernameAndArtistFolderInAndArtistPresentTrue(username, musicFolders,
+                Sort.by(Sort.Direction.DESC, "created")).stream().map(StarredArtist::getArtist).toList();
     }
 
     /**
@@ -137,7 +157,7 @@ public class ArtistService {
      *
      * @param artistId artist id
      * @param username username to star artist for
-     * @param star true to star, false to unstar
+     * @param star     true to star, false to unstar
      * @return true if success, false otherwise
      */
     @Transactional
@@ -169,7 +189,8 @@ public class ArtistService {
             LOG.warn("getStarredDate: artistId or username is null");
             return null;
         }
-        return starredArtistRepository.findByArtistIdAndUsername(artistId, username).map(StarredArtist::getCreated).orElse(null);
+        return starredArtistRepository.findByArtistIdAndUsername(artistId, username).map(StarredArtist::getCreated)
+                .orElse(null);
     }
 
     /**
@@ -204,4 +225,81 @@ public class ArtistService {
         return artist;
     }
 
+    /**
+     * Get artist image URL
+     *
+     * @param baseUrl    base url
+     * @param artistName artist name
+     * @param size       image size
+     * @return image url or null. If artist name is null or empty, return null.
+     */
+    @Nullable
+    @Transactional
+    public String getArtistImageURL(@Nonnull String baseUrl, @Nullable String artistName, int size) {
+        if (!StringUtils.hasLength(artistName)) {
+            LOG.debug("getArtistImageURL: artistName is null");
+            return null;
+        }
+        String prefix = "ext";
+        // expire in 5 minutes
+        Instant expires = Instant.now().plusSeconds(300);
+        return artistRepository.findByName(artistName).map(artist -> {
+            securityService.createGuestUserIfNotExists();
+            return baseUrl + jwtSecurityService.addJWTToken(
+                    User.USERNAME_GUEST,
+                    UriComponentsBuilder
+                            .fromUriString(prefix + "/coverArt.view")
+                            .queryParam("id", String.format("ar-%d", artist.getId()))
+                            .queryParam("size", String.valueOf(size)),
+                    expires)
+                    .build().toUriString();
+        }).orElse(null);
+
+    }
+
+    @Nullable
+    @Transactional
+    public String getArtistImageUrlByMediaFile(@Nonnull String baseUrl, @Nullable MediaFile mediaFile, int size) {
+
+        if (mediaFile == null) {
+            LOG.debug("getArtistImageUrlByMediaFile: mediaFile is null");
+            return null;
+        }
+
+        Integer mediaFileId = mediaFile.getId();
+
+        // if media file is audio or album, get artist image url by album artist or
+        // artist
+        if (mediaFile.isAudio() || mediaFile.isAlbum()) {
+            // get artist image url by album artist or artist
+            String url = Optional.ofNullable(getArtistImageURL(baseUrl, mediaFile.getAlbumArtist(), size))
+                    .orElse(getArtistImageURL(baseUrl, mediaFile.getArtist(), size));
+            if (url != null)
+                return url;
+
+            if (mediaFile.isAudio()) {
+                mediaFile = mediaFileService.getParentOf(mediaFile, true);
+            }
+            MediaFile artistFile = mediaFileService.getParentOf(mediaFile, true);
+            if (artistFile == null) {
+                LOG.debug("getArtistImageUrlByMediaFile: artistFile is null");
+                return null;
+            }
+            mediaFileId = artistFile.getId();
+        }
+
+        // generate artist image url by media file id
+        String prefix = "ext";
+        // expire in 5 minutes
+        Instant expires = Instant.now().plusSeconds(300);
+        securityService.createGuestUserIfNotExists();
+        return baseUrl + jwtSecurityService.addJWTToken(
+                User.USERNAME_GUEST,
+                UriComponentsBuilder
+                        .fromUriString(prefix + "/coverArt.view")
+                        .queryParam("id", String.valueOf(mediaFileId))
+                        .queryParam("size", String.valueOf(size)),
+                expires)
+                .build().toUriString();
+    }
 }

@@ -244,12 +244,14 @@ public class LastFmService {
             if (info == null) {
                 return null;
             }
+
+            // image urls are deprecated
             return new ArtistBio(processWikiText(info.getWikiSummary()),
                                  info.getMbid(),
                                  info.getUrl(),
-                                 info.getImageURL(ImageSize.MEDIUM),
-                                 info.getImageURL(ImageSize.LARGE),
-                                 info.getImageURL(ImageSize.MEGA));
+                                 "",
+                                 "",
+                                 "");
         } catch (Throwable x) {
             LOG.warn("Failed to find artist bio for " + artistName, x);
             return null;

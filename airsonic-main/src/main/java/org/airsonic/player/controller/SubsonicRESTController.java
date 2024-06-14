@@ -32,6 +32,7 @@ import org.airsonic.player.i18n.LocaleResolver;
 import org.airsonic.player.service.*;
 import org.airsonic.player.service.podcast.PodcastDownloadClient;
 import org.airsonic.player.service.search.IndexType;
+import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
 import org.airsonic.player.util.Util;
 import org.apache.commons.lang.StringUtils;
@@ -455,10 +456,12 @@ public class SubsonicRESTController {
             result.setBiography(artistBio.getBiography());
             result.setMusicBrainzId(artistBio.getMusicBrainzId());
             result.setLastFmUrl(artistBio.getLastFmUrl());
-            result.setSmallImageUrl(artistBio.getSmallImageUrl());
-            result.setMediumImageUrl(artistBio.getMediumImageUrl());
-            result.setLargeImageUrl(artistBio.getLargeImageUrl());
         }
+        // extract base url
+        String baseUrl = NetworkUtil.getBaseUrl(request);
+        result.setSmallImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 34));
+        result.setMediumImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 64));
+        result.setLargeImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 300));
 
         Response res = createResponse();
         res.setArtistInfo(result);
@@ -492,11 +495,11 @@ public class SubsonicRESTController {
             result.setBiography(artistBio.getBiography());
             result.setMusicBrainzId(artistBio.getMusicBrainzId());
             result.setLastFmUrl(artistBio.getLastFmUrl());
-            result.setSmallImageUrl(artistBio.getSmallImageUrl());
-            result.setMediumImageUrl(artistBio.getMediumImageUrl());
-            result.setLargeImageUrl(artistBio.getLargeImageUrl());
         }
-
+        String baseUrl = NetworkUtil.getBaseUrl(request);
+        result.setSmallImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 34));
+        result.setMediumImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 64));
+        result.setLargeImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 300));
         Response res = createResponse();
         res.setArtistInfo2(result);
         jaxbWriter.writeResponse(request, response, res);
