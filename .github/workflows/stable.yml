@@ -77,7 +77,7 @@ jobs:
       - run: mkdir -p install/docker/target/dependency
       - run: cp airsonic-main/target/airsonic.war install/docker/target/dependency/airsonic-main.war
       - name: Build and push multiplatform images to Dockerhub
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           file: install/docker/Dockerfile
           context: install/docker
