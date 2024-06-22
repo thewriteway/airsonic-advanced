@@ -42,7 +42,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Parses meta data from video files using FFmpeg (http://ffmpeg.org/).
@@ -103,12 +102,28 @@ public class FFmpegParser extends MetaDataParser {
             metaData.setAlbumName(getData(result, "album"));
             metaData.setGenre(getData(result, "genre"));
             metaData.setTitle(getData(result, "title"));
-
             String data = getData(result, "track");
-            if (NumberUtils.isCreatable(data)) {
-                metaData.setTrackNumber(NumberUtils.createInteger(data));
+            if (data != null) {
+                data = data.replaceFirst("^[\\s\\p{C}]*0+(?!$)", "");
+                if (NumberUtils.isCreatable(data)) {
+                    metaData.setTrackNumber(NumberUtils.createInteger(data));
+                }
+            }
+            data = getData(result, "disc");
+            if (data != null) {
+                data = data.replaceFirst("^[\\s\\p{C}]*0+(?!$)", "");
+                if (NumberUtils.isCreatable(data)) {
+                    metaData.setDiscNumber(NumberUtils.createInteger(data));
+                }
             }
 
+            data = getData(result, "discnumber");
+            if (data != null) {
+                data = data.replaceFirst("^[\\s\\p{C}]*0+(?!$)", "");
+                if (NumberUtils.isCreatable(data)) {
+                    metaData.setDiscNumber(NumberUtils.createInteger(data));
+                }
+            }
             data = getData(result, "date");
             if (NumberUtils.isCreatable(data)) {
                 metaData.setYear(NumberUtils.createInteger(data));
@@ -138,24 +153,33 @@ public class FFmpegParser extends MetaDataParser {
     }
 
     private static String getData(JsonNode node, String keyName) {
-        List<String> keys = ImmutableList.of("/tags/" + keyName, "/tags/" + keyName.toUpperCase(), "/tags/" + keyName.toLowerCase());
-        Optional<String> nonNullKey = keys.stream().map(k -> node.at("/format" + k).asText()).filter(StringUtils::isNotBlank).findFirst();
-        if (nonNullKey.isPresent()) {
-            return nonNullKey.get();
-        } else {
+        // Create a list of key variations to handle different cases
+        List<String> keyVariations = ImmutableList.of(
+            keyName.toLowerCase(),
+            keyName.toUpperCase(),
+            StringUtils.capitalize(keyName)  // Capitalizes only the first letter
+        );
+        // Try to find data in /format/tags/ with different key cases
+        for (String key : keyVariations) {
+            String path = "/format/tags/" + key;
+            String value = node.at(path).asText();
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        // If not found in /format/tags/, check each stream's tags
+        if (node.has("streams")) {
             for (JsonNode stream : node.at("/streams")) {
-                // skip coverart streams
-                if (stream.hasNonNull("codec_name") && stream.get("codec_name").asText().equalsIgnoreCase("mjpeg")) {
-                    continue;
-                }
-                nonNullKey = keys.stream().map(k -> stream.at(k).asText()).filter(StringUtils::isNotBlank).findFirst();
-                if (nonNullKey.isPresent()) {
-                    return nonNullKey.get();
+                for (String key : keyVariations) {
+                    String tagPath = "/tags/" + key;
+                    String value = stream.at(tagPath).asText();
+                    if (StringUtils.isNotBlank(value)) {
+                        return value;
+                    }
                 }
             }
         }
-
-        return null;
+        return null;  // Return null if no matching data is found
     }
 
     /**
