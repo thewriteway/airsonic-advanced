@@ -48,6 +48,7 @@ public class StringUtilTestCase {
         assertEquals("audio/mpeg", StringUtil.getMimeType("mp3"), "Error in getMimeType()");
         assertEquals("audio/mpeg", StringUtil.getMimeType(".mp3"), "Error in getMimeType()");
         assertEquals("audio/mpeg", StringUtil.getMimeType(".MP3"), "Error in getMimeType()");
+        assertEquals("image/webp", StringUtil.getMimeType(".webp"), "Error in getMimeType()");
         assertEquals("application/octet-stream", StringUtil.getMimeType("koko"), "Error in getMimeType()");
         assertEquals("application/octet-stream", StringUtil.getMimeType(""), "Error in getMimeType()");
         assertEquals("application/octet-stream", StringUtil.getMimeType(null), "Error in getMimeType()");

@@ -9,17 +9,26 @@
             $('.artistRow').show(); $('#moreArtists').hide();
         }
 
+        function showMoreArtistsFromTag() {
+            $('.artistFromTagRow').show(); $('#moreArtistsFromTag').hide();
+        }
         function showMoreAlbums() {
             $('.albumRow').show(); $('#moreAlbums').hide();
         }
 
+        function showMoreAlbumsFromTag() {
+            $('.albumFromTagRow').show(); $('#moreAlbumsFromTag').hide();
+        }
         function showMoreSongs() {
             $('.songRow').show();$('#moreSongs').hide();
         }
 
+        function init() {
+            feather.replace();
+        }
     </script>
 </head>
-<body class="mainframe bgcolor1">
+<body class="mainframe bgcolor1" onload="init();">
 
 <h1>
     <img th:src="${#themes.code('searchImage')}" alt=""/>
@@ -29,19 +38,28 @@
 <p th:if="${command.indexBeingCreated}" class="warning" th:text="#{search.index}"></p>
 
 <p th:if="${!command.indexBeingCreated and #lists.isEmpty(command.artists) and #lists.isEmpty(command.albums) and #lists.isEmpty(command.songs)}" class="warning" th:text="#{search.hits.none}"></p>
-
+<h2 th:if="${!#lists.isEmpty(command.artists) or !#lists.isEmpty(command.albums) or !#lists.isEmpty(command.songs)}">
+    <i data-feather="folder" class="feather-sm"></i>
+    <span style="vertical-align: middle" th:text="#{search.folder}"></span>
+</h2>
 <th:block th:if="${!#lists.isEmpty(command.artists)}">
     <h2><b th:text="#{search.hits.artists}"></b></h2>
     <table class="music indent">
+        <tr>
+            <th colspan="4"></th>
+            <th class="truncate left" th:text="#{search.hits.artists}" style="text-align: left"></th>
+            <th class="truncate left" th:text="#{search.folder}" style="text-align: left;"></th>
+        </tr>
         <th:block th:each="match, loopStatus:${command.artists}">
 
-            <tr class="artistRow" th:stayle="${loopStatus.count > 5 ? 'display:none' : ''}">
-                <th:block th:replace="~{playButtons :: buttons(id=${match.value}, playEnabled=${command.user.streamRole and !command.partyModeEnabled},
+            <tr class="artistRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}">
+                <th:block th:replace="~{playButtons :: buttons(id=${match.mediaFileIds}, playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                     addEnabled=${command.user.downloadRole and !command.partyModeEnabled}, asTable=true)}" />
-                <td class="truncate"><a th:href="@{/main.view(id=${match.value})}" th:text="${match.key}"></a></td>
+                <td class="truncate"><a th:href="@{/main.view(id=${match.mediaFileIds})}" th:text="${match.artist}"></a></td>
+                <td class="truncate"><span class="detail" th:text="${match.folder.name}"></span></td>
             </tr>
 
-            </th:block>
+        </th:block>
     </table>
     <div th:if="${#lists.size(command.artists) gt 5}" id="moreArtists" class="forward">
         <a href="javascript:showMoreArtists()" th:text="#{search.hits.more}"></a>
@@ -51,17 +69,21 @@
 <th:block th:if="${!#lists.isEmpty(command.albums)}">
     <h2><b th:text="#{search.hits.albums}"></b></h2>
     <table class="music indent">
+        <tr>
+            <th colspan="4"></th>
+            <th class="truncate left" th:text="#{search.hits.albums}" style="text-align: left"></th>
+            <th class="truncate left" th:text="#{search.folder} + ' | ' + #{search.hits.artists}" style="text-align: left;"></th>
+        </tr>
         <th:block th:each="match,loopStatus:${command.albums}">
 
             <tr class="albumRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" >
                 <th:block th:replace="~{playButtons :: buttons(
-                        id=${match.value},
+                        id=${match.mediaFileIds},
                         playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                         addEnabled=${command.user.downloadRole and !command.partyModeEnabled},
                         asTable=true)}" />
-
-                <td class="truncate"><a th:href="@{/main.view(id=${match.value})}" th:text="${match.key.key}"></a></td>
-                <td class="truncate"><span class="detail" th:text="${match.key.value}"></span></td>
+                <td class="truncate"><a th:href="@{/main.view(id=${match.mediaFileIds})}" th:text="${match.album}"></a></td>
+                <td class="truncate"><span class="detail" th:text="${match.folder.name + ' | ' + match.artist}"></span></td>
             </tr>
 
             </th:block>
@@ -75,25 +97,82 @@
 <th:block th:if="${!#lists.isEmpty(command.songs)}">
     <h2><b th:text="#{search.hits.songs}"></b></h2>
     <table class="music indent">
+        <tr>
+            <th colspan="4"></th>
+            <th class="truncate left" th:text="#{search.hits.songs}" style="text-align: left"></th>
+            <th class="truncate left" th:text="#{search.folder} + ' | ' + #{search.hits.artists} + ' | ' + #{search.hits.albums}" style="text-align: left;"></th>
+        </tr>
         <th:block th:each="match,loopStatus:${command.songs}">
 
-            <tr class="songRow" th:style="${loopStatus.count > 15 ? 'display:none' : ''}">
+            <tr class="songRow" th:style="${loopStatus.count > 10 ? 'display:none' : ''}">
                     <th:block th:replace="~{playButtons :: buttons(id=${match.id},
                             playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                             addEnabled=${command.user.downloadRole and !command.partyModeEnabled},
                             video=${match.video and command.player.web},
                             asTable=true)}" />
 
-                <td class="truncate"><span class="songTitle" th:text="${match.title}"></span></td>
-                <td class="truncate"><a th:href="@{/main.view(path=${match.folder.id+':'+match.parentPath})}">
-                    <span class="detail" th:text="${match.albumName}"></span></a></td>
-                <td class="truncate"><span class="detail" th:text="${match.artist}"></span></td>
+                <td class="truncate"><a th:href="@{/main.view(path=${match.folder.id+':'+match.parentPath})}"><span class="songTitle" th:text="${match.title}"></span></a></td>
+                <td class="truncate" style="max-width: 50px"><span class="detail" th:text="${match.folder.name + ' | ' + match.artist + ' | ' + match.albumName}" ></span></td>
             </tr>
 
         </th:block>
     </table>
-    <div th:if="${#lists.size(command.songs) gt 15}" id="moreSongs" class="forward">
+    <div th:if="${#lists.size(command.songs) gt 10}" id="moreSongs" class="forward">
         <a href="javascript:showMoreSongs()" th:text="#{search.hits.more}"></a></div>
 </th:block>
 
+<h2 th:if="${!#lists.isEmpty(command.artistsFromTag) or !#lists.isEmpty(command.albumsFromTag)}">
+    <i data-feather="tag" class="feather-sm"></i>
+    <span style="vertical-align: middle" th:text="#{search.tag}"></span>
+</h2>
+<th:block th:if="${!#lists.isEmpty(command.artistsFromTag)}">
+    <h2><b th:text="#{search.hits.artists}"></b></h2>
+    <table class="music indent">
+        <tr>
+            <th colspan="4"></th>
+            <th class="truncate left" th:text="#{search.hits.artists}" style="text-align: left"></th>
+            <th class="truncate left" th:text="#{search.folder}" style="text-align: left;"></th>
+        </tr>
+        <th:block th:each="match, loopStatus:${command.artistsFromTag}">
+
+            <tr class="artistFromTagRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}">
+                <th:block th:replace="~{playButtons :: buttons(id=${match.mediaFileIds}, playEnabled=${command.user.streamRole and !command.partyModeEnabled},
+                    addEnabled=${command.user.downloadRole and !command.partyModeEnabled}, asTable=true)}" />
+                <td class="truncate"><a th:href="@{/main.view(id=${match.mediaFileIds})}" th:text="${match.artist}"></a></td>
+                <td class="truncate"><span class="detail" th:text="${match.folder.name}"></span></td>
+            </tr>
+        </th:block>
+    </table>
+    <div th:if="${#lists.size(command.artistsFromTag) gt 5}" id="moreArtistsFromTag" class="forward">
+        <a href="javascript:showMoreArtistsFromTag()" th:text="#{search.hits.more}"></a>
+    </div>
+</th:block>
+
+<th:block th:if="${!#lists.isEmpty(command.albumsFromTag)}">
+    <h2><b th:text="#{search.hits.albums}"></b></h2>
+    <table class="music indent">
+        <tr>
+            <th colspan="4"></th>
+            <th class="truncate left" th:text="#{search.hits.albums}" style="text-align: left"></th>
+            <th class="truncate left" th:text="#{search.folder} + ' | ' + #{search.hits.artists}" style="text-align: left;"></th>
+        </tr>
+         <th:block th:each="match,loopStatus:${command.albumsFromTag}">
+
+            <tr class="albumFromTagRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" >
+                <th:block th:replace="~{playButtons :: buttons(
+                        id=${match.mediaFileIds},
+                        playEnabled=${command.user.streamRole and !command.partyModeEnabled},
+                        addEnabled=${command.user.downloadRole and !command.partyModeEnabled},
+                        asTable=true)}" />
+
+                <td class="truncate"><a th:href="@{/main.view(id=${match.mediaFileIds})}" th:text="${match.album}"></a></td>
+                <td class="truncate"><span class="detail" th:text="${match.folder.name + ' | ' + match.artist}"></span></td>
+            </tr>
+
+            </th:block>
+    </table>
+    <th:block th:if="${#lists.size(command.albumsFromTag) gt 5}">
+        <div id="moreAlbumsFromTag" class="forward"><a href="javascript:showMoreAlbumsFromTag()" th:text="#{search.hits.more}"></a></div>
+    </th:block>
+</th:block>
 </body></html>

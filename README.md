@@ -215,9 +215,9 @@ Other properties are obsolete and have been removed:
 
 First migration to 11.x will create a backup DB next to the DB folder. It will be marked as `db.backup.<timestamp>`. Use this folder as the DB if a revert to an older major version is needed (11.0 -> 10.6.0).
 
-> **Warning**  
-If you use HSQLDB for 10.6.0, DB migration must fails.
-First upgrade to 11.0.0-SNAPSHOT.20221224143241 then upgrade to latest release.
+> [!WARNING]  
+> If you use HSQLDB for 10.6.0, DB migration must fails.
+> First upgrade to 11.0.0-SNAPSHOT.20221224143241 then upgrade to latest release.
 
 Troubleshooting
 ------
@@ -258,6 +258,8 @@ released under [MIT License](http://www.opensource.org/licenses/mit-license.php)
 
 The icons are from the amazing [feather](https://feathericons.com/) project,
 and are licensed under [MIT license](https://github.com/feathericons/feather/blob/master/LICENSE).
+
+The cover art functionality supporting multiple image file formats is powered by the [TwelveMonkeys](https://github.com/haraldk/TwelveMonkeys) library, which is released under the [BSD3 License](https://github.com/haraldk/TwelveMonkeys/blob/main/LICENSE.md).  
 
 Community
 ---------

@@ -228,7 +228,7 @@ public class CoverArtCreateService {
                     if (bimg == null) {
                         reason = "ImageIO.read";
                     } else {
-                        return ImageUtil.scale(bimg, size, size);
+                        return ImageUtil.scaleToSquare(bimg, size);
                     }
                 }
                 LOG.warn("Failed to process cover art {}: {} failed", coverArt, reason);

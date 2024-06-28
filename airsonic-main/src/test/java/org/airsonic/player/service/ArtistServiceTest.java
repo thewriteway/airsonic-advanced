@@ -58,9 +58,6 @@ public class ArtistServiceTest {
     private StarredArtistRepository starredArtistRepository;
 
     @Mock
-    private SecurityService securityService;
-
-    @Mock
     private SettingsService settingsService;
 
     private JWTSecurityService jwtSecurityService;
@@ -77,7 +74,7 @@ public class ArtistServiceTest {
     public void setUp() {
         jwtSecurityService = Mockito.spy(new JWTSecurityService(settingsService));
         artistService = new ArtistService(artistRepository, starredArtistRepository, jwtSecurityService,
-                securityService, mediaFileService);
+                mediaFileService);
     }
 
     @Test
@@ -95,12 +92,11 @@ public class ArtistServiceTest {
         String url = "";
         try (MockedStatic<Instant> instantMock = Mockito.mockStatic(Instant.class, Mockito.CALLS_REAL_METHODS)) {
             instantMock.when(Instant::now).thenReturn(now);
-            url = artistService.getArtistImageURL("http://example.com/", "artist", 30);
+            url = artistService.getArtistImageURL("http://example.com/", "artist", 30, User.USERNAME_GUEST);
         }
 
         // Then
         verify(artistRepository).findByName("artist");
-        verify(securityService).createGuestUserIfNotExists();
         assertTrue(url.startsWith("http://example.com/ext/coverArt.view?id=ar-1&size=30&jwt="));
         verify(jwtSecurityService).addJWTToken(eq(User.USERNAME_GUEST), any(UriComponentsBuilder.class),
                 eq(now.plusSeconds(300L)));
@@ -114,11 +110,11 @@ public class ArtistServiceTest {
         when(artistRepository.findByName("artist")).thenReturn(Optional.empty());
 
         // When
-        String url = artistService.getArtistImageURL("http://example.com/", "artist", 30);
+        String url = artistService.getArtistImageURL("http://example.com/", "artist", 30, User.USERNAME_GUEST);
 
         // Then
         verify(artistRepository).findByName("artist");
-        verifyNoInteractions(securityService, jwtSecurityService, settingsService);
+        verifyNoInteractions(jwtSecurityService, settingsService);
         assertNull(url);
     }
 
@@ -126,10 +122,10 @@ public class ArtistServiceTest {
     public void testGetArtistImageURLNullArtistNameShouldReturnNull() {
 
         // When
-        String url = artistService.getArtistImageURL("http://example.com/", null, 30);
+        String url = artistService.getArtistImageURL("http://example.com/", null, 30, User.USERNAME_GUEST);
 
         // Then
-        verifyNoInteractions(artistRepository, securityService, jwtSecurityService, settingsService);
+        verifyNoInteractions(artistRepository, jwtSecurityService, settingsService);
         assertNull(url);
     }
 
@@ -159,12 +155,11 @@ public class ArtistServiceTest {
         String url = "";
         try (MockedStatic<Instant> instantMock = Mockito.mockStatic(Instant.class, Mockito.CALLS_REAL_METHODS)) {
             instantMock.when(Instant::now).thenReturn(now);
-            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30);
+            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30, User.USERNAME_GUEST);
         }
 
         // Then
         verify(artistRepository).findByName("artist");
-        verify(securityService).createGuestUserIfNotExists();
         assertTrue(url.startsWith("http://example.com/ext/coverArt.view?id=ar-1&size=30&jwt="));
         verify(jwtSecurityService).addJWTToken(eq(User.USERNAME_GUEST), any(UriComponentsBuilder.class),
                 eq(now.plusSeconds(300L)));
@@ -196,12 +191,11 @@ public class ArtistServiceTest {
         String url = "";
         try (MockedStatic<Instant> instantMock = Mockito.mockStatic(Instant.class, Mockito.CALLS_REAL_METHODS)) {
             instantMock.when(Instant::now).thenReturn(now);
-            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30);
+            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30, User.USERNAME_GUEST);
         }
 
         // Then
         verify(artistRepository).findByName("artist");
-        verify(securityService).createGuestUserIfNotExists();
         assertTrue(url.startsWith("http://example.com/ext/coverArt.view?id=ar-1&size=30&jwt="));
         verify(jwtSecurityService).addJWTToken(eq(User.USERNAME_GUEST), any(UriComponentsBuilder.class),
                 eq(now.plusSeconds(300L)));
@@ -221,13 +215,12 @@ public class ArtistServiceTest {
         String url = "";
         try (MockedStatic<Instant> instantMock = Mockito.mockStatic(Instant.class, Mockito.CALLS_REAL_METHODS)) {
             instantMock.when(Instant::now).thenReturn(now);
-            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30);
+            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30, User.USERNAME_GUEST);
         }
 
         // Then
         verifyNoInteractions(artistRepository);
         verifyNoMoreInteractions(mockedMediaFile);
-        verify(securityService).createGuestUserIfNotExists();
         assertTrue(url.startsWith("http://example.com/ext/coverArt.view?id=2&size=30&jwt="));
         verify(jwtSecurityService).addJWTToken(eq(User.USERNAME_GUEST), any(UriComponentsBuilder.class),
                 eq(now.plusSeconds(300L)));
@@ -250,13 +243,12 @@ public class ArtistServiceTest {
         String url = "";
         try (MockedStatic<Instant> instantMock = Mockito.mockStatic(Instant.class, Mockito.CALLS_REAL_METHODS)) {
             instantMock.when(Instant::now).thenReturn(now);
-            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30);
+            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30, User.USERNAME_GUEST);
         }
 
         // Then
         verifyNoInteractions(artistRepository);
         verifyNoMoreInteractions(mockedMediaFile);
-        verify(securityService).createGuestUserIfNotExists();
         assertTrue(url.startsWith("http://example.com/ext/coverArt.view?id=2&size=30&jwt="));
         verify(jwtSecurityService).addJWTToken(eq(User.USERNAME_GUEST), any(UriComponentsBuilder.class),
                 eq(now.plusSeconds(300L)));
@@ -279,13 +271,12 @@ public class ArtistServiceTest {
         String url = "";
         try (MockedStatic<Instant> instantMock = Mockito.mockStatic(Instant.class, Mockito.CALLS_REAL_METHODS)) {
             instantMock.when(Instant::now).thenReturn(now);
-            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30);
+            url = artistService.getArtistImageUrlByMediaFile("http://example.com/", mockedMediaFile, 30, User.USERNAME_GUEST);
         }
 
         // Then
         verifyNoInteractions(artistRepository);
         verifyNoMoreInteractions(mockedMediaFile);
-        verify(securityService).createGuestUserIfNotExists();
         assertTrue(url.startsWith("http://example.com/ext/coverArt.view?id=2&size=30&jwt="));
         verify(jwtSecurityService).addJWTToken(eq(User.USERNAME_GUEST), any(UriComponentsBuilder.class),
                 eq(now.plusSeconds(300L)));

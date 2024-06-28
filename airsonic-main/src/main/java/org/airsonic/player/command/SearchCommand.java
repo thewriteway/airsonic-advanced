@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -23,11 +24,9 @@ import org.airsonic.player.controller.SearchController;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.User;
-import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Command used in {@link SearchController}.
@@ -37,8 +36,10 @@ import java.util.Set;
 public class SearchCommand {
 
     private String query;
-    private Map<String, Set<Integer>> artists;
-    private Map<Pair<String, String>, Set<Integer>> albums;
+    private List<SearchResultArtist> artists = new ArrayList<>();
+    private List<SearchResultArtist> artistsFromTag = new ArrayList<>();
+    private List<SearchResultAlbum> albums;
+    private List<SearchResultAlbum> albumsFromTag;
     private List<MediaFile> songs;
     private boolean isIndexBeingCreated;
     private User user;
@@ -61,20 +62,36 @@ public class SearchCommand {
         isIndexBeingCreated = indexBeingCreated;
     }
 
-    public Map<String, Set<Integer>> getArtists() {
+    public List<SearchResultArtist> getArtists() {
         return artists;
     }
 
-    public void setArtists(Map<String, Set<Integer>> artists) {
+    public void setArtists(List<SearchResultArtist> artists) {
         this.artists = artists;
     }
 
-    public Map<Pair<String, String>, Set<Integer>> getAlbums() {
+    public List<SearchResultArtist> getArtistsFromTag() {
+        return artistsFromTag;
+    }
+
+    public void setArtistsFromTag(List<SearchResultArtist> artistsFromTag) {
+        this.artistsFromTag = artistsFromTag;
+    }
+
+    public List<SearchResultAlbum> getAlbums() {
         return albums;
     }
 
-    public void setAlbums(Map<Pair<String, String>, Set<Integer>> albums) {
+    public void setAlbums(List<SearchResultAlbum> albums) {
         this.albums = albums;
+    }
+
+    public List<SearchResultAlbum> getAlbumsFromTag() {
+        return albumsFromTag;
+    }
+
+    public void setAlbumsFromTag(List<SearchResultAlbum> albumsFromTag) {
+        this.albumsFromTag = albumsFromTag;
     }
 
     public List<MediaFile> getSongs() {

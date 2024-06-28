@@ -21,7 +21,6 @@ package org.airsonic.player.service;
 import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
-import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.entity.StarredArtist;
 import org.airsonic.player.repository.ArtistRepository;
 import org.airsonic.player.repository.OffsetBasedPageRequest;
@@ -52,16 +51,13 @@ public class ArtistService {
 
     private final JWTSecurityService jwtSecurityService;
 
-    private final SecurityService securityService;
-
     private final MediaFileService mediaFileService;
 
     public ArtistService(ArtistRepository artistRepository, StarredArtistRepository starredArtistRepository,
-            JWTSecurityService jwtSecurityService, SecurityService securityService, MediaFileService mediaFileService) {
+            JWTSecurityService jwtSecurityService, MediaFileService mediaFileService) {
         this.artistRepository = artistRepository;
         this.starredArtistRepository = starredArtistRepository;
         this.jwtSecurityService = jwtSecurityService;
-        this.securityService = securityService;
         this.mediaFileService = mediaFileService;
     }
 
@@ -235,7 +231,7 @@ public class ArtistService {
      */
     @Nullable
     @Transactional
-    public String getArtistImageURL(@Nonnull String baseUrl, @Nullable String artistName, int size) {
+    public String getArtistImageURL(@Nonnull String baseUrl, @Nullable String artistName, int size, String username) {
         if (!StringUtils.hasLength(artistName)) {
             LOG.debug("getArtistImageURL: artistName is null");
             return null;
@@ -244,9 +240,8 @@ public class ArtistService {
         // expire in 5 minutes
         Instant expires = Instant.now().plusSeconds(300);
         return artistRepository.findByName(artistName).map(artist -> {
-            securityService.createGuestUserIfNotExists();
             return baseUrl + jwtSecurityService.addJWTToken(
-                    User.USERNAME_GUEST,
+                    username,
                     UriComponentsBuilder
                             .fromUriString(prefix + "/coverArt.view")
                             .queryParam("id", String.format("ar-%d", artist.getId()))
@@ -259,7 +254,7 @@ public class ArtistService {
 
     @Nullable
     @Transactional
-    public String getArtistImageUrlByMediaFile(@Nonnull String baseUrl, @Nullable MediaFile mediaFile, int size) {
+    public String getArtistImageUrlByMediaFile(@Nonnull String baseUrl, @Nullable MediaFile mediaFile, int size, @Nonnull String username) {
 
         if (mediaFile == null) {
             LOG.debug("getArtistImageUrlByMediaFile: mediaFile is null");
@@ -272,8 +267,8 @@ public class ArtistService {
         // artist
         if (mediaFile.isAudio() || mediaFile.isAlbum()) {
             // get artist image url by album artist or artist
-            String url = Optional.ofNullable(getArtistImageURL(baseUrl, mediaFile.getAlbumArtist(), size))
-                    .orElse(getArtistImageURL(baseUrl, mediaFile.getArtist(), size));
+            String url = Optional.ofNullable(getArtistImageURL(baseUrl, mediaFile.getAlbumArtist(), size, username))
+                    .orElse(getArtistImageURL(baseUrl, mediaFile.getArtist(), size, username));
             if (url != null)
                 return url;
 
@@ -292,9 +287,8 @@ public class ArtistService {
         String prefix = "ext";
         // expire in 5 minutes
         Instant expires = Instant.now().plusSeconds(300);
-        securityService.createGuestUserIfNotExists();
         return baseUrl + jwtSecurityService.addJWTToken(
-                User.USERNAME_GUEST,
+                username,
                 UriComponentsBuilder
                         .fromUriString(prefix + "/coverArt.view")
                         .queryParam("id", String.valueOf(mediaFileId))

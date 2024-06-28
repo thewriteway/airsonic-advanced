@@ -836,7 +836,7 @@ public class MediaFileService {
                     tracks.add(base);
                     return tracks.stream();
                 } else {
-                    LOG.warn("Cue sheet file {} not found", filePath);
+                    LOG.warn("Could not find base file '{}' for cue sheet {}", filePath, indexPath);
                     return Stream.empty();
                 }
             }).collect(Collectors.toList());
@@ -1190,8 +1190,6 @@ public class MediaFileService {
             double wholeFileLength = base.getDuration();
 
             String basePath = base.getPath();
-            String file = cueSheet.getFileData().get(0).getFile();
-            LOG.info(file);
             String parentPath = base.getParentPath();
             String performer = cueSheet.getPerformer();
             String albumName = cueSheet.getTitle();
@@ -1337,7 +1335,8 @@ public class MediaFileService {
     private CueSheet getCueSheet(@Nonnull Path cueFile) {
         try {
             CueSheet cueSheet = null;
-            switch (FilenameUtils.getExtension(cueFile.toString()).toLowerCase()) {
+            String ext = FilenameUtils.getExtension(cueFile.toString()).toLowerCase();
+            switch (ext) {
                 case "cue":
                     Charset cs = Charset.forName("UTF-8"); // default to UTF-8
                     // attempt to detect encoding for cueFile, fallback to UTF-8
@@ -1367,7 +1366,10 @@ public class MediaFileService {
             }
             // validation
             if (cueSheet == null || cueSheet.getFileData() == null || cueSheet.getFileData().size() == 0) {
-                LOG.warn("Error parsing cuesheet {}", cueFile);
+                if ("cue".equals(ext)) {
+                    // Warn if no file data found in cue sheet
+                    LOG.warn("Error parsing cuesheet {}", cueFile);
+                }
                 return null;
             }
             return cueSheet;

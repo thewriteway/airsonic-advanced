@@ -66,4 +66,30 @@ public final class ImageUtil {
         return thumb;
     }
 
+    public static BufferedImage scaleToSquare(BufferedImage image, int size) {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        int scale = Math.max(w, h);
+
+        BufferedImage squareImage = new BufferedImage(scale, scale, BufferedImage.TYPE_INT_RGB);
+        squareImage.getGraphics().drawImage(image, (scale - w) / 2, (scale - h) / 2, null);
+
+        do {
+            scale /= 2;
+            if (scale < size) {
+                scale = size;
+            }
+            BufferedImage temp = new BufferedImage(scale, scale, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2 = temp.createGraphics();
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.drawImage(squareImage, 0, 0, temp.getWidth(), temp.getHeight(), null);
+            g2.dispose();
+
+            squareImage = temp;
+        } while (scale != size);
+
+        return squareImage;
+    }
+
 }

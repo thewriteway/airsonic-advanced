@@ -459,9 +459,9 @@ public class SubsonicRESTController {
         }
         // extract base url
         String baseUrl = NetworkUtil.getBaseUrl(request);
-        result.setSmallImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 34));
-        result.setMediumImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 64));
-        result.setLargeImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 300));
+        result.setSmallImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 34, username));
+        result.setMediumImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 64, username));
+        result.setLargeImageUrl(artistService.getArtistImageUrlByMediaFile(baseUrl, mediaFile, 300, username));
 
         Response res = createResponse();
         res.setArtistInfo(result);
@@ -497,9 +497,9 @@ public class SubsonicRESTController {
             result.setLastFmUrl(artistBio.getLastFmUrl());
         }
         String baseUrl = NetworkUtil.getBaseUrl(request);
-        result.setSmallImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 34));
-        result.setMediumImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 64));
-        result.setLargeImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 300));
+        result.setSmallImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 34, username));
+        result.setMediumImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 64, username));
+        result.setLargeImageUrl(artistService.getArtistImageURL(baseUrl, artist.getName(), 300, username));
         Response res = createResponse();
         res.setArtistInfo2(result);
         jaxbWriter.writeResponse(request, response, res);

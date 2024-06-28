@@ -62,7 +62,7 @@ import java.util.concurrent.Semaphore;
  * @author Sindre Mehus
  */
 @Controller
-@RequestMapping({"/coverArt", "/ext/coverArt", "/coverArt.view", "/ext/coverArt.view"})
+@RequestMapping({ "/coverArt", "/ext/coverArt", "/coverArt.view", "/ext/coverArt.view" })
 public class CoverArtController {
 
     public static final String ALBUM_COVERART_PREFIX = "al-";
@@ -70,13 +70,20 @@ public class CoverArtController {
     public static final String PLAYLIST_COVERART_PREFIX = "pl-";
     public static final String PODCAST_COVERART_PREFIX = "pod-";
 
+    // Version of the cover art generation algorithm.
+    // Increment this if the algorithm changes.
+    private static final int COVERART_VERSION = 1;
+
     static final Logger LOG = LoggerFactory.getLogger(CoverArtController.class);
 
-    @Autowired MediaFileService mediaFileService;
-    @Autowired CoverArtService coverArtService;
+    @Autowired
+    MediaFileService mediaFileService;
+    @Autowired
+    CoverArtService coverArtService;
     @Autowired
     private SettingsService settingsService;
-    @Autowired PlaylistService playlistService;
+    @Autowired
+    PlaylistService playlistService;
     @Autowired
     private CoverArtCreateService coverArtCreateService;
     @Autowired
@@ -93,7 +100,8 @@ public class CoverArtController {
      * get last modified time epoch millisecond
      *
      * @param coverArtRequest target coverArtRequest
-     * @return last modified time in epoch milliseconds. if coverArtRequest id null, then return -1L
+     * @return last modified time in epoch milliseconds. if coverArtRequest id null,
+     *         then return -1L
      */
     /*
     private long getLastModifiedMiili(CoverArtRequest coverArtRequest) {
@@ -198,7 +206,7 @@ public class CoverArtController {
     }
 
     private Path getCachedImage(CoverArtRequest request, int size) throws IOException {
-        String hash = DigestUtils.md5Hex(request.getKey());
+        String hash = DigestUtils.md5Hex(request.getKey() + "-" + COVERART_VERSION);
         String encoding = request.getCoverArt() != null ? "jpeg" : "png";
         Path cachedImage = getImageCacheDirectory(size).resolve(hash + "." + encoding);
 

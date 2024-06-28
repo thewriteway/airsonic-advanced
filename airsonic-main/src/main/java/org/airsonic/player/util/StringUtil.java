@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2024 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -82,6 +83,7 @@ public final class StringUtil {
             {"jpeg", "image/jpeg"},
             {"png", "image/png"},
             {"bmp", "image/bmp"},
+            {"webp", "image/webp"},
 
             {"zip", "application/zip"},
     };

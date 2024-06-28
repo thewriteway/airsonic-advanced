@@ -20,6 +20,8 @@
 package org.airsonic.player.controller;
 
 import org.airsonic.player.command.SearchCommand;
+import org.airsonic.player.command.SearchResultAlbum;
+import org.airsonic.player.command.SearchResultArtist;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.service.AlbumService;
 import org.airsonic.player.service.MediaFileService;
@@ -31,6 +33,7 @@ import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.search.IndexType;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -42,14 +45,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * Controller for the search page.
@@ -104,34 +104,13 @@ public class SearchController {
 
             SearchResult artists = searchService.search(criteria, musicFolders, IndexType.ARTIST);
             SearchResult artistsId3 = searchService.search(criteria, musicFolders, IndexType.ARTIST_ID3);
-            artistsId3.getArtists().stream().map(Artist::getName).flatMap(ar -> albumService.getAlbumsByArtist(ar, musicFolders).stream().map(al -> mediaFileService.getMediaFile(al.getPath(), al.getFolder())).filter(Objects::nonNull).map(MediaFile::getId).map(m -> Pair.of(ar, m))).collect(groupingBy(p -> p.getKey(), mapping(p -> p.getValue(), toSet())));
-            artists.getMediaFiles().stream().map(m -> Pair.of(Optional.ofNullable(m.getArtist()).or(() -> Optional.ofNullable(m.getAlbumArtist())).orElse("(Unknown)"), m.getId()));
-            command.setArtists(Stream.concat(
-                    artistsId3.getArtists().stream()
-                        .map(Artist::getName)
-                        .flatMap(ar -> albumService.getAlbumsByArtist(ar, musicFolders).stream()
-                                .map(al -> mediaFileService.getMediaFile(al.getPath(), al.getFolder()))
-                                    .filter(Objects::nonNull)
-                                .map(MediaFile::getId)
-                                .map(m -> Pair.of(ar, m))),
-                    artists.getMediaFiles().stream()
-                        .map(m -> Pair.of(
-                                Optional.ofNullable(m.getArtist())
-                                    .or(() -> Optional.ofNullable(m.getAlbumArtist()))
-                                    .orElse("(Unknown)"),
-                                m.getId())))
-                .collect(groupingBy(p -> p.getKey(), mapping(p -> p.getValue(), toSet()))));
+            command.setArtists(createArtistResults(artists));
+            command.setArtistsFromTag(createArtistResultsFromId3Tag(artistsId3, musicFolders));
 
             SearchResult albums = searchService.search(criteria, musicFolders, IndexType.ALBUM);
             SearchResult albumsId3 = searchService.search(criteria, musicFolders, IndexType.ALBUM_ID3);
-            command.setAlbums(Stream
-                    .concat(albumsId3.getAlbums().stream()
-                            .map(a -> Optional.ofNullable(mediaFileService.getMediaFile(a.getPath(), a.getFolder()))
-                                    .map(m -> Pair.of(Pair.of(a.getName(), a.getArtist()), m.getId())).orElse(null))
-                            .filter(Objects::nonNull),
-                            albums.getMediaFiles().stream()
-                                    .map(m -> Pair.of(Pair.of(m.getAlbumName(), m.getAlbumArtist()), m.getId())))
-                    .collect(groupingBy(p -> p.getKey(), mapping(p -> p.getValue(), toSet()))));
+            command.setAlbums(createAlbumResults(albums));
+            command.setAlbumsFromTag(createAlbumResultsFromId3Tag(albumsId3));
 
             SearchResult songs = searchService.search(criteria, musicFolders, IndexType.SONG);
             command.setSongs(songs.getMediaFiles());
@@ -141,4 +120,108 @@ public class SearchController {
 
         return "search";
     }
+
+    /**
+     * Create a list of search result artists from the search result.
+     *
+     * @param artists the search result to create the artists from (media files)
+     * @return a list of search result artists
+     */
+    private List<SearchResultArtist> createArtistResults(SearchResult artists) {
+
+        Map<Pair<String, Integer>, SearchResultArtist> artistMap = new LinkedHashMap<>();
+
+        artists.getMediaFiles().stream().forEach(m -> {
+            String artist = Optional.ofNullable(m.getArtist())
+                    .or(() -> Optional.ofNullable(m.getAlbumArtist()))
+                    .orElse("(Unknown)");
+            SearchResultArtist artistResult = artistMap.computeIfAbsent(Pair.of(artist, m.getFolder().getId()),
+                    k -> new SearchResultArtist(artist, m.getFolder()));
+            artistResult.addMediaFileId(m.getId());
+        });
+
+        return artistMap.values().stream().toList();
+    }
+
+    /**
+     * Create a list of search result artists from the search result.
+     *
+     * @param artistsId3   the search result to create the artists from (ID3 tags)
+     * @param musicFolders the music folders to search for the media files
+     * @return a list of search result artists
+     */
+    private List<SearchResultArtist> createArtistResultsFromId3Tag(SearchResult artistsId3,
+            List<MusicFolder> musicFolders) {
+
+        Map<Pair<String, Integer>, SearchResultArtist> artistMapFromTag = new LinkedHashMap<>();
+
+        artistsId3.getArtists().stream()
+                .map(Artist::getName)
+                .flatMap(ar -> albumService.getAlbumsByArtist(ar, musicFolders).stream()
+                        .map(al -> mediaFileService.getMediaFile(al.getPath(), al.getFolder()))
+                        .filter(Objects::nonNull)
+                        .map(m -> Pair.of(ar, m)))
+                .forEach(p -> {
+                    SearchResultArtist artistResult = artistMapFromTag.computeIfAbsent(
+                            Pair.of(p.getKey(), p.getValue().getFolder().getId()),
+                            k -> new SearchResultArtist(p.getKey(), p.getValue().getFolder()));
+                    artistResult.addMediaFileId(p.getValue().getId());
+                });
+
+        return artistMapFromTag.values().stream().toList();
+    }
+
+    /**
+     * Create a list of search result albums from the search result.
+     *
+     * @param albums the search result to create the albums from (media files)
+     * @return a list of search result albums
+     */
+    private List<SearchResultAlbum> createAlbumResults(SearchResult albums) {
+
+        Map<Triple<String, String, Integer>, SearchResultAlbum> albumMap = new LinkedHashMap<>();
+
+        albums.getMediaFiles().stream().forEach(m -> {
+            String album = m.getAlbumName();
+            String artist = Optional.ofNullable(m.getArtist())
+                    .or(() -> Optional.ofNullable(m.getAlbumArtist()))
+                    .orElse("(Unknown)");
+            SearchResultAlbum albumResult = albumMap.computeIfAbsent(Triple.of(album, artist, m.getFolder().getId()),
+                    k -> new SearchResultAlbum(album, artist, m.getFolder()));
+            albumResult.addMediaFileId(m.getId());
+        });
+
+        return albumMap.values().stream().toList();
+    }
+
+    /**
+     * Create a list of search result albums from the search result.
+     *
+     * @param albums the search result to create the albums from (media files)
+     * @return a list of search result albums
+     */
+    private List<SearchResultAlbum> createAlbumResultsFromId3Tag(SearchResult albumsId3) {
+
+        Map<Triple<String, String, Integer>, SearchResultAlbum> albumId3Map = new LinkedHashMap<>();
+
+        albumsId3.getAlbums().stream()
+                .forEach(a -> {
+                    MediaFile mediaFile = mediaFileService.getMediaFile(a.getPath(), a.getFolder());
+                    if (mediaFile == null) {
+                        return;
+                    }
+                    String album = a.getName();
+                    String artist = Optional.ofNullable(mediaFile.getArtist())
+                            .or(() -> Optional.ofNullable(mediaFile.getAlbumArtist()))
+                            .orElse(a.getArtist());
+                    SearchResultAlbum albumResult = albumId3Map.computeIfAbsent(
+                            Triple.of(album, artist, a.getFolder().getId()),
+                            k -> new SearchResultAlbum(album, artist, a.getFolder()));
+                    albumResult.addMediaFileId(mediaFile.getId());
+                });
+
+        return albumId3Map.values().stream().toList();
+    }
+
+
 }
