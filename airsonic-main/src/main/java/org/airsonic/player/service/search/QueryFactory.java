@@ -116,11 +116,14 @@ public class QueryFactory {
                 List<Query> fieldQuerys = new ArrayList<>();
                 while (stream.incrementToken()) {
                     String token = stream.getAttribute(CharTermAttribute.class).toString();
+                    TermQuery termQuery = new TermQuery(new Term(fieldName, token));
                     WildcardQuery wildcardQuery = new WildcardQuery(new Term(fieldName, token.concat(ASTERISK)));
                     if (indexType.getBoosts().containsKey(fieldName)) {
+                        fieldQuerys.add(new BoostQuery(termQuery, indexType.getBoosts().get(fieldName) * 0.5f));
                         fieldQuerys.add(new BoostQuery(wildcardQuery, indexType.getBoosts().get(fieldName)));
                     } else {
                         fieldQuerys.add(wildcardQuery);
+                        fieldQuerys.add(new BoostQuery(termQuery, 0.5f));
                     }
                 }
                 fieldsQuerys.add(fieldQuerys);
