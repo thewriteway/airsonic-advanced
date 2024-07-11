@@ -132,7 +132,8 @@ public class SearchController {
         Map<Pair<String, Integer>, SearchResultArtist> artistMap = new LinkedHashMap<>();
 
         artists.getMediaFiles().stream().forEach(m -> {
-            String artist = Optional.ofNullable(m.getArtist())
+            String artist = Optional.ofNullable(m.getTitle())
+                    .or(() -> Optional.ofNullable(m.getArtist()))
                     .or(() -> Optional.ofNullable(m.getAlbumArtist()))
                     .orElse("(Unknown)");
             SearchResultArtist artistResult = artistMap.computeIfAbsent(Pair.of(artist, m.getFolder().getId()),

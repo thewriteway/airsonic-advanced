@@ -279,7 +279,7 @@ public class GlobalSecurityConfig {
                             "/databaseSettings*", "/transcodeSettings*", "/rest/startScan*").hasRole("ADMIN")
                     .requestMatchers("/deletePlaylist*", "/savePlaylist*").hasRole("PLAYLIST").requestMatchers("/download*").hasRole("DOWNLOAD")
                     .requestMatchers("/upload*").hasRole("UPLOAD").requestMatchers("/createShare*").hasRole("SHARE")
-                    .requestMatchers("/changeCoverArt*", "/editTags*").hasRole("COVERART").requestMatchers("/setMusicFileInfo*").hasRole("COMMENT")
+                    .requestMatchers("/changeCoverArt*", "/editTags*", "/editMediaDir*").hasRole("COVERART").requestMatchers("/setMusicFileInfo*").hasRole("COMMENT")
                     .requestMatchers("/podcastReceiverAdmin*", "/podcastEpisodes*").hasRole("PODCAST")
                     .requestMatchers("/**").hasRole("USER").anyRequest().authenticated())
             .formLogin((login) -> login

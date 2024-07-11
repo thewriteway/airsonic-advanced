@@ -165,7 +165,7 @@ public class DocumentFactory {
     public Document createArtistDocument(MediaFile mediaFile, MusicFolder musicFolder) {
         Document doc = new Document();
         fieldId.accept(doc, mediaFile.getId());
-        fieldWords.accept(doc, FieldNames.ARTIST, mediaFile.getArtist());
+        fieldWords.accept(doc, FieldNames.ARTIST, mediaFile.getName());
         fieldFolderPath.accept(doc, musicFolder.getPath().toString());
         return doc;
     }

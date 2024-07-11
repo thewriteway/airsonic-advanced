@@ -50,6 +50,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 
 import java.awt.Graphics2D;
@@ -231,9 +232,13 @@ public class CoverArtCreateService {
                         return ImageUtil.scaleToSquare(bimg, size);
                     }
                 }
-                LOG.warn("Failed to process cover art {}: {} failed", coverArt, reason);
+                LOG.warn("Failed to process cover art {}: {} failed", coverArt.getFullPath(), reason);
+            } catch (IIOException x) {
+                LOG.warn("Failed to process cover art {}: {}", coverArt.getFullPath(), "Bad image file");
+                LOG.debug(x.getMessage(), x);
             } catch (Throwable x) {
-                LOG.warn("Failed to process cover art {}", coverArt, x);
+                LOG.warn("Failed to process cover art {}", coverArt.getFullPath());
+                LOG.debug(x.getMessage(), x);
             }
         }
         return createAutoCover(coverArtRequest, size, size);

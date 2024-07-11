@@ -45,9 +45,14 @@
         #mediaDirTitle {
             font-size: 150%;
             padding: 0;
-            border: 0;
+            border: 1px solid transparent;
             margin: 0;
         } 
+        #mediaDirTitleForm input[type="text"] {
+            font-size: 150%;
+            padding: 0;
+            margin: 0;
+        }
         #mediaDirController span {
             margin-right: 0.3em;
         }
@@ -121,6 +126,12 @@
 
         // comments
         updateComments();
+
+        // directory name
+        // only for artist directories
+        if (mediaDir.contentType == 'artist') {
+            updateMediaDirTitle();
+        }
 
         // search components
         if (mediaDir.album == null && mediaDir.artist == null) {
@@ -272,6 +283,11 @@
         $('#comment').text(mediaDir.comment);
         $('#commentForm textarea').text(mediaDir.comment);
         $('#commentForm input[name="id"]').val(mediaDir.id);
+    }
+
+    function updateMediaDirTitle() {
+        $('#mediaDirTitleForm input[name="mediaDirTitle"]').val(mediaDir.title);
+        $('#mediaDirTitleForm input[name="id"]').val(mediaDir.id);
     }
 
     function subDirsHeading() {
@@ -839,6 +855,8 @@
 
         if (artistInfo.artistBio && artistInfo.artistBio.biography) {
             $("#artistBio").html(artistInfo.artistBio.biography);
+        } else {
+            $("#artistBio").empty();
         }
 
         this.topSongs = artistInfo.topSongs;
@@ -861,6 +879,9 @@
             var ancestor = mediaDir.ancestors[i];
             ancestors.append(feather.icons.folder.toSvg({class: 'feather-sm'}));
             ancestors.append($("<a>").attr("href", "#").attr("onclick", "getMediaDirectory(" + ancestor.id + ")").text(ancestor.title));
+            if (ancestor.title != ancestor.artist && ancestor.entryType == 'DIRECTORY' && ancestor.artist != null) {
+                ancestors.append(" (").append(ancestor.artist).append(")");
+            }
             ancestors.append(" » ");
         }
     }
@@ -873,6 +894,9 @@
             $("#mediaDirTitle").append(feather.icons.folder.toSvg());
         }
         $("#mediaDirTitle").append(mediaDir.title);
+        if (mediaDir.title != mediaDir.artist && mediaDir.contentType == 'artist') {
+            $("#mediaDirTitle").append(" (").append(mediaDir.artist).append(")");
+        }
     }
 
     function toggleMediaDirStar(status) {
@@ -955,6 +979,11 @@
     function toggleComment() {
         $("#commentForm").toggle();
         $("#comment").toggle();
+    }
+    
+    function toggleMediaDirTitle() {
+        $("#mediaDirTitleForm").toggle();
+        $("#mediaDirTitle").toggle();
     }
 
     /** Albums Only **/
@@ -1149,7 +1178,14 @@
 <div style="float:left" id="mediaInfo">
     <p id="ancestors" style="vertical-align: middle"></p>
     <p id="mediaDirTitle"></p>
-    <div id="avgRating"></div>
+    <form method="post" th:action="@{/editMediaDir}" style="display:none" id="mediaDirTitleForm">
+        <i data-feather="folder"></i>
+        <input type="hidden" name="action" value="editMediaDirTitle">
+        <input type="hidden" id="mediaFileId" name="id" value="">
+        <input type="text" name="mediaDirTitle"></input>
+        <input type="submit" th:value="#{common.save}">
+    </form>
+   <div id="avgRating"></div>
 </div>
 
 <div style="float:right;padding-right:1em">
@@ -1173,6 +1209,10 @@
 
         <div th:if="${model.user.coverArtRole}" class="pagetype-dependent type-album" style="display: inline-block;">
             <span><a href="javascript:editTagsPage()"><i data-feather="edit" role="img" th:aria-label="#{main.tags}" th:title="#{main.tags}"></i></a></span>
+        </div>
+
+        <div th:if="${model.user.coverArtRole}" class="pagetype-dependent type-artist" style="display: inline-block;">
+            <span><a href="javascript:toggleMediaDirTitle()"><i data-feather="edit" role="img" th:aria-label="#{common.edit}" th:title="#{common.edit}"></i></a></span>
         </div>
 
         <span th:if="${model.user.commentRole}"><a href="javascript:toggleComment()"><i data-feather="message-square" role="img" th:aria-label="#{main.comment}" th:title="#{main.comment}"></i></a></span>
@@ -1204,6 +1244,7 @@
         <input type="submit" th:value="#{common.save}">
     </form>
 </div>
+
 
 <div class="tableSpacer"></div>
 

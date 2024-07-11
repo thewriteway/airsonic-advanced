@@ -519,7 +519,7 @@ public class SubsonicRESTController {
     private org.subsonic.restapi.Artist createJaxbArtist(MediaFile artist, String username) {
         org.subsonic.restapi.Artist result = new org.subsonic.restapi.Artist();
         result.setId(String.valueOf(artist.getId()));
-        result.setName(artist.getArtist());
+        result.setName(artist.getTitle() != null ? artist.getTitle() : artist.getArtist());
         Instant starred = mediaFileService.getMediaFileStarredDate(artist, username);
         result.setStarred(jaxbWriter.convertDate(starred));
         return result;

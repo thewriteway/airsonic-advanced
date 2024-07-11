@@ -186,11 +186,11 @@
             <th class="fit center" th:text="#{top.status}"></th>
             <th class="truncate left" th:text="#{sharesettings.description}"></th>
         </tr>
-        <tr th:each="episode, loopStatus: ${command.episodes}">
-            <input type="hidden" th:field="${command.episodes[__${loopStatus.index}__].id}" form="form-selected"/>
-            <input type="hidden" th:field="${command.episodes[__${loopStatus.index}__].status}" form="form-selected"/>
+        <tr th:each="episode: ${command.episodes}">
+            <input type="hidden" th:field="${command.episodes[__${episodeStat.index}__].id}" form="form-selected"/>
+            <input type="hidden" th:field="${command.episodes[__${episodeStat.index}__].status}" form="form-selected"/>
 
-            <td class="fit center"><input type="checkbox" th:field="${command.episodes[__${loopStatus.index}__].selected}" form="form-selected" onchange="countSelected()"/></td>
+            <td class="fit center"><input type="checkbox" th:field="${command.episodes[__${episodeStat.index}__].selected}" form="form-selected" onchange="countSelected()"/></td>
 
             <th:block th:if="${#strings.isEmpty(episode.mediaFile?.id) or episode.status.name ne 'COMPLETED'}">
                 <td colspan="4"></td>
