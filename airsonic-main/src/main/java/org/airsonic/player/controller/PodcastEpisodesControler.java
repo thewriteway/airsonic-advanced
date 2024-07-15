@@ -51,7 +51,9 @@ public class PodcastEpisodesControler {
 
     @PostMapping(params = "download")
     public String downloadEpisode(
-            @RequestParam(name = "episodeId", required = true) Integer episodeId) throws Exception {
+            @RequestParam(name = "episodeId", required = true) Integer episodeId,
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) throws Exception {
 
         PodcastEpisode episode = podcastService.getEpisode(episodeId, false);
         if (episode == null) {
@@ -63,7 +65,7 @@ public class PodcastEpisodesControler {
         Integer channelId = episode.getChannel().getId();
         podcastDownloadClient.downloadEpisode(episodeId);
 
-        return "redirect:/podcastChannel?id=" + channelId;
+        return String.format("redirect:/podcastChannel.view?id=%d&page=%d&size=%d", channelId, page, size);
     }
 
     /**
@@ -75,7 +77,9 @@ public class PodcastEpisodesControler {
      */
     @PostMapping(params = "init")
     public String initializeEpisode(
-            @RequestParam(name = "episodeId", required = true) Integer episodeId) throws Exception {
+            @RequestParam(name = "episodeId", required = true) Integer episodeId,
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) throws Exception {
 
         PodcastEpisode episode = podcastService.getEpisode(episodeId, true);
         if (episode == null) {
@@ -87,7 +91,7 @@ public class PodcastEpisodesControler {
         Integer channelId = episode.getChannel().getId();
         podcastService.resetEpisode(episodeId);
 
-        return "redirect:/podcastChannel?id=" + channelId;
+        return String.format("redirect:/podcastChannel.view?id=%d&page=%d&size=%d", channelId, page, size);
     }
 
     /**
@@ -99,7 +103,9 @@ public class PodcastEpisodesControler {
      */
     @PostMapping(params = "lock")
     public String lockEpisode(
-            @RequestParam(name = "episodeId", required = true) Integer episodeId) throws Exception {
+            @RequestParam(name = "episodeId", required = true) Integer episodeId,
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) throws Exception {
 
         PodcastEpisode episode = podcastService.getEpisode(episodeId, true);
         if (episode == null) {
@@ -111,7 +117,7 @@ public class PodcastEpisodesControler {
         Integer channelId = episode.getChannel().getId();
         podcastService.lockEpisode(episodeId);
 
-        return "redirect:/podcastChannel?id=" + channelId;
+        return String.format("redirect:/podcastChannel.view?id=%d&page=%d&size=%d", channelId, page, size);
     }
 
     /**
@@ -123,7 +129,9 @@ public class PodcastEpisodesControler {
      */
     @PostMapping(params = "unlock")
     public String unlockEpisode(
-            @RequestParam(name = "episodeId", required = true) Integer episodeId) throws Exception {
+            @RequestParam(name = "episodeId", required = true) Integer episodeId,
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) throws Exception {
 
         PodcastEpisode episode = podcastService.getEpisode(episodeId, true);
         if (episode == null) {
@@ -135,7 +143,7 @@ public class PodcastEpisodesControler {
         Integer channelId = episode.getChannel().getId();
         podcastService.unlockEpisode(episodeId);
 
-        return "redirect:/podcastChannel?id=" + channelId;
+        return String.format("redirect:/podcastChannel.view?id=%d&page=%d&size=%d", channelId, page, size);
     }
 
 }

@@ -43,6 +43,9 @@ import org.jdom2.Element;
 import org.jdom2.Namespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -384,7 +387,7 @@ public class PodcastPersistenceService {
                     if (mediaFile != null) {
                         // Refresh media file to check if it still exists
                         mediaFileService.refreshMediaFile(mediaFile);
-                        if (!mediaFile.isPresent() && ep.getStatus() != PodcastStatus.DELETED) {
+                        if (!mediaFile.isPresent() && ep.getStatus() != PodcastStatus.DELETED && !ep.isLocked()) {
                             LOG.info("Media file '{}' for episode '{}' is not present anymore. Setting episode status to deleted.", mediaFile.getId(), ep.getTitle());
                             // If media file is not present anymore, set episode status to deleted
                             ep.setStatus(PodcastStatus.DELETED);
@@ -400,6 +403,18 @@ public class PodcastPersistenceService {
             LOG.warn("Podcast channel with id {} not found", channelId);
             return new ArrayList<>();
         });
+    }
+
+    @Transactional
+    public Page<PodcastEpisode> getEpisodes(Integer channelId, Pageable pageable) {
+        List<PodcastEpisode> episodes = getEpisodes(channelId);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), episodes.size());
+
+        List<PodcastEpisode> result = episodes.size() > start ? episodes.subList(start, end) : Collections.emptyList();
+
+        return new PageImpl<>(result, pageable, episodes.size());
     }
 
     /**
@@ -432,7 +447,7 @@ public class PodcastPersistenceService {
                     if (mediaFile != null) {
                         // Refresh media file to check if it still exists
                         mediaFileService.refreshMediaFile(mediaFile);
-                        if (!mediaFile.isPresent() && ep.getStatus() != PodcastStatus.DELETED) {
+                        if (!mediaFile.isPresent() && ep.getStatus() != PodcastStatus.DELETED && !ep.isLocked()) {
                             deleteEpisode(ep, true);
                         }
                     }

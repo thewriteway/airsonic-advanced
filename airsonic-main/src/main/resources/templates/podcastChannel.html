@@ -22,7 +22,9 @@
 <html><head>
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
-
+    <th:block th:replace="~{table}" />
+    <script type="text/javascript" th:src="@{/script/utils.js}"></script>
+    <script type="text/javascript" th:src="@{/script/purify-3.1.6.min.js}"></script>
     <script type="text/javascript" th:inline="javascript">
         function init() {
             $("#dialog-delete").dialog({resizable: false, height: 170, autoOpen: false,
@@ -104,6 +106,12 @@
             }
         }
 
+        function changePageSize(path) {
+            var url = DOMPurify.sanitize(path);
+            console.log(url);
+            location.href = url;
+        }
+
     </script>
     <style type="text/css">
       .music .center {
@@ -119,6 +127,24 @@
       }
       #episode-control td#selected-action{
           display: none;
+      }
+      .paging {
+          text-align: right;
+          margin: 15px 0;
+          font-size: 1rem;
+          list-style-type: none;
+      }
+      
+      .paging li {
+          display: inline-block;
+      }
+      
+      .paging.current, .paging a {
+          padding: 0 3px;
+      }
+      
+      .paging a {
+          display: block;
       }
     </style>
 </head>
@@ -154,8 +180,10 @@
 <hr/>
 <form th:action="@{/podcastChannel.view}" method="post" id="form-selected">
 <input type="hidden" id="channelId" name="channelId" th:value="${command.channel.id}"/>
+<input type="hidden" id="page" name="page" th:value="${pages.number}"/>
+<input type="hidden" id="size" name="size" th:value="${pages.size}"/>
 <table id="episode-control"><tr>
-    <td style="padding-left:1em"><span><a th:href=@{podcastChannel.view(id=${command.channel.id})}><i data-feather="refresh-cw" role="img" th:aria-label="#{podcastreceiver.refresh}"
+    <td style="padding-left:1em"><span><a th:href="@{podcastChannel.view(id=${command.channel.id}, page=${pages.number}, size=${pages.size})}"><i data-feather="refresh-cw" role="img" th:aria-label="#{podcastreceiver.refresh}"
                         th:title="#{podcastreceiver.refresh}"></i></a></span></td>
     <th:block th:if="${command.user.podcastRole}">
         <td id="selected-action"><a href="javascript:actionSelected('download')"><i data-feather="download-cloud" role="img" th:aria-label="#{podcastreceiver.downloadselected}" th:title="#{podcastreceiver.downloadselected}"></i></a></td>
@@ -176,6 +204,61 @@
 </div>
 </form>
 
+<div class="dataTables_wrapper">
+    <div name="table_length" th:if="${pages.totalPages gt 1}" class="dataTables_length">
+        <label>Show </label>
+        <select name="table_length" aria-controls="table" class="custom-select custom-select-sm form-control form-control-sm" onchange="changePageSize(this.options[this.selectedIndex].value)">
+            <option th:each="size: ${ {5, 10, 25, 50, 100} }" th:value="@{/podcastChannel.view(page=0, id=${command.channel.id}, size=${size})}" th:selected="${pages.size eq size}" th:text="${size}"></option>
+        </select>
+        <label> entities</label>
+    </div>
+    <div class="pagination" id="podcastEpisodesPagination" th:if="${pages.totalPages > 1}">
+        <ul class="paging">
+            <li>
+                <span th:if="${pages.first}" th:text="#{common.previous}"></span>
+                <a th:if="${not pages.first}"
+                    th:href="@{/podcastChannel.view(page=${pages.number - 1}, id=${command.channel.id}, size=${pages.size})}" th:text="#{common.previous}"></a>
+            </li>
+            <!-- first page-->
+            <li th:if="${pages.number gt 2}">
+                <a th:href="@{/podcastChannel.view(page=0, id=${command.channel.id}, size=${pages.size})}">1</a>
+            </li>
+
+            <!-- ... -->
+            <li th:if="${pages.number gt 3}">
+                <span>...</span>
+            </li>
+
+            <th:block th:each="i : ${ #numbers.sequence(pages.number - 2, pages.number + 2) }">
+                <li th:if="${i ge 0 and i lt pages.totalPages}">
+                    <span th:if="${i eq pages.number}" th:text="${i + 1}"></span>
+                    <a th:if="${i ne pages.number}"
+                        th:href="@{/podcastChannel.view(page=${i}, id=${command.channel.id}, size=${pages.size})}" th:text="${i + 1}"></a>
+                </li>
+            </th:block>
+
+            <!-- ... -->
+            <li th:if="${pages.number lt pages.totalPages - 4}">
+                <span>...</span>
+            </li>
+
+            <!-- last page -->
+            <li th:if="${pages.number lt pages.totalPages - 3}">
+                <a th:href="@{/podcastChannel.view(page=${pages.totalPages - 1}, id=${command.channel.id}, size=${pages.size})}"
+                    th:text="${pages.totalPages}"></a>
+            </li>
+
+            <!-- next -->
+            <li>
+                <span th:if="${pages.last}" th:text="#{common.next}"></span>
+                <a th:if="${not pages.last}"
+                    th:href="@{/podcastChannel.view(page=${pages.number + 1}, id=${command.channel.id}, size=${pages.size})}" th:text="#{common.next}">
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</div>
 <table class="music">
         <tr>
             <th class="fit center"><input type="checkbox" id="episodessa" value="all"/></th>
@@ -209,6 +292,8 @@
                 th:if="${command.user.podcastRole}"
                 th:name="'formEpisode' + ${episode.id}">
                 <input type="hidden" id="episodeId" name="episodeId" th:value="${episode.id}" />
+                <input type="hidden" id="page" name="page" th:value="${pages.number}" />
+                <input type="hidden" id="size" name="size" th:value="${pages.size}" />
                 <td class="fit center">
                     <th:block th:if="${episode.locked}">
                         <input type="submit" name="unlock" style="display: none;" />
@@ -247,9 +332,9 @@
 
             <td class="fit center">
                 <span class="detail">
-                        <span th:if="${episode.status.name eq 'DOWNLOADING'}" th:text="${#numbers.formatPercent(episode.completionRate, 1 ,1)}">
+                        <span th:if="${episode.status.name eq 'DOWNLOADING' && episode.completionRate != null }" th:text="${#numbers.formatPercent(episode.completionRate, 1 ,1)}">
                         </span>
-                        <span th:if="${episode.status.name ne 'DOWNLOADING'}" th:text="#{podcastreceiver.status.__${#strings.toLowerCase(episode.status)}__}">
+                        <span th:unless="${episode.status.name eq 'DOWNLOADING' && episode.completionRate != null}" th:text="#{podcastreceiver.status.__${#strings.toLowerCase(episode.status)}__}">
                         </span>
                 </span>
             </td>
@@ -263,6 +348,52 @@
 
         </tr>
 </table>
+<div class="pagination" id="podcastEpisodesPagination" th:if="${pages.totalPages > 1}">
+    <ul class="paging">
+        <li>
+            <span th:if="${pages.first}" th:text="#{common.previous}"></span>
+            <a th:if="${not pages.first}"
+                th:href="@{/podcastChannel.view(page=${pages.number - 1}, id=${command.channel.id}, size=${pages.size})}" th:text="#{common.previous}"></a>
+        </li>
+        <!-- first page-->
+        <li th:if="${pages.number gt 2}">
+            <a th:href="@{/podcastChannel.view(page=0, id=${command.channel.id}, size=${pages.size})}">1</a>
+        </li>
+
+        <!-- ... -->
+        <li th:if="${pages.number gt 3}">
+            <span>...</span>
+        </li>
+
+        <th:block th:each="i : ${ #numbers.sequence(pages.number - 2, pages.number + 2) }">
+            <li th:if="${i ge 0 and i lt pages.totalPages}">
+                <span th:if="${i eq pages.number}" th:text="${i + 1}"></span>
+                <a th:if="${i ne pages.number}"
+                    th:href="@{/podcastChannel.view(page=${i}, id=${command.channel.id}, size=${pages.size})}" th:text="${i + 1}"></a>
+            </li>
+        </th:block>
+
+        <!-- ... -->
+        <li th:if="${pages.number lt pages.totalPages - 4}">
+            <span>...</span>
+        </li>
+
+        <!-- last page -->
+        <li th:if="${pages.number lt pages.totalPages - 3}">
+            <a th:href="@{/podcastChannel.view(page=${pages.totalPages - 1}, id=${command.channel.id}, size=${pages.size})}"
+                th:text="${pages.totalPages}"></a>
+        </li>
+
+        <!-- next -->
+        <li>
+            <span th:if="${pages.last}" th:text="#{common.next}"></span>
+            <a th:if="${not pages.last}"
+                th:href="@{/podcastChannel.view(page=${pages.number + 1}, id=${command.channel.id}, size=${pages.size})}" th:text="#{common.next}">
+            </a>
+        </li>
+
+    </ul>
+</div>
 
 
 </body></html>

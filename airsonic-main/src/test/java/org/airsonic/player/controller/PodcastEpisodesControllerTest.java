@@ -101,7 +101,7 @@ public class PodcastEpisodesControllerTest {
             .with(csrf())
             .param("download", "")
             .param("episodeId", "1"))
-            .andExpect(redirectedUrl("/podcastChannel?id=2"));
+            .andExpect(redirectedUrl("/podcastChannel.view?id=2&page=0&size=10"));
         // verify
         verify(podcastDownloadClient).downloadEpisode(1);
         verify(podcastService).getEpisode(1, false);
@@ -121,7 +121,7 @@ public class PodcastEpisodesControllerTest {
             .with(csrf())
             .param("init", "")
             .param("episodeId", "1"))
-            .andExpect(redirectedUrl("/podcastChannel?id=2"));
+            .andExpect(redirectedUrl("/podcastChannel.view?id=2&page=0&size=10"));
         // verify
         verify(podcastService).resetEpisode(1);
         verify(podcastService).getEpisode(1, true);
@@ -141,7 +141,7 @@ public class PodcastEpisodesControllerTest {
             .with(csrf())
             .param("lock", "")
             .param("episodeId", "1"))
-            .andExpect(redirectedUrl("/podcastChannel?id=2"));
+            .andExpect(redirectedUrl("/podcastChannel.view?id=2&page=0&size=10"));
         // verify
         verify(podcastService).getEpisode(1, true);
     }
@@ -160,7 +160,7 @@ public class PodcastEpisodesControllerTest {
             .with(csrf())
             .param("unlock", "")
             .param("episodeId", "1"))
-            .andExpect(redirectedUrl("/podcastChannel?id=2"));
+            .andExpect(redirectedUrl("/podcastChannel.view?id=2&page=0&size=10"));
         // verify
         verify(podcastService).getEpisode(1, true);
     }
