@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html><head>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
 
@@ -48,7 +49,7 @@
     </th:block>
 </p>
 
-<th:block th:replace="~{homePager}" />
+<table th:replace="~{homePager::table}"></table>
 
 <div th:if="${!#strings.isEmpty(model.welcomeMessage)}"
      th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid #${#themes.code('detailColor')}|"
@@ -72,7 +73,7 @@
     </div>
 </th:block>
 <th:block th:if="${model.listSize eq #lists.size(model.albums)}">
-    <th:block th:replace="~{homePager}"></th:block>
+    <table th:replace="~{homePager::table}"></table>
 </th:block>
 
 </body></html>

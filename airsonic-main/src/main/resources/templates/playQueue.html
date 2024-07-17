@@ -9,6 +9,7 @@
         <script th:src="@{/script/mediaelement/plugins/speed/speed-i18n.js}"></script>
         <script th:src="@{/script/mediaelement/plugins/chromecast/chromecast.min.js}"></script>
         <script th:src="@{/script/mediaelement/plugins/chromecast/chromecast-i18n.js}"></script>
+        <script type="text/javascript" th:src="@{/script/purify-3.1.6.min.js}"></script>
         <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/speed/speed.min.css}">
         <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/chromecast/chromecast.min.css}">
 
@@ -59,7 +60,7 @@
                     if (elt.hasAttribute("class")) node.setAttribute("class", elt.getAttribute("class"));
                 
                     if (newState) {
-                        if (elt.hasAttribute("data-href")) node.setAttribute("href", elt.getAttribute("data-href"));
+                        if (elt.hasAttribute("data-href")) node.setAttribute("href", DOMPurify.sanitize(elt.getAttribute("data-href")));
                         node.classList.remove("disabled");
                         node.removeAttribute("aria-disabled");
                     } else {

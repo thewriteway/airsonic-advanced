@@ -1,12 +1,17 @@
-<table th:object="${model}">
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="~{head :: common_head}" />
+</head>
+<body>
+<table th:object="${model}" th:fragment="table">
     <tr>
-        <th:block th:if="*{!#strings.isEmpty(musicFolder)}">
-            <td style="padding-right: 2em">
-                <div th:style="|border:1px solid #${#themes.code('detailColor')}; padding-left: 0.5em;padding-right: 0.5em|"
-                th:text="*{musicFolder.name}">
-                </div>
-            </td>
-        </th:block>
+        <td th:if="*{!#strings.isEmpty(musicFolder)}" style="padding-right: 2em;">
+            <div th:style="|border:1px solid #${#themes.code('detailColor')}; padding-left: 0.5em;padding-right: 0.5em|"
+            th:text="*{musicFolder.name}">
+            </div>
+        </td>
 
         <th:block th:if="*{listType ne 'random'}">
             <th:block th:if="*{#lists.size(albums) gt 0}">
@@ -14,12 +19,15 @@
                 </td>
 
                 <td th:if="*{listOffset gt 0}">
-                    <a th:href="@{/home(listType=*{listType},listOffset=*{listOffset - listSize},genre=*{genre}, decade=*{decade})}"><img th:src="${#themes.code('backImage')}" alt=""></a>
+                    <a th:href="@{/home(listType=*{listType},listOffset=*{listOffset - listSize},genre=*{genre}, decade=*{decade})}">
+                        <img th:src="${#themes.code('backImage')}" alt="">
+                    </a>
                 </td>
 
                 <td th:if="*{#lists.size(albums) eq listSize}">
                     <a th:href="@{/home(listType=*{listType},listOffset=*{listOffset + listSize},genre=*{genre}, decade=*{decade})}">
-                        <img th:src="${#themes.code('forwardImage')}" alt=""></a>
+                        <img th:src="${#themes.code('forwardImage')}" alt="">
+                    </a>
                 </td>
                 <td style="padding-right: 2em">
                 </td>
@@ -28,11 +36,9 @@
             <th:block th:if="*{listType eq 'decade'}" >
                 <td th:text="#{home.decade.text}"></td>
                 <td style="padding-right: 2em">
-                    <select th:field="*{decade}"
-                            th:data-listtype="*{listType}"
-                            onchange="location='home?listType='+this.getAttribute('data-listtype')+'&amp;decade=' + options[selectedIndex].value">
-                            <option th:each="item: *{decades}" 
-                             th:value="${item}" th:text="${item}">1990</option>
+                    <select onchange="changeLocation(this.options[selectedIndex].value)">
+                        <option th:each="item: *{decades}" th:selected="${model.decade eq item}"
+                         th:value="@{/home(listType=*{listType}, decade=${item})}" th:text="${item}">1990</option>
                     </select>
                 </td>
             </th:block>
@@ -41,9 +47,11 @@
                 <td style="padding-right: 2em">
                     <select name="genre"
                             th:data-listtype="*{listType}"
-                            onchange="location='home?listType='+this.getAttribute('data-listtype')+'&amp;genre=' + encodeURIComponent(options[selectedIndex].value)">
-                        <option th:each="item: *{genres}" th:value="${item.name}"
-                        th:text="|${item.name} (${item.albumCount})|"></option>
+                            th:onchange="changeLocation(this.options[selectedIndex].value)">
+                        <option th:each="item: *{genres}" 
+                            th:value="@{/home(listType=*{listType}, genre=${item.name})}"
+                            th:selected="${model.genre eq item.name}"
+                            th:text="|${item.name} (${item.albumCount})|"></option>
                     </select>
                 </td>
             </th:block>
@@ -64,3 +72,5 @@
         </td>
     </tr>
 </table>
+</body>
+</html>

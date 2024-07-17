@@ -23,6 +23,13 @@
             <script defer type="text/javascript" th:src="@{/script/mousetrap-1.6.5.min.js}"></script>
             <script defer type="text/javascript" th:src="@{/script/keyboard_shortcuts.js}"></script>
             <script defer type="text/javascript" th:src="@{/script/feather-4.29.2.min.js}"></script>
+            <script type="text/javascript" th:src="@{/script/purify-3.1.6.min.js}"></script>
+            <script type="text/javascript">
+                function changeLocation(dest) {
+                    const safeDest = DOMPurify.sanitize(dest);
+                    location.href = safeDest;
+                }
+            </script>
         </th:block>
     </head>
 </html>

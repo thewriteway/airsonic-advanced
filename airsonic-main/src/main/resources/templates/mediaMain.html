@@ -829,7 +829,8 @@
         feather.replace();
         <!-- add title to feather icons-->
         Array.from(document.querySelectorAll('svg.feather[title]')).forEach((element) => {
-           element.insertAdjacentHTML('afterbegin', `<title>${element.attributes.title.value}</title>`);
+           const title = DOMPurify.sanitize(element.attributes.title.value);
+           element.insertAdjacentHTML('afterbegin', '<title>' + title  + '</title>');
         });
     }
 
@@ -921,7 +922,8 @@
             $("#starMediaDir").empty().append(feather.icons.star.toSvg({title: svgTitle}));
         }
         Array.from(document.querySelectorAll('#starMediaDir svg.feather[title]')).forEach((element) => {
-           element.insertAdjacentHTML('afterbegin', `<title>${element.attributes.title.value}</title>`);
+            const title = DOMPurify.sanitize(element.attributes.title.value);
+            element.insertAdjacentHTML('afterbegin', '<title>' + title + '</title>');
         });
     }
 
