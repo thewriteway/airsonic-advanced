@@ -54,7 +54,7 @@
 
             feather.replace();
             Array.from(document.querySelectorAll('svg.feather[title]')).forEach((element) => {
-               element.insertAdjacentHTML('afterbegin', `<title>${element.attributes.title.value}</title>`);
+               element.insertAdjacentHTML('afterbegin', `<title>${DOMPurify.sanitize(element.attributes.title.value)}</title>`);
             });
             countSelected();
         }

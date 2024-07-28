@@ -301,6 +301,14 @@ public class MediaScannerService {
                     }, pool)
                     .thenRunAsync(() -> LOG.info("Artist persistence complete"), pool);
 
+            LOG.info("Persisting media files");
+            CompletableFuture<Void> mediaFilePersistence = CompletableFuture
+                    .runAsync(() -> {
+                        LOG.info("Marking non-present media files.");
+                        mediaFileService.markNonPresent(statistics.getScanDate());
+                    }, pool)
+                    .thenRunAsync(() -> LOG.info("Media file persistence complete"), pool);
+
             LOG.info("Persisting genres");
             CompletableFuture<Void> genrePersistence = CompletableFuture
                     .runAsync(() -> {
@@ -310,7 +318,7 @@ public class MediaScannerService {
                         LOG.info("Genre persistence successfully complete: {}", genresSuccessful);
                     }, pool);
 
-            CompletableFuture.allOf(albumPersistence, artistPersistence, genrePersistence).join();
+            CompletableFuture.allOf(albumPersistence, artistPersistence, mediaFilePersistence, genrePersistence).join();
             LOG.info("Completed media library scan.");
 
         } catch (Throwable x) {
@@ -430,6 +438,9 @@ public class MediaScannerService {
                         albumsInDb.add(dbAlbum.getId());
                         dbAlbum.setDuration(0);
                         dbAlbum.setSongCount(0);
+                        if (dbAlbum.getPath() != file.getParentPath()) {
+                            dbAlbum.setPath(file.getParentPath());
+                        }
                     }
                     return dbAlbum;
                 }).orElse(null);

@@ -1672,6 +1672,12 @@ public class MediaFileService {
         file.setChildrenLastUpdated(Instant.ofEpochMilli(1));
         mediaFileRepository.save(file);
         coverArtService.delete(EntityType.MEDIA_FILE, file.getId());
+
+        // delete children recursively
+        if (file.isDirectory()) {
+            List<MediaFile> children = mediaFileRepository.findByFolderAndParentPathAndPresentTrue(file.getFolder(), file.getPath());
+            children.forEach(this::delete);
+        }
         return file;
     }
 
@@ -1705,5 +1711,4 @@ public class MediaFileService {
     public void expunge() {
         mediaFileRepository.deleteAllByPresentFalse();
     }
-
 }
