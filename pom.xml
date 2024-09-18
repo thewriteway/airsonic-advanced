@@ -26,7 +26,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
         <cxf.version>4.0.5</cxf.version>
-        <snakeyaml.version>2.2</snakeyaml.version>
+        <snakeyaml.version>2.3</snakeyaml.version>
         <lucene.version>9.11.1</lucene.version>
         <docker.container.repo>ghcr.io/kagemomiji/airsonic-advanced</docker.container.repo>
         <docker.java.version>17.0.10_7</docker.java.version>
@@ -91,7 +91,7 @@
          <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.14.0</version>
+                <version>3.16.0</version>
             </dependency>
                <dependency>
                 <groupId>org.seamless</groupId>
@@ -151,7 +151,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.46.0</version>
+                <version>3.47.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.j2objc</groupId>
@@ -166,12 +166,12 @@
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>5.14.0</version>
+                <version>5.15.0</version>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna-platform</artifactId>
-                <version>5.14.0</version>
+                <version>5.15.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.lucene</groupId>
@@ -207,7 +207,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>buildnumber-maven-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.2.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.cxf</groupId>
@@ -285,7 +285,7 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>10.0.3</version>
+                    <version>10.0.4</version>
                     <inherited>true</inherited>
                     <configuration>
                         <cveValidForHours>24</cveValidForHours>

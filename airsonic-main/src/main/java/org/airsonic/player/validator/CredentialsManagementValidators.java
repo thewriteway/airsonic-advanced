@@ -1,7 +1,7 @@
 package org.airsonic.player.validator;
 
 import org.airsonic.player.command.CredentialsManagementCommand.CredentialsCommand;
-import org.airsonic.player.security.GlobalSecurityConfig;
+import org.airsonic.player.security.PasswordEncoderConfig;
 import org.apache.commons.lang3.StringUtils;
 
 import jakarta.validation.Constraint;
@@ -66,12 +66,12 @@ public class CredentialsManagementValidators {
             }
 
             if (StringUtils.equals("nonlegacydecodable", type)) {
-                return GlobalSecurityConfig.NONLEGACY_DECODABLE_ENCODERS.contains(field);
+                return PasswordEncoderConfig.NONLEGACY_DECODABLE_ENCODERS.contains(field);
             } else if (StringUtils.equals("nonlegacynondecodable", type)) {
-                return GlobalSecurityConfig.NONLEGACY_NONDECODABLE_ENCODERS.contains(field);
+                return PasswordEncoderConfig.NONLEGACY_NONDECODABLE_ENCODERS.contains(field);
             }
 
-            return GlobalSecurityConfig.ENCODERS.keySet().contains(field);
+            return PasswordEncoderConfig.ENCODERS.keySet().contains(field);
         }
     }
 
@@ -94,7 +94,7 @@ public class CredentialsManagementValidators {
 
             boolean valid = true;
             if (!creds.getApp().getNonDecodableEncodersAllowed()) {
-                valid = !GlobalSecurityConfig.NONLEGACY_NONDECODABLE_ENCODERS.contains(creds.getEncoder());
+                valid = !PasswordEncoderConfig.NONLEGACY_NONDECODABLE_ENCODERS.contains(creds.getEncoder());
             }
 
             return valid;

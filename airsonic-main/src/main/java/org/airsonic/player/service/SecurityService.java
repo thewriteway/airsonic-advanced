@@ -32,8 +32,8 @@ import org.airsonic.player.domain.UserCredential;
 import org.airsonic.player.domain.UserCredential.App;
 import org.airsonic.player.repository.UserCredentialRepository;
 import org.airsonic.player.repository.UserRepository;
-import org.airsonic.player.security.GlobalSecurityConfig;
 import org.airsonic.player.security.PasswordDecoder;
+import org.airsonic.player.security.PasswordEncoderConfig;
 import org.airsonic.player.service.cache.UserCache;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -146,7 +146,7 @@ public class SecurityService implements UserDetailsService {
                 UserCredential userCredential = new UserCredential(
                         u,
                         command.getApp().getUsernameRequired() ? command.getUsername() : username,
-                        GlobalSecurityConfig.ENCODERS.get(command.getEncoder()).encode(command.getCredential()),
+                        PasswordEncoderConfig.ENCODERS.get(command.getEncoder()).encode(command.getCredential()),
                         command.getEncoder(),
                         command.getApp(),
                         comment,
@@ -269,7 +269,7 @@ public class SecurityService implements UserDetailsService {
         String encoder = getPreferredPasswordEncoder(true);
         try {
             UserCredential userCredential = new UserCredential(user, user.getUsername(),
-                    GlobalSecurityConfig.ENCODERS.get(encoder).encode(password), encoder, App.AIRSONIC, comment);
+                    PasswordEncoderConfig.ENCODERS.get(encoder).encode(password), encoder, App.AIRSONIC, comment);
             userCredentialRepository.save(userCredential);
         } catch (Exception e) {
             LOG.warn("Can't create a credential user {}", user.getUsername(), e);
@@ -314,7 +314,7 @@ public class SecurityService implements UserDetailsService {
 
     public Map<App, UserCredential> getDecodableCredsForApps(String username, App... apps) {
         return getCredentials(username, apps).parallelStream()
-                .filter(c -> GlobalSecurityConfig.DECODABLE_ENCODERS.contains(c.getEncoder()))
+                .filter(c -> PasswordEncoderConfig.DECODABLE_ENCODERS.contains(c.getEncoder()))
                 .filter(c -> c.getExpiration() == null || c.getExpiration().isAfter(Instant.now()))
                 .collect(Collectors.groupingByConcurrent(
                         UserCredential::getApp,
@@ -324,12 +324,12 @@ public class SecurityService implements UserDetailsService {
 
     public boolean checkDefaultAdminCredsPresent() {
         return userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC).parallelStream()
-                .anyMatch(c -> GlobalSecurityConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
+                .anyMatch(c -> PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
                         c.getCredential()));
     }
 
     public boolean checkOpenCredsPresent() {
-        return userCredentialRepository.existsByEncoderIn(GlobalSecurityConfig.OPENTEXT_ENCODERS);
+        return userCredentialRepository.existsByEncoderIn(PasswordEncoderConfig.OPENTEXT_ENCODERS);
     }
 
     public boolean checkLegacyCredsPresent() {
@@ -383,7 +383,7 @@ public class SecurityService implements UserDetailsService {
     }
 
     public static final String decodeCredentials(UserCredential reversibleCred) {
-        PasswordDecoder decoder = (PasswordDecoder) GlobalSecurityConfig.ENCODERS.get(reversibleCred.getEncoder());
+        PasswordDecoder decoder = (PasswordDecoder) PasswordEncoderConfig.ENCODERS.get(reversibleCred.getEncoder());
         try {
             return decoder.decode(reversibleCred.getCredential());
         } catch (Exception e) {
@@ -557,7 +557,7 @@ public class SecurityService implements UserDetailsService {
         UserCredential uc = new UserCredential(
                 user,
                 user.getUsername(),
-                GlobalSecurityConfig.ENCODERS.get(defaultEncoder).encode(credential),
+                PasswordEncoderConfig.ENCODERS.get(defaultEncoder).encode(credential),
                 defaultEncoder,
                 App.AIRSONIC,
                 comment);

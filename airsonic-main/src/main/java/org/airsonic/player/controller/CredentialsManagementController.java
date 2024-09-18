@@ -6,7 +6,7 @@ import org.airsonic.player.command.CredentialsManagementCommand.AdminControls;
 import org.airsonic.player.command.CredentialsManagementCommand.CredentialsCommand;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserCredential.App;
-import org.airsonic.player.security.GlobalSecurityConfig;
+import org.airsonic.player.security.PasswordEncoderConfig;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.validator.CredentialsManagementValidators.CredentialCreateChecks;
@@ -63,11 +63,11 @@ public class CredentialsManagementController {
                         c.addDisplayComment("migratecred");
                     }
 
-                    if (GlobalSecurityConfig.OPENTEXT_ENCODERS.contains(c.getEncoder())) {
+                    if (PasswordEncoderConfig.OPENTEXT_ENCODERS.contains(c.getEncoder())) {
                         c.addDisplayComment("opentextcred");
                     }
 
-                    if (GlobalSecurityConfig.DECODABLE_ENCODERS.contains(c.getEncoder())) {
+                    if (PasswordEncoderConfig.DECODABLE_ENCODERS.contains(c.getEncoder())) {
                         c.addDisplayComment("decodablecred");
                     } else {
                         c.addDisplayComment("nondecodablecred");
@@ -88,8 +88,8 @@ public class CredentialsManagementController {
         map.addAttribute("apps", EnumSet.allOf(App.class));
         map.addAttribute("appsMap", EnumSet.allOf(App.class).stream().collect(toMap(a -> a, a -> new BeanMap(a))));
 
-        map.addAttribute("decodableEncoders", GlobalSecurityConfig.NONLEGACY_DECODABLE_ENCODERS);
-        map.addAttribute("nonDecodableEncoders", GlobalSecurityConfig.NONLEGACY_NONDECODABLE_ENCODERS);
+        map.addAttribute("decodableEncoders", PasswordEncoderConfig.NONLEGACY_DECODABLE_ENCODERS);
+        map.addAttribute("nonDecodableEncoders", PasswordEncoderConfig.NONLEGACY_NONDECODABLE_ENCODERS);
         map.addAttribute("encoderAliases", ENCODER_ALIASES);
 
         map.addAttribute("preferredEncoderNonDecodableAllowed", securityService.getPreferredPasswordEncoder(true));

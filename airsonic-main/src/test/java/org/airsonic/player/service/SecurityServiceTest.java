@@ -9,7 +9,7 @@ import org.airsonic.player.domain.UserCredential;
 import org.airsonic.player.domain.UserCredential.App;
 import org.airsonic.player.repository.UserCredentialRepository;
 import org.airsonic.player.repository.UserRepository;
-import org.airsonic.player.security.GlobalSecurityConfig;
+import org.airsonic.player.security.PasswordEncoderConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,7 +112,7 @@ public class SecurityServiceTest {
         UserCredential uc = argumentCaptor.getValue();
         assertEquals(TEST_USER_NAME, uc.getUser().getUsername());
         assertEquals("hex", uc.getEncoder());
-        assertEquals(GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), uc.getCredential());
+        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), uc.getCredential());
         assertEquals(App.LASTFM, uc.getApp());
         assertEquals("testComment", uc.getComment());
     }
@@ -142,7 +142,7 @@ public class SecurityServiceTest {
         // given
         CredentialsManagementCommand command = new CredentialsManagementCommand();
         command.setCredentials(List.of(mockedCredentialsCommand));
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, GlobalSecurityConfig.ENCODERS.get("encrypted-AES-GCM").encode("testPassword"), "encrypted-AES-GCM", App.LASTFM);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").encode("testPassword"), "encrypted-AES-GCM", App.LASTFM);
         userCredentialRepository.saveAndFlush(userCredential);
         when(mockedCredentialsCommand.getHash()).thenReturn(Integer.toString(userCredential.hashCode()));
         when(mockedCredentialsCommand.getMarkedForDeletion()).thenReturn(false);
@@ -157,7 +157,7 @@ public class SecurityServiceTest {
         verify(userCredentialRepository).save(any(UserCredential.class));
         UserCredential actual = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.LASTFM).get(0);
         assertEquals("hex", actual.getEncoder());
-        assertEquals(GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
+        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
         assertEquals("test", actual.getComment());
     }
 
@@ -182,7 +182,7 @@ public class SecurityServiceTest {
         verify(userCredentialRepository).save(any(UserCredential.class));
         UserCredential actual = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.LASTFM).get(0);
         assertEquals("hex", actual.getEncoder());
-        assertEquals(GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
+        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
         assertEquals("test", actual.getComment());
     }
 
@@ -202,7 +202,7 @@ public class SecurityServiceTest {
     public void recoverCredentialWithExistingUser() {
 
         // given
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
         userCredentialRepository.saveAndFlush(userCredential);
 
         // when
@@ -215,7 +215,7 @@ public class SecurityServiceTest {
 
         UserCredential actual = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.AIRSONIC).get(0);
         assertEquals("hex", actual.getEncoder());
-        assertEquals(GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
+        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
 
         User actualUser = userRepository.findByUsername(TEST_USER_NAME).get();
         assertFalse(actualUser.isLdapAuthenticated());
@@ -226,7 +226,7 @@ public class SecurityServiceTest {
     public void deleteCredentialWithLastAirsonicCredsShouldReturnFalse() {
 
         // given
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
         userCredentialRepository.saveAndFlush(userCredential);
 
         // when
@@ -241,9 +241,9 @@ public class SecurityServiceTest {
     public void deleteCredentialSuccessShouldReturnTrue() {
 
         // given
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.LASTFM);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.LASTFM);
         userCredentialRepository.saveAndFlush(userCredential);
-        UserCredential userCredential2 = new UserCredential(testUser, TEST_USER_NAME, GlobalSecurityConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
+        UserCredential userCredential2 = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
         userCredentialRepository.saveAndFlush(userCredential2);
 
         // when

@@ -1,7 +1,7 @@
 package org.airsonic.player.domain;
 
-import org.airsonic.player.security.GlobalSecurityConfig;
 import org.airsonic.player.security.PasswordDecoder;
+import org.airsonic.player.security.PasswordEncoderConfig;
 import org.springframework.util.StringUtils;
 
 import jakarta.persistence.Column;
@@ -245,16 +245,16 @@ public class UserCredential {
         }
         if (!this.encoder.equals(newEncoder) || reencodePlaintextNewCreds) {
             if (reencodePlaintextNewCreds) {
-                String newCredential = GlobalSecurityConfig.ENCODERS.get(newEncoder).encode(this.credential);
+                String newCredential = PasswordEncoderConfig.ENCODERS.get(newEncoder).encode(this.credential);
                 if (!this.credential.equals(newCredential)) {
                     this.credential = newCredential;
                     this.setUpdated(Instant.now().truncatedTo(ChronoUnit.MICROS));
                 }
-            } else if (GlobalSecurityConfig.DECODABLE_ENCODERS.contains(this.encoder)) {
+            } else if (PasswordEncoderConfig.DECODABLE_ENCODERS.contains(this.encoder)) {
                 try {
-                    PasswordDecoder decoder = (PasswordDecoder) GlobalSecurityConfig.ENCODERS.get(this.encoder);
+                    PasswordDecoder decoder = (PasswordDecoder) PasswordEncoderConfig.ENCODERS.get(this.encoder);
                     String decodedCredential = decoder.decode(this.credential);
-                    this.credential = GlobalSecurityConfig.ENCODERS.get(newEncoder).encode(decodedCredential);
+                    this.credential = PasswordEncoderConfig.ENCODERS.get(newEncoder).encode(decodedCredential);
                     this.setUpdated(Instant.now().truncatedTo(ChronoUnit.MICROS));
                 } catch (Exception e) {
                     return false;

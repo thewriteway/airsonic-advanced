@@ -4,13 +4,14 @@ import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -55,13 +56,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     public static final String UNDERLYING_HTTP_SESSION = "httpSession";
     public static final String BASE_URL = "baseUrl";
 
-    private TaskScheduler messageBrokerTaskScheduler;
     private String contextPath;
-
-    @Autowired
-    public void setMessageBrokerTaskScheduler(@Lazy TaskScheduler taskScheduler) {
-        this.messageBrokerTaskScheduler = taskScheduler;
-    }
 
     @Autowired
     @Value("${server.servlet.context-path:/}")
@@ -72,7 +67,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic", "/queue")
-                .setTaskScheduler(messageBrokerTaskScheduler)
+                .setTaskScheduler(messageBrokerTaskScheduler())
                 .setHeartbeatValue(new long[] { 20000, 20000 });
         config.setApplicationDestinationPrefixes("/app");
 
@@ -521,5 +516,10 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
             throw new UnsupportedOperationException("Unimplemented method 'getServletConnection'");
         }
 
+    }
+
+    @Bean(name = "heartbeatTaskScheduler")
+    public TaskScheduler messageBrokerTaskScheduler() {
+        return new ThreadPoolTaskScheduler();
     }
 }
