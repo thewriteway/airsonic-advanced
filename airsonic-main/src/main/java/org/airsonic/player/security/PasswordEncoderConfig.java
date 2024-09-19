@@ -37,13 +37,8 @@ public class PasswordEncoderConfig {
             .<String, PasswordEncoder>builderWithExpectedSize(19)
             .put("bcrypt", new BCryptPasswordEncoder())
             .put("ldap", new org.springframework.security.crypto.password.LdapShaPasswordEncoder())
-            .put("MD4", new org.springframework.security.crypto.password.Md4PasswordEncoder())
-            .put("MD5", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("MD5"))
             .put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8())
             .put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8())
-            .put("SHA-1", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-1"))
-            .put("SHA-256", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-256"))
-            .put("sha256", new org.springframework.security.crypto.password.StandardPasswordEncoder())
             .put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8())
 
             // base decodable encoders
