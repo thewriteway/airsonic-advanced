@@ -60,7 +60,7 @@ jobs:
         with:
           tag_name: ${{ steps.tagcalc.outputs.tag }}
           name: Stable Release ${{ steps.tagcalc.outputs.tag }}
-          draft: false
+          draft: true
           prerelease: false
           generate_release_notes: true
           body: |

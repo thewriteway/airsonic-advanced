@@ -3,6 +3,27 @@
 # kagemomiji/airsonic-advanced
 # -->
 
+## v11.1.4 - 19 Sep 2024
+
+Fixes:
+- Fixed non square cover art display issue
+- Fixed some issues about Web UI
+
+Changes:
+- Changed Web UI technology from JSP to Thymeleaf
+- Support [OpenSubsonic](https://opensubsonic.netlify.app/) API schema
+- Replace artist image from Last.fm to local image
+- Support `webp` image format for cover art
+- Support `m4b` format for audiobook
+- Changed search results order by exact match
+- Add podcast episodes management functions to the Web UI
+- Add podcast episodes redownload function to the Web UI
+- Add edit artist name function to the Web UI
+- Bump up spring-boot to 3.x for deprecated 2.x version
+
+Security:
+- Fix some vulnerabilities from Java codes detected by CodeQL
+
 ## v11.1.3 - 6 Feb 2024
 
 Fixes:
