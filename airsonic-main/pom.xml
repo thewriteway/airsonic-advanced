@@ -53,7 +53,7 @@
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-jmx</artifactId>
-            <version>4.2.27</version>
+            <version>4.2.28</version>
         </dependency>
         <!-- END Metrics -->
 
@@ -332,7 +332,7 @@
             <artifactId>cling-core</artifactId>
             <!-- Cling removed the org.fourthline.cling.transport.impl.apache package in 2.1, which is needed to make Cling work with Tomcat. -->
             <!-- Don't upgrade this unless you can test UPnP/DLNA support properly! -->
-            <version>2.0.1</version>
+            <version>2.1.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>jakarta.servlet</groupId>
@@ -346,7 +346,7 @@
             <artifactId>cling-support</artifactId>
             <!-- Cling removed the org.fourthline.cling.transport.impl.apache package in 2.1, which is needed to make Cling work with Tomcat. -->
             <!-- Don't upgrade this unless you can test UPnP/DLNA support properly! -->
-            <version>2.0.1</version>
+            <version>2.1.2</version>
         </dependency>
 
         <dependency>
@@ -591,7 +591,7 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>9.0.0</version>
+            <version>9.1.0</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -607,7 +607,7 @@
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-webp</artifactId>
-            <version>3.11.0</version>
+            <version>3.12.0</version>
         </dependency>
 
     </dependencies>
