@@ -316,7 +316,7 @@
                             <exclude>org.airsonic.player.service.search.*TestCase.java</exclude>
                         </excludes>
                         <!-- see https://github.com/mockito/mockito/issues/3037#issuecomment-1930132240-->
-                        <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine> 
+                        <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -360,7 +360,7 @@
                 <version>3.8.0</version>
                 <executions>
                     <execution>
-                       <id>init</id> 
+                       <id>init</id>
                        <goals>
                             <goal>properties</goal>
                        </goals>
