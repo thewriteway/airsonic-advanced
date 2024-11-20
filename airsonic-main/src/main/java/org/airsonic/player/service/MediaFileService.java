@@ -1369,7 +1369,7 @@ public class MediaFileService {
                     if (cueSheet != null) {
                         if (cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning"))
                                 .map(m -> {
-                                    LOG.warn("Cue sheet parsing line {} : {}", m.getLineNumber(), m.getMessage());
+                                    LOG.warn("Parsing {} at line {} : {}", cueFile, m.getLineNumber(), m.getMessage());
                                     return m;
                                 }).findFirst().isPresent()) {
                             cueSheet = null;
