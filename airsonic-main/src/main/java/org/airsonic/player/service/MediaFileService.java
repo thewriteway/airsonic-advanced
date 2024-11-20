@@ -1366,9 +1366,14 @@ public class MediaFileService {
                     } catch (IOException e) {
                         LOG.warn("Defaulting to UTF-8 for cuesheet {}", cueFile);
                     }
-                    if (cueSheet == null || cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning")).findFirst().isPresent()) {
-                        LOG.warn("Error parsing cuesheet {}", cueFile);
-                        return null;
+                    if (cueSheet != null) {
+                        if (cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning"))
+                                .map(m -> {
+                                    LOG.warn("Cue sheet parsing line {} : {}", m.getLineNumber(), m.getMessage());
+                                    return m;
+                                }).findFirst().isPresent()) {
+                            cueSheet = null;
+                        }
                     }
                     break;
                 case "flac":
