@@ -3,6 +3,7 @@ package org.airsonic.player.service;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.Playlist;
+import org.airsonic.player.domain.PlaylistMediaFile;
 import org.airsonic.player.repository.PlaylistRepository;
 import org.airsonic.player.repository.UserRepository;
 import org.airsonic.player.service.playlist.DefaultPlaylistExportHandler;
@@ -89,7 +90,13 @@ public class PlaylistFileServiceTestExport {
 
         Playlist playlist = new Playlist();
         playlist.setId(23);
-        playlist.setMediaFiles(getPlaylistFiles());
+        int orderIndex = 0;
+        List<PlaylistMediaFile> playlistMediaFiles = new ArrayList<>();
+        for (MediaFile mediaFile : getPlaylistFiles()) {
+            playlistMediaFiles.add(new PlaylistMediaFile(playlist, mediaFile, orderIndex));
+            orderIndex++;
+        }
+        playlist.setPlaylistMediaFiles(playlistMediaFiles);
         when(playlistRepository.findById(eq(23))).thenReturn(Optional.of(playlist));
         when(settingsService.getPlaylistExportFormat()).thenReturn("m3u");
         when(mediaFolderService.getMusicFolderById(any())).thenReturn(mockedFolder);

@@ -5,6 +5,7 @@ import chameleon.playlist.SpecificPlaylistProvider;
 import chameleon.playlist.xspf.Location;
 import chameleon.playlist.xspf.Track;
 import chameleon.playlist.xspf.XspfProvider;
+import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Playlist;
 import org.airsonic.player.repository.PlaylistRepository;
 import org.airsonic.player.service.CoverArtService;
@@ -40,7 +41,7 @@ public class XspfPlaylistExportHandler implements PlaylistExportHandler {
         return createXsfpPlaylistFromDBId(id);
     }
 
-    chameleon.playlist.xspf.Playlist createXsfpPlaylistFromDBId(int id) {
+    private chameleon.playlist.xspf.Playlist createXsfpPlaylistFromDBId(int id) {
         chameleon.playlist.xspf.Playlist newPlaylist = new chameleon.playlist.xspf.Playlist();
         Playlist playlist = playlistRepository.findById(id).orElseGet(() -> {
             LOG.error("Playlist with id {} not found", id);
@@ -50,7 +51,8 @@ public class XspfPlaylistExportHandler implements PlaylistExportHandler {
         newPlaylist.setCreator("Airsonic user " + playlist.getUsername());
         newPlaylist.setDate(Date.from(Instant.now())); //TODO switch to Instant upstream
 
-        playlist.getMediaFiles().stream().map(mediaFile -> {
+        playlist.getPlaylistMediaFiles().stream().map(pmf -> {
+            MediaFile mediaFile = pmf.getMediaFile();
             Track track = new Track();
             track.setTrackNumber(mediaFile.getTrackNumber());
             track.setCreator(mediaFile.getArtist());

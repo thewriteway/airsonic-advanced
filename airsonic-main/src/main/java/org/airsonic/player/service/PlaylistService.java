@@ -22,6 +22,7 @@ package org.airsonic.player.service;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.Playlist;
+import org.airsonic.player.domain.PlaylistMediaFile;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.repository.PlaylistRepository;
 import org.airsonic.player.repository.UserRepository;
@@ -148,16 +149,23 @@ public class PlaylistService {
 
     @Transactional(readOnly = true)
     public List<MediaFile> getFilesInPlaylist(int id, boolean includeNotPresent) {
-        return playlistRepository.findById(id).map(p -> p.getMediaFiles()).orElseGet(
+        return playlistRepository.findById(id).map(p -> {
+            return p.getPlaylistMediaFiles().stream()
+                .map(PlaylistMediaFile::getMediaFile)
+                .filter(Objects::nonNull)
+                .filter(x -> x.isPresent() || includeNotPresent)
+                .collect(Collectors.toList());
+        }).orElseGet(
             () -> {
                 LOG.warn("Playlist {} not found", id);
                 return new ArrayList<>();
             }
-        ).stream().filter(x -> x.isPresent() || includeNotPresent).collect(Collectors.toList());
+        );
     }
 
     @Transactional
     public Playlist setFilesInPlaylist(int id, List<MediaFile> files) {
+        playlistCache.removePlaylistById(id);
         return playlistRepository.findById(id).map(p -> {
             Playlist playlist = setFilesInPlaylist(p, files);
             playlistRepository.saveAndFlush(playlist);
@@ -170,7 +178,25 @@ public class PlaylistService {
     }
 
     private Playlist setFilesInPlaylist(Playlist playlist, List<MediaFile> files) {
-        playlist.setMediaFiles(files);
+
+        int fileCount = files.size();
+        List<PlaylistMediaFile> playlistMediaFiles =
+            playlist.getPlaylistMediaFiles().stream()
+                .limit(fileCount).collect(Collectors.toList());
+        // update order index and media file
+        int orderIndex = 0;
+        for (MediaFile file : files) {
+            if (orderIndex < playlistMediaFiles.size()) {
+                PlaylistMediaFile pmf = playlistMediaFiles.get(orderIndex);
+                pmf.setMediaFile(file);
+                pmf.setOrderIndex(orderIndex);
+            } else {
+                PlaylistMediaFile pmf = new PlaylistMediaFile(playlist, file, orderIndex);
+                playlistMediaFiles.add(pmf);
+            }
+            orderIndex++;
+        }
+        playlist.setPlaylistMediaFiles(playlistMediaFiles);
         playlist.setFileCount(files.size());
         playlist.setDuration(files.stream().mapToDouble(MediaFile::getDuration).sum());
         playlist.setChanged(Instant.now());
@@ -181,11 +207,11 @@ public class PlaylistService {
     public void removeFilesInPlaylistByIndices(Integer id, List<Integer> indices) {
         playlistCache.removePlaylistById(id);
         playlistRepository.findById(id).ifPresentOrElse(p -> {
-            List<MediaFile> files = p.getMediaFiles();
+            List<PlaylistMediaFile> files = p.getPlaylistMediaFiles();
             List<MediaFile> newFiles = new ArrayList<>();
             for (int i = 0; i < files.size(); i++) {
                 if (!indices.contains(i)) {
-                    newFiles.add(files.get(i));
+                    newFiles.add(files.get(i).getMediaFile());
                 }
             }
             Playlist playlist = setFilesInPlaylist(p, newFiles);
@@ -202,8 +228,8 @@ public class PlaylistService {
     @Transactional
     public List<Playlist> refreshPlaylistsStats() {
         return playlistRepository.findAll().stream().map(p -> {
-            p.setFileCount(p.getMediaFiles().size());
-            p.setDuration(p.getMediaFiles().stream().mapToDouble(MediaFile::getDuration).sum());
+            p.setFileCount(p.getPlaylistMediaFiles().size());
+            p.setDuration(p.getPlaylistMediaFiles().stream().map(PlaylistMediaFile::getMediaFile).mapToDouble(MediaFile::getDuration).sum());
             p.setChanged(Instant.now());
             playlistRepository.save(p);
             return p;

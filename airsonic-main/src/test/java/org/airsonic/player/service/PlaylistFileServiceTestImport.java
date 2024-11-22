@@ -3,6 +3,7 @@ package org.airsonic.player.service;
 import com.google.common.collect.Lists;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Playlist;
+import org.airsonic.player.domain.PlaylistMediaFile;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.repository.PlaylistRepository;
 import org.airsonic.player.repository.UserRepository;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -105,7 +107,11 @@ public class PlaylistFileServiceTestImport {
             Playlist playlist = playlistCaptor.getValue();
             playlist.setId(invocationOnMock.getArgument(0));
             List<MediaFile> mediaFiles = invocationOnMock.getArgument(1);
-            playlist.setMediaFiles(mediaFiles);
+            List<PlaylistMediaFile> files = new ArrayList<>();
+            for (int i = 0; i < mediaFiles.size(); i++) {
+                files.add(new PlaylistMediaFile(playlist, mediaFiles.get(i), i));
+            }
+            playlist.setPlaylistMediaFiles(files);
             playlist.setFileCount(mediaFiles.size());
             playlist.setDuration(mediaFiles.stream().mapToDouble(MediaFile::getDuration).sum());
             return playlist;
@@ -135,7 +141,7 @@ public class PlaylistFileServiceTestImport {
         expected.setFileCount(3);
         expected.setDuration(369.0);
         assertTrue(EqualsBuilder.reflectionEquals(actual, expected, "created", "changed", "sharedUsers", "mediaFiles"));
-        assertEquals(3, actual.getMediaFiles().size());
+        assertEquals(3, actual.getPlaylistMediaFiles().size());
     }
 
     @Test
@@ -158,7 +164,11 @@ public class PlaylistFileServiceTestImport {
             Playlist playlist = playlistCaptor.getValue();
             playlist.setId(invocationOnMock.getArgument(0));
             List<MediaFile> mediaFiles = invocationOnMock.getArgument(1);
-            playlist.setMediaFiles(mediaFiles);
+            List<PlaylistMediaFile> files = new ArrayList<>();
+            for (int i = 0; i < mediaFiles.size(); i++) {
+                files.add(new PlaylistMediaFile(playlist, mediaFiles.get(i), i));
+            }
+            playlist.setPlaylistMediaFiles(files);
             playlist.setFileCount(mediaFiles.size());
             playlist.setDuration(mediaFiles.stream().mapToDouble(MediaFile::getDuration).sum());
             return playlist;
@@ -188,7 +198,7 @@ public class PlaylistFileServiceTestImport {
         expected.setFileCount(3);
         expected.setDuration(369.0);
         assertTrue(EqualsBuilder.reflectionEquals(actual, expected, "created", "changed", "sharedUsers", "mediaFiles"));
-        assertEquals(3, actual.getMediaFiles().size());
+        assertEquals(3, actual.getPlaylistMediaFiles().size());
     }
 
     @Test
@@ -215,7 +225,11 @@ public class PlaylistFileServiceTestImport {
             Playlist playlist = playlistCaptor.getValue();
             playlist.setId(invocationOnMock.getArgument(0));
             List<MediaFile> mediaFiles = invocationOnMock.getArgument(1);
-            playlist.setMediaFiles(mediaFiles);
+            List<PlaylistMediaFile> files = new ArrayList<>();
+            for (int i = 0; i < mediaFiles.size(); i++) {
+                files.add(new PlaylistMediaFile(playlist, mediaFiles.get(i), i));
+            }
+            playlist.setPlaylistMediaFiles(files);
             playlist.setFileCount(mediaFiles.size());
             playlist.setDuration(mediaFiles.stream().mapToDouble(MediaFile::getDuration).sum());
             return playlist;
@@ -244,7 +258,7 @@ public class PlaylistFileServiceTestImport {
         expected.setFileCount(3);
         expected.setDuration(369.0);
         assertTrue(EqualsBuilder.reflectionEquals(actual, expected, "created", "changed", "sharedUsers", "mediaFiles"));
-        assertEquals(3, actual.getMediaFiles().size());
+        assertEquals(3, actual.getPlaylistMediaFiles().size());
     }
 
     private class PersistPlayList implements Answer<Object> {

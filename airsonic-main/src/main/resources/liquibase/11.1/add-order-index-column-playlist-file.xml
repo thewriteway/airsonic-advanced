@@ -1,0 +1,23 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <!-- 1. Check if track_number column exists, if not, add it -->
+    <changeSet id="add-order-index-to-playlist-file" author="kagemomiji">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="playlist_file" columnName="order_index"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="playlist_file">
+            <column name="order_index" type="int" defaultValue="-1">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="playlist_file" columnName="order_index"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

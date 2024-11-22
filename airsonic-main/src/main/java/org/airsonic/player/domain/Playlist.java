@@ -21,6 +21,7 @@ package org.airsonic.player.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -63,11 +64,9 @@ public class Playlist {
             inverseJoinColumns = @JoinColumn(name = "username"))
     private List<User> sharedUsers;
 
-    @ManyToMany
-    @JoinTable(name = "playlist_file",
-            joinColumns = @JoinColumn(name = "playlist_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "media_file_id", referencedColumnName = "id"))
-    private List<MediaFile> mediaFiles;
+    @OrderBy("orderIndex ASC")
+    @OneToMany(mappedBy = "playlist", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PlaylistMediaFile> mediaFiles;
 
     public Playlist() {
     }
@@ -197,11 +196,15 @@ public class Playlist {
     }
 
     @JsonIgnore
-    public List<MediaFile> getMediaFiles() {
-        return mediaFiles;
+    @Nonnull
+    public List<PlaylistMediaFile> getPlaylistMediaFiles() {
+        if (this.mediaFiles == null) {
+            this.mediaFiles = new ArrayList<>();
+        }
+        return this.mediaFiles;
     }
 
-    public void setMediaFiles(List<MediaFile> mediaFiles) {
+    public void setPlaylistMediaFiles(List<PlaylistMediaFile> mediaFiles) {
         if (this.mediaFiles == null) {
             this.mediaFiles = new ArrayList<>();
         } else {

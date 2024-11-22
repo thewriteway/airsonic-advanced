@@ -8,4 +8,5 @@
     <include file="add-genre-pk.xml" relativeToChangelogFile="true"/>
     <include file="change-hsqldb-table-type.xml" relativeToChangelogFile="true"/>
     <include file="add-locked-column-podcast-episode.xml" relativeToChangelogFile="true"/>
+    <include file="add-order-index-column-playlist-file.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

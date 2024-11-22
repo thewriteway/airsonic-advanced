@@ -6,6 +6,7 @@ import chameleon.playlist.Playlist;
 import chameleon.playlist.SpecificPlaylist;
 import chameleon.playlist.SpecificPlaylistProvider;
 import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.domain.PlaylistMediaFile;
 import org.airsonic.player.repository.PlaylistRepository;
 import org.airsonic.player.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class DefaultPlaylistExportHandler implements PlaylistExportHandler {
@@ -37,7 +39,7 @@ public class DefaultPlaylistExportHandler implements PlaylistExportHandler {
     private Playlist createChameleonGenericPlaylistFromDBId(int id) {
         Playlist newPlaylist = new Playlist();
         List<MediaFile> files = playlistRepository.findById(id).map(playlist -> {
-            return playlist.getMediaFiles();
+            return playlist.getPlaylistMediaFiles().stream().map(PlaylistMediaFile::getMediaFile).collect(Collectors.toList());
         }).orElseGet(() -> {
             return new ArrayList<>();
         });
