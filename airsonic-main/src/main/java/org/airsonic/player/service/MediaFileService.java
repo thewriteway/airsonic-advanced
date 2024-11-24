@@ -134,6 +134,10 @@ public class MediaFileService {
 
     private final Map<Integer, Pair<Integer, Instant>> lastPlayed = new ConcurrentHashMap<>();
 
+    private boolean hasBOM(byte[] bom, int bytesRead) {
+        return bytesRead == 3 && bom[0] == (byte) 0xEF && bom[1] == (byte) 0xBB && bom[2] == (byte) 0xBF;
+    }
+
     public MediaFile getMediaFile(String pathName) {
         return getMediaFile(Paths.get(pathName));
     }
@@ -1349,13 +1353,27 @@ public class MediaFileService {
                         if (cm != null && cm.getConfidence() > THRESHOLD) {
                             cs = Charset.forName(cm.getName());
                         }
+                        LOG.debug("Detected charset for cuesheet file {}: Charset detected as {}", cueFile, cs);
+                        bis.mark(3);
+
+                        // check for BOM
+                        byte[] bom = new byte[3];
+                        int bytesRead = bis.read(bom, 0, 3);
+                        if (!hasBOM(bom, bytesRead)) {
+                            bis.reset();
+                        }
+                        cueSheet = CueParser.parse(bis, cs);
                     } catch (IOException e) {
                         LOG.warn("Defaulting to UTF-8 for cuesheet {}", cueFile);
                     }
-                    cueSheet = CueParser.parse(cueFile, cs);
-                    if (cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning")).findFirst().isPresent()) {
-                        LOG.warn("Error parsing cuesheet {}", cueFile);
-                        return null;
+                    if (cueSheet != null) {
+                        if (cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning"))
+                                .map(m -> {
+                                    LOG.warn("Parsing {} at line {} : {}", cueFile, m.getLineNumber(), m.getMessage());
+                                    return m;
+                                }).findFirst().isPresent()) {
+                            cueSheet = null;
+                        }
                     }
                     break;
                 case "flac":

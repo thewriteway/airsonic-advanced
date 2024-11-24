@@ -43,6 +43,10 @@ public class MusicFolderTestData {
         return resolveBaseMediaPath().resolve("cue");
     }
 
+    public static Path resolveMusicCueWithBOMFolderPath() {
+        return resolveBaseMediaPath().resolve("cueBom");
+    }
+
     public static Path resolveMusicDisableCueFolderPath() {
         return resolveBaseMediaPath().resolve("disableCue");
     }
