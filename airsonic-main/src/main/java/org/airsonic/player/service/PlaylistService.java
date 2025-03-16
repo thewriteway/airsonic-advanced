@@ -163,6 +163,18 @@ public class PlaylistService {
         );
     }
 
+    private List<MediaFile> filterNoDurationFiles(List<MediaFile> files) {
+        List<MediaFile> result = new ArrayList<>();
+        for (MediaFile file : files) {
+            if (file.getDuration() == null) {
+                LOG.warn("File {} has no duration", file.getId());
+            } else {
+                result.add(file);
+            }
+        }
+        return result;
+    }
+
     @Transactional
     public Playlist setFilesInPlaylist(int id, List<MediaFile> files) {
         playlistCache.removePlaylistById(id);
@@ -177,15 +189,17 @@ public class PlaylistService {
             });
     }
 
+
     private Playlist setFilesInPlaylist(Playlist playlist, List<MediaFile> files) {
 
-        int fileCount = files.size();
+        List<MediaFile> filteredFiles = filterNoDurationFiles(files);
+        int fileCount = filteredFiles.size();
         List<PlaylistMediaFile> playlistMediaFiles =
             playlist.getPlaylistMediaFiles().stream()
                 .limit(fileCount).collect(Collectors.toList());
         // update order index and media file
         int orderIndex = 0;
-        for (MediaFile file : files) {
+        for (MediaFile file : filteredFiles) {
             if (orderIndex < playlistMediaFiles.size()) {
                 PlaylistMediaFile pmf = playlistMediaFiles.get(orderIndex);
                 pmf.setMediaFile(file);
@@ -197,8 +211,8 @@ public class PlaylistService {
             orderIndex++;
         }
         playlist.setPlaylistMediaFiles(playlistMediaFiles);
-        playlist.setFileCount(files.size());
-        playlist.setDuration(files.stream().mapToDouble(MediaFile::getDuration).sum());
+        playlist.setFileCount(filteredFiles.size());
+        playlist.setDuration(filteredFiles.stream().mapToDouble(MediaFile::getDuration).sum());
         playlist.setChanged(Instant.now());
         return playlist;
     }
@@ -229,7 +243,7 @@ public class PlaylistService {
     public List<Playlist> refreshPlaylistsStats() {
         return playlistRepository.findAll().stream().map(p -> {
             p.setFileCount(p.getPlaylistMediaFiles().size());
-            p.setDuration(p.getPlaylistMediaFiles().stream().map(PlaylistMediaFile::getMediaFile).mapToDouble(MediaFile::getDuration).sum());
+            p.setDuration(p.getPlaylistMediaFiles().stream().map(PlaylistMediaFile::getMediaFile).filter(f -> f.getDuration() != null).mapToDouble(MediaFile::getDuration).sum());
             p.setChanged(Instant.now());
             playlistRepository.save(p);
             return p;

@@ -609,7 +609,15 @@
                 initAutoHide() {
                     var pq = this;
                     $(".playqueue-container").mouseleave(function (event) {
-                        pq.onHidePlayQueue();
+                        var divRect = document.getElementById('playQueueMusic_wrapper').getBoundingClientRect();
+                        if (event.clientX >= divRect.left && event.clientX <= divRect.right &&
+                        event.clientY >= divRect.top && event.clientY <= divRect.bottom) {
+                            // mouse is still within the playqueue and mouseleave event has probably been triggered by a click
+                        }
+                        else
+                        {
+                            pq.onHidePlayQueue();
+                        }
                     });
                 
                     $(".playqueue-container").mouseenter(function () {

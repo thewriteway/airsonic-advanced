@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Thu Mar 13 13:58:11 UTC 2025
+cxf-core-4.1.1.jar>=
+cxf-core-4.1.1.pom>=
