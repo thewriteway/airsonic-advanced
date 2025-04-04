@@ -37,13 +37,9 @@ public class PasswordEncoderConfig {
             .<String, PasswordEncoder>builderWithExpectedSize(19)
             .put("bcrypt", new BCryptPasswordEncoder())
             .put("ldap", new org.springframework.security.crypto.password.LdapShaPasswordEncoder())
-            .put("MD4", new org.springframework.security.crypto.password.Md4PasswordEncoder())
-            .put("MD5", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("MD5"))
             .put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8())
             .put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8())
-            .put("SHA-1", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-1"))
             .put("SHA-256", new org.springframework.security.crypto.password.MessageDigestPasswordEncoder("SHA-256"))
-            .put("sha256", new org.springframework.security.crypto.password.StandardPasswordEncoder())
             .put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8())
 
             // base decodable encoders
@@ -60,29 +56,18 @@ public class PasswordEncoderConfig {
             .put("encrypted-AES-GCM" + SALT_TOKEN_MECHANISM_SPECIALIZATION,
                     new SaltedTokenPasswordEncoder(new AesGcmPasswordEncoder())) // placeholder (real instance created
                                                                                  // below)
-
-            // TODO: legacy marked base encoders, to be upgraded to one-way formats at
-            // breaking version change
-            .put("legacynoop",
-                    new PasswordEncoderDecoderWrapper(
-                            org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance(), p -> p))
-            .put("legacyhex", new HexPasswordEncoder())
-
-            .put("legacynoop" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(p -> p))
-            .put("legacyhex" + SALT_TOKEN_MECHANISM_SPECIALIZATION,
-                    new SaltedTokenPasswordEncoder(new HexPasswordEncoder()))
             .build());
 
     public static final Set<String> NONLEGACY_ENCODERS = ENCODERS.keySet().stream()
-            .filter(e -> !StringUtils.containsAny(e, "legacy", SALT_TOKEN_MECHANISM_SPECIALIZATION))
+            .filter(e -> !StringUtils.containsAny(e, SALT_TOKEN_MECHANISM_SPECIALIZATION))
             .collect(Collectors.toSet());
-    public static final Set<String> DECODABLE_ENCODERS = Set.of("noop", "hex", "logacynoop", "encrypted-AES-GCM");
+    public static final Set<String> DECODABLE_ENCODERS = Set.of("noop", "hex", "encrypted-AES-GCM");
     public static final Set<String> NONLEGACY_DECODABLE_ENCODERS = SetUtils.intersection(DECODABLE_ENCODERS,
             NONLEGACY_ENCODERS);
     public static final Set<String> NONLEGACY_NONDECODABLE_ENCODERS = SetUtils.difference(NONLEGACY_ENCODERS,
             DECODABLE_ENCODERS);
 
-    public static final Set<String> OPENTEXT_ENCODERS = Set.of("noop", "hex", "legacynoop", "legacyhex");
+    public static final Set<String> OPENTEXT_ENCODERS = Set.of("noop", "hex");
 
     @Bean
     public PasswordEncoder passwordEncoder() {
