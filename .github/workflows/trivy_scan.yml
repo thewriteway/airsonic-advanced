@@ -1,7 +1,7 @@
 name: Trivy scan
 on:
   pull_request:
-    branches: 
+    branches:
       - main
   push:
     branches:
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.31.0
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           scan-type: 'fs'
           format: 'sarif'
