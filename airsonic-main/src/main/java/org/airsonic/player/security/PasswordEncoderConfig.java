@@ -39,8 +39,13 @@ public class PasswordEncoderConfig {
             .put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8())
             .put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8())
 
-            // AES-GCM encrypted encoder (secure two-way encryption when needed)
+            // base decodable encoders
+            .put("hex", new HexPasswordEncoder())
             .put("encrypted-AES-GCM", new AesGcmPasswordEncoder()) // placeholder (real instance created below)
+
+            // base decodable encoders that rely on salt+token being passed in (not stored
+            // in db with this type)
+            .put("hex" + SALT_TOKEN_MECHANISM_SPECIALIZATION, new SaltedTokenPasswordEncoder(new HexPasswordEncoder()))
             .put("encrypted-AES-GCM" + SALT_TOKEN_MECHANISM_SPECIALIZATION,
                     new SaltedTokenPasswordEncoder(new AesGcmPasswordEncoder())) // placeholder (real instance created below)
             .build());
@@ -48,13 +53,19 @@ public class PasswordEncoderConfig {
     public static final Set<String> NONLEGACY_ENCODERS = ENCODERS.keySet().stream()
             .filter(e -> !StringUtils.containsAny(e, "legacy", SALT_TOKEN_MECHANISM_SPECIALIZATION))
             .collect(Collectors.toSet());
-    public static final Set<String> DECODABLE_ENCODERS = Set.of("encrypted-AES-GCM");
+    public static final Set<String> DECODABLE_ENCODERS = Set.of("hex", "encrypted-AES-GCM");
     public static final Set<String> NONLEGACY_DECODABLE_ENCODERS = SetUtils.intersection(DECODABLE_ENCODERS,
             NONLEGACY_ENCODERS);
     public static final Set<String> NONLEGACY_NONDECODABLE_ENCODERS = SetUtils.difference(NONLEGACY_ENCODERS,
             DECODABLE_ENCODERS);
 
-    public static final Set<String> OPENTEXT_ENCODERS = Set.of();
+    public static final Set<String> OPENTEXT_ENCODERS = Set.of("hex");
+
+    // Define legacy encoders that should be upgraded
+    public static final Set<String> LEGACY_ENCODERS = Set.of(
+            "ldap", "MD4", "MD5", "SHA-1", "SHA-256", "sha256",
+            "noop", "legacynoop", "legacyhex"
+    );
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -86,29 +97,55 @@ public class PasswordEncoderConfig {
         ENCODERS.put("encrypted-AES-GCM" + SALT_TOKEN_MECHANISM_SPECIALIZATION,
                 new SaltedTokenPasswordEncoder(encoder));
 
-        // Force the use of argon2 as the default encoder
-        DelegatingPasswordEncoder pEncoder = new DelegatingPasswordEncoder("argon2", ENCODERS) {
+        DelegatingPasswordEncoder pEncoder = new DelegatingPasswordEncoder(
+                settingsService.getNonDecodablePasswordEncoder(), ENCODERS) {
             @Override
             public boolean upgradeEncoding(String prefixEncodedPassword) {
-                // Always promote to argon2 if it's not already
-                if (!prefixEncodedPassword.startsWith("{argon2}")) {
+                if (StringUtils.isBlank(prefixEncodedPassword)) {
+                    return false;
+                }
+
+                // Extract the encoding type from the prefixed password
+                String encodingType = extractEncodingType(prefixEncodedPassword);
+
+                // Only upgrade if it's a legacy encoder
+                if (LEGACY_ENCODERS.contains(encodingType)) {
                     return true;
                 }
+
+                // Don't upgrade argon2 or bcrypt
+                if ("argon2".equals(encodingType) || "bcrypt".equals(encodingType)) {
+                    return false;
+                }
+
+                // For other encoders, delegate to the original encoder's upgradeEncoding method
+                PasswordEncoder originalEncoder = ENCODERS.get(encodingType);
+                if (originalEncoder != null) {
+                    return originalEncoder.upgradeEncoding(StringUtils.substringAfter(prefixEncodedPassword, "}"));
+                }
+
                 return false;
+            }
+
+            private String extractEncodingType(String prefixEncodedPassword) {
+                if (prefixEncodedPassword.startsWith("{") && prefixEncodedPassword.contains("}")) {
+                    int endIndex = prefixEncodedPassword.indexOf("}");
+                    return prefixEncodedPassword.substring(1, endIndex);
+                }
+                // If no prefix found, consider it legacy
+                return "legacy";
             }
         };
 
-        pEncoder.setDefaultPasswordEncoderForMatches(new PasswordEncoder() {
-            @Override
-            public boolean matches(CharSequence rawPassword, String encodedPassword) {
-                return false;
-            }
-
-            @Override
-            public String encode(CharSequence rawPassword) {
-                return null;
-            }
-        });
+        // Set default encoder for passwords without prefixes (existing database passwords)
+        // This determines what encoder to use when matching passwords that have no {id} prefix
+        String currentDefaultEncoder = settingsService.getNonDecodablePasswordEncoder();
+        PasswordEncoder defaultForMatching = ENCODERS.get(currentDefaultEncoder);
+        if (defaultForMatching == null) {
+            // Fallback to bcrypt if the configured encoder is not available
+            defaultForMatching = ENCODERS.get("bcrypt");
+        }
+        pEncoder.setDefaultPasswordEncoderForMatches(defaultForMatching);
 
         return pEncoder;
     }
