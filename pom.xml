@@ -17,7 +17,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.10</version>
+        <version>3.5.0</version>
         <relativePath />
     </parent>
 
@@ -27,7 +27,7 @@
         <java.version>17</java.version>
         <cxf.version>4.1.2</cxf.version>
         <snakeyaml.version>2.3</snakeyaml.version>
-        <lucene.version>9.12.0</lucene.version>
+        <lucene.version>9.12.1</lucene.version>
         <docker.container.repo>ghcr.io/kagemomiji/airsonic-advanced</docker.container.repo>
         <docker.java.version>17.0.10_7</docker.java.version>
     </properties>
@@ -111,7 +111,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>33.3.1-jre</version>
+                <version>33.4.8-jre</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
@@ -141,7 +141,7 @@
             <dependency>
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
-                <version>1.18.1</version>
+                <version>1.20.1</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.activation</groupId>
@@ -151,7 +151,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.49.3</version>
+                <version>3.49.4</version>
             </dependency>
             <dependency>
                 <groupId>com.google.j2objc</groupId>
@@ -166,12 +166,12 @@
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>5.15.0</version>
+                <version>5.17.0</version>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna-platform</artifactId>
-                <version>5.15.0</version>
+                <version>5.17.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.lucene</groupId>
@@ -191,7 +191,7 @@
             <dependency>
                 <groupId>io.dropwizard.metrics</groupId>
                 <artifactId>metrics-core</artifactId>
-                <version>4.2.30</version>
+                <version>4.2.32</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.persistence</groupId>
@@ -222,7 +222,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.45.1</version>
+                    <version>0.46.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -261,7 +261,7 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>10.18.1</version>
+                            <version>10.25.0</version>
                         </dependency>
                     </dependencies>
                 </plugin>
@@ -285,7 +285,7 @@
                 <plugin>
                     <groupId>org.owasp</groupId>
                     <artifactId>dependency-check-maven</artifactId>
-                    <version>11.1.0</version>
+                    <version>11.1.1</version>
                     <inherited>true</inherited>
                     <configuration>
                         <cveValidForHours>24</cveValidForHours>
@@ -309,7 +309,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.2</version>
+                    <version>3.5.3</version>
                     <configuration>
                         <!-- #1186 Temporarily skip a test. -->
                         <excludes>
