@@ -10,11 +10,11 @@
   "separateMultipleMinor": true,
   "packageRules": [
     {
-      "updateTypes": ["minor", "patch"],
+      "updateTypes": ["minor", "patch"]
     },
     {
       "datasources": ["maven"],
-      "packagePatterns": ["*"],
+      "packagePatterns": ["*"]
     }
   ],
   "repositories": ["thewriteway/airsonic-advanced"]
