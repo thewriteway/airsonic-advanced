@@ -143,7 +143,7 @@
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
-            <version>4.4.0</version>
+            <version>4.5.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.ldap</groupId>
@@ -647,8 +647,7 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                                <copy file="${basedir}/src/main/resources/org/airsonic/player/i18n/ResourceBundle_en.properties"
-                                      tofile="${project.build.directory}/classes/org/airsonic/player/i18n/ResourceBundle.properties"/>
+                                <copy file="${basedir}/src/main/resources/org/airsonic/player/i18n/ResourceBundle_en.properties" tofile="${project.build.directory}/classes/org/airsonic/player/i18n/ResourceBundle.properties"/>
                             </target>
                         </configuration>
                         <goals>
