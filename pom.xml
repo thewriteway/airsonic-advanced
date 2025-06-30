@@ -30,6 +30,7 @@
         <lucene.version>10.2.2</lucene.version>
         <docker.container.repo>ghcr.io/kagemomiji/airsonic-advanced</docker.container.repo>
         <docker.java.version>21.0.7_6</docker.java.version>
+        <logback.version>1.5.18</logback.version>
     </properties>
 
     <repositories>
@@ -69,6 +70,18 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- logback -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-bom</artifactId>
