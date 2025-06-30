@@ -74,7 +74,7 @@ public class SearchServiceImpl implements SearchService {
             Query query = queryFactory.search(criteria, musicFolders, indexType);
 
             TopDocs topDocs = searcher.search(query, offset + count);
-            int totalHits = util.round.apply(topDocs.totalHits.value);
+            int totalHits = util.round.apply(topDocs.totalHits.value());
             result.setTotalHits(totalHits);
             int start = Math.min(offset, totalHits);
             int end = Math.min(start + count, totalHits);
@@ -219,7 +219,7 @@ public class SearchServiceImpl implements SearchService {
 
             TopDocs topDocs = searcher.search(query, offset + count, sort);
 
-            int totalHits = util.round.apply(topDocs.totalHits.value);
+            int totalHits = util.round.apply(topDocs.totalHits.value());
             result.setTotalHits(totalHits);
             int start = Math.min(offset, totalHits);
             int end = Math.min(start + count, totalHits);
