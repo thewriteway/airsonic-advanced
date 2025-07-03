@@ -53,6 +53,36 @@ public class SearchServiceImpl implements SearchService {
     // TODO Should be changed to SecureRandom?
     private final Random random = new Random(System.currentTimeMillis());
 
+    /**
+     * Extracts the integer value from a TotalHits string.
+     * The string is expected to be in the format "123 hits" or "123+ hits".
+     * If the string ends with "+", it indicates GREATER_THAN_OR_EQUAL_TO.
+     *
+     * @param totalHitsString The TotalHits string to extract the value from.
+     * @return The extracted integer value.
+     */
+
+    private Long extractValue(String totalHitsString) {
+        if (totalHitsString == null || totalHitsString.isEmpty()) {
+            throw new IllegalArgumentException("Input string cannot be null or empty");
+        }
+
+        // Remove " hits" from the end of the string
+        String cleanedString = totalHitsString.replace(" hits", "");
+
+        // Check if the string contains a "+" (indicating GREATER_THAN_OR_EQUAL_TO)
+        if (cleanedString.endsWith("+")) {
+            cleanedString = cleanedString.substring(0, cleanedString.length() - 1);
+        }
+
+        // Parse the remaining string as a long value
+        try {
+            return Long.parseLong(cleanedString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid format for TotalHits string: " + totalHitsString, e);
+        }
+    }
+
     @Override
     public SearchResult search(SearchCriteria criteria, List<MusicFolder> musicFolders,
             IndexType indexType) {
@@ -74,7 +104,7 @@ public class SearchServiceImpl implements SearchService {
             Query query = queryFactory.search(criteria, musicFolders, indexType);
 
             TopDocs topDocs = searcher.search(query, offset + count);
-            int totalHits = util.round.apply(topDocs.totalHits.value());
+            int totalHits = util.round.apply(extractValue(topDocs.totalHits.toString()));
             result.setTotalHits(totalHits);
             int start = Math.min(offset, totalHits);
             int end = Math.min(start + count, totalHits);
@@ -219,7 +249,7 @@ public class SearchServiceImpl implements SearchService {
 
             TopDocs topDocs = searcher.search(query, offset + count, sort);
 
-            int totalHits = util.round.apply(topDocs.totalHits.value());
+            int totalHits = util.round.apply(extractValue(topDocs.totalHits.toString()));
             result.setTotalHits(totalHits);
             int start = Math.min(offset, totalHits);
             int end = Math.min(start + count, totalHits);

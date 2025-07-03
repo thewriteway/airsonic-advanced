@@ -34,7 +34,9 @@ ProtectKernelTunables=yes
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 RestrictNamespaces=yes
 RestrictRealtime=yes
-SystemCallFilter=@basic-io @file-system @chown @network-io @sync @timer @signal @process @system-service
+SystemCallFilter=@system-service @known
+# syscall restrictions. TODO: perhaps could be restricted more.
+SystemCallFilter=~@clock @cpu-emulation @debug @module @obsolete @pkey @privileged @raw-io @reboot @sandbox @swap
 ReadWritePaths=/var/airsonic
 
 # You can change the following line to `strict` instead of `full`

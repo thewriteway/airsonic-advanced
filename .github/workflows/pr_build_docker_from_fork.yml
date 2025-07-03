@@ -8,6 +8,16 @@ on:
 
 jobs:
   deploy:
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - jdk: 17
+          platforms: linux/arm/v7
+          docker_version: 17.0.15_6
+        - jdk: 21
+          platforms: linux/amd64,linux/arm64
+          docker_version: 21.0.7_6
     runs-on: ubuntu-latest
     if: github.repository != github.event.pull_request.head.repo.full_name && contains(github.event.pull_request.labels.*.name, 'safe to test')
     steps:
@@ -20,7 +30,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          java-version: ${{ matrix.cfg.jdk }}
           distribution: 'temurin'
       - name: Cache Maven packages
         uses: actions/cache@v4
@@ -41,6 +51,7 @@ jobs:
       - name: Build with Maven
         run: mvn package -DskipTests -B -P docker
       - name: Upload war file
+        if : success() && ${{ matrix.cfg.jdk == '21' }}
         uses: actions/upload-artifact@v4
         with:
           name: airsonic-advanced
@@ -58,7 +69,9 @@ jobs:
         with:
           file: install/docker/Dockerfile
           context: install/docker
-          platforms: linux/amd64
+          platforms: ${{matrix.cfg.platforms}}
+          build-args: |
+            IMAGE_JAVA_VERSION=${{matrix.cfg.docker_version}}
           push: true
           tags: |
             ghcr.io/kagemomiji/airsonic-advanced:pr-${{ github.event.pull_request.number }}

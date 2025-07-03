@@ -17,12 +17,22 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - jdk: 17
+          platforms: linux/arm/v7
+          docker_version: 17.0.15_6
+        - jdk: 21
+          platforms: linux/amd64,linux/arm64
+          docker_version: 21.0.7_6
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          java-version: ${{ matrix.cfg.jdk }}
           distribution: 'temurin'
       - name: Setup ffmpeg
         id: setup-ffmpeg 
@@ -57,20 +67,6 @@ jobs:
           tag=$ver\.$ts;
           echo $tag;
           echo "tag=$tag" >> $GITHUB_OUTPUT
-      - name: Deploy to GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tagcalc.outputs.tag }}
-          name: Edge Release ${{ steps.tagcalc.outputs.tag }}
-          draft: false
-          prerelease: true
-          generate_release_notes: true
-          files: |
-            airsonic-main/target/airsonic.war
-            airsonic-main/target/artifacts-checksums.sha
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -82,7 +78,9 @@ jobs:
         with:
           file: install/docker/Dockerfile
           context: install/docker
-          platforms: linux/amd64,linux/arm64,linux/arm64/v8
+          build-args: |
+            IMAGE_JAVA_VERSION=${{matrix.cfg.docker_version}}
+          platforms: ${{ matrix.cfg.platforms}}
           push: true
           tags: |
             ghcr.io/kagemomiji/airsonic-advanced:latest
@@ -90,3 +88,19 @@ jobs:
             ghcr.io/kagemomiji/airsonic-advanced:edge-${{ steps.tagcalc.outputs.tag }}
             ghcr.io/kagemomiji/airsonic-advanced:gitcommit-${{ github.sha }}
             ghcr.io/kagemomiji/airsonic-advanced:gitrun-${{ github.run_id }}
+
+      - name: Deploy to GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        if: ${{ matrix.cfg.jdk == 21 && success() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tagcalc.outputs.tag }}
+          name: Edge Release ${{ steps.tagcalc.outputs.tag }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            airsonic-main/target/airsonic.war
+            airsonic-main/target/artifacts-checksums.sha

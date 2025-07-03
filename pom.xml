@@ -24,13 +24,12 @@
     <properties>
         <failOnDependencyWarning>true</failOnDependencyWarning>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>21</java.version>
         <cxf.version>4.1.2</cxf.version>
         <snakeyaml.version>2.4</snakeyaml.version>
         <lucene.version>10.2.2</lucene.version>
         <docker.container.repo>ghcr.io/kagemomiji/airsonic-advanced</docker.container.repo>
-        <docker.java.version>21.0.7_6</docker.java.version>
     </properties>
+
 
     <repositories>
         <repository>
@@ -483,7 +482,18 @@
             </activation>
             <properties>
                 <java.version>21</java.version>
-                <docker.java.version>21.0.3_9</docker.java.version>
+                <docker.java.version>21.0.7_6</docker.java.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>java17</id>
+            <activation>
+                <jdk>[17,21)</jdk>
+            </activation>
+            <properties>
+                <java.version>17</java.version>
+                <docker.java.version>17.0.15_6</docker.java.version>
+                <lucene.version>9.12.2</lucene.version>
             </properties>
         </profile>
     </profiles>
