@@ -7,13 +7,23 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - jdk: 21
+          platforms: linux/amd64,linux/arm64
+          docker_version: 21.0.7_6
+        - jdk: 17
+          platforms: linux/arm/v7
+          docker_version: 17.0.15_6
     if: startsWith(github.ref, 'refs/heads/stable/')
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          java-version: ${{matrix.cfg.jdk}}
           distribution: 'temurin'
       - name: Cache Maven packages
         uses: actions/cache@v4
@@ -52,22 +62,6 @@ jobs:
       - name: Sign artifacts
         run: |
           echo "${{ secrets.GPG_SIGNING_PASSPHRASE }}" | gpg --quiet --batch --yes --pinentry-mode loopback --clearsign --passphrase-fd 0 airsonic-main/target/artifacts-checksums.sha;
-      - name: Deploy to GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tagcalc.outputs.tag }}
-          name: Stable Release ${{ steps.tagcalc.outputs.tag }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
-          body: |
-            List of issues addressed: https://github.com/kagemomiji/airsonic-advanced/issues?q=milestone%3A${{ steps.tagcalc.outputs.tag }}
-          files: |
-            airsonic-main/target/airsonic.war
-            airsonic-main/target/artifacts-checksums.sha.asc
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -81,7 +75,9 @@ jobs:
         with:
           file: install/docker/Dockerfile
           context: install/docker
-          platforms: linux/amd64,linux/arm64,linux/arm64/v8
+          platforms: ${{matrix.cfg.platforms}}
+          build-args: |
+            IMAGE_JAVA_VERSION=${{matrix.cfg.docker_version}}
           push: true
           tags: |
             ghcr.io/kagemomiji/airsonic-advanced:stable
@@ -90,3 +86,20 @@ jobs:
             ghcr.io/kagemomiji/airsonic-advanced:${{ steps.tagcalc.outputs.tag }}
             ghcr.io/kagemomiji/airsonic-advanced:gitcommit-${{ github.sha }}
             ghcr.io/kagemomiji/airsonic-advanced:gitrun-${{ github.run_id }}
+      - name: Deploy to GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        if: ${{matrix.cfg.jdk == 21 && success()}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tagcalc.outputs.tag }}
+          name: Stable Release ${{ steps.tagcalc.outputs.tag }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            List of issues addressed: https://github.com/kagemomiji/airsonic-advanced/issues?q=milestone%3A${{ steps.tagcalc.outputs.tag }}
+          files: |
+            airsonic-main/target/airsonic.war
+            airsonic-main/target/artifacts-checksums.sha.asc
