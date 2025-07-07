@@ -29,6 +29,11 @@ jobs:
       tag_minor: ${{ steps.tagcalc.outputs.minor }}
       tag_major: ${{ steps.tagcalc.outputs.major }}
     steps:
+      - name: Prepare
+        id: prep
+        run: |
+          platform="${{ matrix.cfg.platform }}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
       - name: Set up JDK
         uses: actions/setup-java@v4
