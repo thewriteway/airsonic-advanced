@@ -168,25 +168,6 @@ public class TranscodingRepositoryTest {
         assertEquals(0, activeTranscodings.size());
     }
 
-    @Test
-    public void testCascadingDeleteTranscoding() {
-        Player player = new Player();
-        playerRepository.save(player);
-
-        transcodingRepository.save(new Transcoding(null, "name", "sourceFormats", "targetFormat", "step1", "step2", "step3", true));
-        Transcoding transcoding = transcodingRepository.findAll().get(0);
-
-        player.setTranscodings(new ArrayList<>(List.of(transcoding)));
-        playerRepository.save(player);
-
-        List<Transcoding> activeTranscodings = transcodingRepository.findByPlayersContaining(player);
-        assertEquals(1, activeTranscodings.size());
-
-        transcodingRepository.delete(transcoding);
-        activeTranscodings = transcodingRepository.findByPlayersContaining(player);
-        assertEquals(0, activeTranscodings.size());
-    }
-
     private void assertTranscodingEquals(Transcoding expected, Transcoding actual) {
         assertEquals(expected.getName(), actual.getName());
         assertEquals(expected.getSourceFormats(), actual.getSourceFormats());

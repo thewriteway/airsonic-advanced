@@ -141,7 +141,16 @@ public class TranscodingService {
      */
     @Transactional
     public void deleteTranscoding(Integer id) {
-        transcodingRepository.deleteById(id);
+        transcodingRepository.findById(id).ifPresentOrElse(transcoding -> {
+            // Remove this transcoding from all players
+            List<Player> players = transcoding.getPlayers();
+            players.forEach(player -> player.getTranscodings().remove(transcoding));
+            playerRepository.saveAll(players);
+            transcodingRepository.delete(transcoding);
+        }, () -> {
+                LOG.warn("Transcoding with id {} not found", id);
+            }
+        );
     }
 
     /**
