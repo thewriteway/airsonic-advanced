@@ -408,7 +408,6 @@ public class Player {
      * Adds a transcoding to the player.
      */
     public void addTranscoding(Transcoding transcoding) {
-        transcoding.addPlayer(this);
         this.transcodings.add(transcoding);
     }
 

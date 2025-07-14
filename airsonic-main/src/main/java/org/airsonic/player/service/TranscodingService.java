@@ -126,10 +126,10 @@ public class TranscodingService {
     @Transactional
     public void createTranscoding(Transcoding transcoding) {
         // Activate this transcoding for all players?
-        transcodingRepository.save(transcoding);
+        Transcoding saved = transcodingRepository.saveAndFlush(transcoding);
         if (transcoding.isDefaultActive()) {
             List<Player> players = playerRepository.findAll();
-            players.forEach(player -> player.addTranscoding(transcoding));
+            players.forEach(player -> player.getTranscodings().add(saved));
             playerRepository.saveAll(players);
         }
     }
@@ -143,8 +143,10 @@ public class TranscodingService {
     public void deleteTranscoding(Integer id) {
         transcodingRepository.findById(id).ifPresentOrElse(transcoding -> {
             // Remove this transcoding from all players
-            List<Player> players = transcoding.getPlayers();
-            players.forEach(player -> player.getTranscodings().remove(transcoding));
+            List<Player> players = playerRepository.findByTranscodingsContaining(transcoding);
+            players.forEach(player -> {
+                player.getTranscodings().remove(transcoding);
+            });
             playerRepository.saveAll(players);
             transcodingRepository.delete(transcoding);
         }, () -> {
