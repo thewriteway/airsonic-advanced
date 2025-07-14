@@ -418,7 +418,6 @@ public class PlayerService {
 
         // Set default transcodings.
         List<Transcoding> defaultActiveTranscodings = transcodingRepository.findByDefaultActiveTrue();
-        player.setTranscodings(defaultActiveTranscodings);
 
         // Save player.
         Player saved = playerRepository.save(player);
@@ -442,6 +441,8 @@ public class PlayerService {
             saved = playerRepository.save(clone);
             playerRepository.delete(player);
         }
+        saved.setTranscodings(defaultActiveTranscodings);
+        playerRepository.save(saved);
 
         // Add player to playlist map.
         addPlaylist(saved);

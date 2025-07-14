@@ -4,13 +4,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.Executor;
-
 @Configuration
 public class ThreadPoolConfig {
 
     @Bean(name = "BroadcastThreadPool")
-    public Executor configThreadPool() {
+    public ThreadPoolTaskExecutor configThreadPool() {
         var threadPool = new ThreadPoolTaskExecutor();
         threadPool.setCorePoolSize(2);
         threadPool.setMaxPoolSize(5);
@@ -22,7 +20,7 @@ public class ThreadPoolConfig {
     }
 
     @Bean(name = "PodcastDownloadThreadPool")
-    public Executor podcastDownloadThreadPool() {
+    public ThreadPoolTaskExecutor podcastDownloadThreadPool() {
         var threadPool = new ThreadPoolTaskExecutor();
         threadPool.setCorePoolSize(2);
         threadPool.setMaxPoolSize(3);
@@ -34,7 +32,7 @@ public class ThreadPoolConfig {
     }
 
     @Bean(name = "PodcastRefreshThreadPool")
-    public Executor podcastRefreshThreadPool() {
+    public ThreadPoolTaskExecutor podcastRefreshThreadPool() {
         var threadPool = new ThreadPoolTaskExecutor();
         threadPool.setCorePoolSize(2);
         threadPool.setMaxPoolSize(5);

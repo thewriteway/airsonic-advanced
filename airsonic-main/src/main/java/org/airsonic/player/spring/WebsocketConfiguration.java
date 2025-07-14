@@ -10,7 +10,6 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -519,7 +518,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
     }
 
     @Bean(name = "heartbeatTaskScheduler")
-    public TaskScheduler messageBrokerTaskScheduler() {
+    public ThreadPoolTaskScheduler messageBrokerTaskScheduler() {
         return new ThreadPoolTaskScheduler();
     }
 }
