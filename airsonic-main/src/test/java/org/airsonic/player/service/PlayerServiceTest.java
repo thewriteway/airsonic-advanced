@@ -56,7 +56,7 @@ public class PlayerServiceTest {
         Player actual = playerService.createPlayer(player);
 
         // then
-        verify(playerRepository, times(2)).save(any(Player.class));
+        verify(playerRepository, times(3)).save(any(Player.class));
         verify(playerRepository).delete(any(Player.class));
         verify(asyncWebSocketClient).sendToUser(eq("test"), eq("/queue/players/created"), any());
         PlayQueue playQueue = actual.getPlayQueue();

@@ -104,7 +104,7 @@ public class TranscodingServiceIntTest {
 
         transcodingService.createTranscoding(transcoding);
         verify(playerRepository).findAll();
-        verify(transcodingRepository).save(transcoding);
+        verify(transcodingRepository).saveAndFlush(transcoding);
         verify(playerRepository).saveAll(any());
     }
 }
