@@ -12,8 +12,8 @@
         var bookmarksTable;
 
         function init() {
-        	var ratingOnImage = "[(${themes.get('ratingOnImage')})]";
-            var ratingOffImage = "[(${themes.get('ratingOffImage')})]";
+            var ratingOnImage = "[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]";
+            var ratingOffImage = "[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]";
 
             bookmarksTable = $("#bookmarksTable").DataTable( {
                 deferRender: true,
@@ -75,7 +75,7 @@
                       render: function(present, type, row) {
                           if (type == "display") {
                               if (present) {
-                                  return "<img class='playSong' src=\"[(${themes.get('playImage')})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">";
+                                  return "<img class='playSong' src=\"[(${themes?.get('playImage') ?: 'icons/default_light/play.svg'})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">";
                               } else {
                                   return "";
                               }
@@ -90,7 +90,7 @@
                       render: function(present, type, row) {
                           if (type == "display") {
                               if (present) {
-                                  return "<img class='addSongLast' src=\"[(${themes.get('addImage')})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
+                                  return "<img class='addSongLast' src=\"[(${themes?.get('addImage') ?: 'icons/default_light/add.svg'})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
                               } else {
                                   return "";
                               }
@@ -105,7 +105,7 @@
                       render: function(present, type, row) {
                           if (type == "display") {
                               if (present) {
-                                  return "<img class='addSongNext' src=\"[(${themes.get('addNextImage')})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
+                                  return "<img class='addSongNext' src=\"[(${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
                               } else {
                                   return "";
                               }
@@ -193,7 +193,7 @@
                       searchable: false,
                       name: "remove",
                       className: "fit not-draggable centeralign",
-                      defaultContent: "<img class='removeBookmark' src=\"[(${themes.get('removeImage')})]\" style='height:18px;' alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">"
+                      defaultContent: "<img class='removeBookmark' src=\"[(${themes?.get('removeImage') ?: 'icons/default_light/remove.svg'})]\" style='height:18px;' alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">"
                     }
                 ]
             } );
@@ -332,7 +332,7 @@
 <body class="mainframe bgcolor1" onload="init()">
 
 <h1 style="padding-bottom: 1em">
-    <img th:src="${themes.get('bookmarkImage')}" alt="">
+    <img th:src="${themes?.get('bookmarkImage') ?: 'icons/default_light/bookmark.svg'}" alt="">
     <span style="vertical-align: middle" th:text="#{top.bookmarks}"></span>
 </h1>
 

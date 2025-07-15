@@ -35,12 +35,12 @@
 
     <script type="text/javascript" th:inline="javascript">
         function toggleStar(mediaFileId, imageId) {
-            if ($(imageId).attr("src").indexOf("[(${themes.get('ratingOnImage')})]") != -1) {
-                $(imageId).attr("src", "[(${themes.get('ratingOffImage')})]");
+            if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]") != -1) {
+                $(imageId).attr("src", "[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]");
                 top.StompClient.send("/app/rate/mediafile/unstar", JSON.stringify([mediaFileId]));
             }
-            else if ($(imageId).attr("src").indexOf("[(${themes.get('ratingOffImage')})]") != -1) {
-                $(imageId).attr("src", "[(${themes.get('ratingOnImage')})]");
+            else if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]") != -1) {
+                $(imageId).attr("src", "[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]");
                 top.StompClient.send("/app/rate/mediafile/star", JSON.stringify([mediaFileId]));
             }
         }
@@ -162,14 +162,14 @@
 
 	<div>
 	  <th:block th:if="${model.user.shareRole}">
-	    <img id="share" th:src="${themes.get('shareImage')}" th:title="#{main.more.share}" th:alt="#{main.more.share}">
+	    <img id="share" th:src="${themes?.get('shareImage') ?: 'icons/default_light/share.svg'}" th:title="#{main.more.share}" th:alt="#{main.more.share}">
 	  </th:block>
 	  <th:block th:if="${model.user.downloadRole}">
-	    <img id="download" th:src="${themes.get('downloadImage')}"
+	    <img id="download" th:src="${themes?.get('downloadImage') ?: 'icons/default_light/download.svg'}"
 			 th:title="#{common.download}"
 			 th:alt="#{common.download}">
 	  </th:block>
-	  <img id="starImage" th:src="${themes.get('__${!#strings.isEmpty(model.video.starredDate) ? 'ratingOnImage' : 'ratingOffImage'}__')}"
+	  <img id="starImage" th:src="${themes?.get('__${!#strings.isEmpty(model.video.starredDate) ? 'ratingOnImage' : 'ratingOffImage'}__')}"
 		   th:data-video-id="${model.video.id}"
 	         onclick="toggleStar(this.getAttribute('data-video-id'), '#starImage'); return false;"
 		   th:title="|#{playlist.more.star} / #{playlist.more.unstar}|"

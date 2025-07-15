@@ -12,7 +12,7 @@
 <body class="mainframe bgcolor1">
 
 <h1 style="padding-bottom:0.5em">
-    <img th:src="${themes.get('homeImage')}" alt="">
+    <img th:src="${themes?.get('homeImage') ?: 'icons/default_light/home.svg'}" alt="">
     <span th:text="#{gettingStarted.title}"></span>
 </h1>
 

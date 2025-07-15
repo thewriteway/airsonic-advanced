@@ -4,7 +4,7 @@
     <th:block th:replace="~{jquery}" />
     <style th:inline="text">
         .progress-bar {width: 350px; height: 10px; border: 1px solid black; display:block;}
-        .progress-bar-content {width: 0; height: 10px; background: url("[(@{/icons/default_light/progress.png})]") repeat;}
+        .progress-bar-content {width: 0; height: 10px; background: url("[(@{icons/default_light/progress.png})]") repeat;}
         .progress-text {display:block;}
         #randomPlayQueue td { padding: 0 5px; }
     </style>
@@ -122,13 +122,13 @@
 <body class="mainframe bgcolor1">
 
 <h1>
-    <img th:src="${themes.get('moreImage')}" alt=""/>
+    <img th:src="${themes?.get('moreImage') ?: 'icons/default_light/more.svg'}" alt=""/>
     <span style="vertical-align: middle" th:text="#{more.title}"></span>
 </h1>
 
 <th:block th:if="${model.user.streamRole}">
     <h2>
-        <img th:src="@{${themes.get('shuffleImage')}}" alt=""/>
+        <img th:src="@{${themes?.get('shuffleImage') ?: 'icons/default_light/shuffle.svg'}}" alt=""/>
         <span style="vertical-align: middle" th:text="#{more.random.title}"></span>
     </h2>
 
@@ -262,20 +262,20 @@
 <a href="https://airsonic.github.io/docs/apps/" target="_blank" rel="noopener noreferrer"><img alt="Apps" th:src="@{/icons/default_light/apps.png}" style="float: right;margin-left: 3em; margin-right: 3em"/></a>
 
 <h2>
-    <img th:src="${themes.get('androidImage')}" alt=""/>
+    <img th:src="${themes?.get('androidImage') ?: 'icons/default_light/android.svg'}" alt=""/>
     <span style="vertical-align: middle" th:text="#{more.apps.title}"></span>
 </h2>
 <span th:Utext="#{more.apps.text}"></span>
 
 
 <h2>
-    <img th:src="${themes.get('statusSmallImage')}" alt=""/>
+    <img th:src="${themes?.get('statusSmallImage') ?: 'icons/default_light/status.svg'}" alt=""/>
     <span style="vertical-align: middle" th:text="#{more.status.title}"></span>
 </h2>
 <span th:Utext="#{more.status.text}"></span>
 
 <h2>
-    <img th:src="${themes.get('podcastImage')}" alt=""/>
+    <img th:src="${themes?.get('podcastImage') ?: 'icons/default_light/podcast.svg'}" alt=""/>
     <span style="vertical-align: middle" th:text="#{more.podcast.title}"></span>
 </h2>
 <span th:utext="#{more.podcast.text}"></span>
@@ -283,7 +283,7 @@
 <th:block th:if="${model.user.uploadRole}">
 
     <h2>
-        <img th:src="${themes.get('uploadImage')}" alt=""/>
+        <img th:src="${themes?.get('uploadImage') ?: 'icons/default_light/upload.svg'}" alt=""/>
         <span style="vertical-align: middle" th:text="#{more.upload.title}"></span>
     </h2>
 
@@ -316,7 +316,7 @@
 
 <a name="shortcuts"></a>
 <h2>
-    <img th:src="@{${themes.get('keyboardImage')}}" alt=""/>
+    <img th:src="@{${themes?.get('keyboardImage') ?: 'icons/default_light/keyboard.png'}}" alt=""/>
     <span style="vertical-align: middle" th:text="#{more.keyboard.title}"></span>
 </h2>
 <span th:utext="#{more.keyboard.text}"></span>

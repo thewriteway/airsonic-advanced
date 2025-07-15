@@ -15,7 +15,7 @@
 
         <div id="loginframe" class="bgcolor2 shadow">
 
-            <img th:src="{themes.get('logoImage')}" alt=""/>
+            <img th:src="${themes?.get('logoImage') ?: 'icons/default_light/logo.png'}" alt=""/>
 
             <div class="loginmessagetop" th:text="${model.loginMessage}"></div>
 

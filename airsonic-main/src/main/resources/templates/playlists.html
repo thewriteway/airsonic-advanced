@@ -81,13 +81,13 @@
                   searchable: false,
                   name: "play",
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='playSong' src=\"[(${themes.get('playImage')})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
+                  defaultContent: "<img class='playSong' src=\"[(${themes?.get('playImage') ?: 'icons/default_light/play.svg'})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
                 },
                 { data: null,
                   searchable: false,
                   name: "addLast",
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='addSongLast' src=\"[(${themes.get('addImage')})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">"
+                  defaultContent: "<img class='addSongLast' src=\"[(${themes?.get('addImage') ?: 'icons/default_light/add.svg'})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">"
                 },
                 { data: "name",
                   className: "detail fit",
@@ -172,7 +172,7 @@
                   searchable: false,
                   name: "export",
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='exportFile' src=\"[(${themes.get('exportFileImage')})]\" style='height:18px;' alt=\"[(#{playlist2.export})]\" title=\"[(#{playlist2.export})]\">"
+                  defaultContent: "<img class='exportFile' src=\"[(${themes?.get('exportFileImage') ?: 'icons/default_light/file-text.svg'})]\" style='height:18px;' alt=\"[(#{playlist2.export})]\" title=\"[(#{playlist2.export})]\">"
                 },
                 { data: null,
                   searchable: false,
@@ -180,7 +180,7 @@
                   className: "fit not-draggable centeralign",
                   render: function(data, type, row) {
                       if (type == "display" && row.username == user) {
-                          return "<img class='removePlaylist' src=\"[(${themes.get('removeImage')})]\" style='height:18px;' alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">";
+                          return "<img class='removePlaylist' src=\"[(${themes?.get('removeImage') ?: 'icons/default_light/remove.svg'})]\" style='height:18px;' alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">";
                       }
                       return "";
                   }
@@ -368,13 +368,13 @@
 <body class="mainframe bgcolor1" onload="init()">
 
 <h1 style="padding-bottom: 1em">
-    <img th:src="${themes.get('playlistImage')}" alt="">
+    <img th:src="${themes?.get('playlistImage') ?: 'icons/default_light/playlist.svg'}" alt="">
     <span style="vertical-align: middle" th:text="#{left.playlists}"></span>
 </h1>
 
 <div style="float:right;padding-right:1em">
-    <img id="viewAsList" th:src="${themes.get('viewAsListImage')}" alt="" class="headerSelected" style="margin-right:8px" onclick="setViewAsList(true)"/>
-    <img id="viewAsGrid" th:src="${themes.get('viewAsGridImage')}" alt="" class="headerNotSelected" onclick="setViewAsList(false)"/>
+    <img id="viewAsList" th:src="${themes?.get('viewAsListImage') ?: 'icons/default_light/view_as_list.svg'}" alt="" class="headerSelected" style="margin-right:8px" onclick="setViewAsList(true)"/>
+    <img id="viewAsGrid" th:src="${themes?.get('viewAsGridImage') ?: 'icons/default_light/view_as_grid.svg'}" alt="" class="headerNotSelected" onclick="setViewAsList(false)"/>
 </div>
 <div style="clear:both"></div>
 

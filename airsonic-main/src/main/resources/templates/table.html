@@ -7,6 +7,6 @@
         display: none !important;
     }
 </style>
-<link rel="stylesheet" th:href="@{/{styleSheet}(styleSheet=${themes.get('styleSheet')})}" type="text/css">
+<link rel="stylesheet" th:href="@{/{styleSheet}(styleSheet=${themes?.get('styleSheet') ?: 'style/default.css'})}" type="text/css">
 <script type="text/javascript" th:src="@{/script/DataTables/datatables.min.js}"></script>
 <script type="text/javascript" th:src="@{/script/DataTables/row.show.js}"></script>

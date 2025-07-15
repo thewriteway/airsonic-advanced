@@ -34,7 +34,7 @@
 </head>
 <body class="mainframe bgcolor1" onload="init();">
 <h1 th:if="${!#strings.isEmpty(model.welcomeTitle)}">
-    <img th:src="${themes.get('homeImage')}" alt="">
+    <img th:src="${themes?.get('homeImage') ?: 'icons/default_light/home.svg'}" alt="">
     <span style="vertical-align: middle" th:text="${model.welcomeTitle}">Welcome</span>
 </h1>
 
@@ -52,7 +52,7 @@
 <table th:replace="~{homePager::table}"></table>
 
 <div th:if="${!#strings.isEmpty(model.welcomeMessage)}"
-     th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid #${themes.get('detailColor')}|"
+     th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid #${themes?.get('detailColor')}|"
      th:utext="${model.welcomeMessage}"
 ></div>
 <th:block th:each="album, loopStatus : ${model.albums}">

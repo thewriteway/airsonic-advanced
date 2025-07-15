@@ -31,7 +31,7 @@
 <body class="mainframe bgcolor1" onload="init();">
 
 <h1>
-    <img th:src="${themes.get('searchImage')}" alt=""/>
+    <img th:src="${themes?.get('searchImage') ?: 'icons/default_light/search.svg'}" alt=""/>
     <span style="vertical-align: middle" th:text="#{search.title}"></span>
 </h1>
 

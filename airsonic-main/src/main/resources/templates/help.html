@@ -6,7 +6,7 @@
 <body class="mainframe bgcolor1">
 
 <h1>
-    <img th:src="${themes.get('helpImage')}" alt="">
+    <img th:src="${themes?.get('helpImage') ?: 'icons/default_light/help.svg'}" alt="">
     <span style="vertical-align: middle" th:text="#{help.title(${model.brand})}"></span>
 </h1>
 
@@ -26,7 +26,7 @@
     <tr>
         <td class="ruleTableHeader" th:utext="#{help.license.title}"></td>
         <td class="ruleTableCell">
-        <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank"><img style="float:right;margin-left: 10px" alt="GPL 3.0" th:src="@{/icons/default_light/gpl.png}"></a>
+        <a href="http://www.gnu.org/copyleft/gpl.html" target="_blank"><img style="float:right;margin-left: 10px" alt="GPL 3.0" th:src="@{'icons/default_light/gpl.png'}"></a>
         <span th:utext="#{help.license.text(${model.brand})}"></span></td></tr>
     <tr>
         <td class="ruleTableHeader" th:text="#{help.homepage.title}"></td>
@@ -45,7 +45,7 @@
 <p></p>
 
 <h2>
-    <img th:src="${themes.get('logImage')}" alt="">
+    <img th:src="${themes?.get('logImage') ?: 'icons/default_light/log.svg'}" alt="">
     <span style="vertical-align: middle; white-space: pre" th:text="#{help.log}"></span>
 </h2>
 

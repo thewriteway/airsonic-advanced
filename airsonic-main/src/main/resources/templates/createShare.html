@@ -7,18 +7,18 @@
 <body class="mainframe bgcolor1">
 
 <h1>
-    <img th:src="${themes.get('shareImage')}" alt="" style="height:18px;">
+    <img th:src="${themes?.get('shareImage') ?: 'icons/default_light/share.svg'}" alt="" style="height:18px;">
     <span style="vertical-align: middle" th:text="#{share.title}"></span>
 </h1>
 
 <span th:utext="#{share.warning}"></span>
 <p>
-    <a th:href="|https://www.facebook.com/sharer.php?u=${model.playUrl}|" target="_blank" rel="noopener noreferrer"><img th:src="${themes.get('shareFacebookImage')}" alt=""></a>&nbsp;
+    <a th:href="|https://www.facebook.com/sharer.php?u=${model.playUrl}|" target="_blank" rel="noopener noreferrer"><img th:src="${themes?.get('shareFacebookImage') ?: 'icons/default_light/share_facebook.svg'}" alt=""></a>&nbsp;
     <a th:href="|https://www.facebook.com/sharer.php?u=${model.playUrl}|" target="_blank" rel="noopener noreferrer" th:text="#{share.facebook}"></a>
 </p>
 
 <p>
-    <a th:href="|https://twitter.com/?status=Listening to ${model.playUrl}|" target="_blank" rel="noopener noreferrer"><img th:src="${themes.get('shareTwitterImage')}" alt=""></a>&nbsp;
+    <a th:href="|https://twitter.com/?status=Listening to ${model.playUrl}|" target="_blank" rel="noopener noreferrer"><img th:src="${themes?.get('shareTwitterImage') ?: 'icons/default_light/share_twitter.svg'}" alt=""></a>&nbsp;
     <a th:href="|https://twitter.com/?status=Listening to ${model.playUrl}|" target="_blank" rel="noopener noreferrer" th:text="#{share.twitter}"></a>
 </p>
 <p th:utext="#{share.link(${model.playUrl})}"></p>

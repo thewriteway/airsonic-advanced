@@ -8,7 +8,7 @@
 <body class="mainframe bgcolor1">
 
 <h1>
-    <img th:src="${themes.get('errorImage')}" alt=""/>
+    <img th:src="${themes?.get('errorImage') ?: 'icons/default_light/error.svg'}" alt=""/>
     <span style="vertical-align: middle" th:text="${#messages.msg('notFound.title')}"></span>
 </h1>
 

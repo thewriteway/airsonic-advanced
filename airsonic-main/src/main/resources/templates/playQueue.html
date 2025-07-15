@@ -112,8 +112,8 @@
                 audioPlayer: null,
             
                 init() {
-                    var ratingOnImage = "[(${themes.get('ratingOnImage')})]";
-                    var ratingOffImage = "[(${themes.get('ratingOffImage')})]";
+                    var ratingOnImage = "[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]";
+                    var ratingOffImage = "[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]";
                     var pq = this;
                 
                     pq.musicTable = $("#playQueueMusic").DataTable( {
@@ -215,7 +215,7 @@
                               searchable: false,
                               name: "remove",
                               className: "fit not-draggable centeralign",
-                              defaultContent: "<img class='removeSong' src=\"[( ${themes.get('removeImage')} )]\" style='height:18px;' " +
+                              defaultContent: "<img class='removeSong' src=\"[( ${themes?.get('removeImage') ?: 'icons/default_light/remove.svg'} )]\" style='height:18px;' " +
                                   "alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">"
                             },
                             { data: "trackNumber", className: "detail fit", visible: /*[( ${model['visibility']?.trackNumberVisible == true} )]*/ false, title: /*[[#{personalsettings.tracknumber}]]*/ "Track" },
@@ -225,7 +225,7 @@
                               title: /*[[#{edittags.songtitle}]]*/ "Title",
                               render(title, type, row) {
                                   if (type == "display") {
-                                      var img = "<img class='currentImage' src=\"[( ${themes.get('currentImage')} )]\" alt='' style='display: none; padding-right: 0.5em' />";
+                                      var img = "<img class='currentImage' src=\"[( ${themes?.get('currentImage') ?: 'icons/default_light/current.svg'} )]\" alt='' style='display: none; padding-right: 0.5em' />";
                                       if (playQueue.player.tech != "EXTERNAL_WITH_PLAYLIST") {
                                           return img + $("<a>", {title: title, alt: title, text: title}).addClass("titleUrl").attr("href", "javascript:void(0)")[0].outerHTML;
                                       } else {
@@ -1057,13 +1057,13 @@
                         if (this.shuffleRadioEnabled) {
                             $("#toggleRepeat").html(/*[[#{playlist.repeat_radio}]]*/ "Repeat Radio");
                         } else if (this.repeatStatus == 'QUEUE') {
-                            $("#toggleRepeat").attr('src', /*[[${themes.get('repeatAll')}]]*/ "");
+                            $("#toggleRepeat").attr('src', /*[[${themes?.get('repeatAll')}]]*/ "icons/default_light/repeat_all.svg");
                             $("#toggleRepeat").attr('alt', 'Repeat All/Queue');
                         } else if (this.repeatStatus == 'OFF') {
-                            $("#toggleRepeat").attr('src', /*[[${themes.get('repeatOff')}]]*/ "");
+                            $("#toggleRepeat").attr('src', /*[[${themes?.get('repeatOff')}]]*/ "icons/default_light/repeat_off.svg");
                             $("#toggleRepeat").attr('alt', 'Repeat Off');
                         } else if (this.repeatStatus == 'TRACK') {
-                            $("#toggleRepeat").attr('src', /*[[${themes.get('repeatOne')}]]*/ "");
+                            $("#toggleRepeat").attr('src', /*[[${themes?.get('repeatOne')}]]*/ "icons/default_light/repeat_one.svg");
                             $("#toggleRepeat").attr('alt', 'Repeat One/Track');
                         }
                     }
@@ -1282,12 +1282,12 @@
                 </div>
         
                 <div th:if="${model['user']?.streamRole == true}" class="player-tech player-tech-non-web" style="white-space:nowrap;">
-                    <img alt="Start" id="audioStart" th:src="${themes.get('castPlayImage')}" onclick="playQueue.onStart()" style="cursor:pointer">
-                    <img alt="Stop" id="audioStop" th:src="${themes.get('castPauseImage')}" onclick="playQueue.onStop()" style="cursor:pointer; display:none">
+                    <img alt="Start" id="audioStart" th:src="${themes?.get('castPlayImage') ?: 'icons/default_light/play.svg'}" onclick="playQueue.onStart()" style="cursor:pointer">
+                    <img alt="Stop" id="audioStop" th:src="${themes?.get('castPauseImage') ?: 'icons/default_light/cast_pause.svg'}" onclick="playQueue.onStop()" style="cursor:pointer; display:none">
                 </div>
         
                 <div class="player-tech player-tech-jukebox" style="white-space:nowrap;">
-                    <img th:src="${themes.get('volumeImage')}" alt="">
+                    <img th:src="${themes?.get('volumeImage') ?: 'icons/default_light/volume.svg'}" alt="">
                 </div>
                 <div class="player-tech player-tech-jukebox" style="white-space:nowrap;">
                     <div id="jukeboxVolume" style="width:80px;height:4px"></div>
@@ -1299,19 +1299,19 @@
         
                 <div class="player-tech player-tech-web" style="white-space:nowrap;">
                     <span class="header">
-                        <img th:src="${themes.get('backImage')}"  alt="Play previous" title="Play previous" onclick="playQueue.onPrevious()" style="cursor:pointer">
+                        <img th:src="${themes?.get('backImage') ?: 'icons/default_light/back.svg'}"  alt="Play previous" title="Play previous" onclick="playQueue.onPrevious()" style="cursor:pointer">
                     </span>
                 </div>
                 <div class="player-tech player-tech-web" style="white-space:nowrap;">
                     <span class="header">
-                        <img th:src="${themes.get('forwardImage')}" alt="Play next" title="Play next" onclick="playQueue.onNext('OFF')" style="cursor:pointer">
+                        <img th:src="${themes?.get('forwardImage') ?: 'icons/default_light/forward.svg'}" alt="Play next" title="Play next" onclick="playQueue.onNext('OFF')" style="cursor:pointer">
                     </span> |
                 </div>
         
                 <div style="white-space:nowrap;">
                     <span class="header">
                         <a href="javascript:playQueue.onClear()" class="player-control">
-                            <img th:src="${themes.get('clearImage')}" alt="Clear playlist" title="Clear playlist" style="cursor:pointer; height:18px">
+                            <img th:src="${themes?.get('clearImage') ?: 'icons/default_light/clear.svg'}" alt="Clear playlist" title="Clear playlist" style="cursor:pointer; height:18px">
                         </a>
                     </span> |
                 </div>
@@ -1319,7 +1319,7 @@
                 <div style="white-space:nowrap;">
                     <span class="header">
                         <a href="javascript:playQueue.onShuffle()" id="shuffleQueue" class="player-control">
-                            <img th:src="${themes.get('shuffleImage')}" alt="Shuffle" title="Shuffle" style="cursor:pointer; height:18px">
+                            <img th:src="${themes?.get('shuffleImage') ?: 'icons/default_light/shuffle.svg'}" alt="Shuffle" title="Shuffle" style="cursor:pointer; height:18px">
                         </a>
                     </span> |
                 </div>
@@ -1327,7 +1327,7 @@
                 <div class="player-tech player-tech-web player-tech-jukebox player-tech-external" style="white-space:nowrap;">
                     <span class="header">
                         <a href="javascript:playQueue.onToggleRepeat()" id="repeatQueue" class="player-control">
-                            <img id="toggleRepeat" th:src="${themes.get('repeatOff')}" alt="Toggle repeat" title="Toggle repeat" style="cursor:pointer; height:18px">
+                            <img id="toggleRepeat" th:src="${themes?.get('repeatOff') ?: 'icons/default_light/repeat_off.svg'}" alt="Toggle repeat" title="Toggle repeat" style="cursor:pointer; height:18px">
                         </a>
                     </span> |
                 </div>
@@ -1335,7 +1335,7 @@
                 <div style="white-space:nowrap;">
                     <span class="header">
                         <a href="javascript:playQueue.onUndo()" id="undoQueue" class="player-control">
-                            <img th:src="${themes.get('undoImage')}" alt="Undo" title="Undo" style="cursor:pointer; height:18px">
+                            <img th:src="${themes?.get('undoImage')}" alt="Undo" title="Undo" style="cursor:pointer; height:18px">
                         </a>
                     </span>  |
                 </div>
@@ -1343,7 +1343,7 @@
                 <div th:if="${model['user']?.settingsRole == true}" style="white-space:nowrap;">
                     <span class="header">
                         <a href="javascript:playQueue.playerSettingsPage()" class="player-control">
-                            <img th:src="${themes.get('settingsImage')}" alt="Settings" title="Settings" style="cursor:pointer; height:18px">
+                            <img th:src="${themes?.get('settingsImage') ?: 'icons/default_light/settings.svg'}" alt="Settings" title="Settings" style="cursor:pointer; height:18px">
                         </a>
                     </span> |
                 </div>
@@ -1376,8 +1376,8 @@
         
                 <div th:if="${model['autoHide'] != true}" style="white-space:nowrap; text-align:right; padding-left:1.5em; padding-right:1.5em">
                     <a href="javascript:playQueue.onTogglePlayQueue(!playQueue.isVisible)">
-                        <img class="playqueue-shown" th:src="${themes.get('playQueueHide')}" alt="Hide play queue" title="Hide play queue" style="cursor:pointer; height:18px;"/>
-                        <img class="playqueue-hidden" th:src="${themes.get('playQueueShow')}" alt="Show play queue" title="Show play queue" style="cursor:pointer; height:18px; display: none;"/>
+                        <img class="playqueue-shown" th:src="${themes?.get('playQueueHide') ?: 'icons/default_light/chevrons-up.svg'}" alt="Hide play queue" title="Hide play queue" style="cursor:pointer; height:18px;"/>
+                        <img class="playqueue-hidden" th:src="${themes?.get('playQueueShow') ?: 'icons/default_light/chevrons-down.svg'}" alt="Show play queue" title="Show play queue" style="cursor:pointer; height:18px; display: none;"/>
                     </a>
                 </div>
         
