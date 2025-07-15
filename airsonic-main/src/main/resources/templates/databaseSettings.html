@@ -237,7 +237,7 @@
 
     <div style="display:table-cell; padding:0.5em;">
       <button id="exportdb" onclick="exportDB()">
-        <img th:src="${#themes.code('downloadImage')}" alt=""/>
+        <img th:src="${themes.get('downloadImage')}" alt=""/>
         <span th:text="#{databasesettings.export}"></span>
           <th:block th:replace="~{helpToolTip((topic=exportdb))}" />
       </button>
@@ -250,7 +250,7 @@
         <div style="display:table-cell; padding:0.5em; padding-right:0;"><input type="file" id="file" name="file" size="40" multiple="multiple"/></div>
         <div style="display:table-cell; padding:0.5em; padding-left:0;">
           <button id="importdb" type="submit">
-            <img th:src="${#themes.code('uploadImage')}" alt=""/>
+            <img th:src="${themes.get('uploadImage')}" alt=""/>
             <span style="vertical-align: middle" th:text="#{databasesettings.import}"></span>
               <th:block th:replace="~{helpToolTip((topic=importdb))}" />
           </button>

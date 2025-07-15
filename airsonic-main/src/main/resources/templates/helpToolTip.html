@@ -10,4 +10,4 @@ PARAMETERS
     <div style="font-weight:bold;" th:text="#{helppopup.__${topic}__.title(${'Airsonic'})}"></div>
     <div th:utext="#{helppopup.__${topic}__.text(${'Airsonic'})}"></div>
 </div>
-<img th:src="@{|/${#themes.code('helpPopupImage')}|}" th:alt="#{common.help}" th:title="#{common.help}" th:data-tip-id="|placeholder-${topic}|" onmouseover="TagToTip(this.getAttribute('data-tip-id'), BALLOON, true, ABOVE, true, OFFSETX, -17, PADDING, 8, WIDTH, -240, CLICKSTICKY, true, CLICKCLOSE, true)" onmouseout="UnTip()"/>
+<img th:src="@{|/${themes.get('helpPopupImage')}|}" th:alt="#{common.help}" th:title="#{common.help}" th:data-tip-id="|placeholder-${topic}|" onmouseover="TagToTip(this.getAttribute('data-tip-id'), BALLOON, true, ABOVE, true, OFFSETX, -17, PADDING, 8, WIDTH, -240, CLICKSTICKY, true, CLICKCLOSE, true)" onmouseout="UnTip()"/>

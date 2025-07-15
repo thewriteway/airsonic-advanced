@@ -8,7 +8,7 @@
 <table th:object="${model}" th:fragment="table">
     <tr>
         <td th:if="*{!#strings.isEmpty(musicFolder)}" style="padding-right: 2em;">
-            <div th:style="|border:1px solid #${#themes.code('detailColor')}; padding-left: 0.5em;padding-right: 0.5em|"
+            <div th:style="|border:1px solid #${themes.get('detailColor')}; padding-left: 0.5em;padding-right: 0.5em|"
             th:text="*{musicFolder.name}">
             </div>
         </td>
@@ -20,13 +20,13 @@
 
                 <td th:if="*{listOffset gt 0}">
                     <a th:href="@{/home(listType=*{listType},listOffset=*{listOffset - listSize},genre=*{genre}, decade=*{decade})}">
-                        <img th:src="${#themes.code('backImage')}" alt="">
+                        <img th:src="${themes.get('backImage')}" alt="">
                     </a>
                 </td>
 
                 <td th:if="*{#lists.size(albums) eq listSize}">
                     <a th:href="@{/home(listType=*{listType},listOffset=*{listOffset + listSize},genre=*{genre}, decade=*{decade})}">
-                        <img th:src="${#themes.code('forwardImage')}" alt="">
+                        <img th:src="${themes.get('forwardImage')}" alt="">
                     </a>
                 </td>
                 <td style="padding-right: 2em">
@@ -59,14 +59,14 @@
 
         <td style="padding-right: 2em;">
             <a href="javascript:refresh()">
-                <img th:src="${#themes.code('refreshImage')}" th:alt="#{common.refresh}" style="height:16px;">
+                <img th:src="${themes.get('refreshImage')}" th:alt="#{common.refresh}" style="height:16px;">
                 <span th:text="#{common.refresh}"></span>
             </a>
         </td>
 
         <td th:if="${!#strings.isEmpty(model.albums)}">
             <a href="javascript:playShuffle()">
-              <img th:src="${#themes.code('shuffleImage')}" th:alt="#{home.shuffle}" style="height:16px;">
+              <img th:src="${themes.get('shuffleImage')}" th:alt="#{home.shuffle}" style="height:16px;">
                 <span th:text="#{home.shuffle}"></span>
             </a>
         </td>

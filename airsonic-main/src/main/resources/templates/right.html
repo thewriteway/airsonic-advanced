@@ -115,7 +115,7 @@
     </div>
 
     <div id="scanningStatus" style="display: none;" class="warning">
-        <img th:src="${#themes.code('scanningImage')}" title="" alt=""> <span th:text="#{main.scanning}"></span> <span id="scanCount"></span>
+        <img th:src="${themes.get('scanningImage')}" title="" alt=""> <span th:text="#{main.scanning}"></span> <span id="scanCount"></span>
     </div>
 
     <div id="nowPlaying" style='display:none'>

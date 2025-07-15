@@ -13,7 +13,7 @@
     <form th:action="@{/login}" method="POST">
         <div id="loginframe" class="bgcolor2 shadow">
 
-            <img th:src="${#themes.code('logoImage')}" alt="">
+            <img th:src="${themes.get('logoImage')}" alt="">
 
             <div class="loginmessagetop" th:text="${model.loginMessage}"></div>
 

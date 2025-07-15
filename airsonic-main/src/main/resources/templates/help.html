@@ -6,7 +6,7 @@
 <body class="mainframe bgcolor1">
 
 <h1>
-    <img th:src="${#themes.code('helpImage')}" alt="">
+    <img th:src="${themes.get('helpImage')}" alt="">
     <span style="vertical-align: middle" th:text="#{help.title(${model.brand})}"></span>
 </h1>
 
@@ -45,7 +45,7 @@
 <p></p>
 
 <h2>
-    <img th:src="${#themes.code('logImage')}" alt="">
+    <img th:src="${themes.get('logImage')}" alt="">
     <span style="vertical-align: middle; white-space: pre" th:text="#{help.log}"></span>
 </h2>
 

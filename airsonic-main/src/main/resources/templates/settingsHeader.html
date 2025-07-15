@@ -10,7 +10,7 @@
 <!--    th:with="tokens=${ {'random', 'newest', 'starred', 'highest', 'frequent', 'recent', 'decade', 'genre', 'alphabetical'} }"-->
 <!--    <c:set var="categories" value="${param.restricted ? 'personal credentials player share' : 'musicFolder general advanced personal credentials user player share dlna sonos transcoding internetRadio podcast database'}"/>-->
     <h1>
-        <img th:src="${#themes.code('settingsImage')}" alt=""/>
+        <img th:src="${themes.get('settingsImage')}" alt=""/>
         <span style="vertical-align: middle" th:text="#{settingsheader.title}"></span>
     </h1>
 

@@ -15,7 +15,7 @@
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <!-- Included before airsonic stylesheet to allow overriding -->
             <link type="text/css" rel="stylesheet" th:href="@{/script/mediaelement/mediaelementplayer.min.css}" />
-            <link rel="stylesheet" th:href="@{/{ss}(ss=${#themes.code('styleSheet')})}" type="text/css" />
+            <link rel="stylesheet" th:href="@{/{ss}(ss=${themes.get('styleSheet')})}" type="text/css" />
             <title>Airsonic</title>
             <script th:if="${model != null && model['keyboardShortcutsEnabled'] != null}" type="text/javascript" th:inline="javascript">
                 var keyboardShortcutsEnabled = /*[[${model['keyboardShortcutsEnabled']}]]*/ false;
