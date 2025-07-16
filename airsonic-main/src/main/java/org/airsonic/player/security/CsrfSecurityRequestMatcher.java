@@ -1,6 +1,7 @@
 package org.airsonic.player.security;
 
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
@@ -27,12 +28,14 @@ public class CsrfSecurityRequestMatcher implements RequestMatcher {
         this.whiteListedMatchers = Arrays.asList(
             new RegexRequestMatcher("/rest/.*\\.view(\\?.*)?", "POST"),
             new RegexRequestMatcher("/search(?:\\.view)?", "POST"),
+            PathPatternRequestMatcher.withDefaults().matcher("/websocket/**"),
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.DELETE, "/actuator/caches/**")
             // websockets are protected by stomp headers
-            new AntPathRequestMatcher("/websocket/**"),
-            new AntPathRequestMatcher("/actuator/caches/**", "DELETE")
-        );
+            );
     }
 
+     //       new AntPathRequestMatcher("/websocket/**"),
+     //       new AntPathRequestMatcher("/actuator/caches/**", "DELETE")
     @Override
     public boolean matches(HttpServletRequest request) {
         boolean skipCSRF = allowedMethods.contains(request.getMethod()) ||

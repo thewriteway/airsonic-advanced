@@ -78,7 +78,7 @@ public class Player {
     @Enumerated(EnumType.STRING)
     private TranscodeScheme transcodeScheme = TranscodeScheme.OFF;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinTable(
         name = "player_transcoding",
         joinColumns = {@JoinColumn(name = "player_id")},
@@ -402,16 +402,12 @@ public class Player {
      */
     public void setTranscodings(List<Transcoding> transcodings) {
         this.transcodings = transcodings;
-        for (Transcoding transcoding : transcodings) {
-            transcoding.addPlayer(this);
-        }
     }
 
     /**
      * Adds a transcoding to the player.
      */
     public void addTranscoding(Transcoding transcoding) {
-        transcoding.addPlayer(this);
         this.transcodings.add(transcoding);
     }
 

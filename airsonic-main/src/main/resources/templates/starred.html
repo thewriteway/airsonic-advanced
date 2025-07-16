@@ -7,12 +7,12 @@
     <script type="text/javascript" th:inline="javascript">
 
         function toggleStar(mediaFileId, imageId) {
-            if ($(imageId).attr("src").indexOf("[(${#themes.code('ratingOnImage')})]") != -1) {
-                $(imageId).attr("src", "[(${#themes.code('ratingOffImage')})]");
+            if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]") != -1) {
+                $(imageId).attr("src", "[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]");
                 top.StompClient.send("/app/rate/mediafile/unstar", JSON.stringify([mediaFileId]));
             }
-            else if ($(imageId).attr("src").indexOf("[(${#themes.code('ratingOffImage')})]") != -1) {
-                $(imageId).attr("src", "[(${#themes.code('ratingOnImage')})]");
+            else if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]") != -1) {
+                $(imageId).attr("src", "[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]");
                 top.StompClient.send("/app/rate/mediafile/star", JSON.stringify([mediaFileId]));
             }
         }
@@ -40,7 +40,7 @@
 <body class="mainframe bgcolor1" onload="init()">
 
 <h1>
-    <img th:src="${#themes.code('starredImage')}" alt="">
+    <img th:src="${themes?.get('starredImage') ?: 'icons/default_light/starred.svg'}" alt="">
     <span style="vertical-align: middle" th:text="#{starred.title}"></span>
 </h1>
 

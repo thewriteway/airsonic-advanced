@@ -22,13 +22,13 @@ package org.airsonic.player.domain;
 
 import org.airsonic.player.util.StringUtil;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.PreRemove;
 import jakarta.persistence.Table;
 
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public class Transcoding {
     @Column(name = "default_active", nullable = false)
     private boolean defaultActive;
 
-    @ManyToMany(mappedBy = "transcodings", cascade = {CascadeType.REMOVE, CascadeType.MERGE})
+    @ManyToMany(mappedBy = "transcodings")
     private List<Player> players = new ArrayList<>();
 
     public Transcoding() {
@@ -278,5 +278,14 @@ public class Transcoding {
 
     public int hashCode() {
         return (id != null ? id.hashCode() : 0);
+    }
+
+    @PreRemove
+    private void removePlayerAssociation() {
+        // Remove this transcoding from all players
+        for (Player player : this.players) {
+            player.getTranscodings().remove(this);
+        }
+        this.players.clear();
     }
 }

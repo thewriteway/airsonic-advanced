@@ -19,6 +19,7 @@
 package org.airsonic.player.repository;
 
 import org.airsonic.player.domain.Player;
+import org.airsonic.player.domain.Transcoding;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,15 +30,17 @@ import java.util.List;
 @Repository
 public interface PlayerRepository extends JpaRepository<Player, Integer> {
 
-    public List<Player> findByUsername(String username);
+    List<Player> findByUsername(String username);
 
-    public List<Player> findByUsernameAndClientIdIsNull(String username);
+    List<Player> findByUsernameAndClientIdIsNull(String username);
 
-    public List<Player> findByUsernameAndClientId(String username, String clientId);
+    List<Player> findByUsernameAndClientId(String username, String clientId);
+
+    List<Player> findByTranscodingsContaining(Transcoding transcoding);
 
     @Transactional
-    public void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenIsNull();
+    void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenIsNull();
 
     @Transactional
-    public void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenBefore(Instant lastSeen);
+    void deleteAllByNameIsNullAndClientIdIsNullAndLastSeenBefore(Instant lastSeen);
 }

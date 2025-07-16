@@ -5,7 +5,6 @@ import org.airsonic.player.controller.SubsonicRESTController.ErrorCode;
 import org.airsonic.player.domain.UserCredential;
 import org.airsonic.player.repository.UserCredentialRepository;
 import org.airsonic.player.service.SecurityService.UserDetail;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -24,7 +23,14 @@ import java.util.Optional;
 public class MultipleCredsMatchingAuthenticationProvider extends DaoAuthenticationProvider {
     public static final String SALT_TOKEN_MECHANISM_SPECIALIZATION = "salttoken";
 
-    private UserCredentialRepository userCredentialRepository;
+    private final UserCredentialRepository userCredentialRepository;
+
+    public MultipleCredsMatchingAuthenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder, UserCredentialRepository userCredentialRepository) {
+        super(userDetailsService);
+        super.setPasswordEncoder(passwordEncoder);
+        this.userCredentialRepository = userCredentialRepository;
+    }
+
 
     @Override
     protected void additionalAuthenticationChecks(UserDetails userDetails,
@@ -47,7 +53,7 @@ public class MultipleCredsMatchingAuthenticationProvider extends DaoAuthenticati
 
         UserDetail userDetail = (UserDetail) userDetails;
 
-        Optional<UserCredential> matchedCred = userDetail.getCredentials().parallelStream()
+        Optional<UserCredential> matchedCred = userDetail.getCredentials().stream()
                 .filter(c -> getPasswordEncoder().matches(presentedPassword, "{" + c.getEncoder() + encoderSpecialization + "}" + c.getCredential()))
                 .findAny();
 
@@ -84,20 +90,4 @@ public class MultipleCredsMatchingAuthenticationProvider extends DaoAuthenticati
         }
     }
 
-    @Autowired
-    public void setUserCredentialRepository(UserCredentialRepository userCredentialRepository) {
-        this.userCredentialRepository = userCredentialRepository;
-    }
-
-    @Override
-    @Autowired
-    public void setUserDetailsService(UserDetailsService userDetailsService) {
-        super.setUserDetailsService(userDetailsService);
-    }
-
-    @Override
-    @Autowired
-    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
-        super.setPasswordEncoder(passwordEncoder);
-    }
 }

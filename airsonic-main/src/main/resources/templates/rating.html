@@ -10,13 +10,13 @@ PARAMETERS
     <th:block th:each="i: ${#numbers.sequence(1, 5)}">
 
         <th:block th:if="${rating ge (i * 10)}">
-            <th:block th:replace="~{::star(${#themes.code('ratingOnImage')}, ${i})}" />
+            <th:block th:replace="~{::star(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'}, ${i})}" />
         </th:block>
         <th:block th:if="${rating ge (i*10) - 7 and rating le (i*10) - 3}">
-            <th:block th:replace="~{::star(${#themes.code('ratingHalfImage')}, ${i})}" />
+            <th:block th:replace="~{::star(${themes?.get('ratingHalfImage') ?: 'icons/default_light/ratingHalf.svg'}, ${i})}" />
         </th:block>
         <th:block th:if="${rating le (i * 10) -3}">
-              <th:block th:replace="~{::star(${#themes.code('ratingOffImage')}, ${i})}" />
+              <th:block th:replace="~{::star(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}, ${i})}" />
         </th:block>
 
         <th:block remove="all">
@@ -35,7 +35,7 @@ PARAMETERS
 
     <th:block th:if="${readOnly != true}">
             &nbsp;| <a th:href="@{/setRating(id=${id},action=rating,rating=0)}">
-        <img th:src="${#themes.code('clearRatingImage')}" alt="" th:title="#{rating.clearrating}" style="margin-right:5px;height:18px">
+        <img th:src="${themes?.get('clearRatingImage') ?: 'icons/default_light/remove.svg'}" alt="" th:title="#{rating.clearrating}" style="margin-right:5px;height:18px">
     </a>
     </th:block>
 </th:block>

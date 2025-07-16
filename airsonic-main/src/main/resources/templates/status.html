@@ -369,7 +369,7 @@
 <body class="mainframe bgcolor1" onload="init()">
 
 <h1>
-    <img th:src="${#themes.code('statusImage')}" alt="">
+    <img th:src="${themes?.get('statusImage') ?: 'icons/default_light/status.svg'}" alt="">
     <span style="vertical-align: middle" th:text="#{status.title}"></span>
 </h1>
 <h2 th:text="#{status.currenttransfers}">

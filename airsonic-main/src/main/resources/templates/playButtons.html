@@ -25,9 +25,9 @@ PARAMETERS
      <th:block th:if="${starEnabled}">
           <th:block th:if="${asTable}"><td class="fit"></th:block>
           <img th:if="starred" th:id="|starImage${id}|"
-               th:src="${#themes.code('ratingOnImage')}" alt="" style="cursor:pointer;height:18px;"
+               th:src="${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'}" alt="" style="cursor:pointer;height:18px;"
                th:onclick="|toggleStar(${id}, '#starImage${id}'); return false;|"> <img th:unless="starred"
-               th:id="|starImage${id}|" th:src="${#themes.code('ratingOffImage')}" alt=""
+               th:id="|starImage${id}|" th:src="${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}" alt=""
                style="cursor:pointer;height:18px;" th:onclick="|toggleStar(${id}, '#starImage${id}'); return false;|">
 
           <th:block th:if="${asTable}"></td></th:block>
@@ -38,22 +38,22 @@ PARAMETERS
      </th:block>
      <th:block th:if="${playEnabled}">
           <a th:if="${video}" th:href="@{/videoPlayer(id=${id})}" target="main">
-               <img th:src="${#themes.code('playImage')}" th:alt="#{common.play}" th:title="#{common.play}">
+               <img th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}" th:alt="#{common.play}" th:title="#{common.play}">
           </a>
 
-        <img th:if="${!#strings.isEmpty(podcastId)}" th:src="${#themes.code('playImage')}"
+        <img th:if="${!#strings.isEmpty(podcastId)}" th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}"
              th:alt="#{common.play}" style="cursor:pointer; height:18px;"
              th:data-podcast-id="${podcastId}"
              onclick="top.playQueue.onPlayPodcastEpisode(this.getAttribute('data-podcast-id')); return false;" th:title="#{common.play}">
 
-        <img th:if="${!video && #strings.isEmpty(podcastId)}" th:src="${#themes.code('playImage')}" th:alt="#{common.play}" style="cursor:pointer; height:18px;"
+        <img th:if="${!video && #strings.isEmpty(podcastId)}" th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}" th:alt="#{common.play}" style="cursor:pointer; height:18px;"
              th:data-id="${id}" onclick="top.playQueue.onPlay(this.getAttribute('data-id')); return false;" th:title="#{common.play}">
     </th:block>
 
      <th:block th:if="${asTable}">
           <td class="fit">
      </th:block>
-     <img th:if="${addEnabled && !video}" th:id="|add${id}|" th:src="${#themes.code('addImage')}"
+     <img th:if="${addEnabled && !video}" th:id="|add${id}|" th:src="${themes?.get('addImage') ?: 'icons/default_light/add.svg'}"
           th:alt="#{main.addlast}" th:data-id="${id}" th:data-toast-msg="#{main.addlast.toast}"
           onclick="top.playQueue.onAdd(this.getAttribute('data-id')); $().toastmessage('showSuccessToast', this.getAttribute('data-toast-msg')); return false;"
           style="cursor:pointer; height:18px;" th:title="#{main.addlast}">
@@ -63,7 +63,7 @@ PARAMETERS
      <th:block th:if="${asTable}">
           <td class="fit">
      </th:block>
-     <img th:if="${addEnabled && !video}" th:id="|add${id}|" th:src="${#themes.code('addNextImage')}"
+     <img th:if="${addEnabled && !video}" th:id="|add${id}|" th:src="${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'}"
           th:alt="#{main.addnext}" th:data-id="${id}" th:data-toast-msg="#{main.addnext.toast}"
           th:onclick="top.playQueue.onAddNext(this.getAttribute('data-id')); $().toastmessage('showSuccessToast', this.getAttribute('data-toast-msg')); return false;"
           style="cursor:pointer; height:18px;" th:title="#{main.addnext}">
@@ -75,7 +75,7 @@ PARAMETERS
           <td class="fit">
      </th:block>
      <a th:if="${downloadEnabled}" th:href="@{/download(id=${id})}">
-          <img th:src="${#themes.code('downloadImage')}" th:alt="#{common.download}" th:title="#{common.download}">
+          <img th:src="${themes?.get('downloadImage') ?: 'icons/default_light/download.svg'}" th:alt="#{common.download}" th:title="#{common.download}">
      </a>
      <th:block th:if="${asTable}">
           </td>

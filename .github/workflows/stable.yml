@@ -40,6 +40,10 @@ jobs:
         with:
           java-version: ${{matrix.cfg.jdk}}
           distribution: 'temurin'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{matrix.cfg.platform}}
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -47,10 +51,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: ${{matrix.cfg.platform}}
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3

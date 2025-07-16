@@ -317,8 +317,8 @@
             resizeStop: function (event, ui) { setJQueryUiDialogPlaylistSize("mediaMain", ui.size) }
         });
 
-        var ratingOnImage = /*[[${#themes.code('ratingOnImage')}]]*/ "icons\/default\/ratingOn.svg";
-        var ratingOffImage = /*[[${#themes.code('ratingOffImage')}]]*/ "icons\/default\/ratingOff.svg";
+        var ratingOnImage = /*[[${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'}]]*/ "icons\/default_light\/ratingOn.svg";
+        var ratingOffImage = /*[[${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}]]*/ "icons\/default_light\/ratingOff.svg";
 
         /** FILES **/
         filesTable = $("#filesTable").DataTable( {
@@ -383,7 +383,7 @@
                   name: "play",
                   visible: /*[[${model.user.streamRole and !model.partyMode}]]*/ true,
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='playSong' src=\"[(${#themes.code('playImage')})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
+                  defaultContent: "<img class='playSong' src=\"[(${themes?.get('playImage') ?: 'icons/default_light/play.svg'})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
                 },
                 { data: "entryType",
                   searchable: false,
@@ -392,7 +392,7 @@
                   className: "fit not-draggable centeralign",
                   render: function(entryType, type, row) {
                       if (type == "display" && entryType != "VIDEO" && entryType != "DIRECTORY" && entryType != "ALBUM") {
-                          return "<img class='addSongLast' src=\"[(${#themes.code('addImage')})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
+                          return "<img class='addSongLast' src=\"[(${themes?.get('addImage') ?: 'icons/default_light/add.svg'})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
                       }
                       return "";
                   }
@@ -404,7 +404,7 @@
                   className: "fit not-draggable centeralign",
                   render: function(entryType, type, row) {
                       if (type == "display" && entryType != "VIDEO" && entryType != "DIRECTORY" && entryType != "ALBUM") {
-                          return "<img class='addSongNext' src=\"[(${#themes.code('addNextImage')})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
+                          return "<img class='addSongNext' src=\"[(${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
                       }
                       return "";
                   }
@@ -625,7 +625,7 @@
                   name: "play",
                   visible: /*[[${model.user.streamRole and !model.partyMode}]]*/ true,
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='playSong' src=\"[(${#themes.code('playImage')})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
+                  defaultContent: "<img class='playSong' src=\"[(${themes?.get('playImage') ?: 'icons/default_light/play.svg'})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
                 },
                 { data: "entryType",
                   searchable: false,
@@ -634,7 +634,7 @@
                   className: "fit not-draggable centeralign",
                   render: function(entryType, type, row) {
                       if (type == "display") {
-                          return "<img class='addSongLast' src=\"[(${#themes.code('addImage')})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
+                          return "<img class='addSongLast' src=\"[(${themes?.get('addImage') ?: 'icons/default_light/add.svg'})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
                       }
                       return "";
                   }
@@ -646,7 +646,7 @@
                   className: "fit not-draggable centeralign",
                   render: function(entryType, type, row) {
                       if (type == "display") {
-                          return "<img class='addSongNext' src=\"[(${#themes.code('addNextImage')})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
+                          return "<img class='addSongNext' src=\"[(${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
                       }
                       return "";
                   }
@@ -729,19 +729,19 @@
                   searchable: false,
                   name: "play",
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='playSong' src=\"[(${#themes.code('playImage')})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
+                  defaultContent: "<img class='playSong' src=\"[(${themes?.get('playImage') ?: 'icons/default_light/play.svg'})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">"
                 },
                 { data: null,
                   searchable: false,
                   name: "addLast",
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='addSongLast' src=\"[(${#themes.code('addImage')})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">"
+                  defaultContent: "<img class='addSongLast' src=\"[(${themes?.get('addImage') ?: 'icons/default_light/add.svg'})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">"
                 },
                 { data: null,
                   searchable: false,
                   name: "addNext",
                   className: "fit not-draggable centeralign",
-                  defaultContent: "<img class='addSongNext' src=\"[(${#themes.code('addNextImage')})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">"
+                  defaultContent: "<img class='addSongNext' src=\"[(${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">"
                 },
                 { data: "title",
                   className: "detail songTitle truncate",
@@ -1191,8 +1191,8 @@
 </div>
 
 <div style="float:right;padding-right:1em">
-    <img id="viewAsList" th:src="${#themes.code('viewAsListImage')}" alt="" class="headerSelected" style="margin-right:8px" onclick="setViewAsList(true)"/>
-    <img id="viewAsGrid" th:src="${#themes.code('viewAsGridImage')}" alt="" class="headerNotSelected" onclick="setViewAsList(false)"/>
+    <img id="viewAsList" th:src="${themes?.get('viewAsListImage') ?: 'icons/default_light/view_as_list.svg'}" alt="" class="headerSelected" style="margin-right:8px" onclick="setViewAsList(true)"/>
+    <img id="viewAsGrid" th:src="${themes?.get('viewAsGridImage') ?: 'icons/default_light/view_as_grid.svg'}" alt="" class="headerNotSelected" onclick="setViewAsList(false)"/>
 </div>
 <div style="clear:both"></div>
 <div id="mediaDirController">

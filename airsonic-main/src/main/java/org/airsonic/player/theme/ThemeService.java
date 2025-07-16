@@ -14,6 +14,7 @@
  You should have received a copy of the GNU General Public License
  along with Airsonic.  If not, see <http://www.gnu.org/licenses/>.
 
+ Copyright 2025 (C) Y.Tory
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
@@ -25,11 +26,10 @@ import org.airsonic.player.service.PersonalSettingsService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.ThemeResolver;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,8 +39,8 @@ import java.util.Set;
  *
  * @author Sindre Mehus
  */
-@Component("themeResolver")
-public class CustomThemeResolver implements ThemeResolver {
+@Service
+public class ThemeService {
 
     @Autowired
     private SecurityService securityService;
@@ -56,7 +56,8 @@ public class CustomThemeResolver implements ThemeResolver {
     * @param request Request to be used for resolution
     * @return The current theme name
     */
-    public String resolveThemeName(HttpServletRequest request) {
+    @Transactional
+    public String getCurrentTheme(HttpServletRequest request) {
         String themeId = (String) request.getAttribute("airsonic.theme");
         if (themeId != null) {
             return themeId;
@@ -107,18 +108,4 @@ public class CustomThemeResolver implements ThemeResolver {
 
         return themeIds.contains(themeId);
     }
-
-    /**
-     * Set the current theme name to the given one. This method is not supported.
-     *
-     * @param request   Request to be used for theme name modification
-     * @param response  Response to be used for theme name modification
-     * @param themeName The new theme name
-     * @throws UnsupportedOperationException If the ThemeResolver implementation
-     *                                       does not support dynamic changing of the theme
-     */
-    public void setThemeName(HttpServletRequest request, HttpServletResponse response, String themeName) {
-        throw new UnsupportedOperationException("Cannot change theme - use a different theme resolution strategy");
-    }
-
 }

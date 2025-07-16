@@ -46,6 +46,10 @@ jobs:
         with:
           java-version: ${{ matrix.cfg.jdk }}
           distribution: 'temurin'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.cfg.platform }}
       - name: Setup ffmpeg
         id: setup-ffmpeg 
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
@@ -56,10 +60,9 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-m2-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: ${{ matrix.cfg.platform }}
+      - run: mkdir -p ${DEFAULT_MUSIC_FOLDER}
+      - name: Build with Maven
+        run: mvn -DexcludedGroups=${EXCLUDED_TEST_GROUPS} -Ddocker.testing.default-music-folder=${DEFAULT_MUSIC_FOLDER} verify -B -P integration-test
       - name: Calculate tags
         if: success()
         id: tagcalc
@@ -88,9 +91,6 @@ jobs:
           install: true
       - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
-      - run: mkdir -p ${DEFAULT_MUSIC_FOLDER}
-      - name: Build with Maven
-        run: mvn -DexcludedGroups=${EXCLUDED_TEST_GROUPS} -Ddocker.testing.default-music-folder=${DEFAULT_MUSIC_FOLDER} verify -B -P integration-test
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:

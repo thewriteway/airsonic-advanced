@@ -36,13 +36,17 @@ PARAMETERS
                  th:title="${caption1}" th:id="${divId}">
 
                 <div style="position: relative; width: 0; height: 0">
-                    <img alt="Play overlay" th:src="${#themes.code('playOverlayImage')}" th:id="${playId}"
+                    <img alt="Play overlay"
+                         th:src="${themes?.get('playOverlayImage') ?: 'icons/default_light/play_overlay.svg'}"
+                         th:id="${playId}"
                          style="position: relative; top: 8px; left: 8px; z-index: 2; display:none" >
                 </div>
 
                 <th:block th:if="${!#strings.isEmpty(albumId) or !#strings.isEmpty(playlistId)}">
                   <div style="position: relative; width: 0; height: 0">
-                      <img alt="Add overlay" th:src="${#themes.code('addOverlayImage')}" th:id="${addId}"
+                      <img alt="Add overlay"
+                           th:src="${themes?.get('addOverlayImage') ?: 'icons/default_light/add_overlay.svg'}"
+                           th:id="${addId}"
                            style="position: relative; top: 8px; left: 48px; z-index: 2; display:none" >
                   </div>
                 </th:block>

@@ -47,7 +47,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public Filter bootstrapVerificationFilter() {
+    public BootstrapVerificationFilter bootstrapVerificationFilter() {
         return new BootstrapVerificationFilter(homeConfig);
     }
 
@@ -61,7 +61,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public Filter parameterDecodingFilter() {
+    public ParameterDecodingFilter parameterDecodingFilter() {
         return new ParameterDecodingFilter();
     }
 
@@ -75,7 +75,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public Filter restFilter() {
+    public RESTFilter restFilter() {
         return new RESTFilter();
     }
 
@@ -90,7 +90,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public Filter requestEncodingFilter() {
+    public RequestEncodingFilter requestEncodingFilter() {
         return new RequestEncodingFilter();
     }
 
@@ -105,7 +105,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public Filter cacheFilter() {
+    public ResponseHeaderFilter cacheFilter() {
         return new ResponseHeaderFilter();
     }
 
@@ -122,7 +122,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public Filter noCacheFilter() {
+    public ResponseHeaderFilter noCacheFilter() {
         return new ResponseHeaderFilter();
     }
 
@@ -134,7 +134,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public Filter metricsFilter() {
+    public MetricsFilter metricsFilter() {
         return new MetricsFilter();
     }
 

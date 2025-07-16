@@ -106,7 +106,7 @@
 
 <div style="padding-bottom:1.5em">
     <a th:href="@{/home}" target="main">
-      <img th:src="${#themes.code('logoImage')}" style="width:196px" th:title="#{top.help}" alt="">
+      <img th:src="${themes?.get('logoImage') ?: 'icons/default_light/logo.png'}" style="width:196px" th:title="#{top.help}" alt="">
     </a>
 </div>
 
@@ -155,7 +155,7 @@
     <th:block th:each="radio : ${model.radios}">
         <p class="dense truncate" style="padding-left: 2px">
         <a target="hidden" th:href="${radio.streamUrl}" class="radio-play" th:data-id="${radio.id}">
-            <img th:src="${#themes.code('playImage')}" th:alt="#{common.play}" th:title="#{common.play}"></a>
+            <img th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}" th:alt="#{common.play}" th:title="#{common.play}"></a>
             <span style="vertical-align: middle">
                 <span th:if="${#strings.isEmpty(radio.homepageUrl)}" th:title="${radio.name}" th:text="${radio.name}">name</span>
                 <a th:unless="${#strings.isEmpty(radio.homepageUrl)}" target="_blank" rel="noopener" th:href="${radio.homepageUrl}" th:title="|Visit ${radio.name}|" th:text="${radio.name}">name</a>
@@ -171,7 +171,7 @@
                 <h2 style="padding:0;margin:0;border:0" th:text="${entry.key.index}">index</h2>
             </th>
             <th style="text-align:right;">
-                <a href="#top"><img th:src="${#themes.code('upImage')}" alt="" style="height:18px;"></a>
+                <a href="#top"><img th:src="${themes?.get('upImage') ?: 'icons/default_light/up.svg'}" alt="" style="height:18px;"></a>
             </th>
         </tr>
     </table>

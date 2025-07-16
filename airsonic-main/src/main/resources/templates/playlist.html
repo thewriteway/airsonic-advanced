@@ -13,8 +13,8 @@
         var songs = [];
 
         function init() {
-            var ratingOnImage = /*[[${#themes.code('ratingOnImage')}]]*/ "";
-            var ratingOffImage = /*[[${#themes.code('ratingOffImage')}]]*/ "";
+            var ratingOnImage = /*[[${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'}]]*/ "";
+            var ratingOffImage = /*[[${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}]]*/ "";
 
             let dataTableConfig = {
                 deferRender: true,
@@ -90,7 +90,7 @@
                     render: function(present, type, row) {
                         if (type == "display") {
                             if (present) {
-                                return "<img class='playSong' src=\"[(${#themes.code('playImage')})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">";
+                                return "<img class='playSong' src=\"[(${themes?.get('playImage') ?: 'icons/default_light/play.svg'})]\" style='height:18px;' alt=\"[(#{common.play})]\" title=\"[(#{common.play})]\">";
                             } else {
                                 return "";
                             }
@@ -105,7 +105,7 @@
                     render: function(present, type, row) {
                         if (type == "display") {
                             if (present) {
-                                return "<img class='addSongLast' src=\"[(${#themes.code('addImage')})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
+                                return "<img class='addSongLast' src=\"[(${themes?.get('addImage') ?: 'icons/default_light/add.svg'})]\" style='height:18px;' alt=\"[(#{common.add})]\" title=\"[(#{common.add})]\">";
                             } else {
                                 return "";
                             }
@@ -120,7 +120,7 @@
                     render: function(present, type, row) {
                         if (type == "display") {
                             if (present) {
-                                return "<img class='addSongNext' src=\"[(${#themes.code('addNextImage')})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
+                                return "<img class='addSongNext' src=\"[(${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'})]\" style='height:18px;' alt=\"[(#{main.addnext})]\" title=\"[(#{main.addnext})]\">";
                             } else {
                                 return "";
                             }
@@ -274,7 +274,7 @@
                     name: "remove",
                     visible: /*[[${model.editAllowed}]]*/ false,
                     className: "fit not-draggable centeralign",
-                    defaultContent: "<img class='removeSong' src=\"[(${#themes.code('removeImage')})]\" style='height:18px;' alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">"
+                    defaultContent: "<img class='removeSong' src=\"[(${themes?.get('removeImage') ?: 'icons/default_light/remove.svg'})]\" style='height:18px;' alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">"
                 }
             ]
             }

@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 
-import jakarta.xml.ws.Endpoint;
-
 import java.util.Collections;
 
 
@@ -19,7 +17,7 @@ import java.util.Collections;
 public class SonosConfiguration {
 
     @Bean
-    public Endpoint sonosEndpoint(Bus bus, SonosService sonosService,
+    public EndpointImpl sonosEndpoint(Bus bus, SonosService sonosService,
             SonosFaultInterceptor sonosFaultInterceptor,
             SonosLinkSecurityInterceptor sonosSecurity) {
         EndpointImpl endpoint = new EndpointImpl(bus, sonosService);
