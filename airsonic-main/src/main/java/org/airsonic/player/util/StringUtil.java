@@ -27,7 +27,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -262,7 +262,7 @@ public final class StringUtil {
         while (elements.size() < 3) {
             elements.add("");
         }
-        return new Locale(elements.get(0), elements.get(1), elements.get(2));
+        return Locale.of(elements.get(0), elements.get(1), elements.get(2));
     }
 
     /**
@@ -330,7 +330,7 @@ public final class StringUtil {
      */
     public static String getUrlFile(String url) {
         try {
-            String path = new URL(url).getPath();
+            String path = URI.create(url).toURL().getPath();
             if (StringUtils.isBlank(path) || path.endsWith("/")) {
                 return null;
             }
@@ -342,7 +342,7 @@ public final class StringUtil {
             }
             return filename;
 
-        } catch (MalformedURLException x) {
+        } catch (MalformedURLException | IllegalArgumentException e) {
             return null;
         }
     }

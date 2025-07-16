@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.time.Instant;
 import java.util.*;
@@ -168,7 +169,8 @@ public class InternetRadioService {
         LOG.debug("Parsing internet radio (playlist) at {}...", streamUrl);
 
         SpecificPlaylist inputPlaylist = null;
-        HttpURLConnection urlConnection = connectToURLWithRedirects(new URL(streamUrl), maxRedirects);
+        URL url = URI.create(streamUrl).toURL();
+        HttpURLConnection urlConnection = connectToURLWithRedirects(url, maxRedirects);
         try (InputStream in = urlConnection.getInputStream();
                 BoundedInputStream bin = BoundedInputStream.builder().setInputStream(in).setMaxCount(maxByteSize).get();) {
             String contentType = urlConnection.getContentType();
@@ -239,7 +241,7 @@ public class InternetRadioService {
             }
 
             // Reconnect to the new URL.
-            currentURL = new URL(connection.getHeaderField("Location"));
+            currentURL = URI.create(connection.getHeaderField("Location")).toURL();
             connection.disconnect();
             connection = connectToURL(currentURL);
         }

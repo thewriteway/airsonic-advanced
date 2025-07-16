@@ -117,8 +117,8 @@ public class NetworkUtil {
         return StringUtils.isNotBlank(xForwardedHost) && !StringUtils.equals("null", xForwardedHost);
     }
 
-    private static URI calculateNonProxyUri(HttpServletRequest request) throws MalformedURLException, URISyntaxException {
-        URL url = new URL(request.getRequestURL().toString());
+    private static URI calculateNonProxyUri(HttpServletRequest request) throws URISyntaxException, MalformedURLException {
+        URL url = URI.create(request.getRequestURL().toString()).toURL();
         String host = url.getHost();
         String scheme = url.getProtocol();
         int port = url.getPort();
@@ -134,9 +134,9 @@ public class NetworkUtil {
      */
     public static boolean isValidUrl(String url) {
         try {
-            new URL(url).toURI();
+            URI.create(url).toURL();
             return true;
-        } catch (MalformedURLException | URISyntaxException e) {
+        } catch (Exception e) {
             return false;
         }
     }

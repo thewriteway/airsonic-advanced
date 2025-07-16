@@ -30,7 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -78,7 +78,7 @@ public class InternetRadioServiceTest {
         doReturn(mockURLInputStream1).when(mockURLConnection1).getInputStream();
         doReturn(HttpURLConnection.HTTP_OK).when(mockURLConnection1).getResponseCode();
         // Prepare the mock 'connectToURL' method
-        doReturn(mockURLConnection1).when(internetRadioService).connectToURL(eq(new URL(TEST_PLAYLIST_URL_1)));
+        doReturn(mockURLConnection1).when(internetRadioService).connectToURL(eq(URI.create(TEST_PLAYLIST_URL_1).toURL()));
 
         // when
         List<InternetRadioSource> radioSources = internetRadioService.getInternetRadioSources(radio1);
@@ -100,14 +100,14 @@ public class InternetRadioServiceTest {
         HttpURLConnection mockURLConnectionMove = Mockito.mock(HttpURLConnection.class);
         doReturn(HttpURLConnection.HTTP_MOVED_PERM).when(mockURLConnectionMove).getResponseCode();
         doReturn(TEST_PLAYLIST_URL_2).when(mockURLConnectionMove).getHeaderField(eq("Location"));
-        doReturn(mockURLConnectionMove).when(internetRadioService).connectToURL(eq(new URL(TEST_PLAYLIST_URL_MOVE)));
+        doReturn(mockURLConnectionMove).when(internetRadioService).connectToURL(eq(URI.create(TEST_PLAYLIST_URL_MOVE).toURL()));
 
         // Prepare the mocked URL connection for the second simple playlist
         HttpURLConnection mockURLConnection2 = Mockito.mock(HttpURLConnection.class);
         InputStream mockURLInputStream2 = new ByteArrayInputStream(TEST_STREAM_PLAYLIST_CONTENTS_2.getBytes());
         doReturn(mockURLInputStream2).when(mockURLConnection2).getInputStream();
         doReturn(HttpURLConnection.HTTP_OK).when(mockURLConnection2).getResponseCode();
-        doReturn(mockURLConnection2).when(internetRadioService).connectToURL(eq(new URL(TEST_PLAYLIST_URL_2)));
+        doReturn(mockURLConnection2).when(internetRadioService).connectToURL(eq(URI.create(TEST_PLAYLIST_URL_2).toURL()));
 
         // when
         List<InternetRadioSource> radioSources = internetRadioService.getInternetRadioSources(radioMove);
@@ -137,7 +137,7 @@ public class InternetRadioServiceTest {
         };
         doReturn(mockURLInputStreamLarge).when(mockURLConnectionLarge).getInputStream();
         doReturn(HttpURLConnection.HTTP_OK).when(mockURLConnectionLarge).getResponseCode();
-        doReturn(mockURLConnectionLarge).when(internetRadioService).connectToURL(eq(new URL(TEST_PLAYLIST_URL_LARGE)));
+        doReturn(mockURLConnectionLarge).when(internetRadioService).connectToURL(eq(URI.create(TEST_PLAYLIST_URL_LARGE).toURL()));
 
         // when
         List<InternetRadioSource> radioSources = internetRadioService.getInternetRadioSources(radioLarge);
@@ -168,7 +168,7 @@ public class InternetRadioServiceTest {
         doReturn(mockURLInputStreamLarge2).when(mockURLConnectionLarge2).getInputStream();
         doReturn(HttpURLConnection.HTTP_OK).when(mockURLConnectionLarge2).getResponseCode();
         doReturn(mockURLConnectionLarge2).when(internetRadioService)
-                .connectToURL(eq(new URL(TEST_PLAYLIST_URL_LARGE_2)));
+                .connectToURL(eq(URI.create(TEST_PLAYLIST_URL_LARGE_2).toURL()));
 
         // when
         List<InternetRadioSource> radioSources = internetRadioService.getInternetRadioSources(radioLarge2);
@@ -192,7 +192,7 @@ public class InternetRadioServiceTest {
         doReturn(HttpURLConnection.HTTP_MOVED_PERM).when(mockURLConnectionMoveLoop).getResponseCode();
         doReturn(TEST_PLAYLIST_URL_MOVE_LOOP).when(mockURLConnectionMoveLoop).getHeaderField(eq("Location"));
         doReturn(mockURLConnectionMoveLoop).when(internetRadioService)
-                .connectToURL(eq(new URL(TEST_PLAYLIST_URL_MOVE_LOOP)));
+                .connectToURL(eq(URI.create(TEST_PLAYLIST_URL_MOVE_LOOP).toURL()));
 
         // when
         List<InternetRadioSource> radioSources = internetRadioService.getInternetRadioSources(radioMoveLoop);
