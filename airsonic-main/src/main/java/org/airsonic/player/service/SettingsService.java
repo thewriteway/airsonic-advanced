@@ -1137,7 +1137,7 @@ public class SettingsService {
         String country = getProperty(KEY_LOCALE_COUNTRY, DEFAULT_LOCALE_COUNTRY);
         String variant = getProperty(KEY_LOCALE_VARIANT, DEFAULT_LOCALE_VARIANT);
 
-        return Locale.of(language, country, variant);
+        return new Locale(language, country, variant);
     }
 
     /**

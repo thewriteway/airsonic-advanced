@@ -262,7 +262,7 @@ public final class StringUtil {
         while (elements.size() < 3) {
             elements.add("");
         }
-        return Locale.of(elements.get(0), elements.get(1), elements.get(2));
+        return new Locale(elements.get(0), elements.get(1), elements.get(2));
     }
 
     /**
