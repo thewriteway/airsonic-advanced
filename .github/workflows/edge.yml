@@ -191,7 +191,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ needs.deploy.outputs.tag }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ env.RELEASE_TAG }}
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:edge-${{ env.RELEASE_TAG }}
 
       - name: Deploy to GitHub Release
         id: create_release
