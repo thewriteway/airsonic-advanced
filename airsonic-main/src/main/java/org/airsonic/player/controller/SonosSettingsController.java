@@ -22,6 +22,7 @@ import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.service.SonosService;
 import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -68,7 +69,7 @@ public class SonosSettingsController {
         settingsService.setSonosLinkMethod(request.getParameter("sonosLinkMethod"));
         settingsService.setSonosEnabled(sonosEnabled);
         settingsService.setSonosServiceName(sonosServiceName);
-        settingsService.setSonosCallbackHostAddress(StringUtils.appendIfMissing(StringUtils.trimToNull(request.getParameter("callbackHostAddress")), "/"));
+        settingsService.setSonosCallbackHostAddress(Strings.CS.appendIfMissing(StringUtils.trimToNull(request.getParameter("callbackHostAddress")), "/"));
         settingsService.save();
 
         List<String> returnCodes = sonosService.updateMusicServiceRegistration();

@@ -22,6 +22,7 @@ package org.airsonic.player.util;
 
 import org.airsonic.player.spring.WebsocketConfiguration;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -114,7 +115,7 @@ public class NetworkUtil {
     }
 
     private static boolean isValidXForwardedHost(String xForwardedHost) {
-        return StringUtils.isNotBlank(xForwardedHost) && !StringUtils.equals("null", xForwardedHost);
+        return StringUtils.isNotBlank(xForwardedHost) && !Strings.CS.equals("null", xForwardedHost);
     }
 
     private static URI calculateNonProxyUri(HttpServletRequest request) throws URISyntaxException, MalformedURLException {

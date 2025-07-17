@@ -36,6 +36,7 @@ import org.airsonic.player.service.sonos.SonosSoapFault;
 import org.airsonic.player.service.sonos.SonosUtilComponent;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.cxf.binding.soap.SoapMessage;
@@ -683,8 +684,8 @@ public class SonosService implements SonosSoap {
 
     public DeviceAuthTokenResult refreshAuthToken(Credentials expiredCreds, HttpServletRequest request) {
         Pair<SonosLink, String> jwtSonosLink = sonosHelper.getSonosLinkFromJWT(expiredCreds.getLoginToken().getToken());
-        if (StringUtils.equals(jwtSonosLink.getRight(), expiredCreds.getLoginToken().getKey())
-                && StringUtils.equals(jwtSonosLink.getLeft().getHouseholdId(), expiredCreds.getLoginToken().getHouseholdId())
+        if (Strings.CS.equals(jwtSonosLink.getRight(), expiredCreds.getLoginToken().getKey())
+                && Strings.CS.equals(jwtSonosLink.getLeft().getHouseholdId(), expiredCreds.getLoginToken().getHouseholdId())
                 && jwtSonosLink.getLeft().equals(sonosLinkRepository.findById(jwtSonosLink.getLeft().getLinkcode()).orElse(null))) {
             return createAuthToken(jwtSonosLink.getLeft(), request);
         } else {

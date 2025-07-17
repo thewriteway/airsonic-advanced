@@ -1,6 +1,6 @@
 package org.airsonic.player.security;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.encrypt.Encryptors;
@@ -28,7 +28,7 @@ public class AesGcmPasswordEncoder implements PasswordEncoder, PasswordDecoder {
     @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
         try {
-            return StringUtils.equals(rawPassword, decode(encodedPassword));
+            return Strings.CS.equals(rawPassword, decode(encodedPassword));
         } catch (Exception e) {
             LOG.warn("Exception while trying to match passwords", e);
             return false;

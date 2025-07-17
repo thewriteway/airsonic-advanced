@@ -10,7 +10,7 @@ import liquibase.exception.ValidationErrors;
 import liquibase.resource.ResourceAccessor;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.InsertStatement;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -55,7 +55,7 @@ public class AddPodcastMediaFolderUsers implements CustomSqlChange {
                     maxFolderId = rs1.getInt("maxid");
                 }
                 while (rs2.next()) {
-                    if (StringUtils.contains(rs2.getString("roles"), "PODCAST")) {
+                    if (Strings.CS.contains(rs2.getString("roles"), "PODCAST")) {
                         podcastUsers.add(rs2.getString("username"));
                     }
                 }

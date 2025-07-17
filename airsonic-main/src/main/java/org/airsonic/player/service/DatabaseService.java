@@ -52,6 +52,7 @@ import org.airsonic.player.util.LambdaUtils;
 import org.airsonic.player.util.LambdaUtils.ThrowingBiFunction;
 import org.airsonic.player.util.LegacyHsqlMigrationUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -184,7 +185,7 @@ public class DatabaseService {
 
     public boolean backuppable() {
         return settingsService.getDatabaseJNDIName() == null
-                && StringUtils.startsWith(settingsService.getDatabaseUrl(), "jdbc:hsqldb:file:");
+                && Strings.CS.startsWith(settingsService.getDatabaseUrl(), "jdbc:hsqldb:file:");
     }
 
     ThrowingBiFunction<Path, Connection, Boolean, Exception> exportFunction = (tmpPath,

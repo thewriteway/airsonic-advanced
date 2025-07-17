@@ -2,7 +2,7 @@ package org.airsonic.player.validator;
 
 import org.airsonic.player.command.CredentialsManagementCommand.CredentialsCommand;
 import org.airsonic.player.security.PasswordEncoderConfig;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
@@ -33,7 +33,7 @@ public class CredentialsManagementValidators {
                 return true;
             }
 
-            return StringUtils.equals(creds.getCredential(), creds.getConfirmCredential());
+            return Strings.CS.equals(creds.getCredential(), creds.getConfirmCredential());
         }
     }
 
@@ -65,9 +65,9 @@ public class CredentialsManagementValidators {
                 return true;
             }
 
-            if (StringUtils.equals("nonlegacydecodable", type)) {
+            if (Strings.CS.equals("nonlegacydecodable", type)) {
                 return PasswordEncoderConfig.NONLEGACY_DECODABLE_ENCODERS.contains(field);
-            } else if (StringUtils.equals("nonlegacynondecodable", type)) {
+            } else if (Strings.CS.equals("nonlegacynondecodable", type)) {
                 return PasswordEncoderConfig.NONLEGACY_NONDECODABLE_ENCODERS.contains(field);
             }
 
