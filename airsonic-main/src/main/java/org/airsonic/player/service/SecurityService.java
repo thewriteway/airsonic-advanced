@@ -37,6 +37,7 @@ import org.airsonic.player.security.PasswordEncoderConfig;
 import org.airsonic.player.service.cache.UserCache;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.text.RandomStringGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,7 +191,7 @@ public class SecurityService implements UserDetailsService {
                     List.of(App.values()));
 
             command.getCredentials().forEach(c -> {
-                userCredentials.stream().filter(sc -> StringUtils.equals(String.valueOf(sc.hashCode()), c.getHash()))
+                userCredentials.stream().filter(sc -> Strings.CS.equals(String.valueOf(sc.hashCode()), c.getHash()))
                         .findFirst().ifPresent(dbCreds -> {
                             if (c.getMarkedForDeletion()) {
                                 if (!deleteCredential(dbCreds)) {

@@ -1,6 +1,6 @@
 package org.airsonic.player.util;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -17,7 +17,7 @@ public final class PodcastUtil {
      * @return sanitized URL
      */
     public static String sanitizeUrl(String url, boolean force) {
-        if (url != null && (!StringUtils.contains(url, "://") || force)) {
+        if (url != null && (!Strings.CS.contains(url, "://") || force)) {
             return URLDecoder.decode(url, StandardCharsets.UTF_8);
         }
         return url;

@@ -29,6 +29,7 @@ import org.airsonic.player.repository.TranscodingRepository;
 import org.airsonic.player.util.StringUtil;
 import org.airsonic.player.util.Util;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -385,7 +386,7 @@ public class TranscodingService {
         Path path = mediaFile.getFullPath().toAbsolutePath();
         String pathString = path.toString();
         Path tmpFile = null;
-        if (Util.isWindows() && !mediaFile.isVideo() && !StringUtils.isAsciiPrintable(path.toString()) && StringUtils.contains(command, "%s")) {
+        if (Util.isWindows() && !mediaFile.isVideo() && !StringUtils.isAsciiPrintable(path.toString()) && Strings.CS.contains(command, "%s")) {
             tmpFile = Files.createTempFile("airsonic", "." + MoreFiles.getFileExtension(path));
             tmpFile.toFile().deleteOnExit();
             Files.copy(path, tmpFile, StandardCopyOption.REPLACE_EXISTING);

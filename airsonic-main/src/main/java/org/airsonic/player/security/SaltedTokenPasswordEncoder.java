@@ -1,7 +1,7 @@
 package org.airsonic.player.security;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,7 +36,7 @@ public class SaltedTokenPasswordEncoder implements PasswordEncoder {
         try {
             SaltToken saltToken = saltTokenExtractor.apply(rawPassword.toString());
             String storedPassword = decoder.decode(encodedPassword);
-            return StringUtils.equals(saltToken.getToken(), encode(storedPassword + saltToken.getSalt()));
+            return Strings.CS.equals(saltToken.getToken(), encode(storedPassword + saltToken.getSalt()));
         } catch (Exception e) {
             LOG.warn("Exception while trying to match passwords", e);
             return false;

@@ -20,6 +20,7 @@
 package org.airsonic.player.domain;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
@@ -134,6 +135,6 @@ public class Version implements Comparable<Version> {
 
     public boolean isPreview() {
         return StringUtils.isNotBlank(internalVersion.getQualifier()) &&
-                !StringUtils.equalsIgnoreCase(internalVersion.getQualifier(), Artifact.RELEASE_VERSION);
+                !Strings.CI.equals(internalVersion.getQualifier(), Artifact.RELEASE_VERSION);
     }
 }

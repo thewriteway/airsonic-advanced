@@ -23,7 +23,7 @@ package org.airsonic.player.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.airsonic.player.domain.Version;
 import org.airsonic.player.util.Util;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
@@ -258,8 +258,8 @@ public class VersionService {
         Optional<Map<String, Object>> betaR = releases.stream().findFirst();
         Optional<Map<String, Object>> finalR = releases.stream().filter(x -> !((Boolean)x.get("draft")) && !((Boolean)x.get("prerelease"))).findFirst();
         Optional<Map<String,Object>> currentR = releases.stream().filter(x ->
-            StringUtils.equals(build.getProperty("version") + "." + build.getProperty("timestamp"), (String) x.get("tag_name")) ||
-            StringUtils.equals(build.getProperty("version"), (String) x.get("tag_name"))).findAny();
+            Strings.CS.equals(build.getProperty("version") + "." + build.getProperty("timestamp"), (String) x.get("tag_name")) ||
+            Strings.CS.equals(build.getProperty("version"), (String) x.get("tag_name"))).findAny();
 
         LOG.debug("Got {} for beta version", betaR.map(x -> x.get("tag_name")).orElse(null));
         LOG.debug("Got {} for final version", finalR.map(x -> x.get("tag_name")).orElse(null));

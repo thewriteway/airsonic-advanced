@@ -278,7 +278,7 @@ public class PodcastPersistenceService {
         }
 
         String relativeChannelDir = channelTitle != null ? StringUtil.fileSystemSafe(channelTitle)
-                : RandomStringUtils.randomAlphanumeric(10);
+                : RandomStringUtils.insecure().nextAlphanumeric(10);
 
         Path channelDir = podcastFolder.getPath().resolve(relativeChannelDir);
 

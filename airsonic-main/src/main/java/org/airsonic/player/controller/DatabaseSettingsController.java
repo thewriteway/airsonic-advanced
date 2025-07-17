@@ -35,6 +35,7 @@ import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,9 +155,9 @@ public class DatabaseSettingsController {
 
         if (StringUtils.isNotBlank(command.getJNDIName())) {
             command.setConfigType(DataSourceConfigType.JNDI);
-        } else if (StringUtils.equals(command.getUrl(), homeConfig.getDefaultJDBCUrl())
-                && StringUtils.equals(command.getUsername(), SettingsService.DEFAULT_JDBC_USERNAME)
-                && StringUtils.equals(command.getJdbcPassword(), SettingsService.DEFAULT_JDBC_PASSWORD)) {
+        } else if (Strings.CS.equals(command.getUrl(), homeConfig.getDefaultJDBCUrl())
+                && Strings.CS.equals(command.getUsername(), SettingsService.DEFAULT_JDBC_USERNAME)
+                && Strings.CS.equals(command.getJdbcPassword(), SettingsService.DEFAULT_JDBC_PASSWORD)) {
             command.setConfigType(DataSourceConfigType.BUILTIN);
         } else {
             command.setConfigType(DataSourceConfigType.EXTERNAL);

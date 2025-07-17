@@ -1,7 +1,7 @@
 package org.airsonic.player.security;
 
 import org.apache.commons.codec.binary.Base16;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.nio.charset.StandardCharsets;
@@ -21,7 +21,7 @@ public final class HexPasswordEncoder implements PasswordEncoder, PasswordDecode
 
     @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
-        return StringUtils.equals(encode(rawPassword), encodedPassword);
+        return Strings.CS.equals(encode(rawPassword), encodedPassword);
     }
 
     public HexPasswordEncoder() {

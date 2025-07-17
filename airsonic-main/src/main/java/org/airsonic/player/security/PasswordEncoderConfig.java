@@ -6,6 +6,7 @@ import org.airsonic.player.service.SettingsService;
 import org.apache.commons.codec.binary.Base16;
 import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +75,7 @@ public class PasswordEncoderConfig {
             .build());
 
     public static final Set<String> NONLEGACY_ENCODERS = ENCODERS.keySet().stream()
-            .filter(e -> !StringUtils.containsAny(e, "legacy", SALT_TOKEN_MECHANISM_SPECIALIZATION))
+            .filter(e -> !Strings.CS.containsAny(e, "legacy", SALT_TOKEN_MECHANISM_SPECIALIZATION))
             .collect(Collectors.toSet());
     public static final Set<String> DECODABLE_ENCODERS = Set.of("noop", "hex", "logacynoop", "encrypted-AES-GCM");
     public static final Set<String> NONLEGACY_DECODABLE_ENCODERS = SetUtils.intersection(DECODABLE_ENCODERS,

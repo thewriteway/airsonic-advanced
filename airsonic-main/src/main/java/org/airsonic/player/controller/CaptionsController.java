@@ -15,6 +15,7 @@ import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,7 +93,7 @@ public class CaptionsController {
         if (captionId == null) {
             res = captions.stream().findFirst().orElse(null);
         } else {
-            res = captions.stream().filter(c -> StringUtils.equalsIgnoreCase(captionId, c.getIdentifier())).findAny().orElse(null);
+            res = captions.stream().filter(c -> Strings.CI.equals(captionId, c.getIdentifier())).findAny().orElse(null);
         }
 
         if (res == null) {

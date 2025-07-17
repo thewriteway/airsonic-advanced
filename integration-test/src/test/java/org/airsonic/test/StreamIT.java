@@ -1,7 +1,7 @@
 package org.airsonic.test;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ public class StreamIT {
         String mediaFileId = Scanner.getMediaFilesInMusicFolder().parallelStream()
                 .filter(x -> {
                     LOG.info("media file: {}", x.getTitle());
-                    return StringUtils.containsIgnoreCase(x.getTitle(), file);
+                    return Strings.CI.contains(x.getTitle(), file);
                 })
                 .findAny()
                 .map(x -> x.getId())

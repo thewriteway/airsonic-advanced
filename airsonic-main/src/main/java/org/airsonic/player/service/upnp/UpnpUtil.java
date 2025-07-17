@@ -32,6 +32,7 @@ import org.airsonic.player.service.TranscodingService;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.fourthline.cling.support.model.Res;
 import org.seamless.util.MimeType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,7 +97,7 @@ public class UpnpUtil {
         if (StringUtils.isBlank(dlnaBaseLANURL)) {
             throw new RuntimeException("DLNA Base LAN URL is not set correctly");
         }
-        return StringUtils.appendIfMissing(dlnaBaseLANURL, "/");
+        return Strings.CS.appendIfMissing(dlnaBaseLANURL, "/");
     }
 
     public URI getAlbumArtURI(int albumId) {
