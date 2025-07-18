@@ -20,34 +20,29 @@
  */
 package org.airsonic.player.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.airsonic.player.domain.Version;
-import org.airsonic.player.util.Util;
+import org.airsonic.player.domain.dto.GitHubRelease;
 import org.apache.commons.lang3.Strings;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.impl.client.AbstractResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.io.*;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Provides version-related services, including functionality for determining whether a newer
@@ -206,26 +201,17 @@ public class VersionService {
         }
     }
 
-    private static final String VERSION_URL = "https://api.github.com/repos/kagemomiji/airsonic-advanced/releases?per_page=100";
+    private static final String VERSION_URL = "https://api.github.com/repos/kagemomiji/airsonic-advanced/releases";
 
-    private static ResponseHandler<List<Map<String, Object>>> respHandler = new AbstractResponseHandler<List<Map<String,Object>>>() {
-        @Override
-        public List<Map<String, Object>> handleEntity(HttpEntity entity) throws IOException {
-            try (InputStream is = entity.getContent(); InputStream bis = new BufferedInputStream(is)) {
-                return Util.getObjectMapper().readValue(bis, new TypeReference<List<Map<String, Object>>>() {});
-            }
-        }
-    };
-
-    private static Function<Map<String,Object>, Version> releaseToVersionMapper = r ->
+    private static Function<GitHubRelease, Version> releaseToVersionMapper = r ->
             new Version(
-                    (String) r.get("tag_name"),
-                    (String) r.get("target_commitish"),
-                    (Boolean) r.get("draft") || (Boolean) r.get("prerelease"),
-                    (String) r.get("html_url"),
-                    Instant.parse((String) r.get("published_at")),
-                    Instant.parse((String) r.get("created_at")),
-                    (List<Map<String,Object>>) r.get("assets")
+                    r.getTagName(),
+                    r.getTargetCommitish(),
+                    r.isDraft() || r.isPrerelease(),
+                    r.getHtmlUrl(),
+                    r.getPublishedAt(),
+                    r.getCreatedAt(),
+                    r.getAssets()
                     );
 
     /**
@@ -234,35 +220,65 @@ public class VersionService {
     private void readLatestVersion() throws IOException {
 
         LOG.debug("Starting to read latest version");
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(10000)
-                .setSocketTimeout(10000)
+        // Set up the RestClient to fetch the latest version from GitHub
+        // Use HttpComponentsClientHttpRequestFactory for better control over timeouts
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(10000);
+        factory.setReadTimeout(10000);
+        // Set up the ObjectMapper to handle Java 8 time types
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModules(new JavaTimeModule());
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        RestClient restClient = RestClient.builder()
+                .defaultHeaders(
+                    httpHeaders -> {
+                        httpHeaders.set("Accept", "application/vnd.github.v3+json");
+                        httpHeaders.set("User-Agent", "Airsonic/" + getLocalVersion());
+                    }
+                )
+                .messageConverters(converters -> {
+                    converters.clear();
+                    converters.add(converter);
+                })
+                .baseUrl(VERSION_URL)
+                .requestFactory(factory)
                 .build();
-        HttpGet method = new HttpGet(VERSION_URL);
-        method.setConfig(requestConfig);
-        method.setHeader("accept", "application/vnd.github.v3+json");
-        method.setHeader("User-Agent", "Airsonic/" + getLocalVersion());
-        List<Map<String, Object>> content;
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            content = client.execute(method, respHandler);
-        } catch (ConnectTimeoutException e) {
-            LOG.warn("Got a timeout when trying to reach {}", VERSION_URL);
-            return;
+        List<GitHubRelease> releases = new ArrayList<>();
+        try {
+            for (int i = 1; i <= 10; i++) { // Limit to 10 pages to avoid infinite loops
+                final int pageNum = i;
+                List<GitHubRelease> response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                        .queryParam("per_page", "100")
+                        .queryParam("page", String.valueOf(pageNum))
+                        .build())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<GitHubRelease>>() {});
+                if (response.isEmpty()) {
+                    break;
+                }
+                releases.addAll(response);
+            }
+
+        } catch (Exception e) {
+            LOG.warn("Failed to fetch latest version from GitHub: {}", e.getMessage());
         }
 
-        List<Map<String, Object>> releases = content.stream()
-                .sorted(Comparator.<Map<String, Object>,Instant>comparing(r -> Instant.parse((String) r.get("published_at")), Comparator.reverseOrder()))
-                .collect(Collectors.toList());
+        releases.sort((a, b) -> {
+            if (a.getPublishedAt() == null || b.getPublishedAt() == null) {
+                return 0; // Can't compare, so treat as equal
+            }
+            return a.getPublishedAt().compareTo(b.getPublishedAt());
+        });
 
+        Optional<GitHubRelease> betaR = releases.stream().findFirst();
+        Optional<GitHubRelease> finalR = releases.stream().filter(x -> !(x.isDraft()) && !(x.isPrerelease())).findFirst();
+        Optional<GitHubRelease> currentR = releases.stream().filter(x ->
+            Strings.CS.equals(build.getProperty("version") + "." + build.getProperty("timestamp"), x.getTagName()) ||
+            Strings.CS.equals(build.getProperty("version"), x.getTagName())).findAny();
 
-        Optional<Map<String, Object>> betaR = releases.stream().findFirst();
-        Optional<Map<String, Object>> finalR = releases.stream().filter(x -> !((Boolean)x.get("draft")) && !((Boolean)x.get("prerelease"))).findFirst();
-        Optional<Map<String,Object>> currentR = releases.stream().filter(x ->
-            Strings.CS.equals(build.getProperty("version") + "." + build.getProperty("timestamp"), (String) x.get("tag_name")) ||
-            Strings.CS.equals(build.getProperty("version"), (String) x.get("tag_name"))).findAny();
-
-        LOG.debug("Got {} for beta version", betaR.map(x -> x.get("tag_name")).orElse(null));
-        LOG.debug("Got {} for final version", finalR.map(x -> x.get("tag_name")).orElse(null));
+        LOG.debug("Got {} for beta version", betaR.map(GitHubRelease::getTagName).orElse(null));
+        LOG.debug("Got {} for final version", finalR.map(GitHubRelease::getTagName).orElse(null));
 
         latestBetaVersion = betaR.map(releaseToVersionMapper).orElse(null);
         latestFinalVersion = finalR.map(releaseToVersionMapper).orElse(null);
