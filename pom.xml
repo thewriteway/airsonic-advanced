@@ -178,7 +178,7 @@
             <dependency>
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
-                <version>2.36.0</version>
+                <version>2.40.0</version>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
@@ -444,6 +444,7 @@
                                 <ignoredUnusedDeclaredDependency>org.apache.cxf:cxf-tools-wsdlto-databinding-jaxb</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.apache.lucene:lucene-backward-codecs</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>com.twelvemonkeys.imageio:imageio-webp</ignoredUnusedDeclaredDependency>
+                                <ignoredUnusedDeclaredDependency>org.apache.httpcomponents.client5:httpclient5</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>
