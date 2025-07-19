@@ -245,8 +245,8 @@ public class VersionService {
             .build();
         List<GitHubRelease> releases = new ArrayList<>();
         int maxRetries = 3;
-        long backoffMillis = 500;
-        for (int i = 1; i <= 10; i++) { // Limit to 10 pages to avoid infinite loops
+        long backoffMillis = 2000;
+        for (int i = 1; i <= 5; i++) { // Limit to 5 pages to avoid infinite loops
             final int pageNum = i;
             int attempt = 0;
             while (attempt < maxRetries) {
