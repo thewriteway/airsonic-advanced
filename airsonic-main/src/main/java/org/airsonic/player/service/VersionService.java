@@ -284,7 +284,7 @@ public class VersionService {
             if (a.getPublishedAt() == null || b.getPublishedAt() == null) {
                 return 0; // Can't compare, so treat as equal
             }
-            return a.getPublishedAt().compareTo(b.getPublishedAt());
+            return b.getPublishedAt().compareTo(a.getPublishedAt()); // Descending order
         });
 
         Optional<GitHubRelease> betaR = releases.stream().findFirst();
