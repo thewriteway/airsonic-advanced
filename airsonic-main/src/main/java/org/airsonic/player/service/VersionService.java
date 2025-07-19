@@ -230,40 +230,56 @@ public class VersionService {
         objectMapper.registerModules(new JavaTimeModule());
         MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
         RestClient restClient = RestClient.builder()
-                .defaultHeaders(
-                    httpHeaders -> {
-                        httpHeaders.set("Accept", "application/vnd.github.v3+json");
-                        httpHeaders.set("User-Agent", "Airsonic/" + getLocalVersion());
-                    }
-                )
-                .messageConverters(converters -> {
-                    converters.clear();
-                    converters.add(converter);
-                })
-                .baseUrl(VERSION_URL)
-                .requestFactory(factory)
-                .build();
-        List<GitHubRelease> releases = new ArrayList<>();
-        try {
-            for (int i = 1; i <= 10; i++) { // Limit to 10 pages to avoid infinite loops
-                final int pageNum = i;
-                List<GitHubRelease> response = restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                        .queryParam("per_page", "100")
-                        .queryParam("page", String.valueOf(pageNum))
-                        .build())
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<List<GitHubRelease>>() {});
-                if (response.isEmpty()) {
-                    break;
+            .defaultHeaders(
+                httpHeaders -> {
+                    httpHeaders.set("Accept", "application/vnd.github.v3+json");
+                    httpHeaders.set("User-Agent", "Airsonic/" + getLocalVersion());
                 }
-                releases.addAll(response);
+            )
+            .messageConverters(converters -> {
+                converters.clear();
+                converters.add(converter);
+            })
+            .baseUrl(VERSION_URL)
+            .requestFactory(factory)
+            .build();
+        List<GitHubRelease> releases = new ArrayList<>();
+        int maxRetries = 3;
+        long backoffMillis = 500;
+        for (int i = 1; i <= 10; i++) { // Limit to 10 pages to avoid infinite loops
+            final int pageNum = i;
+            int attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    List<GitHubRelease> response = restClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                            .queryParam("per_page", "100")
+                            .queryParam("page", String.valueOf(pageNum))
+                            .build())
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<List<GitHubRelease>>() {});
+                    if (response.isEmpty()) {
+                        break;
+                    }
+                    releases.addAll(response);
+                    break; // Success, exit retry loop
+                } catch (Exception e) {
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        LOG.warn("Failed to fetch page {} from GitHub after {} attempts: {}", pageNum, attempt, e.getMessage());
+                        break;
+                    }
+                    try {
+                        Thread.sleep(backoffMillis);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
             }
-
-        } catch (Exception e) {
-            LOG.warn("Failed to fetch latest version from GitHub: {}", e.getMessage());
         }
 
+        // Sort releases by published date
         releases.sort((a, b) -> {
             if (a.getPublishedAt() == null || b.getPublishedAt() == null) {
                 return 0; // Can't compare, so treat as equal
