@@ -522,6 +522,7 @@ public class SubsonicRESTController {
         result.setName(artist.getTitle() != null ? artist.getTitle() : artist.getArtist());
         Instant starred = mediaFileService.getMediaFileStarredDate(artist, username);
         result.setStarred(jaxbWriter.convertDate(starred));
+        // TODO: add rating. https://opensubsonic.netlify.app/docs/responses/artist/
         return result;
     }
 
