@@ -88,7 +88,7 @@ public class UserSettingsController {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserSettingsController.class);
 
-    @InitBinder
+    @InitBinder("command")
     protected void initBinder(WebDataBinder binder, HttpServletRequest request) {
         binder.addValidators(new UserSettingsValidator(securityService, settingsService, request));
     }
