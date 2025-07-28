@@ -16,6 +16,22 @@ env:
   REGISTRY_IMAGE: ghcr.io/kagemomiji/airsonic-advanced
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: build-metadata
+        run: mvn generate-resources
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-metadata
+          path: airsonic-main/target/generated/build-metadata/build.properties 
   deploy:
     strategy:
       fail-fast: false
@@ -41,6 +57,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+      - run: |
+          mkdir -p airsonic-main/target/generated/build-metadata
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-metadata
+          path: airsonic-main/target/generated/build-metadata/
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
@@ -76,7 +98,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Maven
-        run: mvn package -DskipTests -B -P docker
+        run: mvn package -DskipTests -B -P docker -Dmaven.buildNumber.skip=true
       - name: Build and push by digest
         uses: docker/build-push-action@v6
         id: build
