@@ -65,11 +65,11 @@ jobs:
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
       - run: |
-          mkdir -p airsonic-main/target/generated/build-metadata
+          mkdir -p airsonic-main/target/classes
       - uses: actions/download-artifact@v4
         with:
           name: build-metadata
-          path: airsonic-main/target/generated/build-metadata/  
+          path: airsonic-main/target/classes/  
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:

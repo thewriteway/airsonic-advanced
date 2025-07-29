@@ -63,11 +63,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - run: |
-          mkdir -p airsonic-main/target/generated/build-metadata
+          mkdir -p airsonic-main/target/classes
       - uses: actions/download-artifact@v4
         with:
           name: build-metadata
-          path: airsonic-main/target/generated/build-metadata/
+          path: airsonic-main/target/classes/  
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
