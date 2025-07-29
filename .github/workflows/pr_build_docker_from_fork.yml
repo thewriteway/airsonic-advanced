@@ -28,9 +28,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
       - name: Build with Maven
-        run: mvn verify -B -DskipTests=true
-      - name: Generate build metadata
-        run: mvn generate-resources
+        run: mvn verify -B -DskipTests=true -P docker
       - uses: actions/upload-artifact@v4
         with:
           name: build-metadata
