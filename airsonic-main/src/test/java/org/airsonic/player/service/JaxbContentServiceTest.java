@@ -327,7 +327,6 @@ class JaxbContentServiceTest {
             MediaFile mediaFile = mock(MediaFile.class);
             when(mediaFile.getId()).thenReturn(123);
             when(mediaFile.getTitle()).thenReturn("Artist Title");
-            when(mediaFile.getArtist()).thenReturn("Artist Name");
             when(mediaFileService.getMediaFileStarredDate(mediaFile, "user"))
                     .thenReturn(Instant.ofEpochMilli(123456789L));
 
