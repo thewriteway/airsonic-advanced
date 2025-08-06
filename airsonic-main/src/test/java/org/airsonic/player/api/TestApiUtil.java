@@ -3,6 +3,9 @@ package org.airsonic.player.api;
 import org.airsonic.player.controller.JAXBWriter;
 import org.subsonic.restapi.AlbumID3;
 import org.subsonic.restapi.AlbumWithSongsID3;
+import org.subsonic.restapi.Artist;
+import org.subsonic.restapi.ArtistID3;
+import org.subsonic.restapi.ArtistWithAlbumsID3;
 import org.subsonic.restapi.Child;
 
 import java.time.Instant;
@@ -138,10 +141,85 @@ public class TestApiUtil {
         album.setCoverArt("al-10");
         album.setSongCount(12);
         album.setDuration(3600);
-        album.setCreated(jaxbWriter.convertDate(Instant.parse("2023-01-01T00:00:00Z")));
-        album.setStarred(jaxbWriter.convertDate(Instant.parse("2023-06-01T00:00:00Z")));
+        album.setCreated(jaxbWriter.convertDate(Instant.parse("2023-01-01T00:00:00.123Z")));
+        album.setStarred(jaxbWriter.convertDate(Instant.parse("2023-06-01T00:00:00.123Z")));
         album.setYear(2023);
         album.setGenre("Rock");
         return album;
     }
+
+    /**
+     * Create a typical ArtistID3 object for testing purposes.
+     *
+     * @return ArtistID3 object with preset values.
+     */
+    public static ArtistID3 createTestArtistID3Full(String name) {
+        JAXBWriter jaxbWriter = new JAXBWriter();
+        ArtistID3 artist = new ArtistID3();
+        artist.setId("1");
+        artist.setName(name);
+        artist.setStarred(jaxbWriter.convertDate(Instant.parse("2023-01-01T00:00:00Z")));
+        artist.setAlbumCount(5);
+        artist.setCoverArt("ar-1");
+        return artist;
+    }
+
+    /**
+     * Create a minimal ArtistID3 object for testing.
+     * This is useful when only the ID and name are needed.
+     *
+     * @return ArtistID3 object with minimal fields set.
+     */
+    public static ArtistID3 createTestArtistID3Minimum(String name) {
+        ArtistID3 artist = new ArtistID3();
+        artist.setId("2");
+        artist.setName(name);
+        return artist;
+    }
+
+    /**
+     * Create a typical Artist object for testing purposes.
+     *
+     * @return Artist object with preset values.
+     */
+    public static Artist createTestArtist(String name) {
+        JAXBWriter jaxbWriter = new JAXBWriter();
+        Artist artist = new Artist();
+        artist.setId("3");
+        artist.setName(name);
+        artist.setStarred(jaxbWriter.convertDate(Instant.parse("2023-01-01T00:00:00.123Z")));
+        return artist;
+    }
+
+    /**
+     * Create a typical ArtistWithAlbumsID3 object for testing purposes.
+     * This object includes fields like ID, name, starred date, album count, and cover art.
+     * It is useful for testing scenarios where artist data with albums is required.
+     * @param name The name of the artist.
+     * @return ArtistWithAlbumsID3 object with preset values.
+     */
+    public static ArtistWithAlbumsID3 createTestArtistWithAlbumsID3Full(String name) {
+        JAXBWriter jaxbWriter = new JAXBWriter();
+        ArtistWithAlbumsID3 artist = new ArtistWithAlbumsID3();
+        artist.setId("4");
+        artist.setName(name);
+        artist.setStarred(jaxbWriter.convertDate(Instant.parse("2023-01-01T00:00:00.123Z")));
+        artist.setAlbumCount(10);
+        artist.setCoverArt("ar-4");
+        return artist;
+    }
+
+    /**
+     * Create a minimal ArtistWithAlbumsID3 object for testing.
+     * This is useful when only the ID and name are needed.
+     * @param name The name of the artist.
+     * @return ArtistWithAlbumsID3 object with minimal fields set.
+     */
+    public static ArtistWithAlbumsID3 createTestArtistWithAlbumsID3Minimum(String name) {
+        ArtistWithAlbumsID3 artist = new ArtistWithAlbumsID3();
+        artist.setId("5");
+        artist.setName(name);
+        return artist;
+    }
+
 }
