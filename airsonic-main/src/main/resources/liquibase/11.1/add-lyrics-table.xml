@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="add-lyrics-table" author="kagemomiji">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="lyrics"/>
+            </not>
+        </preConditions>
+        <createTable tableName="lyrics">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="lyrics" type="${varchar_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="media_file_id" type="integer">
+                <constraints nullable="false" foreignKeyName="fk_lyrics_media_file"
+                             referencedTableName="media_file" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="created" type="${timestamp_type}" defaultValueComputed="${curr_date_expr}"/>
+            <column name="updated" type="${timestamp_type}" defaultValueComputed="${curr_date_expr}"/>
+        </createTable>
+        <rollback>
+            <dropTable tableName="lyrics" />
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
