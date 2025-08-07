@@ -49,7 +49,7 @@ public class UserSettingsValidator implements Validator {
     /**
      * {@inheritDoc}
      */
-    public boolean supports(Class clazz) {
+    public boolean supports(Class<?> clazz) {
         return clazz.equals(UserSettingsCommand.class);
     }
 
