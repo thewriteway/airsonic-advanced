@@ -22,11 +22,15 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.annotation.Nullable;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,17 +45,18 @@ public class LrcParser {
      * @return A list of LyricsLine objects parsed from the LRC file.
      * @throws IOException If an error occurs while reading the file.
      */
-    public List<LyricsLine> parse(String lrcFilePath) {
+    @Nullable
+    public LrcFile parse(String lrcFilePath) {
         try {
             if (StringUtils.isBlank(lrcFilePath)) {
-                LOG.warn("LRC file path is blank, returning empty list.");
-                return List.of();
+                LOG.warn("LRC file path is blank");
+                return null;
             }
             Path path = Path.of(lrcFilePath);
             return parse(path);
         } catch (InvalidPathException e) {
             LOG.error("Invalid LRC file path: {}", lrcFilePath, e);
-            return List.of();
+            return null;
         }
     }
 
@@ -61,10 +66,10 @@ public class LrcParser {
      * @param lrcFilePath The path to the LRC file.
      * @return A list of LyricsLine objects parsed from the LRC file.
      */
-    public List<LyricsLine> parse(Path lrcFilePath) {
+    public LrcFile parse(Path lrcFilePath) {
         if (lrcFilePath == null || !lrcFilePath.toFile().exists()) {
             LOG.warn("LRC file does not exist: {}", lrcFilePath);
-            return List.of();
+            return null;
         }
         List<LyricsLine> lines = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(lrcFilePath.toFile()))) {
@@ -87,13 +92,13 @@ public class LrcParser {
                     lines.add(new LyricsLine(time, text));
                 }
             }
-            return lines;
+            return new LrcFile(lines, Files.getLastModifiedTime(lrcFilePath).toInstant().truncatedTo(ChronoUnit.MICROS));
         } catch (IOException e) {
             LOG.warn("Error reading LRC file: {}", lrcFilePath);
-            return List.of();
+            return null;
         } catch (Exception e) {
             LOG.warn("Unexpected error while parsing LRC file: {}", lrcFilePath);
-            return List.of();
+            return null;
         }
     }
 

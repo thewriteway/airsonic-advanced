@@ -8,6 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LrcParserTest {
@@ -23,7 +24,9 @@ class LrcParserTest {
     @Test
     void parseSimpleLrcShouldSuccess() {
         Path path = getResourcePath("simple.lrc");
-        List<LyricsLine> lines = parser.parse(path);
+        LrcFile lrcFile = parser.parse(path);
+        assertNotNull(lrcFile);
+        List<LyricsLine> lines = lrcFile.getLyricsLines();
         assertEquals(12, lines.size());
         assertEquals("Lyrics1 Line 1", lines.get(0).getText());
         assertEquals("Lyrics2 Line 2", lines.get(1).getText());
@@ -36,7 +39,9 @@ class LrcParserTest {
     @Test
     void parseTagLrcShouldSuccess() {
         Path path = getResourcePath("tag.lrc");
-        List<LyricsLine> lines = parser.parse(path);
+        LrcFile lrcFile = parser.parse(path);
+        assertNotNull(lrcFile);
+        List<LyricsLine> lines = lrcFile.getLyricsLines();
         assertEquals(12, lines.size());
         assertEquals("Lyrics1 Line 1", lines.get(0).getText());
         assertEquals("Lyrics2 Line 2", lines.get(1).getText());
@@ -49,7 +54,9 @@ class LrcParserTest {
     @Test
     void parseA2ExtendedLrcShouldSuccess() {
         Path path = getResourcePath("a2extended.lrc");
-        List<LyricsLine> lines = parser.parse(path);
+        LrcFile lrcFile = parser.parse(path);
+        assertNotNull(lrcFile);
+        List<LyricsLine> lines = lrcFile.getLyricsLines();
         assertEquals(12, lines.size());
         assertEquals("Lyrics1 Line 1", lines.get(0).getText());
         assertEquals("Lyrics2 Line 2", lines.get(1).getText());
@@ -62,7 +69,9 @@ class LrcParserTest {
     @Test
     void parseWalaokeLrcShouldSuccess() {
         Path path = getResourcePath("walaoke.lrc");
-        List<LyricsLine> lines = parser.parse(path);
+        LrcFile lrcFile = parser.parse(path);
+        assertNotNull(lrcFile);
+        List<LyricsLine> lines = lrcFile.getLyricsLines();
         assertEquals(12, lines.size());
         assertEquals("F: Lyrics3", lines.get(3).getText());
         assertEquals("M: Lyrics4", lines.get(4).getText());
@@ -76,19 +85,19 @@ class LrcParserTest {
     void parseInvalidLrcShouldReturnEmptyList() {
         // invalid.lrc does not exist, so we expect an empty list
         Path path = getResourcePath("invalid.lrc");
-        List<LyricsLine> lines = parser.parse(path);
-        assertTrue(lines.isEmpty());
+        LrcFile lrcFile = parser.parse(path);
+        assertNull(lrcFile);
     }
 
     @Test
     void parseWithBlankPathShouldReturnEmptyList() {
-        List<LyricsLine> lines = parser.parse("");
-        assertTrue(lines.isEmpty());
+        LrcFile lrcFile = parser.parse("");
+        assertNull(lrcFile);
     }
 
     @Test
     void parseWithNullPathShouldReturnEmptyList() {
-        List<LyricsLine> lines = parser.parse((Path) null);
-        assertTrue(lines.isEmpty());
+        LrcFile lrcFile = parser.parse((Path) null);
+        assertNull(lrcFile);
     }
 }
