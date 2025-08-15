@@ -1178,8 +1178,8 @@ public class SubsonicRESTController {
         request = wrapRequest(request);
         NowPlaying result = new NowPlaying();
 
-        Stream.concat(statusService.getActivePlays().parallelStream(),
-                statusService.getInactivePlays().parallelStream())
+        Stream.concat(statusService.getActivePlays().stream(),
+                statusService.getInactivePlays().stream())
             .map(info -> info.fromPlayStatus())
             .forEach(s -> {
                 NowPlayingEntry entry = new NowPlayingEntry();
