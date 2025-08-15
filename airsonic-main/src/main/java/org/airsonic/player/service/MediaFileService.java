@@ -216,7 +216,7 @@ public class MediaFileService {
      * @param id The media file id.
      * @return mediafile for the given id.
      */
-    public MediaFile getMediaFile(Integer id) {
+    public MediaFile getMediaFile(@Nullable Integer id) {
         return getMediaFile(id, false);
     }
 
@@ -227,7 +227,7 @@ public class MediaFileService {
      * @param ignoreCache Whether to ignore the cache
      * @return mediafile for the given id.
      */
-    public MediaFile getMediaFile(Integer id, boolean ignoreCache) {
+    public MediaFile getMediaFile(@Nullable Integer id, boolean ignoreCache) {
         if (Objects.isNull(id)) return null;
         MediaFile result = ignoreCache ? null : mediaFileCache.getMediaFileById(id);
         if (result == null) {
@@ -450,7 +450,7 @@ public class MediaFileService {
      * @param musicFolders Only return songs in these folders.
      * @return Song by the artist and title.
      */
-    public MediaFile getSongByArtistAndTitle(String artist, String title, List<MusicFolder> musicFolders) {
+    public MediaFile getSongByArtistAndTitle(@Nullable String artist, @Nullable String title, @Nullable List<MusicFolder> musicFolders) {
         if (CollectionUtils.isEmpty(musicFolders) || StringUtils.isBlank(artist) || StringUtils.isBlank(title)) {
             return null;
         }

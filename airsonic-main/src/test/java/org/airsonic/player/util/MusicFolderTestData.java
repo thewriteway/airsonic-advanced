@@ -79,6 +79,10 @@ public class MusicFolderTestData {
         return resolveBaseMediaPath().resolve("flacWithCue");
     }
 
+    public static Path resolveLyricsFolderPath() {
+        return resolveBaseMediaPath().resolve("lyrics");
+    }
+
 
     public static List<MusicFolder> getTestMusicFolders() {
         List<MusicFolder> liste = new ArrayList<>();

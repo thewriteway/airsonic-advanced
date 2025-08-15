@@ -19,16 +19,19 @@
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.domain.Lyrics;
+import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.service.LyricsService;
+import org.airsonic.player.service.MediaFileService;
+import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.view.LyricsPage;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.security.Principal;
 
 /**
  * Controller for the lyrics popup.
@@ -39,13 +42,39 @@ import java.util.Map;
 @RequestMapping({"/lyrics", "/lyrics.view"})
 public class LyricsController {
 
+    private final LyricsService lyricsService;
+    private final MediaFileService mediaFileService;
+    private final SecurityService securityService;
+
+    public LyricsController(
+        LyricsService lyricsService,
+        MediaFileService mediaFileService,
+        SecurityService securityService
+    ) {
+        this.lyricsService = lyricsService;
+        this.mediaFileService = mediaFileService;
+        this.securityService = securityService;
+    }
+
     @GetMapping
-    protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) {
-        Map<String, Object> map = new HashMap<>();
+    protected ModelAndView handleRequestInternal(
+        Principal principal,
+        @RequestParam(value = "id", required = false) Integer id
+    ) {
 
-        map.put("artist", request.getParameter("artist"));
-        map.put("song", request.getParameter("song"));
-
-        return new ModelAndView("lyrics","model",map);
+        MediaFile mediaFile = mediaFileService.getMediaFile(id);
+        if (mediaFile == null || !securityService.isFolderAccessAllowed(mediaFile, principal.getName())) {
+            return new ModelAndView("notFound");
+        }
+        String artist = mediaFile.getArtist() != null ? mediaFile.getArtist() : mediaFile.getAlbumArtist();
+        String song = mediaFile.getTitle();
+        Lyrics lyrics = lyricsService.getLyricsFromMediaFile(mediaFile);
+        LyricsPage lyricsPage = new LyricsPage(
+            id,
+            artist,
+            song,
+            lyrics != null ? lyrics.getLyrics() : null
+        );
+        return new ModelAndView("lyrics","view", lyricsPage);
     }
 }

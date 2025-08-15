@@ -19,6 +19,10 @@
  */
 package org.airsonic.player.ajax;
 
+import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.service.LyricsService;
+import org.airsonic.player.service.MediaFileService;
+import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpResponseException;
@@ -42,6 +46,7 @@ import org.springframework.stereotype.Controller;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.SocketException;
+import java.security.Principal;
 
 import static org.airsonic.player.util.XMLUtil.createSAXBuilder;
 
@@ -57,6 +62,22 @@ public class LyricsWSController {
 
     private static final Logger LOG = LoggerFactory.getLogger(LyricsWSController.class);
 
+    private final LyricsService lyricsService;
+
+    private final SecurityService securityService;
+
+    private final MediaFileService mediaFileService;
+
+    public LyricsWSController(
+        LyricsService lyricsService,
+        SecurityService securityService,
+        MediaFileService mediaFileService) {
+        this.lyricsService = lyricsService;
+        this.securityService = securityService;
+        this.mediaFileService = mediaFileService;
+    }
+
+
     /**
      * Returns lyrics for the given song and artist.
      *
@@ -64,12 +85,12 @@ public class LyricsWSController {
      */
     @MessageMapping("/get")
     @SendToUser(broadcast = false)
-    public LyricsInfo getLyrics(LyricsGetRequest req) {
-        return getLyrics(req.getArtist(), req.getSong());
-    }
+    public LyricsStatus getLyrics(Principal user, LyricsGetRequest req) {
 
-    public LyricsInfo getLyrics(String artist, String song) {
-        LyricsInfo lyrics = new LyricsInfo();
+        String artist = req.getArtist();
+        String song = req.getSong();
+
+        LyricsStatus status = new LyricsStatus();
         try {
 
             artist = StringUtil.urlEncode(artist);
@@ -77,23 +98,34 @@ public class LyricsWSController {
 
             String url = "http://api.chartlyrics.com/apiv1.asmx/SearchLyricDirect?artist=" + artist + "&song=" + song;
             String xml = executeGetRequest(url);
-            lyrics = parseSearchResult(xml);
+            String lyrics = parseSearchResult(xml);
+            LOG.info("MediaFile id is {}, lyrics: {}", req.getId(), lyrics);
 
+            if (lyrics != null && req.getId() != null) {
+                MediaFile mediaFile = mediaFileService.getMediaFile(req.getId());
+                if (mediaFile != null && securityService.isFolderAccessAllowed(mediaFile, user.getName())) {
+                    boolean persisted = lyricsService.saveLyricsForMediaFile(mediaFile, lyrics);
+                    LOG.info("Persisted lyrics for song '{}' by '{}': {}", song, artist, persisted);
+                    status.setPersisted(persisted);
+                }
+            }
         } catch (HttpResponseException x) {
             LOG.warn("Failed to get lyrics for song '{}'. Request failed: {}", song, x.toString());
             if (x.getStatusCode() == 503) {
-                lyrics.setTryLater(true);
+                status.setTryLater(true);
             }
         } catch (SocketException | ConnectTimeoutException x) {
             LOG.warn("Failed to get lyrics for song '{}': {}", song, x.toString());
-            lyrics.setTryLater(true);
+            status.setTryLater(true);
         } catch (Exception x) {
             LOG.warn("Failed to get lyrics for song '" + song + "'.", x);
         }
-        return lyrics;
+        return status;
     }
 
-    private LyricsInfo parseSearchResult(String xml) throws Exception {
+
+
+    private String parseSearchResult(String xml) throws Exception {
         SAXBuilder builder = createSAXBuilder();
         Document document = builder.build(new StringReader(xml));
 
@@ -101,10 +133,8 @@ public class LyricsWSController {
         Namespace ns = root.getNamespace();
 
         String lyric = StringUtils.trimToNull(root.getChildText("Lyric", ns));
-        String song = root.getChildText("LyricSong", ns);
-        String artist = root.getChildText("LyricArtist", ns);
 
-        return new LyricsInfo(lyric, artist, song);
+        return lyric;
     }
 
     private String executeGetRequest(String url) throws IOException {
@@ -123,13 +153,15 @@ public class LyricsWSController {
     public static class LyricsGetRequest {
         private String artist;
         private String song;
+        private Integer id;
 
         public LyricsGetRequest() {
         }
 
-        public LyricsGetRequest(String artist, String song) {
+        public LyricsGetRequest(String artist, String song, Integer id) {
             this.artist = artist;
             this.song = song;
+            this.id = id;
         }
 
         public String getArtist() {
@@ -146,6 +178,14 @@ public class LyricsWSController {
 
         public void setSong(String song) {
             this.song = song;
+        }
+
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
         }
     }
 }

@@ -34,7 +34,7 @@
 
                 <!-- Lyrics link (only if needed). UTF-8 encoding is handled by @{...} -->
                 <span class="forward" th:if="${np.showLyrics}">
-                    <a th:href="@{/lyrics.view(artist=${np.artist}, song=${np.title})}"
+                    <a th:href="@{/lyrics.view(id=${np.mediaFileId})}"
                          onclick="return popupSize(this, 'lyrics', 500, 550)"
                          th:text="#{main.lyrics}">Lyrics</a>
                 </span>

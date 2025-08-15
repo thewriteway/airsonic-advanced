@@ -24,33 +24,14 @@ package org.airsonic.player.ajax;
  *
  * @author Sindre Mehus
  */
-public class LyricsInfo {
+public class LyricsStatus {
 
-    private final String lyrics;
-    private final String artist;
-    private final String title;
     private boolean tryLater;
+    private boolean persisted;
 
-    public LyricsInfo() {
-        this(null, null, null);
-    }
-
-    public LyricsInfo(String lyrics, String artist, String title) {
-        this.lyrics = lyrics;
-        this.artist = artist;
-        this.title = title;
-    }
-
-    public String getLyrics() {
-        return lyrics;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public String getTitle() {
-        return title;
+    public LyricsStatus() {
+        this.tryLater = false;
+        this.persisted = false;
     }
 
     public void setTryLater(boolean tryLater) {
@@ -59,5 +40,13 @@ public class LyricsInfo {
 
     public boolean isTryLater() {
         return tryLater;
+    }
+
+    public void setPersisted(boolean persisted) {
+        this.persisted = persisted;
+    }
+
+    public boolean isPersisted() {
+        return persisted;
     }
 }
