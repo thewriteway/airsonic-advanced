@@ -18,7 +18,6 @@
  */
 package org.airsonic.player.api;
 
-import org.airsonic.player.ajax.NowPlayingInfo;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.PlayStatus;
 import org.airsonic.player.domain.Player;
@@ -51,13 +50,6 @@ public class NowPlayingApiTest extends AbstractRESTTest {
 
     private static final String CLIENT_NAME = "nowPlayingApiTest";
 
-
-    @Mock
-    NowPlayingInfo inactiveInfo;
-
-    @Mock
-    NowPlayingInfo activeInfo;
-
     @Mock
     PlayStatus inActivePlayStatus;
 
@@ -72,8 +64,8 @@ public class NowPlayingApiTest extends AbstractRESTTest {
         List<Player> existingPlayers = playerService.getPlayersForUserAndClientId(AIRSONIC_USER, CLIENT_NAME);
         assertTrue(existingPlayers.isEmpty());
 
-        when(statusService.getActivePlays()).thenReturn(List.of(activeInfo));
-        when(statusService.getInactivePlays()).thenReturn(List.of(inactiveInfo));
+        when(statusService.getActivePlayStatuses()).thenReturn(List.of(activePlayStatus));
+        when(statusService.getInactivePlayStatuses()).thenReturn(List.of(inActivePlayStatus));
 
         ArgumentCaptor<NowPlayingEntry> activePlayingEntryCaptor = ArgumentCaptor.forClass(NowPlayingEntry.class);
         ArgumentCaptor<NowPlayingEntry> inactivePlayingEntryCaptor = ArgumentCaptor.forClass(NowPlayingEntry.class);
@@ -83,7 +75,6 @@ public class NowPlayingApiTest extends AbstractRESTTest {
         activePlayer.setUsername("user1");
         activePlayer.setName("Active Player");
         MediaFile activeMediaFile = new MediaFile();
-        when(activeInfo.fromPlayStatus()).thenReturn(activePlayStatus);
         when(activePlayStatus.getPlayer()).thenReturn(activePlayer);
         when(activePlayStatus.getMinutesAgo()).thenReturn(5L);
         when(activePlayStatus.getMediaFile()).thenReturn(activeMediaFile);
@@ -94,7 +85,6 @@ public class NowPlayingApiTest extends AbstractRESTTest {
         inactivePlayer.setUsername("user2");
         inactivePlayer.setName("Inactive Player");
 
-        when(inactiveInfo.fromPlayStatus()).thenReturn(inActivePlayStatus);
         when(inActivePlayStatus.getPlayer()).thenReturn(inactivePlayer);
         when(inActivePlayStatus.getMinutesAgo()).thenReturn(10L);
         MediaFile inactiveMediaFile = new MediaFile();
@@ -177,8 +167,8 @@ public class NowPlayingApiTest extends AbstractRESTTest {
         List<Player> existingPlayers = playerService.getPlayersForUserAndClientId(AIRSONIC_USER, CLIENT_NAME);
         assertTrue(existingPlayers.isEmpty());
 
-        when(statusService.getActivePlays()).thenReturn(List.of());
-        when(statusService.getInactivePlays()).thenReturn(List.of());
+        when(statusService.getActivePlayStatuses()).thenReturn(List.of());
+        when(statusService.getInactivePlayStatuses()).thenReturn(List.of());
 
         // perform request
         String response = mvc.perform(get(endpoint)

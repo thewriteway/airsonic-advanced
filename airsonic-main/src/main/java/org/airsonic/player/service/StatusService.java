@@ -235,6 +235,54 @@ public class StatusService {
                 .collect(Collectors.toList());
     }
 
+    private boolean isAvailable(PlayStatus status) {
+        Player player = status.getPlayer();
+        MediaFile mediaFile = status.getMediaFile();
+        if (mediaFile == null) {
+            return false;
+        }
+        String username = player.getUsername();
+        if (username == null) {
+            return false;
+        }
+        long minutesAgo = status.getMinutesAgo();
+        if (minutesAgo > 60) {
+            return false;
+        }
+        UserSettings userSettings = personalSettingsService.getUserSettings(username);
+        if (!userSettings.getNowPlayingAllowed()) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns a list of active play statuses.
+     *
+     * @return a list of active play statuses
+     */
+    public List<PlayStatus> getActivePlayStatuses() {
+        return activeLocalPlays.stream()
+                .filter(this::isAvailable)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns a list of inactive play statuses.
+     *
+     * @return a list of inactive play statuses
+     */
+    public List<PlayStatus> getInactivePlayStatuses() {
+        Map<Integer, PlayStatus> inactivePlayStatuses = inactiveStreamStatuses.values().parallelStream()
+                .map(ts -> getPlayStatus(ts))
+                .collect(Collectors.toMap(s -> s.getPlayer().getId(), s -> s));
+        inactivePlayStatuses.putAll(remotePlays);
+
+        return inactivePlayStatuses.values().stream()
+                .filter(s -> isAvailable(s))
+                .collect(Collectors.toList());
+    }
+
     /**
      * Creates a NowPlayingInfo object for the given play status.
      *
@@ -244,23 +292,15 @@ public class StatusService {
     private NowPlayingInfo createForBroadcast(PlayStatus status) {
         String url = "";// NetworkService.getBaseUrl(request);
 
+        if (!isAvailable(status)) {
+            return null;
+        }
+
         Player player = status.getPlayer();
         MediaFile mediaFile = status.getMediaFile();
-        if (mediaFile == null) {
-            return null;
-        }
         String username = player.getUsername();
-        if (username == null) {
-            return null;
-        }
         long minutesAgo = status.getMinutesAgo();
-        if (minutesAgo > 60) {
-            return null;
-        }
         UserSettings userSettings = personalSettingsService.getUserSettings(username);
-        if (!userSettings.getNowPlayingAllowed()) {
-            return null;
-        }
 
         String artist = mediaFile.getArtist();
         String title = mediaFile.getTitle();
