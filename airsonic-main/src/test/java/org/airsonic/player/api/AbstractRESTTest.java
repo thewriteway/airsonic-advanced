@@ -18,11 +18,16 @@
  */
 package org.airsonic.player.api;
 
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.airsonic.player.TestCaseUtils;
 import org.airsonic.player.domain.MusicFolder;
+import org.airsonic.player.service.JaxbContentService;
 import org.airsonic.player.service.LibraryStatusService;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.PlayerService;
+import org.airsonic.player.service.StatusService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +52,10 @@ public abstract class AbstractRESTTest {
 
     protected MusicFolder testFolder = new MusicFolder(1, Paths.get("/test/folder"), "Test Folder", MusicFolder.Type.MEDIA, true, Instant.now());
 
+    protected ObjectMapper objectMapper = JsonMapper.builder()
+        .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
+        .build();
+
     @Autowired
     protected MockMvc mvc;
 
@@ -58,6 +67,12 @@ public abstract class AbstractRESTTest {
 
     @MockitoBean
     protected LibraryStatusService libraryStatusService;
+
+    @MockitoBean
+    protected StatusService statusService;
+
+    @MockitoBean
+    protected JaxbContentService jaxbContentService;
 
     @TempDir
     private static Path tempAirsonicHome;

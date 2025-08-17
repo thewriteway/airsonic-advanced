@@ -7,6 +7,7 @@ import org.subsonic.restapi.Artist;
 import org.subsonic.restapi.ArtistID3;
 import org.subsonic.restapi.ArtistWithAlbumsID3;
 import org.subsonic.restapi.Child;
+import org.subsonic.restapi.NowPlayingEntry;
 
 import java.time.Instant;
 
@@ -220,6 +221,37 @@ public class TestApiUtil {
         artist.setId("5");
         artist.setName(name);
         return artist;
+    }
+
+    /**
+     * Create a typical NowPlayingEntry object for testing purposes.
+     *
+     * @return NowPlayingEntry object with preset values.
+     */
+    public static NowPlayingEntry createTestNowPlayingEntry() {
+        NowPlayingEntry entry = new NowPlayingEntry();
+        entry.setId("1");
+        entry.setTitle("Test Song");
+        entry.setAlbum("Test Album");
+        entry.setArtist("Test Artist");
+        entry.setIsDir(false);
+        entry.setYear(2024);
+        entry.setGenre("Rock");
+        entry.setDuration(180);
+        entry.setBitRate(320);
+        entry.setTrack(1);
+        entry.setDiscNumber(1);
+        entry.setSize(12345678L);
+        entry.setSuffix("mp3");
+        entry.setContentType("audio/mpeg");
+        entry.setIsVideo(false);
+        entry.setPath("/music/test.mp3");
+        entry.setType(org.subsonic.restapi.MediaType.MUSIC);
+        entry.setUsername("Test User");
+        entry.setMinutesAgo(10);
+        entry.setPlayerId(1);
+        entry.setPlayerName("Test Player");
+        return entry;
     }
 
 }
