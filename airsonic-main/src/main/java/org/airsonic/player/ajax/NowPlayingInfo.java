@@ -17,9 +17,8 @@
  Copyright 2016 (C) Airsonic Authors
  Based upon Subsonic, Copyright 2009 (C) Sindre Mehus
  */
-package org.airsonic.player.ajax;
 
-import org.airsonic.player.domain.PlayStatus;
+package org.airsonic.player.ajax;
 
 import java.util.UUID;
 
@@ -33,41 +32,18 @@ public class NowPlayingInfo {
     private final UUID transferId;
     private final Integer playerId;
     private final Integer mediaFileId;
-    private final String username;
-    private final String artist;
-    private final String title;
-    private final String tooltip;
-    private final String streamUrl;
-    private final String albumUrl;
-    private final String lyricsUrl;
-    private final String coverArtUrl;
-    private final String avatarUrl;
-    private final long minutesAgo;
-    private final PlayStatus playStatus;
 
-    public NowPlayingInfo(Integer playerId, String user, String artist, String title, String tooltip, String streamUrl, String albumUrl,
-            String lyricsUrl, String coverArtUrl, String avatarUrl, long minutesAgo) {
-        this(null, playerId, null, user, artist, title, tooltip, streamUrl, albumUrl, lyricsUrl, coverArtUrl, avatarUrl,
-                minutesAgo, null);
-    }
-
-    public NowPlayingInfo(UUID transferId, Integer playerId, Integer mediaFileId, String user, String artist, String title,
-            String tooltip, String streamUrl, String albumUrl, String lyricsUrl, String coverArtUrl, String avatarUrl,
-            long minutesAgo, PlayStatus playStatus) {
+    /**
+     * Constructs a new NowPlayingInfo object.
+     *
+     * @param transferId the unique identifier for the transfer
+     * @param playerId the ID of the player
+     * @param mediaFileId the ID of the media file being played
+     */
+    public NowPlayingInfo(UUID transferId, Integer playerId, Integer mediaFileId) {
         this.transferId = transferId;
         this.playerId = playerId;
         this.mediaFileId = mediaFileId;
-        this.username = user;
-        this.artist = artist;
-        this.title = title;
-        this.tooltip = tooltip;
-        this.streamUrl = streamUrl;
-        this.albumUrl = albumUrl;
-        this.lyricsUrl = lyricsUrl;
-        this.coverArtUrl = coverArtUrl;
-        this.avatarUrl = avatarUrl;
-        this.minutesAgo = minutesAgo;
-        this.playStatus = playStatus;
     }
 
     public UUID getTransferId() {
@@ -82,48 +58,4 @@ public class NowPlayingInfo {
         return mediaFileId;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getTooltip() {
-        return tooltip;
-    }
-
-    public String getStreamUrl() {
-        return streamUrl;
-    }
-
-    public String getAlbumUrl() {
-        return albumUrl;
-    }
-
-    public String getLyricsUrl() {
-        return lyricsUrl;
-    }
-
-    public String getCoverArtUrl() {
-        return coverArtUrl;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public long getMinutesAgo() {
-        return minutesAgo;
-    }
-
-    // deliberately do not make it a getter so it doesn't serialize
-    public PlayStatus fromPlayStatus() {
-        return playStatus;
-    }
 }

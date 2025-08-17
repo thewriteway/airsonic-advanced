@@ -1,5 +1,6 @@
 package org.airsonic.player.ajax;
 
+import org.airsonic.player.domain.PlayStatus;
 import org.airsonic.player.service.StatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
@@ -14,11 +15,17 @@ public class NowPlayingWSController {
 
     @SubscribeMapping("/nowPlaying/current")
     public List<NowPlayingInfo> getActivePlays() {
-        return statusService.getActivePlays();
+        List<PlayStatus> activePlays = statusService.getActivePlayStatuses();
+        return activePlays.stream()
+                .map(status -> statusService.createForBroadcast(status))
+                .toList();
     }
 
     @SubscribeMapping("/nowPlaying/recent")
     public List<NowPlayingInfo> getInactivePlays() {
-        return statusService.getInactivePlays();
+        List<PlayStatus> inactivePlays = statusService.getInactivePlayStatuses();
+        return inactivePlays.stream()
+                .map(status -> statusService.createForBroadcast(status))
+                .toList();
     }
 }

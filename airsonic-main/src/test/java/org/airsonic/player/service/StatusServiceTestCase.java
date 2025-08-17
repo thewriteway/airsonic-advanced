@@ -96,9 +96,9 @@ public class StatusServiceTestCase {
         assertTrue(service.getAllStreamStatuses().contains(status));
         assertTrue(service.getStreamStatusesForPlayer(player1).contains(status));
         assertTrue(service.getStreamStatusesForPlayer(player2).isEmpty());
-        assertTrue(service.getInactivePlays().isEmpty());
+        assertTrue(service.getInactivePlayStatuses().isEmpty());
         // won't start until file starts playing
-        assertTrue(service.getActivePlays().isEmpty());
+        assertTrue(service.getActivePlayStatuses().isEmpty());
         verifyNoInteractions(asyncWebSocketClient);
 
         service.removeStreamStatus(status);
@@ -106,8 +106,8 @@ public class StatusServiceTestCase {
         assertTrue(service.getAllStreamStatuses().contains(status));
         assertTrue(service.getStreamStatusesForPlayer(player1).isEmpty());
         assertTrue(service.getStreamStatusesForPlayer(player2).isEmpty());
-        assertFalse(service.getInactivePlays().isEmpty());
-        assertTrue(service.getActivePlays().isEmpty());
+        assertFalse(service.getInactivePlayStatuses().isEmpty());
+        assertTrue(service.getActivePlayStatuses().isEmpty());
         verify(asyncWebSocketClient, timeout(300)).send(eq("/topic/nowPlaying/recent/add"), any(NowPlayingInfo.class));
     }
 
@@ -116,18 +116,18 @@ public class StatusServiceTestCase {
     public void testSimpleAddRemovePlayStatus() {
         PlayStatus status = new PlayStatus(UUID.randomUUID(), new MediaFile(), player1, 0);
         service.addActiveLocalPlay(status);
-        assertTrue(service.getInactivePlays().isEmpty());
-        assertFalse(service.getActivePlays().isEmpty());
+        assertTrue(service.getInactivePlayStatuses().isEmpty());
+        assertFalse(service.getActivePlayStatuses().isEmpty());
         verify(asyncWebSocketClient, timeout(300)).send(eq("/topic/nowPlaying/current/add"), any(NowPlayingInfo.class));
 
         service.removeActiveLocalPlay(status);
-        assertTrue(service.getInactivePlays().isEmpty());
-        assertTrue(service.getActivePlays().isEmpty());
+        assertTrue(service.getInactivePlayStatuses().isEmpty());
+        assertTrue(service.getActivePlayStatuses().isEmpty());
         verify(asyncWebSocketClient, timeout(300)).send(eq("/topic/nowPlaying/current/remove"), any(NowPlayingInfo.class));
 
         service.addRemotePlay(status);
-        assertFalse(service.getInactivePlays().isEmpty());
-        assertTrue(service.getActivePlays().isEmpty());
+        assertFalse(service.getInactivePlayStatuses().isEmpty());
+        assertTrue(service.getActivePlayStatuses().isEmpty());
         verify(asyncWebSocketClient, timeout(300)).send(eq("/topic/nowPlaying/recent/add"), any(NowPlayingInfo.class));
     }
 
