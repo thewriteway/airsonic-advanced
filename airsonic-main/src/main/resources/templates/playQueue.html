@@ -657,7 +657,8 @@
                 },
             
                 onNowPlayingChanged(nowPlayingInfo) {
-                    if (nowPlayingInfo != null && nowPlayingInfo.streamUrl != this.currentStreamUrl && nowPlayingInfo.playerId == this.player.id) {
+                    const nowPlayingStreamUrl = "stream?player=" + nowPlayingInfo.playerId + "&id=" + nowPlayingInfo.mediaFileId;
+                    if (nowPlayingInfo != null && nowPlayingStreamUrl != this.currentStreamUrl && nowPlayingInfo.playerId == this.player.id) {
                         if (this.player.tech != 'WEB') {
                             // TODO this should be keying off skip callbacks (and skip callbacks should be getting emitted)
                             // otherwise there is an issue with the same song appearing multiple times on the playqueue (we'll always select the first)

@@ -21,16 +21,12 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.ajax.NowPlayingInfo;
-import org.airsonic.player.domain.AvatarScheme;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.PlayStatus;
 import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.TransferStatus;
 import org.airsonic.player.domain.UserSettings;
 import org.airsonic.player.service.websocket.AsyncWebSocketClient;
-import org.airsonic.player.util.StringUtil;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -42,14 +38,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Provides services for maintaining the list of stream, download and upload statuses.
+ * Provides services for maintaining the list of stream, download and upload
+ * statuses.
  * <p/>
  * Note that for stream statuses, the last inactive status is also stored.
  *
@@ -65,11 +61,10 @@ public class StatusService {
     private final TaskSchedulingService taskService;
 
     public StatusService(
-        MediaFileService mediaFileService,
-        AsyncWebSocketClient asyncWebSocketClient,
-        TaskSchedulingService taskService,
-        PersonalSettingsService personalSettingsService
-    ) {
+            MediaFileService mediaFileService,
+            AsyncWebSocketClient asyncWebSocketClient,
+            TaskSchedulingService taskService,
+            PersonalSettingsService personalSettingsService) {
         this.mediaFileService = mediaFileService;
         this.taskService = taskService;
         this.asyncWebSocketClient = asyncWebSocketClient;
@@ -78,9 +73,9 @@ public class StatusService {
 
     @EventListener
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        taskService.scheduleFixedDelayTask("remote-playstatus-cleanup", () -> cleanupRemotePlays(), Instant.now().plus(3, ChronoUnit.HOURS), Duration.ofHours(3), true);
+        taskService.scheduleFixedDelayTask("remote-playstatus-cleanup", () -> cleanupRemotePlays(),
+                Instant.now().plus(3, ChronoUnit.HOURS), Duration.ofHours(3), true);
     }
-
 
     private final List<TransferStatus> streamStatuses = Collections.synchronizedList(new ArrayList<>());
     private final List<TransferStatus> downloadStatuses = Collections.synchronizedList(new ArrayList<>());
@@ -119,7 +114,8 @@ public class StatusService {
         // Add inactive status for those players that have no active status.
         return Stream.concat(
                 snapshot.parallelStream(),
-                inactiveStreamStatuses.values().parallelStream().filter(s -> !playerIds.contains(s.getPlayer().getId())))
+                inactiveStreamStatuses.values().parallelStream()
+                        .filter(s -> !playerIds.contains(s.getPlayer().getId())))
                 .collect(Collectors.toList());
     }
 
@@ -159,7 +155,8 @@ public class StatusService {
     }
 
     public void cleanupRemotePlays() {
-        Set<PlayStatus> expired = remotePlays.values().parallelStream().filter(PlayStatus::isExpired).collect(Collectors.toSet());
+        Set<PlayStatus> expired = remotePlays.values().parallelStream().filter(PlayStatus::isExpired)
+                .collect(Collectors.toSet());
         expired.forEach(e -> {
             remotePlays.remove(e.getPlayer().getId());
             broadcast(e, "recent/remove");
@@ -216,25 +213,6 @@ public class StatusService {
         }
     }
 
-    public List<NowPlayingInfo> getActivePlays() {
-        return activeLocalPlays.parallelStream()
-                .map(s -> createForBroadcast(s))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
-
-    public List<NowPlayingInfo> getInactivePlays() {
-        Map<Integer, PlayStatus> inactivePlayStatuses = inactiveStreamStatuses.values().parallelStream()
-                .map(ts -> getPlayStatus(ts))
-                .collect(Collectors.toMap(s -> s.getPlayer().getId(), s -> s));
-        inactivePlayStatuses.putAll(remotePlays);
-
-        return inactivePlayStatuses.values().parallelStream()
-                .map(s -> createForBroadcast(s))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
-
     private boolean isAvailable(PlayStatus status) {
         Player player = status.getPlayer();
         MediaFile mediaFile = status.getMediaFile();
@@ -287,51 +265,21 @@ public class StatusService {
      * Creates a NowPlayingInfo object for the given play status.
      *
      * @param status the play status
-     * @return the NowPlayingInfo object, or null if the status is too old or the user has disabled now playing
+     * @return the NowPlayingInfo object, or null if the status is too old or the
+     *         user has disabled now playing
      */
-    private NowPlayingInfo createForBroadcast(PlayStatus status) {
-        String url = "";// NetworkService.getBaseUrl(request);
-
-        if (!isAvailable(status)) {
+    public NowPlayingInfo createForBroadcast(PlayStatus status) {
+        if (!isAvailable(status))
             return null;
-        }
 
         Player player = status.getPlayer();
         MediaFile mediaFile = status.getMediaFile();
-        String username = player.getUsername();
-        long minutesAgo = status.getMinutesAgo();
-        UserSettings userSettings = personalSettingsService.getUserSettings(username);
 
-        String artist = mediaFile.getArtist();
-        String title = mediaFile.getTitle();
-        String streamUrl = url + "stream?player=" + player.getId() + "&id=" + mediaFile.getId();
-        String albumUrl = url + "main.view?id=" + mediaFile.getId();
-        String lyricsUrl = null;
-        if (!mediaFile.isVideo()) {
-            lyricsUrl = url + "lyrics.view?artistUtf8Hex=" + StringUtil.utf8HexEncode(artist) + "&songUtf8Hex="
-                    + StringUtil.utf8HexEncode(title);
-        }
-        String coverArtUrl = url + "coverArt.view?size=60&id=" + mediaFile.getId();
+        return new NowPlayingInfo(
+                status.getTransferId(),
+                player.getId(),
+                mediaFile.getId());
 
-        String avatarUrl = null;
-        if (userSettings.getAvatarScheme() == AvatarScheme.SYSTEM) {
-            avatarUrl = url + "avatar.view?id=" + userSettings.getSystemAvatarId();
-        } else if (userSettings.getAvatarScheme() == AvatarScheme.CUSTOM
-                && personalSettingsService.getCustomAvatar(username) != null) {
-            avatarUrl = url + "avatar.view?usernameUtf8Hex=" + StringUtil.utf8HexEncode(username);
-        }
-
-        String tooltip = StringEscapeUtils.escapeHtml(artist) + " &ndash; " + StringEscapeUtils.escapeHtml(title);
-
-        if (StringUtils.isNotBlank(player.getName())) {
-            username += "@" + player.getName();
-        }
-        artist = StringEscapeUtils.escapeHtml(StringUtils.abbreviate(artist, 25));
-        title = StringEscapeUtils.escapeHtml(StringUtils.abbreviate(title, 25));
-        username = StringEscapeUtils.escapeHtml(StringUtils.abbreviate(username, 25));
-
-        return new NowPlayingInfo(status.getTransferId(), player.getId(), mediaFile.getId(), username, artist, title,
-                tooltip, streamUrl, albumUrl, lyricsUrl, coverArtUrl, avatarUrl, minutesAgo, status);
     }
 
 }
