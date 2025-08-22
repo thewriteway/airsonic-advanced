@@ -99,12 +99,11 @@ public class LyricsWSController {
             String url = "http://api.chartlyrics.com/apiv1.asmx/SearchLyricDirect?artist=" + artist + "&song=" + song;
             String xml = executeGetRequest(url);
             String lyrics = parseSearchResult(xml);
-            LOG.info("MediaFile id is {}, lyrics: {}", req.getId(), lyrics);
 
             if (lyrics != null && req.getId() != null) {
                 MediaFile mediaFile = mediaFileService.getMediaFile(req.getId());
                 if (mediaFile != null && securityService.isFolderAccessAllowed(mediaFile, user.getName())) {
-                    boolean persisted = lyricsService.saveLyricsForMediaFile(mediaFile, lyrics);
+                    boolean persisted = lyricsService.saveLyricsForMediaFile(mediaFile, lyrics, "chartlyrics.com");
                     LOG.info("Persisted lyrics for song '{}' by '{}': {}", song, artist, persisted);
                     status.setPersisted(persisted);
                 }

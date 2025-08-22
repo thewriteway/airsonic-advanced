@@ -85,7 +85,7 @@ public class LyricsService {
             for (LyricsLine line : lrcFile.getLyricsLines()) {
                 lyricsText.append(line.getText()).append("\n");
             }
-            Lyrics newLyrics = new Lyrics(lyricsText.toString(), mediaFile.getId());
+            Lyrics newLyrics = new Lyrics(lyricsText.toString(), mediaFile.getId(), "file");
             return lyricsRepository.save(newLyrics);
         });
 
@@ -118,7 +118,7 @@ public class LyricsService {
     }
 
     @Transactional
-    public boolean saveLyricsForMediaFile(@Nonnull MediaFile mediaFile, @Nonnull String lyricsText) {
+    public boolean saveLyricsForMediaFile(@Nonnull MediaFile mediaFile, @Nonnull String lyricsText, @Nonnull String source) {
 
         if (mediaFile.isDirectory()) {
             LOG.warn("MediaFile is a directory, cannot save lyrics");
@@ -126,10 +126,20 @@ public class LyricsService {
         }
 
         Lyrics lyrics = lyricsRepository.findByMediaFileId(mediaFile.getId())
-                .orElse(new Lyrics("", mediaFile.getId()));
+                .orElse(new Lyrics("", mediaFile.getId(), source));
         lyrics.setLyrics(lyricsText);
+        lyrics.setSource(source);
         lyricsRepository.save(lyrics);
         return true;
 
     }
+
+    @Transactional
+    public void deleteLyricsForMediaFile(@Nonnull MediaFile mediaFile) {
+        lyricsRepository.findByMediaFileId(mediaFile.getId())
+                .ifPresent(lyrics -> {
+                    lyricsRepository.delete(lyrics);
+                });
+    }
 }
+

@@ -6,6 +6,7 @@ public class LyricsPage {
     private final String artist;
     private final String song;
     private final String lyrics;
+    private final String source;
 
     /**
      * Constructor for LyricsPage
@@ -13,11 +14,12 @@ public class LyricsPage {
      * @param artist the artist name
      * @param song the song title
      */
-    public LyricsPage(Integer id, String artist, String song, String lyrics) {
+    public LyricsPage(Integer id, String artist, String song, String lyrics, String source) {
         this.id = id;
         this.artist = artist;
         this.song = song;
         this.lyrics = lyrics;
+        this.source = source;
     }
 
     public Integer getId() {
@@ -34,6 +36,10 @@ public class LyricsPage {
 
     public String getLyrics() {
         return lyrics;
+    }
+
+    public String getSource() {
+        return source;
     }
 
 }

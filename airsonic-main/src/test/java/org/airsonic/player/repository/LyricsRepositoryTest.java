@@ -113,7 +113,7 @@ public class LyricsRepositoryTest {
 
     @Test
     public void testCreateLyrics() {
-        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId());
+        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId(), "file");
         lyricsRepository.save(lyrics);
 
         Lyrics newLyrics = lyricsRepository.findAll().get(0);
@@ -124,7 +124,7 @@ public class LyricsRepositoryTest {
 
     @Test
     public void testUpdateLyrics() {
-        Lyrics lyrics = new Lyrics("Initial lyrics text", testMediaFile.getId());
+        Lyrics lyrics = new Lyrics("Initial lyrics text", testMediaFile.getId(), "file");
         lyricsRepository.save(lyrics);
         lyrics = lyricsRepository.findAll().get(0);
         lyrics.setLyrics("Updated lyrics text");
@@ -137,7 +137,7 @@ public class LyricsRepositoryTest {
 
     @Test
     public void testDeleteLyrics() {
-        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId());
+        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId(), "file");
         lyricsRepository.save(lyrics);
         assertEquals(1, lyricsRepository.count());
         lyricsRepository.deleteById(lyrics.getId());
@@ -146,13 +146,13 @@ public class LyricsRepositoryTest {
 
     @Test
     public void testErrorIfInvalidMediaFileId() {
-        Lyrics lyrics = new Lyrics("Sample lyrics text", 9999); // Assuming 9999 is an invalid ID
+        Lyrics lyrics = new Lyrics("Sample lyrics text", 9999, "file"); // Assuming 9999 is an invalid ID
         assertThrows(DataIntegrityViolationException.class, () -> lyricsRepository.save(lyrics));
     }
 
     @Test
     public void testFindByMediaFileId() {
-        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId());
+        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId(), "file");
         lyricsRepository.save(lyrics);
         Lyrics foundLyrics = lyricsRepository.findByMediaFileId(testMediaFile.getId()).orElse(null);
         assertEquals(lyrics.getLyrics(), foundLyrics.getLyrics());
@@ -163,7 +163,7 @@ public class LyricsRepositoryTest {
 
     @Test
     public void testDeleteByCascadeDelete() {
-        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId());
+        Lyrics lyrics = new Lyrics("Sample lyrics text", testMediaFile.getId(), "file");
         lyricsRepository.save(lyrics);
         assertEquals(1, lyricsRepository.count());
 

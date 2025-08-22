@@ -24,6 +24,9 @@ public class Lyrics {
     @Column(name = "media_file_id", nullable = false)
     private Integer mediaFileId;
 
+    @Column(name = "source", nullable = false)
+    private String source;
+
     @Column(name = "created", nullable = false)
     private Instant created;
 
@@ -37,9 +40,10 @@ public class Lyrics {
      *
      * @param lyrics The lyrics text.
      */
-    public Lyrics(String lyrics, Integer mediaFileId) {
+    public Lyrics(String lyrics, Integer mediaFileId, String source) {
         this.lyrics = lyrics;
         this.mediaFileId = mediaFileId;
+        this.source = source;
         Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
         this.created = now;
         this.updated = now;
@@ -86,6 +90,14 @@ public class Lyrics {
 
     public void setUpdated(Instant updated) {
         this.updated = updated;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 
     @Override

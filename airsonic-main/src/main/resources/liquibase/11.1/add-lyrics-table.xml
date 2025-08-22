@@ -23,6 +23,9 @@
                              referencedTableName="media_file" referencedColumnNames="id"
                              deleteCascade="true"/>
             </column>
+            <column name="source" type="${varchar_type}">
+                <constraints nullable="false"/>
+            </column>
             <column name="created" type="${timestamp_type}" defaultValueComputed="${curr_date_expr}"/>
             <column name="updated" type="${timestamp_type}" defaultValueComputed="${curr_date_expr}"/>
         </createTable>

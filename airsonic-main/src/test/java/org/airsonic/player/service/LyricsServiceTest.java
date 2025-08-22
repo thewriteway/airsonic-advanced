@@ -6,6 +6,8 @@ import org.airsonic.player.repository.LyricsRepository;
 import org.airsonic.player.util.MusicFolderTestData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -62,7 +64,7 @@ class LyricsServiceTest {
         MediaFile mediaFile = mock(MediaFile.class);
         when(mediaFile.isDirectory()).thenReturn(false);
         when(mediaFile.getId()).thenReturn(2);
-        Lyrics lyrics = new Lyrics("existing lyrics", 2);
+        Lyrics lyrics = new Lyrics("existing lyrics", 2, "file");
         when(lyricsRepository.findByMediaFileId(eq(2))).thenReturn(Optional.of(lyrics));
 
         Lyrics result = lyricsService.getLyricsFromMediaFile(mediaFile);
@@ -108,6 +110,7 @@ class LyricsServiceTest {
         assertNotNull(result.getLyrics());
         assertEquals(3, result.getMediaFileId());
         assertEquals(1, result.getId());
+        assertEquals("file", result.getSource());
         assertNotNull(result.getCreated());
         assertNotNull(result.getUpdated());
 
@@ -136,12 +139,13 @@ class LyricsServiceTest {
 
     }
 
-    @Test
-    void saveLyricsForMediaFile_shouldReturnFalseForDirectory() {
+    @ParameterizedTest
+    @ValueSource(strings = { "file", "user" })
+    void saveLyricsForMediaFile_shouldReturnFalseForDirectory(String source) {
         MediaFile mediaFile = mock(MediaFile.class);
         when(mediaFile.isDirectory()).thenReturn(true);
 
-        boolean result = lyricsService.saveLyricsForMediaFile(mediaFile, "lyrics");
+        boolean result = lyricsService.saveLyricsForMediaFile(mediaFile, "lyrics", source);
 
         assertFalse(result);
         verifyNoInteractions(lyricsRepository);
@@ -153,13 +157,14 @@ class LyricsServiceTest {
         when(mediaFile.getId()).thenReturn(10);
         when(lyricsRepository.findByMediaFileId(eq(10))).thenReturn(Optional.empty());
 
-        boolean result = lyricsService.saveLyricsForMediaFile(mediaFile, "new lyrics");
+        boolean result = lyricsService.saveLyricsForMediaFile(mediaFile, "new lyrics", "user");
 
         assertTrue(result);
         ArgumentCaptor<Lyrics> captor = ArgumentCaptor.forClass(Lyrics.class);
         verify(lyricsRepository).save(captor.capture());
         assertEquals("new lyrics", captor.getValue().getLyrics());
         assertEquals(10, captor.getValue().getMediaFileId());
+        assertEquals("user", captor.getValue().getSource());
     }
 
     @Test
@@ -167,13 +172,15 @@ class LyricsServiceTest {
         MediaFile mediaFile = mock(MediaFile.class);
         when(mediaFile.isDirectory()).thenReturn(false);
         when(mediaFile.getId()).thenReturn(11);
-        Lyrics lyrics = new Lyrics("old lyrics", 11);
+        Lyrics lyrics = new Lyrics("old lyrics", 11, "file");
         when(lyricsRepository.findByMediaFileId(11)).thenReturn(Optional.of(lyrics));
 
-        boolean result = lyricsService.saveLyricsForMediaFile(mediaFile, "updated lyrics");
+        boolean result = lyricsService.saveLyricsForMediaFile(mediaFile, "updated lyrics", "user");
 
         assertTrue(result);
         assertEquals("updated lyrics", lyrics.getLyrics());
+        assertEquals(11, lyrics.getMediaFileId());
+        assertEquals("user", lyrics.getSource());
         verify(lyricsRepository).save(lyrics);
     }
 }
