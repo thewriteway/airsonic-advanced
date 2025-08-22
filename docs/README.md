@@ -6,6 +6,7 @@
 - [WebUI](./webui/README.md)
   - [Media](./webui/media.md)
   - [Podcast](./webui/podcast.md)
+  - [Lyrics](./webui/lyrics.md)
 - [Configures](./configures/README.md)
   - [Detail Configuration](./configures/detail.md)
 - Proxy
