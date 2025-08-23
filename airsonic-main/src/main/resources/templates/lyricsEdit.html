@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html><head>
+    <th:block th:replace="~{head :: common_head}" />
+    <th:block th:replace="~{jquery}" />
+    <title th:text="#{lyrics.title}"></title>
+</head>
+<body class="mainframe bgcolor1" onload="init();">
+
+<table>
+    <tr>
+        <td th:text="#{lyrics.artist}"></td>
+        <td style="padding-left:0.50em" th:text="${view.artist}"></td>
+    </tr>
+    <tr>
+        <td th:text="#{lyrics.song}"></td>
+        <td style="padding-left:0.50em" th:text="${view.song}"></td>
+    </tr>
+</table>
+<hr/>
+
+<div id="lyrics" style="display:inline;">
+    <form th:action="@{/lyrics}" method="post" th:object="${form}">
+        <input type="hidden" th:field="*{id}" />
+        <div id="lyricsText">
+            <textarea name="lyrics" rows="20" style="width:100%; box-sizing:border-box;" th:field="*{lyrics}" tabindex="2"></textarea>
+        </div>
+        <div style="text-align:left; margin-top:1em;">
+            <button type="submit" tabindex="3" th:text="#{common.save}"></button>
+            <button type="button"
+                    th:onclick="|location.href='@{/lyrics(id=${view.id})}'|"
+                    tabindex="4" th:text="#{common.cancel}"></button>
+        </div>
+    </form>
+</div>
+
+<hr/>
+<p style="text-align:center">
+    <a href="javascript:self.close()">[<span th:text="#{common.close}"></span>]</a>
+</p>
+
+</body>
+</html>

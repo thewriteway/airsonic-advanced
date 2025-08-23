@@ -1,0 +1,23 @@
+[ti:Sample Song]
+[ar:Sample Artist]
+[al:Sample Album]
+[au:Sample Author]
+[lr:Sample Lyricist]
+[length:03:45]
+[by:LRC File Creator]
+[offset:+500]
+[re:Sample LRC Editor]
+[tool:Sample LRC Editor]
+[ve:1.0]
+[# This is a sample LRC file with placeholder lyrics]
+
+[00:10.37]Lyrics1 Line 1
+[00:20.09][00:25.31]Lyrics2 Line 2
+[00:30.42]Lyrics3
+[00:40.73]Lyrics4
+[00:50.13][00:52.14]Lyrics5
+[01:00.59]Lyrics6
+[01:10.08]Lyrics7
+[01:20.81]Lyrics8
+[01:30.01]Lyrics9
+[01:40.00]Lyrics10

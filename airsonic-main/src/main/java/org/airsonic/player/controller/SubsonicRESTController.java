@@ -21,11 +21,10 @@
 package org.airsonic.player.controller;
 
 import com.google.common.primitives.Ints;
-import org.airsonic.player.ajax.LyricsInfo;
-import org.airsonic.player.ajax.LyricsWSController;
 import org.airsonic.player.command.UserSettingsCommand;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.Bookmark;
+import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.i18n.LocaleResolver;
@@ -54,6 +53,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.subsonic.restapi.*;
+import org.subsonic.restapi.Lyrics;
 import org.subsonic.restapi.PodcastStatus;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -119,7 +119,7 @@ public class SubsonicRESTController {
     @Autowired
     private PlaylistService playlistService;
     @Autowired
-    private LyricsWSController lyricsWSController;
+    private LyricsService lyricsService;
     @Autowired
     private PlayQueueService playQueueService;
     @Autowired
@@ -2049,12 +2049,18 @@ public class SubsonicRESTController {
         request = wrapRequest(request);
         String artist = request.getParameter("artist");
         String title = request.getParameter("title");
-        LyricsInfo lyrics = lyricsWSController.getLyrics(artist, title);
+
+        String username = securityService.getCurrentUsername(request);
+        List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
+
 
         Lyrics result = new Lyrics();
-        result.setArtist(lyrics.getArtist());
-        result.setTitle(lyrics.getTitle());
-        result.setContent(lyrics.getLyrics());
+        result.setArtist(artist);
+        result.setTitle(title);
+        org.airsonic.player.domain.Lyrics lyrics = lyricsService.getLyricsFromArtistAndTitle(artist, title, musicFolders);
+        if (lyrics != null) {
+            result.setContent(lyrics.getLyrics());
+        }
 
         Response res = createResponse();
         res.setLyrics(result);
