@@ -25,7 +25,6 @@ import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.MusicFolder.Type;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import jakarta.transaction.Transactional;
 
@@ -60,9 +58,6 @@ public class LyricsRepositoryTest {
 
     @Autowired
     private MusicFolderRepository musicFolderRepository;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @TempDir
     private static Path tempAirsonicDir;
@@ -102,13 +97,6 @@ public class LyricsRepositoryTest {
         testMediaFile.setChildrenLastUpdated(Instant.now());
         mediaFileRepository.save(testMediaFile);
 
-    }
-
-    @AfterEach
-    public void cleanUpAfter() {
-        jdbcTemplate.execute("DELETE FROM media_file");
-        jdbcTemplate.execute("DELETE FROM lyrics");
-        musicFolderRepository.delete(testFolder);
     }
 
     @Test
