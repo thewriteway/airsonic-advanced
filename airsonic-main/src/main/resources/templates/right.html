@@ -6,6 +6,9 @@
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 
     <script type="text/javascript" th:inline="javascript">
+        // Pass the evaluated Thymeleaf URL to JS variable
+        const nowPlayingStatusUrl = /*[[@{/nowPlaying/status}]]*/ "/nowPlaying/status";
+
         class TaskQueue {
           constructor() {
             this.q = [];
@@ -103,10 +106,13 @@
 
         async function addStatus(status, table) {
             const tableRoot = document.getElementById(table + 'Table');
+            if (!tableRoot) {
+                return;
+            }
             const selector = '.playstatus-' + status.transferId;
 
-
-            const res = await fetch(`/nowPlaying/status?id=${encodeURIComponent(status.transferId)}`, { credentials: 'same-origin' });
+            const statusUrl = nowPlayingStatusUrl + "?id=" + status.transferId;
+            const res = await fetch(statusUrl, { credentials: 'same-origin' });
 
             if (!res.ok) {
                 return;
