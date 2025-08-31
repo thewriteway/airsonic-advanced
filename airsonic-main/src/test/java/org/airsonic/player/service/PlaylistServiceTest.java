@@ -17,8 +17,8 @@ import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -38,6 +38,9 @@ public class PlaylistServiceTest {
 
     @Mock
     private AsyncWebSocketClient asyncWebSocketClient;
+
+    @Mock
+    private PlaylistMediaFileRepository playlistMediaFileRepository;
 
     @Mock
     private PlaylistCache playlistCache;
@@ -72,7 +75,7 @@ public class PlaylistServiceTest {
 
         List<Playlist> result = playlistService.getAllPlaylists();
 
-        assertThat(result).isEqualTo(playlists);
+        assertEquals(playlists, result);
         verify(playlistRepository).findAll(any(Sort.class));
     }
 
@@ -85,7 +88,7 @@ public class PlaylistServiceTest {
 
         List<Playlist> result = playlistService.getReadablePlaylistsForUser("testuser");
 
-        assertThat(result).hasSize(1);
+        assertEquals(1, result.size());
         verify(playlistRepository).findByUsername(anyString());
         verify(playlistRepository).findBySharedTrue();
         verify(playlistRepository).findByUsernameNotAndSharedUsersUsername(anyString(), anyString());
@@ -98,7 +101,7 @@ public class PlaylistServiceTest {
 
         List<Playlist> result = playlistService.getWritablePlaylistsForUser("testuser");
 
-        assertThat(result).hasSize(1);
+        assertEquals(1, result.size());
         verify(userRepository).findByUsername(anyString());
         verify(playlistRepository).findByUsernameOrderByNameAsc(anyString());
     }
@@ -110,7 +113,7 @@ public class PlaylistServiceTest {
 
         Playlist result = playlistService.getPlaylist(1);
 
-        assertThat(result).isEqualTo(playlist);
+        assertEquals(playlist, result);
         verify(playlistCache).getPlaylistById(anyInt());
         verify(playlistRepository).findById(anyInt());
         verify(playlistCache).putPlaylistById(anyInt(), any(Playlist.class));
@@ -125,7 +128,7 @@ public class PlaylistServiceTest {
 
         List<String> result = playlistService.getPlaylistUsers(1);
 
-        assertThat(result).contains("testuser");
+        assertTrue(result.contains("testuser"));
         verify(playlistCache).getUsersForPlaylist(anyInt());
         verify(playlistRepository).findById(anyInt());
         verify(playlistCache).putUsersForPlaylist(anyInt(), anyList());
@@ -134,26 +137,25 @@ public class PlaylistServiceTest {
     @Test
     public void testGetFilesInPlaylist() {
         // Create 10 media files, half of them are present in the playlist
-        List<PlaylistMediaFile> playlistMediaFiles = new ArrayList<>();
+        List<MediaFile> playlistMediaFiles = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             MediaFile mediaFile = new MediaFile();
             mediaFile.setId(i);
             mediaFile.setPresent(i % 2 == 0);
-            playlistMediaFiles.add(new PlaylistMediaFile(playlist, mediaFile, i));
+            playlistMediaFiles.add(mediaFile);
         }
-        playlist.setPlaylistMediaFiles(playlistMediaFiles);
-        when(playlistRepository.findById(anyInt())).thenReturn(Optional.of(playlist));
+        when(playlistMediaFileRepository.findMediaFilesByPlaylistId(anyInt())).thenReturn(playlistMediaFiles);
 
         // Get files in the playlist
         List<MediaFile> result = playlistService.getFilesInPlaylist(1);
 
         // Assert that only the present files are returned
-        assertThat(result).hasSize(5);
+        assertEquals(5, result.size());
         for (int i = 0; i < 5; i++) {
-            assertThat(result.get(i).getId()).isEqualTo(i * 2);
+            assertEquals(i * 2, result.get(i).getId());
         }
         // Verify that the playlist was fetched and the files were filtered
-        verify(playlistRepository).findById(anyInt());
+        verifyNoInteractions(playlistRepository);
     }
 
     @Test
@@ -171,14 +173,14 @@ public class PlaylistServiceTest {
 
         Playlist result = playlistService.setFilesInPlaylist(1, files);
 
-        assertThat(result).isEqualTo(playlist);
+        assertEquals(playlist, result);
         verify(playlistRepository).findById(anyInt());
         verify(playlistRepository).saveAndFlush(any(Playlist.class));
-        assertThat(result.getDuration()).isEqualTo(1000.0 * 10);
-        assertThat(result.getFileCount()).isEqualTo(5);
+        assertEquals(1000.0 * 10, result.getDuration());
+        assertEquals(5, result.getFileCount());
         for (int i = 0; i < 5; i++) {
-            assertThat(result.getPlaylistMediaFiles().get(i).getOrderIndex()).isEqualTo(i);
-            assertThat(result.getPlaylistMediaFiles().get(i).getMediaFile().getId()).isEqualTo(i);
+            assertEquals(i, result.getPlaylistMediaFiles().get(i).getOrderIndex());
+            assertEquals(i, result.getPlaylistMediaFiles().get(i).getMediaFile().getId());
         }
     }
 
@@ -205,7 +207,7 @@ public class PlaylistServiceTest {
 
         List<Playlist> result = playlistService.refreshPlaylistsStats();
 
-        assertThat(result).hasSize(1);
+        assertEquals(1, result.size());
         verify(playlistRepository).findAll();
         verify(playlistRepository).save(any(Playlist.class));
     }
@@ -309,7 +311,7 @@ public class PlaylistServiceTest {
 
         boolean result = playlistService.isExist(1);
 
-        assertThat(result).isTrue();
+        assertTrue(result);
         verify(playlistRepository).existsById(anyInt());
     }
 
@@ -319,7 +321,7 @@ public class PlaylistServiceTest {
 
         boolean result = playlistService.isWriteAllowed(1, "testuser");
 
-        assertThat(result).isTrue();
+        assertTrue(result);
         verify(playlistRepository).existsByIdAndUsername(anyInt(), anyString());
     }
 

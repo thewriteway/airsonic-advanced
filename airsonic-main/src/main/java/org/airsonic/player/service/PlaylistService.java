@@ -20,10 +20,13 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.PlayQueue;
+import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.Playlist;
 import org.airsonic.player.domain.PlaylistMediaFile;
 import org.airsonic.player.domain.User;
+import org.airsonic.player.repository.PlaylistMediaFileRepository;
 import org.airsonic.player.repository.PlaylistRepository;
 import org.airsonic.player.repository.UserRepository;
 import org.airsonic.player.service.cache.PlaylistCache;
@@ -31,7 +34,6 @@ import org.airsonic.player.service.websocket.AsyncWebSocketClient;
 import org.airsonic.player.util.LambdaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,9 @@ import org.springframework.util.CollectionUtils;
 import jakarta.annotation.Nonnull;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,14 +60,34 @@ public class PlaylistService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlaylistService.class);
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private PlaylistRepository playlistRepository;
-    @Autowired
-    private AsyncWebSocketClient asyncWebSocketClient;
-    @Autowired
-    private PlaylistCache playlistCache;
+    private final UserRepository userRepository;
+    private final PlaylistRepository playlistRepository;
+    private final AsyncWebSocketClient asyncWebSocketClient;
+    private final PlaylistCache playlistCache;
+    private final PlaylistMediaFileRepository playlistMediaFileRepository;
+    private final MediaFileService mediaFileService;
+    private final MediaFolderService mediaFolderService;
+    private final PlayerService playerService;
+
+    public PlaylistService(
+        UserRepository userRepository,
+        PlaylistRepository playlistRepository,
+        AsyncWebSocketClient asyncWebSocketClient,
+        PlaylistCache playlistCache,
+        PlaylistMediaFileRepository playlistMediaFileRepository,
+        PlayerService playerService,
+        MediaFolderService mediaFolderService,
+        MediaFileService mediaFileService
+    ) {
+        this.userRepository = userRepository;
+        this.playlistRepository = playlistRepository;
+        this.asyncWebSocketClient = asyncWebSocketClient;
+        this.playlistCache = playlistCache;
+        this.playlistMediaFileRepository = playlistMediaFileRepository;
+        this.playerService = playerService;
+        this.mediaFolderService = mediaFolderService;
+        this.mediaFileService = mediaFileService;
+    }
 
 
     /**
@@ -142,6 +167,7 @@ public class PlaylistService {
         return result;
     }
 
+    @Transactional(readOnly = true)
     public List<MediaFile> getFilesInPlaylist(int id) {
         return getFilesInPlaylist(id, false);
     }
@@ -149,18 +175,10 @@ public class PlaylistService {
 
     @Transactional(readOnly = true)
     public List<MediaFile> getFilesInPlaylist(int id, boolean includeNotPresent) {
-        return playlistRepository.findById(id).map(p -> {
-            return p.getPlaylistMediaFiles().stream()
-                .map(PlaylistMediaFile::getMediaFile)
+        return playlistMediaFileRepository.findMediaFilesByPlaylistId(id).stream()
                 .filter(Objects::nonNull)
                 .filter(x -> x.isPresent() || includeNotPresent)
                 .collect(Collectors.toList());
-        }).orElseGet(
-            () -> {
-                LOG.warn("Playlist {} not found", id);
-                return new ArrayList<>();
-            }
-        );
     }
 
     private List<MediaFile> filterNoDurationFiles(List<MediaFile> files) {
@@ -188,7 +206,6 @@ public class PlaylistService {
                 return null;
             });
     }
-
 
     private Playlist setFilesInPlaylist(Playlist playlist, List<MediaFile> files) {
 
@@ -429,6 +446,48 @@ public class PlaylistService {
                         .forEach(u -> asyncWebSocketClient.sendToUser(u, "/queue/playlists/updated", bp));
             }
         });
+    }
+
+    /**
+     * Creates a new playlist for the specified play queue.
+     *
+     * @param playerId the ID of the player
+     * @param username the username of the user creating the playlist
+     * @param locale the locale to use for formatting
+     * @return the ID of the created playlist
+     */
+    @Transactional
+    public Integer createPlaylistForPlayQueue(@Nonnull Integer playerId, @Nonnull String username, Locale locale) {
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale);
+        Instant now = Instant.now();
+        String name = dateFormat.format(now.atZone(ZoneId.systemDefault()));
+
+        Playlist playlist = createPlaylist(name, false, username);
+        broadcast(playlist);
+
+        Player player = playerService.getPlayerById(playerId);
+        playlist = setFilesInPlaylist(playlist, player.getPlayQueue().getFiles());
+
+        playlistRepository.saveAndFlush(playlist);
+        return playlist.getId();
+    }
+
+    @Transactional
+    public Integer createPlaylistForStarredSongs(@Nonnull String username, Locale locale) {
+
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale);
+        ResourceBundle bundle = ResourceBundle.getBundle("org.airsonic.player.i18n.ResourceBundle", locale);
+        Instant now = Instant.now();
+        String name = bundle.getString("top.starred") + " " + dateFormat.format(now.atZone(ZoneId.systemDefault()));
+
+        Playlist playlist = createPlaylist(name, false, username);
+        broadcast(playlist);
+
+        List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
+        List<MediaFile> musicFiles = mediaFileService.getStarredSongs(0, Integer.MAX_VALUE, username, musicFolders);
+        setFilesInPlaylist(playlist, musicFiles);
+        Integer playlistId = playlist.getId();
+        return playlistId;
     }
 
     public static class BroadcastedPlaylist extends Playlist {

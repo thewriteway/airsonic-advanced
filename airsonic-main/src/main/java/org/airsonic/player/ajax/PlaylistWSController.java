@@ -1,13 +1,9 @@
 package org.airsonic.player.ajax;
 
 import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.MusicFolder;
-import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.Playlist;
 import org.airsonic.player.i18n.LocaleResolver;
 import org.airsonic.player.service.MediaFileService;
-import org.airsonic.player.service.MediaFolderService;
-import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.PlaylistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -26,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,10 +32,6 @@ public class PlaylistWSController {
     private MediaFileService mediaFileService;
     @Autowired
     private PlaylistService playlistService;
-    @Autowired
-    private MediaFolderService mediaFolderService;
-    @Autowired
-    private PlayerService playerService;
     @Autowired
     private LocaleResolver localeResolver;
 
@@ -55,66 +46,34 @@ public class PlaylistWSController {
         return playlistService.getWritablePlaylistsForUser(p.getName());
     }
 
-    /**
-     * Creates a playlist and broadcasts it to all users that have access to it.
-     *
-     * @param playlist the playlist to create
-     * @return the id of the created playlist
-     */
-    private Playlist createPlaylist(String name, boolean shared, String username) {
-        Playlist result = playlistService.createPlaylist(name, shared, username);
-        playlistService.broadcast(result);
-        return result;
-    }
-
     @MessageMapping("/create/empty")
     @SendToUser(broadcast = false)
     public int createEmptyPlaylist(Principal p) {
         Locale locale = localeResolver.resolveLocale(p.getName());
         DateTimeFormatter dateFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale);
         Instant now = Instant.now();
-        Playlist result = createPlaylist(dateFormat.format(now.atZone(ZoneId.systemDefault())), false, p.getName());
+        Playlist result = playlistService.createPlaylist(dateFormat.format(now.atZone(ZoneId.systemDefault())), false, p.getName());
+        playlistService.broadcast(result);
         return result.getId();
     }
 
     @MessageMapping("/create/starred")
     @SendToUser(broadcast = false)
     public int createPlaylistForStarredSongs(Principal p) {
-        Locale locale = localeResolver.resolveLocale(p.getName());
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale);
-
-        ResourceBundle bundle = ResourceBundle.getBundle("org.airsonic.player.i18n.ResourceBundle", locale);
-        Instant now = Instant.now();
-        String name = bundle.getString("top.starred") + " " + dateFormat.format(now.atZone(ZoneId.systemDefault()));
         String username = p.getName();
-
-        Playlist result = createPlaylist(name, false, username);
-        List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
-        List<MediaFile> songs = mediaFileService.getStarredSongs(0, Integer.MAX_VALUE, username, musicFolders);
-        Integer playlistId = result.getId();
-        playlistService.setFilesInPlaylist(playlistId, songs);
+        Locale locale = localeResolver.resolveLocale(username);
+        Integer playlistId = playlistService.createPlaylistForStarredSongs(username, locale);
         playlistService.broadcastFileChange(playlistId, false, true);
-        return result.getId();
+        return playlistId;
     }
 
     @MessageMapping("/create/playqueue")
     @SendToUser(broadcast = false)
     public int createPlaylistForPlayQueue(Principal p, Integer playerId) throws Exception {
-        Player player = playerService.getPlayerById(playerId);
-        Locale locale = localeResolver.resolveLocale(p.getName());
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale);
-
-        Instant now = Instant.now();
-        Playlist playlist = new Playlist();
-        playlist.setUsername(p.getName());
-        playlist.setShared(false);
-        playlist.setName(dateFormat.format(now.atZone(ZoneId.systemDefault())));
-
-        Playlist result = createPlaylist(dateFormat.format(now.atZone(ZoneId.systemDefault())), false, p.getName());
-        Integer playlistId = result.getId();
-        playlistService.setFilesInPlaylist(playlistId, player.getPlayQueue().getFiles());
+        String username = p.getName();
+        Locale locale = localeResolver.resolveLocale(username);
+        Integer playlistId = playlistService.createPlaylistForPlayQueue(playerId, username, locale);
         playlistService.broadcastFileChange(playlistId, false, true);
-
         return playlistId;
     }
 
