@@ -26,7 +26,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cxf.version>4.1.4</cxf.version>
         <snakeyaml.version>2.5</snakeyaml.version>
-        <lucene.version>10.3.1</lucene.version>
+        <lucene.version>10.3.2</lucene.version>
         <logback.version>1.5.20</logback.version>
         <docker.container.repo>ghcr.io/kagemomiji/airsonic-advanced</docker.container.repo>
     </properties>
