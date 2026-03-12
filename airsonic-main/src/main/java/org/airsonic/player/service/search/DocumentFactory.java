@@ -124,6 +124,9 @@ public class DocumentFactory {
     };
 
     public final Term createPrimarykey(Integer id) {
+        if (id == null) {
+            return null;
+        }
         return new Term(FieldNames.ID, Integer.toString(id));
     }
 
@@ -151,7 +154,9 @@ public class DocumentFactory {
         fieldId.accept(doc, mediaFile.getId());
         fieldWords.accept(doc, FieldNames.ARTIST, mediaFile.getArtist());
         fieldWords.accept(doc, FieldNames.ALBUM, mediaFile.getAlbumName());
-        fieldFolderPath.accept(doc, musicFolder.getPath().toString());
+        if (musicFolder != null && musicFolder.getPath() != null) {
+            fieldFolderPath.accept(doc, musicFolder.getPath().toString());
+        }
         return doc;
     }
 
@@ -166,7 +171,9 @@ public class DocumentFactory {
         Document doc = new Document();
         fieldId.accept(doc, mediaFile.getId());
         fieldWords.accept(doc, FieldNames.ARTIST, mediaFile.getName());
-        fieldFolderPath.accept(doc, musicFolder.getPath().toString());
+        if (musicFolder != null && musicFolder.getPath() != null) {
+            fieldFolderPath.accept(doc, musicFolder.getPath().toString());
+        }
         return doc;
     }
 
@@ -182,7 +189,9 @@ public class DocumentFactory {
         fieldId.accept(doc, album.getId());
         fieldWords.accept(doc, FieldNames.ARTIST, album.getArtist());
         fieldWords.accept(doc, FieldNames.ALBUM, album.getName());
-        fieldFolderId.accept(doc, album.getFolder().getId());
+        if (album.getFolder() != null && album.getFolder().getId() != null) {
+            fieldFolderId.accept(doc, album.getFolder().getId());
+        }
         return doc;
     }
 
@@ -209,7 +218,9 @@ public class DocumentFactory {
         Document doc = new Document();
         fieldId.accept(doc, artist.getId());
         fieldWords.accept(doc, FieldNames.ARTIST, artist.getName());
-        fieldFolderId.accept(doc, musicFolder.getId());
+        if (musicFolder != null && musicFolder.getId() != null) {
+            fieldFolderId.accept(doc, musicFolder.getId());
+        }
         return doc;
     }
 
@@ -228,7 +239,9 @@ public class DocumentFactory {
         fieldWords.accept(doc, FieldNames.ARTIST, mediaFile.getArtist());
         fieldGenre.accept(doc, mediaFile.getGenre());
         fieldYear.accept(doc, FieldNames.YEAR, mediaFile.getYear());
-        fieldFolderPath.accept(doc, musicFolder.getPath().toString());
+        if (musicFolder != null && musicFolder.getPath() != null) {
+            fieldFolderPath.accept(doc, musicFolder.getPath().toString());
+        }
         return doc;
     }
 

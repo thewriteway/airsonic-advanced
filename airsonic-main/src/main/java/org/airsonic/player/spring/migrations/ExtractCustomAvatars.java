@@ -31,10 +31,12 @@ public class ExtractCustomAvatars implements CustomSqlChange {
 
     @Override
     public void setUp() throws SetupException {
+        // No setup required for this custom change
     }
 
     @Override
     public void setFileOpener(ResourceAccessor resourceAccessor) {
+        // Not needed for this implementation
     }
 
     @Override
@@ -59,12 +61,11 @@ public class ExtractCustomAvatars implements CustomSqlChange {
 
                 while (result.next()) {
                     try {
-                        Path folder = homeConfig.getAirsonicHome().resolve("avatars").resolve(result.getString("username"));
-                        Files.createDirectories(folder);
-                        Path filePath = folder.resolve(result.getString("name") + "." + StringUtils.substringAfter(result.getString("mime_type"), "/"));
-                        Files.copy(new ByteArrayInputStream(result.getBytes("data")), filePath);
+                        processAvatarRow(result, homeConfig);
                     } catch (Exception e) {
-                        LOG.warn("Exception while trying to extract avatar for user {}. Will skip this user.", result.getString("username"), e);
+                        String user = "unknown";
+                        try { user = result.getString("username"); } catch (Exception ignored) {}
+                        LOG.warn("Exception while trying to extract avatar for user {}. Will skip this user.", user, e);
                     }
                 }
             } catch (DatabaseException | SQLException e) {
@@ -74,4 +75,34 @@ public class ExtractCustomAvatars implements CustomSqlChange {
 
         return new SqlStatement[0];
     }
+
+    private static String sanitizeName(String name) {
+        if (name == null) {
+            return "unknown";
+        }
+        String n = name.replaceAll("[^A-Za-z0-9@._-]", "_");
+        if (n.isEmpty()) {
+            n = "unknown";
+        }
+        if (n.length() > 64) {
+            n = n.substring(0, 64);
+        }
+        return n;
+    }
+
+    private void processAvatarRow(ResultSet result, AirsonicHomeConfig homeConfig) throws Exception {
+        String username = result.getString("username");
+        String name = result.getString("name");
+        String mime = result.getString("mime_type");
+
+        String safeUsername = sanitizeName(username);
+        String safeBaseName = sanitizeName(name);
+        String suffix = StringUtils.substringAfter(mime, "/");
+
+        Path folder = homeConfig.getAirsonicHome().resolve("avatars").resolve(safeUsername);
+        Files.createDirectories(folder);
+        Path filePath = folder.resolve(safeBaseName + "." + suffix);
+        Files.copy(new ByteArrayInputStream(result.getBytes("data")), filePath);
+    }
+
 }

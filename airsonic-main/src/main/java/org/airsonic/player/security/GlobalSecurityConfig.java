@@ -175,6 +175,7 @@ public class GlobalSecurityConfig {
                     .failureUrl(FAILURE_URL)
                     .usernameParameter("j_username")
                     .passwordParameter("j_password"))
+                .sessionManagement(manager -> manager.sessionFixation().changeSessionId())
             .logout((logout) -> logout
                 .deleteCookies("JSESSIONID", "XSRF-TOKEN")
                 .clearAuthentication(true)
