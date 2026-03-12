@@ -74,10 +74,10 @@
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <insert tableName="user">
-            <column name="username" value="admin"/>
-            <column name="password" value="admin"/>
-        </insert>
+        <!-- Intentionally do not insert a default admin user with a fixed password.
+             Creating default credentials in source control is insecure. The application
+             will create an admin account at runtime if none exists, or an administrator
+             should create one via a secure provisioning process. -->
         <rollback>
             <dropTable tableName="user" />
         </rollback>
@@ -98,26 +98,10 @@
             </column>
         </createTable>
         <addPrimaryKey tableName="user_role" columnNames="username,role_id" />
-        <insert tableName="user_role">
-            <column name="username" value="admin"/>
-            <column name="role_id" valueNumeric="1" />
-        </insert>
-        <insert tableName="user_role">
-            <column name="username" value="admin"/>
-            <column name="role_id" valueNumeric="2" />
-        </insert>
-        <insert tableName="user_role">
-            <column name="username" value="admin"/>
-            <column name="role_id" valueNumeric="3" />
-        </insert>
-        <insert tableName="user_role">
-            <column name="username" value="admin"/>
-            <column name="role_id" valueNumeric="4" />
-        </insert>
-        <insert tableName="user_role">
-            <column name="username" value="admin"/>
-            <column name="role_id" valueNumeric="5" />
-        </insert>
+        <!-- No default user_role entries for admin are inserted here to avoid
+             hard-coded credentials and privileges in migrations. The application
+             bootstrapping process will assign appropriate roles when creating the
+             initial administrative account. -->
         <rollback>
             <dropTable tableName="user_role" />
         </rollback>
