@@ -82,6 +82,36 @@ public class PersonalSettingsService {
         return systemAvatarRepository.findAll().stream().map(SystemAvatar::toAvatar).toList();
     }
 
+    private static String sanitizeFileName(String name) {
+        if (name == null) {
+            return "avatar";
+        }
+        String n = FilenameUtils.getName(name);
+        n = n.replaceAll("[^A-Za-z0-9._-]", "_");
+        if (n.isEmpty()) {
+            n = "avatar";
+        }
+        if (n.length() > 64) {
+            n = n.substring(0, 64);
+        }
+        return n;
+    }
+
+    private static String sanitizeUsername(String username) {
+        if (username == null) {
+            return "unknown";
+        }
+        String u = FilenameUtils.getName(username);
+        u = u.replaceAll("[^A-Za-z0-9@._-]", "_");
+        if (u.isEmpty()) {
+            u = "unknown";
+        }
+        if (u.length() > 64) {
+            u = u.substring(0, 64);
+        }
+        return u;
+    }
+
     public Avatar getCustomAvatar(String username) {
         if (StringUtils.isBlank(username)) {
             return null;
@@ -149,10 +179,21 @@ public class PersonalSettingsService {
             }
             int width = image.getWidth();
             int height = image.getHeight();
-            String mimeType = StringUtil.getMimeType(FilenameUtils.getExtension(fileName));
-            Path folder = homeConfig.getAirsonicHome().resolve("avatars").resolve(username);
+            // Sanitize username and filename to avoid path traversal/injection
+            if (StringUtils.isBlank(username)) {
+                throw new IOException("Missing username for avatar upload");
+            }
+            String safeUsername = sanitizeUsername(username);
+
+            String originalExt = FilenameUtils.getExtension(fileName);
+            String mimeType = StringUtil.getMimeType(originalExt);
+
+            String baseName = FilenameUtils.getBaseName(fileName);
+            String safeBaseName = sanitizeFileName(baseName);
+
+            Path folder = homeConfig.getAirsonicHome().resolve("avatars").resolve(safeUsername);
             Files.createDirectories(folder);
-            Path fileOnDisk = folder.resolve(fileName + "." + StringUtils.substringAfter(mimeType, "/"));
+            Path fileOnDisk = folder.resolve(safeBaseName + "." + StringUtils.substringAfter(mimeType, "/"));
             // Scale down image if necessary.
             if (width > MAX_AVATAR_SIZE || height > MAX_AVATAR_SIZE) {
                 double scaleFactor = MAX_AVATAR_SIZE / (double) Math.max(width, height);
@@ -160,7 +201,7 @@ public class PersonalSettingsService {
                 width = (int) (width * scaleFactor);
                 image = ImageUtil.scale(image, width, height);
                 mimeType = StringUtil.getMimeType("jpeg");
-                fileOnDisk = folder.resolve(fileName + ".jpeg");
+                fileOnDisk = folder.resolve(safeBaseName + ".jpeg");
                 ImageIO.write(image, "jpeg", fileOnDisk.toFile());
 
                 result.put("resized", true);
@@ -170,7 +211,7 @@ public class PersonalSettingsService {
             customAvatarRepository.deleteAllByUsername(username);
             Avatar avatar = new Avatar(fileName, Instant.now(), mimeType, width, height, fileOnDisk);
             customAvatarRepository.save(avatar.toCustomAvatar(username, homeConfig.getAirsonicHome()));
-            LOG.info("Created avatar '{}' ({} bytes) for user {}", fileName, FileUtil.size(fileOnDisk), username);
+            LOG.info("Created avatar '{}' ({} bytes) for user {}", safeBaseName, FileUtil.size(fileOnDisk), safeUsername);
             return result;
 
         } catch (IOException x) {

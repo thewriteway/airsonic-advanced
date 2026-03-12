@@ -636,6 +636,18 @@ function tt_MkTipSubDivs()
 	sTbTrTd = ' cellspacing="0" cellpadding="0" border="0" style="' + sCss + '"><tbody style="' + sCss + '"><tr><td ';
 
 	tt_aElt[0].style.width = tt_GetClientW() + "px";
+	// Ensure that plain text passed to Tip() is not reinterpreted as HTML.
+	function tt_SafeContent(content) {
+		try {
+			if (typeof content !== 'string') return content;
+			// If content contains HTML-like characters, assume caller intended HTML
+			if (content.indexOf('<') === -1 && content.indexOf('&') === -1) {
+				return content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			}
+		} catch (e) {}
+		return content;
+	}
+
 	tt_aElt[0].innerHTML =
 		(''
 		+ (tt_aV[TITLE].length ?
@@ -656,7 +668,7 @@ function tt_MkTipSubDivs()
 			: '')
 		+ '<div id="WzBoDy" style="position:relative;z-index:0;">'
 		+ '<table' + sTbTrTd + 'id="WzBoDyI" style="' + sCss + '">'
-		+ tt_sContent
+		+ tt_SafeContent(tt_sContent)
 		+ '</td></tr></tbody></table></div>'
 		+ (tt_aV[SHADOW]
 			? ('<div id="WzTtShDwR" style="position:absolute;overflow:hidden;"></div>'
@@ -1200,7 +1212,7 @@ function tt_GetWndCliSiz(s)
 		return(
 			// Gecko or Opera with scrollbar
 			// ... quirks mode
-			((db = document.body) && typeof(y2 = db[sC]) == sN && y2 &&  y2 <= y) ? y2 
+			((db = document.body) && typeof(y2 = db[sC]) == sN && y2 &&  y2 <= y) ? y2
 			// ... strict mode
 			: ((db = document.documentElement) && typeof(y2 = db[sC]) == sN && y2 && y2 <= y) ? y2
 			// No scrollbar, or clientarea size == 0, or other browser (KHTML etc.)
@@ -1211,7 +1223,7 @@ function tt_GetWndCliSiz(s)
 	return(
 		// document.documentElement.client+s functional, returns > 0
 		((db = document.documentElement) && (y = db[sC])) ? y
-		// ... not functional, in which case document.body.client+s 
+		// ... not functional, in which case document.body.client+s
 		// is the clientarea size, fortunately
 		: document.body[sC]
 	);

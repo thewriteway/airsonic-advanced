@@ -44,6 +44,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -113,13 +114,18 @@ public class IndexManager {
     /**
      * Returns the directory of the specified index
      */
-    private Function<IndexType, Path> getIndexDirectory = (indexType) -> rootIndexDirectory.resolve(indexType.toString().toLowerCase());
+    private Function<IndexType, Path> getIndexDirectory = indexType -> rootIndexDirectory.resolve(indexType.toString().toLowerCase());
 
     private Map<IndexType, SearcherManager> searchers = new ConcurrentHashMap<>();
 
     private Map<IndexType, IndexWriter> writers = new ConcurrentHashMap<>();
 
     public void index(Album album) {
+        if (album == null || album.getId() == null) {
+            LOG.debug("Skipping indexing album without id: {}", album);
+            return;
+        }
+
         Term primarykey = documentFactory.createPrimarykey(album);
         Document document = documentFactory.createAlbumId3Document(album);
         try {
@@ -130,6 +136,11 @@ public class IndexManager {
     }
 
     public void index(Artist artist, MusicFolder musicFolder) {
+        if (artist == null || artist.getId() == null) {
+            LOG.debug("Skipping indexing artist without id: {}", artist);
+            return;
+        }
+
         Term primarykey = documentFactory.createPrimarykey(artist);
         Document document = documentFactory.createArtistId3Document(artist, musicFolder);
         try {
@@ -140,6 +151,11 @@ public class IndexManager {
     }
 
     public void index(MediaFile mediaFile, MusicFolder musicFolder) {
+        if (mediaFile == null || mediaFile.getId() == null) {
+            LOG.debug("Skipping indexing mediaFile without id: {}", mediaFile);
+            return;
+        }
+
         Term primarykey = documentFactory.createPrimarykey(mediaFile);
         try {
             if (mediaFile.isFile()) {
@@ -177,8 +193,9 @@ public class IndexManager {
 
     public void expunge() {
         Term[] primarykeys = mediaFileRepository.findByMediaTypeAndPresentFalse(MediaType.DIRECTORY).stream()
-                .map(m -> documentFactory.createPrimarykey(m.getId()))
-                .toArray(i -> new Term[i]);
+            .map(m -> documentFactory.createPrimarykey(m.getId()))
+            .filter(Objects::nonNull)
+            .toArray(Term[]::new);
         try {
             writers.get(IndexType.ARTIST).deleteDocuments(primarykeys);
         } catch (IOException e) {
@@ -186,8 +203,9 @@ public class IndexManager {
         }
 
         primarykeys = mediaFileRepository.findByMediaTypeAndPresentFalse(MediaType.ALBUM).stream()
-                .map(m -> documentFactory.createPrimarykey(m.getId()))
-                .toArray(i -> new Term[i]);
+            .map(m -> documentFactory.createPrimarykey(m.getId()))
+            .filter(Objects::nonNull)
+            .toArray(Term[]::new);
         try {
             writers.get(IndexType.ALBUM).deleteDocuments(primarykeys);
         } catch (IOException e) {
@@ -195,8 +213,9 @@ public class IndexManager {
         }
 
         primarykeys = mediaFileRepository.findByMediaTypeInAndPresentFalse(MediaType.playableTypes()).stream()
-                .map(m -> documentFactory.createPrimarykey(m.getId()))
-                .toArray(i -> new Term[i]);
+            .map(m -> documentFactory.createPrimarykey(m.getId()))
+            .filter(Objects::nonNull)
+            .toArray(Term[]::new);
         try {
             writers.get(IndexType.SONG).deleteDocuments(primarykeys);
         } catch (IOException e) {
@@ -204,8 +223,9 @@ public class IndexManager {
         }
 
         primarykeys = artistRepository.findByPresentFalse().stream()
-                .map(m -> documentFactory.createPrimarykey(m.getId()))
-                .toArray(i -> new Term[i]);
+            .map(m -> documentFactory.createPrimarykey(m.getId()))
+            .filter(Objects::nonNull)
+            .toArray(Term[]::new);
         try {
             writers.get(IndexType.ARTIST_ID3).deleteDocuments(primarykeys);
         } catch (IOException e) {
@@ -213,8 +233,9 @@ public class IndexManager {
         }
 
         primarykeys = albumRepository.findByPresentFalse().stream()
-                .map(m -> documentFactory.createPrimarykey(m.getId()))
-                .toArray(i -> new Term[i]);
+            .map(m -> documentFactory.createPrimarykey(m.getId()))
+            .filter(Objects::nonNull)
+            .toArray(Term[]::new);
         try {
             writers.get(IndexType.ALBUM_ID3).deleteDocuments(primarykeys);
         } catch (IOException e) {
