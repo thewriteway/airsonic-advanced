@@ -71,7 +71,8 @@ public class AirsonicScanConfig {
             LOG.info("MediaScannerParallelism is deprecated. Use AIRSONC_SCAN_PARALLELISM instead.");
             return Integer.parseInt(deprecatedParallelism);
         }
-        return Runtime.getRuntime().availableProcessors() + 1;
+        // Default to an IO-bound value: limit parallelism to available processors or 8, whichever is smaller
+        return Math.max(1, Math.min(Runtime.getRuntime().availableProcessors(), 8));
     }
 
     public void setFullTimeout(Integer fullTimeout) {

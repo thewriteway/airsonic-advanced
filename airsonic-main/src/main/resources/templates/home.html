@@ -26,7 +26,7 @@
 
         function playShuffle() {
             /*[+
-            top.playQueue.onPlayShuffle([[${model.listType}]], [[${model.listOffset}]], [[${model.listSize}]], '[(${model['genre']})]', '[(${model['decade']})]');
+            top.playQueue.onPlayShuffle([[${model.listType}]], [[${model.listOffset}]], [[${model.listSize}]], [[${model.genre}]], [[${model.decade}]]);
             +]*/
         }
 
@@ -52,8 +52,8 @@
 <table th:replace="~{homePager::table}"></table>
 
 <div th:if="${!#strings.isEmpty(model.welcomeMessage)}"
-     th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid #${themes?.get('detailColor')}|"
-     th:utext="${model.welcomeMessage}"
+    th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid #${themes?.get('detailColor')}|"
+    th:text="${model.welcomeMessage}"
 ></div>
 <th:block th:each="album, loopStatus : ${model.albums}">
     <div class="albumThumb">
