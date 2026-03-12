@@ -29,7 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Collectors;
+
 
 /**
  * Subclass of {@link InputStream} which provides on-the-fly transcoding.
@@ -58,7 +58,9 @@ public class TranscodeInputStream extends InputStream {
      */
     public TranscodeInputStream(ProcessBuilder processBuilder, final InputStream in, Path tmpFile) throws IOException {
         this.tmpFile = tmpFile;
-        LOG.info("Starting transcoder: {}", processBuilder.command().stream().collect(Collectors.joining("][", "[", "]")));
+        String exe = processBuilder.command().isEmpty() ? "<unknown>" : processBuilder.command().get(0);
+        int argCount = Math.max(0, processBuilder.command().size() - 1);
+        LOG.info("Starting transcoder executable: {} (args={})", exe, argCount);
 
         process = processBuilder.start();
         processOutputStream = process.getOutputStream();
