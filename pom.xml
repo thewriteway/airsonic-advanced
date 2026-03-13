@@ -24,7 +24,7 @@
     <properties>
         <failOnDependencyWarning>true</failOnDependencyWarning>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cxf.version>4.1.4</cxf.version>
+        <cxf.version>4.2.0</cxf.version>
         <snakeyaml.version>2.5</snakeyaml.version>
         <lucene.version>10.3.2</lucene.version>
         <logback.version>1.5.26</logback.version>
