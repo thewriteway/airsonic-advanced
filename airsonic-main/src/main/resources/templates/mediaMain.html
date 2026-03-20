@@ -220,13 +220,77 @@
         var urlBase = '[(@{/coverArtJsp})]';
         $('#thumbs').html('');
 
-        thumbsData.filter(t => t.entryType != 'VIDEO').forEach((t,i) => {
-            //append container first to keep order intact when async callback happens
-            $('#thumbs').append('<div class="albumThumb"></div>');
-            $.get(urlBase + '?hideOverflow=true&showLink=true&appearAfter=' + (i * 30) + '&coverArtSize=[(${model.coverArtSizeMedium})]&captionCount=2&caption2=' + (t.year ? t.year : '') + '&caption1=' + encodeURIComponent(t.title) +'&albumId=' + t.id, data => {
-                $('#thumbs .albumThumb:nth-child(' + (i + 1) + ')').append(data);
-            });
+        var albumThumbs = thumbsData.filter(t => t.entryType != 'VIDEO');
+
+        albumThumbs.forEach((t, i) => {
+            var placeholder = $('<div/>').addClass('albumThumb thumbPlaceholder')
+                    .attr('data-index', i)
+                    .attr('data-album-id', t.id)
+                    .attr('data-year', t.year ? t.year : '')
+                    .attr('data-title', t.title)
+                    .attr('data-appearafter', i * 30);
+            $('#thumbs').append(placeholder);
         });
+
+        function loadThumb(el, finished) {
+            var $el = $(el);
+            if ($el.data('loaded')) {
+                if (typeof finished === 'function') {
+                    finished();
+                }
+                return;
+            }
+            $el.data('loaded', true);
+
+            var albumId = $el.data('album-id');
+            var appearAfter = $el.data('appearafter');
+            var caption2 = encodeURIComponent($el.data('year'));
+            var caption1 = encodeURIComponent($el.data('title'));
+
+            $.get(urlBase + '?hideOverflow=true&showLink=true&appearAfter=' + appearAfter + '&coverArtSize=[(${model.coverArtSizeMedium})]&captionCount=2&caption2=' + caption2 + '&caption1=' + caption1 + '&albumId=' + albumId, data => {
+                $el.append(data);
+            }).always(function() {
+                if (typeof finished === 'function') {
+                    finished();
+                }
+            });
+        }
+
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        loadThumb(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                rootMargin: '200px 0px',
+                threshold: 0.1
+            });
+
+            $('.thumbPlaceholder').each(function() {
+                observer.observe(this);
+            });
+        } else {
+            // Fallback: eager load in small batches to avoid storm.
+            var maxConcurrent = 8;
+            var active = 0;
+            var queue = $('.thumbPlaceholder').toArray();
+
+            function processQueue() {
+                while (active < maxConcurrent && queue.length > 0) {
+                    var next = queue.shift();
+                    active++;
+                    loadThumb(next, function() {
+                        active--;
+                        processQueue();
+                    });
+                }
+            }
+
+            processQueue();
+        }
 
         var videoUrlBase = '[(@{/videoPlayer})]';
         var covertArtUrlBase = '[(@{/coverArt})]';

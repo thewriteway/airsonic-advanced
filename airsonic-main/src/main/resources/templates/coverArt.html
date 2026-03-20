@@ -24,7 +24,7 @@ PARAMETERS
     imgId=${'img'+#strings.randomAlphanumeric(5)},
     playId=${'play'+#strings.randomAlphanumeric(5)},
     addId=${'add'+#strings.randomAlphanumeric(5)},
-    appearAfter=0
+    appearAfter=${appearAfter?:0}
 ">
     <th:block th:remove="all">
         <th:block th:fragment="album(id, targetUrl, coverArtUrl)">
