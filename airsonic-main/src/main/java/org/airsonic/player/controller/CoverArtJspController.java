@@ -30,6 +30,17 @@ public class CoverArtJspController {
         model.put("showChange", "true".equalsIgnoreCase(request.getParameter("showChange")));
         model.put("showZoom", "true".equalsIgnoreCase(request.getParameter("showZoom")));
 
+        String appearAfterParam = request.getParameter("appearAfter");
+        int appearAfter = 0;
+        if (appearAfterParam != null) {
+            try {
+                appearAfter = Integer.parseInt(appearAfterParam);
+            } catch (NumberFormatException ignored) {
+                appearAfter = 0;
+            }
+        }
+        model.put("appearAfter", appearAfter);
+
         return new ModelAndView("coverArt", model);
     }
 }
