@@ -64,7 +64,10 @@ public class ExtractCustomAvatars implements CustomSqlChange {
                         processAvatarRow(result, homeConfig);
                     } catch (Exception e) {
                         String user = "unknown";
-                        try { user = result.getString("username"); } catch (Exception ignored) {}
+                        try {
+                            user = result.getString("username");
+                        } catch (Exception ignored) {
+                        }
                         LOG.warn("Exception while trying to extract avatar for user {}. Will skip this user.", user, e);
                     }
                 }
