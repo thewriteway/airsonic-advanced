@@ -20,14 +20,21 @@
 
 package org.airsonic.player.service.search;
 
-import org.airsonic.player.config.AirsonicHomeConfig;
-import org.airsonic.player.domain.*;
-import org.airsonic.player.domain.MediaFile.MediaType;
-import org.airsonic.player.repository.AlbumRepository;
-import org.airsonic.player.repository.ArtistRepository;
-import org.airsonic.player.repository.MediaFileRepository;
-import org.airsonic.player.util.FileUtil;
-import org.airsonic.player.util.Util;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+// THIRD-PARTY
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
@@ -37,19 +44,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+// PROJECT (org.airsonic)
+import org.airsonic.player.config.AirsonicHomeConfig;
+import org.airsonic.player.domain.*;
+import org.airsonic.player.domain.MediaFile.MediaType;
+import org.airsonic.player.repository.AlbumRepository;
+import org.airsonic.player.repository.ArtistRepository;
+import org.airsonic.player.repository.MediaFileRepository;
+import org.airsonic.player.util.FileUtil;
+import org.airsonic.player.util.Util;
 
 /**
  * Function class that is strongly linked to the lucene index implementation.
