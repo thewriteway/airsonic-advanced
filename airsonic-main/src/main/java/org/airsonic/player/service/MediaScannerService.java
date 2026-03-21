@@ -261,13 +261,13 @@ public class MediaScannerService {
             boolean fetchArtwork = true;
 
             // Recurse through all files on disk.
-                mediaFolderService.getAllMusicFolders()
+            mediaFolderService.getAllMusicFolders()
                     .parallelStream()
                     .forEach(musicFolder -> scanFile(pool, null, null, mediaFileService.getMediaFile(Paths.get(""), musicFolder, false),
                         musicFolder, statistics, albumCount, artists, albums, albumsInDb, genres, coverArtCache, fetchArtwork));
                 // Update statistics
-                statistics.incrementArtists(albumCount.size());
-                statistics.incrementAlbums(albumCount.values().parallelStream().mapToInt(AtomicInteger::get).sum());
+            statistics.incrementArtists(albumCount.size());
+            statistics.incrementAlbums(albumCount.values().parallelStream().mapToInt(AtomicInteger::get).sum());
 
             LOG.info("Scanned media library with {} entries.", scanCount.longValue());
 
@@ -342,7 +342,7 @@ public class MediaScannerService {
         }
     }
 
-        private void scanFile(ForkJoinPool pool, MediaFile grandParent, MediaFile parent, MediaFile file, MusicFolder musicFolder, MediaLibraryStatistics statistics,
+    private void scanFile(ForkJoinPool pool, MediaFile grandParent, MediaFile parent, MediaFile file, MusicFolder musicFolder, MediaLibraryStatistics statistics,
             Map<String, AtomicInteger> albumCount, Map<String, Artist> artists, Map<String, Album> albums,
             Set<Integer> albumsInDb, Genres genres, Map<Integer, CoverArt> coverArtCache, boolean fetchArtwork) {
 
@@ -421,7 +421,7 @@ public class MediaScannerService {
      * @param albums albums
      * @param albumsInDb albums in db
      */
-        private void updateAlbum(MediaFile parent, MediaFile file, MusicFolder musicFolder,
+    private void updateAlbum(MediaFile parent, MediaFile file, MusicFolder musicFolder,
             Instant lastScanned, Map<String, AtomicInteger> albumCount, Map<String, Album> albums,
             Set<Integer> albumsInDb, Map<Integer, CoverArt> coverArtCache, boolean fetchArtwork) {
 
@@ -514,7 +514,7 @@ public class MediaScannerService {
      * @param albumCount  album count
      * @param artists     artists
      */
-        private void updateArtist(MediaFile grandParent, MediaFile file, MusicFolder musicFolder, Instant lastScanned,
+    private void updateArtist(MediaFile grandParent, MediaFile file, MusicFolder musicFolder, Instant lastScanned,
             Map<String, AtomicInteger> albumCount, Map<String, Artist> artists, Map<Integer, CoverArt> coverArtCache, boolean fetchArtwork) {
         if (file.getAlbumArtist() == null || !file.isAudio()) {
             return;
