@@ -144,7 +144,7 @@ public class ParameterDecodingFilter implements Filter {
                 try {
                     result[i] = StringUtil.utf8HexDecode(values[i]);
                 } catch (Exception x) {
-                    LOG.error("Failed to decode parameter value '" + values[i] + "'");
+                    LOG.error("Failed to decode parameter value '{}'", values[i]);
                     result[i] = values[i];
                 }
             }

@@ -118,7 +118,7 @@ public class LastFmService {
             }
 
         } catch (Throwable x) {
-            LOG.warn("Failed to find similar artists for " + artistName, x);
+            LOG.warn("Failed to find similar artists for {}", artistName, x);
         }
         return result;
     }
@@ -166,7 +166,7 @@ public class LastFmService {
             }
 
         } catch (Throwable x) {
-            LOG.warn("Failed to find similar artists for " + artist.getName(), x);
+            LOG.warn("Failed to find similar artists for {}", artist.getName(), x);
         }
         return result;
     }
@@ -253,7 +253,7 @@ public class LastFmService {
                                  "",
                                  "");
         } catch (Throwable x) {
-            LOG.warn("Failed to find artist bio for " + artistName, x);
+            LOG.warn("Failed to find artist bio for {}", artistName, x);
             return null;
         }
     }
@@ -302,7 +302,7 @@ public class LastFmService {
             }
             return result;
         } catch (Throwable x) {
-            LOG.warn("Failed to find top songs for " + artistName, x);
+            LOG.warn("Failed to find top songs for {}", artistName, x);
             return Collections.emptyList();
         }
     }
@@ -350,7 +350,7 @@ public class LastFmService {
                                  info.getImageURL(ImageSize.LARGE),
                                  info.getImageURL(ImageSize.MEGA));
         } catch (Throwable x) {
-            LOG.warn("Failed to find album notes for " + artist + " - " + album, x);
+            LOG.warn("Failed to find album notes for {} - {}", artist, album, x);
             return null;
         }
     }
@@ -381,7 +381,7 @@ public class LastFmService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         } catch (Throwable x) {
-            LOG.warn("Failed to search for cover art for " + artist + " - " + album, x);
+            LOG.warn("Failed to search for cover art for {} - {}", artist, album, x);
             return Collections.emptyList();
         }
     }
@@ -411,7 +411,7 @@ public class LastFmService {
             String redirectedArtistName = getRedirectedArtist(biography);
             return redirectedArtistName != null ? redirectedArtistName : artistName;
         } catch (Throwable x) {
-            LOG.warn("Failed to find artist bio for " + artistName, x);
+            LOG.warn("Failed to find artist bio for {}", artistName, x);
             return null;
         }
     }
