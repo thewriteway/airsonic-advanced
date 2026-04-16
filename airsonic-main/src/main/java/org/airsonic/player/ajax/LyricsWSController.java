@@ -117,7 +117,7 @@ public class LyricsWSController {
             LOG.warn("Failed to get lyrics for song '{}': {}", song, x.toString());
             status.setTryLater(true);
         } catch (Exception x) {
-            LOG.warn("Failed to get lyrics for song '" + song + "'.", x);
+            LOG.warn("Failed to get lyrics for song '{}'", song, x);
         }
         return status;
     }

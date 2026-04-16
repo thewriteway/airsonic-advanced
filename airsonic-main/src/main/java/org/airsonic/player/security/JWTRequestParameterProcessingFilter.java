@@ -100,9 +100,9 @@ public class JWTRequestParameterProcessingFilter implements Filter {
         SecurityContextHolder.clearContext();
 
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Authentication request failed: " + failed.toString(), failed);
+            LOG.debug("Authentication request failed: {}", failed.toString(), failed);
             LOG.debug("Updated SecurityContextHolder to contain null Authentication");
-            LOG.debug("Delegating to authentication failure handler " + failureHandler);
+            LOG.debug("Delegating to authentication failure handler {}", failureHandler);
         }
 
         failureHandler.onAuthenticationFailure(request, response, failed);

@@ -452,59 +452,6 @@ public class SecurityService implements UserDetailsService {
         }
     }
 
-    /**
-     * Increment the number of bytes downloaded by the given user.
-     *
-     * @param username             user name.
-     * @param deltaBytesDownloaded number of bytes downloaded.
-     * @return updated user.
-     */
-    // TODO: This is not security related. Move to a different service.
-    @Transactional
-    public User incrementBytesStreamed(String username, long deltaBytesStreamed) {
-        User user = getUserByName(username);
-        if (Objects.nonNull(user)) {
-            user.setBytesStreamed(user.getBytesStreamed() + deltaBytesStreamed);
-            userRepository.save(user);
-        }
-        return user;
-    }
-
-    /**
-     * Increment the number of bytes streamed by the given user.
-     *
-     * @param username           user name.
-     * @param deltaBytesStreamed number of bytes streamed.
-     * @return updated user.
-     */
-    // TODO: This is not security related. Move to a different service.
-    @Transactional
-    public User incrementBytesDownloaded(String username, long deltaBytesDownloaded) {
-        User user = getUserByName(username);
-        if (Objects.nonNull(user)) {
-            user.setBytesDownloaded(user.getBytesDownloaded() + deltaBytesDownloaded);
-            userRepository.save(user);
-        }
-        return user;
-    }
-
-    /**
-     * Increment the number of bytes uploaded by the given user.
-     *
-     * @param username           user name.
-     * @param deltaBytesUploaded number of bytes uploaded.
-     * @return updated user.
-     */
-    // TODO: This is not security related. Move to a different service.
-    @Transactional
-    public User incrementBytesUploaded(String username, long deltaBytesUploaded) {
-        User user = getUserByName(username);
-        if (Objects.nonNull(user)) {
-            user.setBytesUploaded(user.getBytesUploaded() + deltaBytesUploaded);
-            userRepository.save(user);
-        }
-        return user;
-    }
 
     /**
      * delete user.
