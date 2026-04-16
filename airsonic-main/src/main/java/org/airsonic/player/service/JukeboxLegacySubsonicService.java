@@ -135,7 +135,7 @@ public class JukeboxLegacySubsonicService implements AudioPlayer.Listener {
             currentPlayingFile = file;
 
         } catch (Exception x) {
-            LOG.error("Error in jukebox: " + x, x);
+            LOG.error("Error in jukebox: {}", x, x);
             FileUtil.closeQuietly(in);
         }
     }
