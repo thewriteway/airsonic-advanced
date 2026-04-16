@@ -67,7 +67,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - run: |
           mkdir -p airsonic-main/target/classes
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: build-metadata
           path: airsonic-main/target/classes/  
@@ -78,7 +78,7 @@ jobs:
           distribution: 'temurin'
       - name: Docker meta
         id: docker-meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
@@ -137,7 +137,7 @@ jobs:
     if: github.repository == github.event.pull_request.head.repo.full_name
     steps:
       - name: Download digest
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: /tmp/digests
           pattern: docker-digest-*
@@ -147,7 +147,7 @@ jobs:
       
       - name: Docker meta
         id: docker-meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
