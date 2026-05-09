@@ -131,6 +131,7 @@ class JaxbContentServiceTest {
             when(album.getCreated()).thenReturn(starredDate);
             when(album.getYear()).thenReturn(2020);
             when(album.getGenre()).thenReturn("Rock");
+            when(album.getPlayCount()).thenReturn(42);
             when(coverArtService.getAlbumArt(10)).thenReturn(coverArt);
             when(albumService.getAlbumStarredDate(10, "user")).thenReturn(starredDate);
             when(coverArtService.getAlbumArt(10)).thenReturn(coverArt);
@@ -150,6 +151,7 @@ class JaxbContentServiceTest {
             assertNotNull(result.getStarred());
             assertEquals(2020, result.getYear());
             assertEquals("Rock", result.getGenre());
+            assertEquals(42L, result.getPlayCount());
         }
 
         @Test
