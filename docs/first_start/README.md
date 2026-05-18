@@ -12,7 +12,9 @@ To change this you can create a dedicated user that will run Airsonic.
 
 ## Set up user accounts
 
-The default username and password for Airsonic is admin. You should absolutely change this to secure your server.
+Airsonic creates an administrator account automatically on first startup. The default username is `admin`, but the password is not fixed unless you set it explicitly before startup.
+
+If you want to specify the initial admin password, set the `AIRSONIC_ADMIN_PASSWORD` environment variable before starting Airsonic. Otherwise a strong random password will be generated and written to the startup log.
 
 Go to Settings > Users to change this password.
 
