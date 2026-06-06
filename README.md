@@ -8,6 +8,7 @@ Airsonic-Advanced
 ![Downloads](https://img.shields.io/github/downloads/thewriteway/airsonic-advanced/total)
 ![Dependabot](https://img.shields.io/badge/dependabot-enabled-brightgreen)
 ![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)
+[![CodeQL](https://github.com/thewriteway/airsonic-advanced/actions/workflows/codeql.yml/badge.svg)](https://github.com/thewriteway/airsonic-advanced/actions/workflows/codeql.yml)
 ![Stars](https://img.shields.io/github/stars/thewriteway/airsonic-advanced)
 
 What is kagemomiji/airsonic-advanced?
