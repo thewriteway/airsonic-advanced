@@ -6,7 +6,6 @@ Airsonic-Advanced
 =================
 ![Release](https://img.shields.io/github/v/release/thewriteway/airsonic-advanced)
 ![Downloads](https://img.shields.io/github/downloads/thewriteway/airsonic-advanced/total)
-![License](https://img.shields.io/github/license/thewriteway/airsonic-advanced)
 ![Dependabot](https://img.shields.io/badge/dependabot-enabled-brightgreen)
 ![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)
 ![Stars](https://img.shields.io/github/stars/thewriteway/airsonic-advanced)
