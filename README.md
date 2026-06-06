@@ -4,8 +4,13 @@
 -->
 Airsonic-Advanced
 =================
-![](https://github.com/kagemomiji/airsonic-advanced/workflows/Edge%20Deploy%20CI%20(Maven)/badge.svg)
-![](https://github.com/kagemomiji/airsonic-advanced/workflows/Stable%20Deploy%20CI%20(Maven)/badge.svg)
+![Release](https://shieldcn.dev/github/release/thewriteway/airsonic-advanced)
+![Downloads](https://shieldcn.dev/github/downloads/thewriteway/airsonic-advanced.svg)
+![Stars](https://shieldcn.dev/github/stars/thewriteway/airsonic-advanced)
+![Forks](https://shieldcn.dev/github/forks/thewriteway/airsonic-advanced)
+![Commits](https://shieldcn.dev/github/commits/thewriteway/airsonic-advanced)
+[![CodeQL](https://github.com/thewriteway/airsonic-advanced/actions/workflows/codeql.yml/badge.svg)](https://github.com/thewriteway/airsonic-advanced/actions/workflows/codeql.yml)
+
 
 What is kagemomiji/airsonic-advanced?
 ------------------------------------
