@@ -242,7 +242,7 @@ public class AlbumRepositoryTest {
         }
 
         @Test
-        public void testFindByIdAndStarredAlbumsUsername() {
+        public void testFindByAlbumIdAndUsername() {
 
             Album album1 = new Album("path1", "name1", "artist1", Instant.now(), Instant.now(), true, testFolders.get(0));
             Album album2 = new Album("path2", "name2", "artist1", Instant.now(), Instant.now(), false, testFolders.get(1));
@@ -250,20 +250,22 @@ public class AlbumRepositoryTest {
             albumRepository.saveAndFlush(album1);
             albumRepository.saveAndFlush(album2);
 
-            StarredAlbum starredAlbum1 = new StarredAlbum(album1, TEST_USER_NAME, Instant.now());
+            Instant created = Instant.now();
+            StarredAlbum starredAlbum1 = new StarredAlbum(album1, TEST_USER_NAME, created);
             StarredAlbum starredAlbum2 = new StarredAlbum(album2, TEST_USER_NAME2, Instant.now());
 
             starredAlbumRepository.saveAndFlush(starredAlbum1);
             starredAlbumRepository.saveAndFlush(starredAlbum2);
 
-            Album result = albumRepository.findByIdAndStarredAlbumsUsername(album1.getId(), TEST_USER_NAME).get();
-            assertEquals(album1, result);
+            StarredAlbum result = starredAlbumRepository.findByAlbumIdAndUsername(album1.getId(), TEST_USER_NAME).get();
+            assertEquals(starredAlbum1, result);
+            assertEquals(created, result.getCreated());
 
-            Album result2 = albumRepository.findByIdAndStarredAlbumsUsername(album2.getId(), TEST_USER_NAME)
+            StarredAlbum result2 = starredAlbumRepository.findByAlbumIdAndUsername(album2.getId(), TEST_USER_NAME)
                     .orElse(null);
             assertNull(result2);
 
-            Album result3 = albumRepository.findByIdAndStarredAlbumsUsername(album1.getId(), TEST_USER_NAME2)
+            StarredAlbum result3 = starredAlbumRepository.findByAlbumIdAndUsername(album1.getId(), TEST_USER_NAME2)
                     .orElse(null);
             assertNull(result3);
 
