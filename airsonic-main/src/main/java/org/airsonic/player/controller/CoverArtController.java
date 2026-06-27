@@ -170,7 +170,11 @@ public class CoverArtController {
         if (id.startsWith(PODCAST_COVERART_PREFIX)) {
             return coverArtCreateService.createPodcastCoverArtRequest(Integer.valueOf(id.replace(PODCAST_COVERART_PREFIX, "")), offset);
         }
-        return coverArtCreateService.createMediaFileCoverArtRequest(Integer.valueOf(id), offset);
+        Integer numericId = Integer.valueOf(id);
+        CoverArtRequest mediaFileCoverArtRequest = coverArtCreateService.createMediaFileCoverArtRequest(numericId, offset);
+        return mediaFileCoverArtRequest != null
+                ? mediaFileCoverArtRequest
+                : coverArtCreateService.createAlbumCoverArtRequest(numericId);
     }
 
 
