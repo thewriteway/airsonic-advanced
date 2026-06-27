@@ -21,6 +21,8 @@ public interface StarredAlbumRepository extends JpaRepository<StarredAlbum, Inte
 
     public Optional<StarredAlbum> findByAlbumAndUsername(Album album, String username);
 
+    public Optional<StarredAlbum> findByAlbumIdAndUsername(Integer albumId, String username);
+
     @Transactional
     public void deleteByAlbumAndUsername(Album album, String username);
 

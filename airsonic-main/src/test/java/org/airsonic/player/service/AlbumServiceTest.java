@@ -35,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -208,6 +209,40 @@ public class AlbumServiceTest {
         assertEquals(Sort.Direction.DESC, actualPageRequest.getSort().getOrderFor("created").getDirection());
         assertEquals(Sort.Direction.ASC, actualPageRequest.getSort().getOrderFor("albumId").getDirection());
 
+    }
+
+    @Test
+    public void testGetAlbumStarredDate() {
+
+        // given
+        Instant created = Instant.parse("2026-06-27T10:57:10Z");
+        Album album = new Album();
+        album.setId(1);
+        StarredAlbum starredAlbum = new StarredAlbum(album, "username", created);
+        when(starredAlbumRepository.findByAlbumIdAndUsername(1, "username")).thenReturn(Optional.of(starredAlbum));
+
+        // when
+        Instant actual = albumService.getAlbumStarredDate(1, "username");
+
+        // then
+        assertEquals(created, actual);
+        verify(starredAlbumRepository).findByAlbumIdAndUsername(1, "username");
+        verifyNoInteractions(albumRepository);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        ",username",
+        "1,",
+    })
+    public void testGetAlbumStarredDateShouldReturnNullForInvalidParameters(Integer albumId, String username) {
+
+        // when
+        Instant actual = albumService.getAlbumStarredDate(albumId, username);
+
+        // then
+        assertNull(actual);
+        verifyNoInteractions(albumRepository, starredAlbumRepository);
     }
 
 }
