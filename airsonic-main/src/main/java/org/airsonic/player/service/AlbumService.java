@@ -281,8 +281,8 @@ public class AlbumService {
         if (albumId == null || !StringUtils.hasLength(username)) {
             return null;
         }
-        return albumRepository.findByIdAndStarredAlbumsUsername(albumId, username)
-                .map(album -> album.getStarredAlbums().isEmpty() ? null : album.getStarredAlbums().get(0).getCreated())
+        return starredAlbumRepository.findByAlbumIdAndUsername(albumId, username)
+                .map(StarredAlbum::getCreated)
                 .orElse(null);
     }
 
