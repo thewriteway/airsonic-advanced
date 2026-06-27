@@ -43,8 +43,6 @@ public interface AlbumRepository extends JpaRepository<Album, Integer> {
 
     public List<Album> findByPresentFalse();
 
-    public Optional<Album> findByIdAndStarredAlbumsUsername(Integer id, String username);
-
     public boolean existsByLastScannedBeforeAndPresentTrue(Instant lastScanned);
 
     @Transactional
