@@ -182,6 +182,64 @@ public class CoverArtControllerTest {
 
     }
 
+    /** get cover art by numeric album id when no media file matches */
+    @Test
+    @WithMockUser(username = AIRSONIC_USER, password = AIRSONIC_PASSWORD)
+    public void getCoverArtWithIntegerAlbumFallbackTest() throws Exception {
+
+        final int ALBUM_ID = 100;
+
+        Album mockedAlbum = new Album();
+        mockedAlbum.setId(ALBUM_ID);
+        AlbumCoverArtRequest request = new AlbumCoverArtRequest(mockedCoverArt, mockedAlbum);
+
+        doReturn(null).when(coverArtService).createMediaFileCoverArtRequest(eq(ALBUM_ID), eq(60));
+        doReturn(request).when(coverArtService).createAlbumCoverArtRequest(eq(ALBUM_ID));
+        doReturn(IMAGE_RESOURCE.getFile().toPath()).when(mockedCoverArt).getFullPath();
+
+        byte[] expected = IMAGE_RESOURCE.getInputStream().readAllBytes();
+
+        byte[] actual = mvc.perform(get("/coverArt")
+                .param("id", Integer.toString(ALBUM_ID)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertArrayEquals(expected, actual);
+        verify(coverArtService).createMediaFileCoverArtRequest(eq(ALBUM_ID), eq(60));
+        verify(coverArtService).createAlbumCoverArtRequest(eq(ALBUM_ID));
+        verify(coverArtService).getImageInputStreamWithType(eq(IMAGE_RESOURCE.getFile().toPath()));
+        verifyNoMoreInteractions(coverArtService);
+    }
+
+    /** get fallback by numeric id when neither media file nor album matches */
+    @Test
+    @WithMockUser(username = AIRSONIC_USER, password = AIRSONIC_PASSWORD)
+    public void getCoverArtWithIntegerIdNoMatchFallbackTest() throws Exception {
+
+        final int MISSING_ID = 100;
+
+        doReturn(null).when(coverArtService).createMediaFileCoverArtRequest(eq(MISSING_ID), eq(60));
+        doReturn(null).when(coverArtService).createAlbumCoverArtRequest(eq(MISSING_ID));
+
+        byte[] actual = mvc.perform(get("/coverArt")
+                .param("id", Integer.toString(MISSING_ID)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            InputStream in = coverArtController.getClass().getResourceAsStream("default_cover.jpg");
+            BufferedImage image = ImageIO.read(in);
+            ImageIO.write(image, "jpeg", out);
+            byte[] expected = out.toByteArray();
+
+            assertArrayEquals(expected, actual);
+        }
+
+        verify(coverArtService).createMediaFileCoverArtRequest(eq(MISSING_ID), eq(60));
+        verify(coverArtService).createAlbumCoverArtRequest(eq(MISSING_ID));
+        verifyNoMoreInteractions(coverArtService);
+    }
+
     /** get cover art by id with album prerix "al-" */
     @Test
     @WithMockUser(username = AIRSONIC_USER, password = AIRSONIC_PASSWORD)
