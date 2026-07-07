@@ -1,6 +1,6 @@
 <!--
 # README.md
-# kagemomiji/airsonic-advanced
+# thewriteway/airsonic-advanced
 -->
 Airsonic-Advanced
 =================
@@ -12,7 +12,7 @@ Airsonic-Advanced
 [![CodeQL](https://github.com/thewriteway/airsonic-advanced/actions/workflows/codeql.yml/badge.svg)](https://github.com/thewriteway/airsonic-advanced/actions/workflows/codeql.yml)
 
 
-What is kagemomiji/airsonic-advanced?
+What is thewriteway/airsonic-advanced?
 ------------------------------------
 The main objective of this repository is to keep airsonic-advanced safe for use.
 I don't have much time to add features right now as I am adding tests to prevent deggregation and upgrade dependent libraries.
@@ -37,90 +37,6 @@ Written in Java, Airsonic runs on most platforms, including Windows, Mac, Linux 
 
 ![Screenshot](contrib/assets/screenshot.png)
 
-Feature Enhancements:
----------------------
-The following is an incomplete list of features that are enhanced from Airsonic:
-- More modern base frameworks and libraries
-  - Spring Boot 2.x (instead of 1.x), Spring Framework 5.x (instead of 4.x). Plus all the additional dependency upgrades due to the base libaries being upgraded (including EhCache, upgraded SQL connectors etc.)
-- Security
-  - A completely revamped credential system that actually stores credentials securely instead of openly. Includes encryption for credentials that need to be retrievable later (such as for third-party locations) and backwards compatibility. Also includes modern password hashing algorithms such as bcrypt, Argon for password storage.
-- Compliance: More compliant with web specs and utilizes frameworks to apply them instead of custom home-implemented solutions
-  - RFC 7233 for Range headers
-  - Send correct ETags and Last-Modified headers to aid in client-side caching
-- Performance enhancements
-  - A more efficient and compliant streaming engine, utilizing piping and threading
-  - Removal of pessimistic locking throughout the software in favor of more modern concurrency techniques
-  - Upgraded internal database that uses connection pooling and uses MVCC control mode for dealing with concurrent updates
-    - Massive throughput boost (100K media library scan times reduced from ~40 min to ~3 mins)
-  - Much faster UI rendering for browsers, especially for massive playlists
-  - Aggressively uses multi-threading and parallelization for most operations, including but not limited to:
-    - Massively parallelized engine for media scanning (media scanning is done much much faster, ~8x)
-    - Other various use cases utilizing async or parallel options via fork-join pools
-  - Use of websockets to communicate with web-clients instead of polling
-    - Much lighter on resource utilization as well as more dynamic
-    - Does not have to keep running the same command client side again every 10 seconds to check statuses
-    - Server pushes status updates when they're needed when something has changed
-    - Web clients can update UIs immediately (live views)
-    - Removal of DWR (10 year old technology used as an interface between the web-client and the server)
-    - Provides status indicator whether client is connected to server
-- UI:
-    - HTML5 compliant
-      - Redesigned layout: Uses iframes instead of framesets and frames
-    - Utilize a dedicated library (DataTables) to render tables
-      - Deferred rendering and data manipulation outside the DOM allows much faster rendering (~10x-800x!)
-        - The bigger the table, the more performance benefits it sees
-        - Play queue that took about 800s to render in the browser, can now render in < 1s
-      - Allow optional paging and accessible searching within tables
-    - Customize generated cover art thumbnail quality
-    - Ability to show and display more track fields in playlists, playqueue and file browse mode
-    - Option to show header row for track fields
-    - Sort tracks in browse mode (such as show most recently scanned files etc.)
-    - Star and unstar from playqueue and media browser in bulk
-    - Status charts/graphs are rendered on client-side using JS library, instead of on the server
-- Bugfixes:
-  - Several race condition fixes
-  - Consistency checks and refactors
-  - Documentation fixes
-- Miscellaneous
-  - Works with JDK17
-  - Uses JSR 310 (Java time) instead of older Java packages for time/duration tracking
-  - Uses Java's NIO for handling files instead of the older IO packages
-  - More precise song duration calculation
-  - Ability to pass properties via environment or system variables. You can but do not need to modify `airsonic.properties` to change preferences
-  - Ability to use custom URLs to scrobble on ListenBrainz servers
-  - Ability to use Repeat-One in play queues in web-clients
-  - Sonos support: [read documentation](https://github.com/kagemomiji/airsonic-advanced/blob/master/SONOS.md)
-  - Chromecast support: [read details](https://github.com/kagemomiji/airsonic-advanced/blob/master/CHROMECAST.md)
-  - Ability to upload to specified folders (via `UploadsFolder` property/parameter)
-  - Ability to upload multiple files simultaneously
-  - Ability to upload and extract more archive formats:
-    - rar
-    - 7z
-    - tar
-  - Ability to export Podcasts to OPML
-  - Ability to import playlists with relative file paths (resolved relative to Playlists folder)
-  - Support direct binary internet radio stream urls
-  - Catalog multiple genres
-  - Ability to specify custom log file location (via `logging.file.name` property/parameter)
-  - Auto Bookmarks and Bookmark management
-  - Ability to backup internal database, manually and on a schedule, including specifying how many backups to keep
-  - Export and import data across installations and databases
-- Testing
-  - Various fixes to make it compatible with multiple external DBs
-  - Automated tests are performed against external DBs
-    - Postgres
-    - MySQL
-    - MariaDB
-  - Uses failsafe for integration testing instead of cucumber
-- Build and deployment
-  - An updated Docker image with JRE 17 base layer.
-    - Add support for XMP to support playing MOD files out of the box
-  - Multiplatform builds, including for ARM v7 and ARM64
-  - A more advanced build pipeline including automatic releases and deploys at merge
-    - Allows people to grab the newest build without compiling from source as soon as features/enhancements are merged, instead of waiting for the next stable build (which may be months away)
-  - Available on GHCR 
-- Stepbacks
-  - The Java Jukebox has been removed, due to the third-party library not being kept up to date with modern JVMs. See [PR #636](https://github.com/airsonic-advanced/airsonic-advanced/pull/636).
 
 The complete list of PRs that were used to enhance Airsonic can be seen on the PRs page. At some point an automatic changelog generator will be added to keep track.
 
@@ -128,49 +44,18 @@ Airsonic-Advanced will occasionally backport features introduced in the base Air
 
 Usage
 -----
-Airsonic-Advanced v10.6.x series (and its snapshots) are intercompatible with vanilla Airsonic 10.6.x series. This may not necessarily be the case with 11.x versions.
-
-Also note that Airsonic-Advanced 11.x (and its snapshots) are *breaking* (non-backwards-compatible) version changes. You will not be able to revert back to 10.6.x after upgrading (the system _does_ create a backup of the DB in case such revert is necessary, but it must be manually restored).
-
-Airsonic-Advanced snapshots are generally pretty stable and recommended for use over the stable releases (which may be extremely outdated).
-
 ### Stand-alone binaries
 Airsonic-Advanced can be downloaded from
-[GitHub](https://github.com/kagemomiji/airsonic-advanced/releases).
+[GitHub](https://github.com/thewriteway/airsonic-advanced/releases).
 
-The release signature may be verified using the [public key](https://github.com/kagemomiji/airsonic-advanced/blob/master/releases_public_key.asc).
-
-You need a _minimum_ Java Runtime Environment (JRE) of 1.8 for 10.6.x series, and 11 for 11.x onwards (including snapshots).
-- For 11.x releases and onwards -> Java 17
+You need a _minimum_ Java Runtime Environment (JRE) of 21
 
 Airsonic-Advanced is run similarly to (and in lieu of) vanilla Airsonic.
-
-Read the [compatibility notes](#compatibility-notes).
-
-### Docker
-[GHCR](https://ghcr.io/kagemomiji/airsonic-advanced). Docker releases are recently multiplatform, which means ARMv7 and ARM64 are also released to Dockerhub. However, automated testing for those archs is not currently done in the CI/CD pipeline (only Linux platform is tested).
-
-Please note that for Docker images, the volume mounting points have changed and are different from Airsonic. Airsonic mount points are at `/airsonic/*` inside the container. Airsonic-Advanced tries to use the same volume locations as the default war image at `/var/*` in order to remain consistent if people want to switch between the containers and non-containers.
-  - `Music:/airsonic/music` -> `Music:/var/music`
-  - `Podcasts:/airsonic/podcast` -> `Podcasts:/var/podcast`
-  - `Playlists:/airsonic/playlists` -> `Playlists:/var/playlists`
-  - `/airsonic/data` -> `/var/airsonic`
-
-Also note that the Docker image will by default run as user root (0), group root (0), and so any files created in the external volume will be owned as such. You may change the user running the internal process in one of two ways:
-  - Specifying `--user` when invoking the `docker run` command, and providing it with one or both in the format `uid:gid`
-  - Specifying the `PUID` or `PGID` environment variables to the container image when invoking the `docker run` command (`-e PUID=uid -e PGID=gid`)
 
 Vanilla Airsonic can be downloaded from
 [GitHub](https://github.com/airsonic/airsonic/releases).
 
 Please use the [Airsonic documentation](https://airsonic.github.io/docs/) for instructions on running Airsonic. For the most part (currently) Airsonic-Advanced shares similar running instructions unless stated otherwise. Notable exceptions are available as comments or resolutions in the Issues page (please search).
-
-### Docker Compose
-
-To evaluate Airsonic in Docker Compose try our compose files in [install/compose](./install/compose) directory. There are two variants: one uses embedded database (HSQLDB), another - external (PostgreSQL). You can run from within directory by command:
-```shell
-docker compose -p airsonic-hsqldb -f docker-compose.hsqldb.yaml up
-```
 
 ### Building/Compiling
 You may compile the code yourself by using maven. One of the repositories does not have https, so you may need to allow that for maven. A custom `settings.xml` has been put in `.mvn` folder for this purpose. A sample invocation would be (in the root):
@@ -201,55 +86,10 @@ Additionally, if placed behind a proxy, the Airsonic server needs to forward hea
   - After and including *Edge Release 11.0.0-SNAPSHOT.20210117214044*: `server.forward-headers-strategy=native`
   - Prior to *Edge Release 11.0.0-SNAPSHOT.20210117214044*: `server.use-forward-headers=true`
 
-### 11.x series
-Certain property names have been changed from 10.6 to recent snapshots of 11.0 and will be _automigrated_. When modifying properties, use the modern name.
-  - `DatabaseConfigEmbedDriver` -> `spring.datasource.driver-class-name`
-  - `DatabaseConfigEmbedUrl` -> `spring.datasource.url`
-  - `DatabaseConfigEmbedUsername` -> `spring.datasource.username`
-  - `DatabaseConfigEmbedPassword` -> `spring.datasource.password`
-  - `DatabaseConfigJNDIName` -> `spring.datasource.jndi-name`
-  - `DatabaseMysqlMaxlength` -> `spring.liquibase.parameters.mysqlVarcharLimit`
-  - `DatabaseUsertableQuote` -> `spring.liquibase.parameters.userTableQuote`
-
-The following property names have been changed from 10.6 to recent snapshots of 11.0 and will NOT be _automigrated_. Make sure you switch the property names if you use them.
-  - `server.use-forward-headers=true` -> `server.forward-headers-strategy=native` (due to [Spring Boot 2.2 deprecation](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.2-Release-Notes#deprecations-in-spring-boot-22), verified in [comment](https://github.com/airsonic-advanced/airsonic-advanced/issues/359#issuecomment-772724722), changed enacted in [#428](https://github.com/airsonic-advanced/airsonic-advanced/pull/428) and released in [Edge Release 11.0.0-SNAPSHOT.20210117214044](https://github.com/airsonic-advanced/airsonic-advanced/releases/tag/11.0.0-SNAPSHOT.20210117214044))
-
-Other properties are obsolete and have been removed:
-  - `DatabaseConfigType`
-  - `DatabaseUsertableQuote` (now self-managed)
-
-First migration to 11.x will create a backup DB next to the DB folder. It will be marked as `db.backup.<timestamp>`. Use this folder as the DB if a revert to an older major version is needed (11.0 -> 10.6.0).
-
-> [!WARNING]  
-> If you use HSQLDB for 10.6.0, DB migration must fails.
-> First upgrade to 11.0.0-SNAPSHOT.20221224143241 then upgrade to latest release.
-
 Troubleshooting
 ------
 
 See the [Troubleshooting](./docs/troubleshooting.md)
-
-History
------
-
-The original [Subsonic](http://www.subsonic.org/) is developed by [Sindre Mehus](mailto:sindre@activeobjects.no). Subsonic was open source through version 6.0-beta1, and closed-source from then onwards.
-
-Libresonic was created and maintained by [Eugene E. Kashpureff Jr](mailto:eugene@kashpureff.org). It originated as an unofficial ("Kang") of Subsonic which did not contain the Licensing code checks present in the official builds. With the announcement of Subsonic's closed-source future, a decision was made to make a full fork and rebrand to Libresonic.
-
-Around July 2017, it was discovered that Eugene had different intentions/goals
-for the project than some contributors had.  Although the developers were
-hesitant to create a fork as it would fracture/confuse the community even
-further, it was deemed necessary in order to preserve a community-focused fork.
-To reiterate this more clearly:
-
-Airsonic's goal is to provide a full-featured, stable, self-hosted media server
-based on the Subsonic codebase that is free, open source, and community driven.
-
-Around November 2019, Airsonic-Advanced was forked off the base Airsonic fork due to differences in pace and review of development. Several key features of the framework were outdated, and attempts to upgrade them occasionally took upto a year. Airsonic-Advanced tries a modern implementation and bleeding edge approach to development, and is thus usually ahead of the base fork in dependencies and features.
-
-December 2022, this repository forked from Airsonic-Advanced.
-
-Pull Requests are always welcome. All Pull Requests are reviewed before being merged to ensure we continue to meet our goals.
 
 License
 -------
@@ -270,4 +110,4 @@ Community
 ---------
 Bugs/feature requests/discussions pertaining to kagemomiji/airsonic-advanced may be raised as issues within GitHub on the Airsonic-Advanced project page.
 
-GitHub Discussions is prepared for community discussion, questions, etc:
+
