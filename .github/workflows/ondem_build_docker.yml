@@ -1,18 +1,17 @@
-name: 'Edge Deploy CI (Maven)'
+name: 'Build and publish docker image on demand'
 
 on:
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - "**.md"
-      - "*.txt"
-      - ".github/**" 
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish as (e.g. latest, v1.2.3, dev)'
+        required: true
+        default: 'latest'
 
+permissions:
+  packages: write
 
-env:
-  DEFAULT_MUSIC_FOLDER: /tmp/music
-  EXCLUDED_TEST_GROUPS:
+env: 
   REGISTRY_IMAGE: ghcr.io/thewriteway/airsonic-advanced
 
 jobs:
@@ -40,7 +39,6 @@ jobs:
           name: build-metadata
           path: airsonic-main/target/generated/build-metadata/build.properties 
   deploy:
-    runs-on: ubuntu-latest
     needs: version
     strategy:
       fail-fast: false
@@ -52,8 +50,7 @@ jobs:
         - jdk: 21
           platform: linux/arm64
           docker_version: 21
-    outputs:
-      tag: ${{ steps.tagcalc.outputs.tag }}
+    runs-on: ubuntu-latest
     steps:
       - name: Prepare
         id: prep
@@ -63,61 +60,36 @@ jobs:
       - uses: actions/checkout@v7
       - run: |
           mkdir -p airsonic-main/target/classes
-          mkdir -p airsonic-main/target/generated/build-metadata
       - uses: actions/download-artifact@v8
         with:
           name: build-metadata
           path: airsonic-main/target/classes/  
-      - run: |
-          cp airsonic-main/target/classes/build.properties airsonic-main/target/generated/build-metadata/build.properties
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.cfg.jdk }}
           distribution: 'temurin'
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: ${{ matrix.cfg.platform }}
-      - name: Setup ffmpeg
-        id: setup-ffmpeg 
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Cache Maven packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-m2-
-      - run: mkdir -p ${DEFAULT_MUSIC_FOLDER}
-      - name: Build with Maven
-        run: mvn -DexcludedGroups=${EXCLUDED_TEST_GROUPS} -Ddocker.testing.default-music-folder=${DEFAULT_MUSIC_FOLDER} -Dmaven.buildNumber.skip=true verify -B -P integration-test
-      - name: Calculate tags
-        if: success()
-        id: tagcalc
-        run: |
-          # Create tag
-          ver=$(grep "version=" airsonic-main/target/generated/build-metadata/build.properties | cut -d"=" -f2);
-          ts=$(grep "timestamp=" airsonic-main/target/generated/build-metadata/build.properties | cut -d"=" -f2);
-          # Note this doesn't completely follow semver because docker tags do not take a + sign
-          tag=$ver\.$ts;
-          echo $tag;
-          echo "tag=$tag" >> $GITHUB_OUTPUT
       - name: Docker meta
         id: docker-meta
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            latest
-            edge-latest
-            edge-${{ steps.tagcalc.outputs.tag }}
-            gitcommit-${{ github.sha }}
+            ${{ github.event.inputs.tag }}
+      - name: Cache Maven packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: ${{ matrix.cfg.platform }}
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v4
-        with:
-          install: true
       - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
       - name: Login to GitHub Container Registry
@@ -126,18 +98,20 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push multiplatform images to Dockerhub
+      - name: Build with Maven
+        run: mvn package -DskipTests -B -P docker -Dmaven.buildNumber.skip=true
+      - name: Build and push by digest
         uses: docker/build-push-action@v7
         id: build
         with:
           file: install/docker/Dockerfile
           context: install/docker
+          platforms: ${{matrix.cfg.platform}}
           build-args: |
             IMAGE_JAVA_VERSION=${{matrix.cfg.docker_version}}
-          platforms: ${{ matrix.cfg.platform }}
-          push: true
           labels: ${{steps.docker-meta.outputs.labels}}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          push: true
       - name: Export image digest
         run: |
           mkdir -p /tmp/digests
@@ -150,61 +124,26 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
-      - name: Upload war
-        if: ${{matrix.cfg.jdk == 21 && matrix.cfg.platform == 'linux/amd64'}}
-        uses: actions/upload-artifact@v7
-        with:
-          name: airsonic.war
-          path: |
-            airsonic-main/target/airsonic.war
-          if-no-files-found: error
-          retention-days: 1
-      - name: Upload checksums
-        if: ${{matrix.cfg.jdk == 21 && matrix.cfg.platform == 'linux/amd64'}}
-        uses: actions/upload-artifact@v7
-        with:
-          name: artifacts-checksums.sha
-          path: |
-            airsonic-main/target/artifacts-checksums.sha
-          if-no-files-found: error
-          retention-days: 1
-
-  release:
+  merge:
     runs-on: ubuntu-latest
     needs: deploy
     steps:
-      - name: checkout
-        uses: actions/checkout@v7
       - name: Download digest
         uses: actions/download-artifact@v8
         with:
-          pattern: docker-digest-*
           path: /tmp/digests
+          pattern: docker-digest-*
           merge-multiple: true
-      - name: Download war
-        uses: actions/download-artifact@v8
-        with:
-          name: airsonic.war
-          path: /tmp/artifacts
-      - name: Download checksums
-        uses: actions/download-artifact@v8
-        with:
-          name: artifacts-checksums.sha
-          path: /tmp/artifacts
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
+      
       - name: Docker meta
         id: docker-meta
         uses: docker/metadata-action@v6
-        env:
-          RELEASE_TAG: ${{ needs.deploy.outputs.tag }}
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            latest
-            edge-latest
-            edge-${{ env.RELEASE_TAG }}
-            gitcommit-${{ github.sha }}
+            ${{ github.event.inputs.tag }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
@@ -217,23 +156,5 @@ jobs:
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
       - name: Inspect Image
-        env:
-          RELEASE_TAG: ${{ needs.deploy.outputs.tag }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:edge-${{ env.RELEASE_TAG }}
-
-      - name: Deploy to GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ needs.deploy.outputs.tag }}
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: Edge Release ${{ env.RELEASE_TAG }}
-          draft: false
-          prerelease: true
-          generate_release_notes: true
-          files: |
-            /tmp/artifacts/airsonic.war
-            /tmp/artifacts/artifacts-checksums.sha
+          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ github.event.inputs.tag }}

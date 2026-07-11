@@ -13,7 +13,7 @@ permissions:
   packages: write
 
 env: 
-  REGISTRY_IMAGE: ghcr.io/kagemomiji/airsonic-advanced
+  REGISTRY_IMAGE: ghcr.io/thewriteway/airsonic-advanced
 
 jobs:
   version:
@@ -45,15 +45,12 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-        - jdk: 17
-          platform: linux/arm/v7
-          docker_version: 17.0.15_6
         - jdk: 21
           platform: linux/amd64
-          docker_version: 21.0.7_6
+          docker_version: 21
         - jdk: 21
           platform: linux/arm64
-          docker_version: 21.0.7_6
+          docker_version: 21
     runs-on: ubuntu-latest
     if: github.repository == github.event.pull_request.head.repo.full_name 
     steps:

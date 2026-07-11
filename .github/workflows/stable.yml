@@ -5,7 +5,7 @@ on:
     branches: [ stable/** ]
 
 env:
-  REGISTRY_IMAGE: ghcr.io/kagemomiji/airsonic-advanced
+  REGISTRY_IMAGE: ghcr.io/thewriteway/airsonic-advanced
 
 jobs:
   deploy:
@@ -13,16 +13,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cfg:
-        - jdk: 17
-          platform: linux/arm/v7
-          docker_version: 17.0.15_6
         - jdk: 21
           platform: linux/amd64
-          docker_version: 21.0.7_6
+          docker_version: 21
         - jdk: 21
           platform: linux/arm64
-          docker_version: 21.0.7_6
+          docker_version: 21
     if: startsWith(github.ref, 'refs/heads/stable/')
     outputs:
       tag: ${{ steps.tagcalc.outputs.tag }}
@@ -203,7 +199,7 @@ jobs:
           prerelease: false
           generate_release_notes: true
           body: |
-            List of issues addressed: https://github.com/kagemomiji/airsonic-advanced/issues?q=milestone%3A${{ env.RELEASE_TAG }}
+            List of issues addressed: https://github.com/thewriteway/airsonic-advanced/issues?q=milestone%3A${{ env.RELEASE_TAG }}
           files: |
             /tmp/artifacts/airsonic.war
             /tmp/artifacts/artifacts-checksums.sha
