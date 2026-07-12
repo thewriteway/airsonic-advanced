@@ -408,6 +408,87 @@ public class MediaFolderService {
     }
 
     /**
+     * Migrate music folder root paths. Replaces the given oldRoot prefix with newRoot for all
+     * registered music folders whose path starts with oldRoot. The comparison is done on the
+     * stored path strings, tolerant of separator style (slash vs backslash), so paths recorded
+     * on one OS can be migrated while running on another (e.g. rewriting Windows paths such as
+     * "e:\music" to "/var/music" after moving the library to a Linux host). When the migration
+     * crosses platforms, the folder-relative paths of the media files and cover art in each
+     * migrated folder are rewritten to the new platform's separator as well, so existing media
+     * (and the play counts, ratings and playlists attached to it) is found again at the new
+     * location instead of being rescanned as new files. No filesystem access is performed and
+     * the new root is stored exactly as given. Clears caches after update.
+     *
+     * @param oldRoot Old root path to replace.
+     * @param newRoot New root path to use.
+     * @return Number of music folders migrated.
+     */
+    @Transactional
+    public int migrateRootPath(String oldRoot, String newRoot) {
+        String oldPrefix = trimTrailingSeparators(oldRoot);
+        String newPrefix = trimTrailingSeparators(newRoot);
+        if (oldPrefix.isEmpty() || newPrefix.isEmpty()) {
+            throw new IllegalArgumentException("Old and new root must be provided");
+        }
+
+        String oldKey = oldPrefix.replace('\\', '/');
+        // Windows paths (drive letter or UNC) are case-insensitive
+        boolean ignoreCase = isWindowsStylePath(oldKey);
+        // media scanned on Windows recorded relative paths with backslashes, on other platforms with slashes
+        char oldSeparator = ignoreCase ? '\\' : '/';
+        char newSeparator = isWindowsStylePath(newPrefix.replace('\\', '/')) ? '\\' : '/';
+
+        List<MusicFolder> allFolders = musicFolderRepository.findAll();
+        LOG.info("Migrating music folder roots {} -> {} ({} folders to check)", oldPrefix, newPrefix, allFolders.size());
+
+        int migrated = 0;
+        for (MusicFolder folder : allFolders) {
+            String stored = folder.getPath().toString();
+            if (!isPathPrefix(stored.replace('\\', '/'), oldKey, ignoreCase)) {
+                continue;
+            }
+            String remainder = stored.substring(oldPrefix.length()).replace('/', newSeparator).replace('\\', newSeparator);
+            String newPath = newPrefix + remainder;
+            LOG.info("Migrating music folder '{}' (id {}): {} -> {}", folder.getName(), folder.getId(), stored, newPath);
+            musicFolderRepository.updatePathById(folder.getId(), newPath, Instant.now());
+            if (oldSeparator != newSeparator) {
+                LOG.info("Converting path separators of media files in folder '{}' to '{}', this may take a while on large libraries", folder.getName(), newSeparator);
+                int mediaFiles = mediaFileRepository.updatePathSeparatorsByFolderId(folder.getId(), String.valueOf(oldSeparator), String.valueOf(newSeparator));
+                int coverArts = coverArtRepository.updatePathSeparatorsByFolderId(folder.getId(), String.valueOf(oldSeparator), String.valueOf(newSeparator));
+                LOG.info("Converted {} media file paths and {} cover art paths in folder '{}'", mediaFiles, coverArts, folder.getName());
+            }
+            migrated++;
+        }
+
+        if (migrated > 0) {
+            clearMusicFolderCache();
+            clearMediaFileCache();
+        }
+        LOG.info("Music folder root migration complete: {} of {} folders migrated from {} to {}", migrated, allFolders.size(), oldPrefix, newPrefix);
+        return migrated;
+    }
+
+    private static String trimTrailingSeparators(String path) {
+        String result = path == null ? "" : path.trim();
+        while (result.length() > 1 && (result.endsWith("/") || result.endsWith("\\"))) {
+            result = result.substring(0, result.length() - 1);
+        }
+        return result;
+    }
+
+    private static boolean isWindowsStylePath(String normalizedPath) {
+        return normalizedPath.startsWith("//")
+                || (normalizedPath.length() >= 2 && Character.isLetter(normalizedPath.charAt(0)) && normalizedPath.charAt(1) == ':');
+    }
+
+    private static boolean isPathPrefix(String path, String prefix, boolean ignoreCase) {
+        if (path.length() < prefix.length() || !path.regionMatches(ignoreCase, 0, prefix, 0, prefix.length())) {
+            return false;
+        }
+        return path.length() == prefix.length() || path.charAt(prefix.length()) == '/';
+    }
+
+    /**
      * Returns the music folder that contains the given file. If multiple music folders contain the file, the one with the longest path is returned.
      *
      * @param file             File to get music folder for.

@@ -215,4 +215,22 @@
 
 </form>
 
+<hr/>
+<form th:action="@{/musicFolderSettings}" method="post">
+    <h3 th:text="#{musicfoldersettings.migrate.title}">Migrate root paths</h3>
+    <p class="detail" style="width:60%;white-space:normal;" th:text="#{musicfoldersettings.migrate.description}"></p>
+    <input type="hidden" name="migrate" value="true"/>
+    <div>
+        <label th:text="#{musicfoldersettings.migrate.old}">Old root</label>
+        <input type="text" name="migrateOld" size="70"/>
+    </div>
+    <div>
+        <label th:text="#{musicfoldersettings.migrate.new}">New root</label>
+        <input type="text" name="migrateNew" size="70"/>
+    </div>
+    <div style="margin-top:0.5em">
+        <input type="submit" th:value="#{musicfoldersettings.migrate.submit}" value="Migrate" onclick="return confirm('Are you sure you want to migrate matching music folder roots? This will update folder paths in the database.');"/>
+    </div>
+</form>
+
 </body></html>

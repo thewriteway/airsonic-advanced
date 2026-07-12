@@ -22,6 +22,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -63,6 +65,9 @@ public class MediaFolderServiceTest {
 
     @MockitoBean
     private MediaFileRepository mediaFileRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @TempDir
     private static Path tempAirsonicHome;
@@ -190,6 +195,65 @@ public class MediaFolderServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             mediaFolderService.createMusicFolder(newFolder);
         });
+    }
+
+    @Test
+    public void testMigrateRootPath() {
+        // given
+        Path oldRoot = tempMusicFolder.resolve("oldroot");
+        Path folderPath = oldRoot.resolve("music");
+        MusicFolder existingFolder = new MusicFolder(folderPath, "Existing Folder", MusicFolder.Type.MEDIA, true,
+                Instant.now());
+        musicFolderRepository.save(existingFolder);
+
+        Path newRoot = tempMusicFolder.resolve("newroot");
+
+        // when
+        int migrated = mediaFolderService.migrateRootPath(oldRoot.toString(), newRoot.toString());
+
+        // then
+        assertEquals(1, migrated);
+        MusicFolder migratedFolder = musicFolderRepository.findById(existingFolder.getId()).orElseThrow();
+        assertEquals(newRoot.resolve("music"), migratedFolder.getPath());
+        // same platform, so media file paths keep their separators
+        verify(mediaFileRepository, never()).updatePathSeparatorsByFolderId(any(), any(), any());
+        verify(coverArtRepository, never()).updatePathSeparatorsByFolderId(any(), any(), any());
+    }
+
+    @Test
+    public void testMigrateRootPathAcrossPlatforms() {
+        // given: folder paths recorded on a Windows install
+        MusicFolder root = new MusicFolder(Paths.get("e:\\music"), "Root", MusicFolder.Type.MEDIA, true, Instant.now());
+        MusicFolder sub = new MusicFolder(Paths.get("e:\\music\\rock"), "Sub", MusicFolder.Type.MEDIA, true, Instant.now());
+        MusicFolder caseDiffers = new MusicFolder(Paths.get("E:\\Music\\Jazz"), "Case", MusicFolder.Type.MEDIA, true, Instant.now());
+        MusicFolder boundary = new MusicFolder(Paths.get("e:\\musicals"), "Boundary", MusicFolder.Type.MEDIA, true, Instant.now());
+        MusicFolder other = new MusicFolder(Paths.get("d:\\other"), "Other", MusicFolder.Type.MEDIA, true, Instant.now());
+        musicFolderRepository.saveAll(List.of(root, sub, caseDiffers, boundary, other));
+
+        // when: migrating to a Linux root, with a trailing slash to be trimmed
+        int migrated = mediaFolderService.migrateRootPath("e:\\music\\", "/var/music/");
+
+        // then: matching folders are rewritten with the exact string given, others untouched
+        assertEquals(3, migrated);
+        assertEquals("/var/music", getStoredPath(root));
+        assertEquals("/var/music/rock", getStoredPath(sub));
+        assertEquals("/var/music/Jazz", getStoredPath(caseDiffers));
+        assertEquals(Paths.get("e:\\musicals").toString(), getStoredPath(boundary));
+        assertEquals(Paths.get("d:\\other").toString(), getStoredPath(other));
+
+        // and: relative media file and cover art paths of migrated folders are converted to the new separator
+        verify(mediaFileRepository).updatePathSeparatorsByFolderId(root.getId(), "\\", "/");
+        verify(mediaFileRepository).updatePathSeparatorsByFolderId(sub.getId(), "\\", "/");
+        verify(mediaFileRepository).updatePathSeparatorsByFolderId(caseDiffers.getId(), "\\", "/");
+        verify(coverArtRepository).updatePathSeparatorsByFolderId(root.getId(), "\\", "/");
+        verify(coverArtRepository).updatePathSeparatorsByFolderId(sub.getId(), "\\", "/");
+        verify(coverArtRepository).updatePathSeparatorsByFolderId(caseDiffers.getId(), "\\", "/");
+        verify(mediaFileRepository, never()).updatePathSeparatorsByFolderId(eq(boundary.getId()), any(), any());
+        verify(mediaFileRepository, never()).updatePathSeparatorsByFolderId(eq(other.getId()), any(), any());
+    }
+
+    private String getStoredPath(MusicFolder folder) {
+        return jdbcTemplate.queryForObject("SELECT path FROM music_folder WHERE id = ?", String.class, folder.getId());
     }
 
     @Test

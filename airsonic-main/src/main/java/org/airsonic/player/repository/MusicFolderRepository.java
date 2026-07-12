@@ -22,9 +22,13 @@ import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.MusicFolder.Type;
 import org.airsonic.player.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,5 +47,14 @@ public interface MusicFolderRepository extends JpaRepository<MusicFolder, Intege
 
     @Transactional
     public void deleteAllByDeletedTrue();
+
+    /**
+     * Updates the path column with the given string as-is. Bypasses the {@link PathConverter}
+     * round-trip through {@link java.nio.file.Path}, which would rewrite separators according
+     * to the OS this server runs on and corrupt paths meant for another platform.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "UPDATE music_folder SET path = :path, changed = :changed WHERE id = :id", nativeQuery = true)
+    public int updatePathById(@Param("id") Integer id, @Param("path") String path, @Param("changed") Instant changed);
 
 }

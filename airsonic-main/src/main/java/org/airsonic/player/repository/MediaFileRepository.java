@@ -114,4 +114,12 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Integer> {
     @Query("UPDATE MediaFile m SET m.present = false, m.childrenLastUpdated = :childrenLastUpdated WHERE m.lastScanned < :lastScanned")
     public void markNonPresent(@Param("childrenLastUpdated") Instant childrenLastUpdated, @Param("lastScanned") Instant lastScanned);
 
+    /**
+     * Rewrites the path separators of all media file paths in the given folder, e.g. from
+     * backslash to slash when a library scanned on Windows is migrated to a Linux host.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "UPDATE media_file SET path = REPLACE(path, :oldSeparator, :newSeparator), parent_path = REPLACE(parent_path, :oldSeparator, :newSeparator), index_path = REPLACE(index_path, :oldSeparator, :newSeparator) WHERE folder_id = :folderId", nativeQuery = true)
+    public int updatePathSeparatorsByFolderId(@Param("folderId") Integer folderId, @Param("oldSeparator") String oldSeparator, @Param("newSeparator") String newSeparator);
+
 }

@@ -121,6 +121,36 @@ public class MusicFolderSettingsController {
         model.addAttribute("command", command);
     }
 
+    @PostMapping(params = "migrate")
+    protected String migrate(@RequestParam("migrateOld") String migrateOld,
+                             @RequestParam("migrateNew") String migrateNew,
+                             RedirectAttributes redirectAttributes) {
+        if (mediaScannerService.isScanning()) {
+            LOG.warn("Not migrating music folder roots: a media library scan is in progress. Wait for it to finish and try again.");
+            redirectAttributes.addFlashAttribute("settings_toast", false);
+            redirectAttributes.addFlashAttribute("settings_reload", false);
+            return "redirect:musicFolderSettings.view";
+        }
+        boolean success;
+        try {
+            int migrated = mediaFolderService.migrateRootPath(migrateOld, migrateNew);
+            success = migrated > 0;
+            if (migrated == 0) {
+                LOG.warn("No music folders matched root {} for migration", migrateOld);
+            } else {
+                LOG.info("Music folder migration finished, starting media library scan");
+                mediaFolderService.clearMusicFolderCache();
+                mediaScannerService.scanLibrary();
+            }
+        } catch (Exception e) {
+            LOG.warn("Could not migrate music folder roots {} -> {}", migrateOld, migrateNew, e);
+            success = false;
+        }
+        redirectAttributes.addFlashAttribute("settings_toast", success);
+        redirectAttributes.addFlashAttribute("settings_reload", success);
+        return "redirect:musicFolderSettings.view";
+    }
+
     private void expunge() {
         // to be before dao#expunge
         MediaLibraryStatistics statistics = indexManager.getStatistics();
