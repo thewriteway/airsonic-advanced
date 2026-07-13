@@ -37,11 +37,6 @@ Written in Java, Airsonic runs on most platforms, including Windows, Mac, Linux 
 
 ![Screenshot](contrib/assets/screenshot.png)
 
-
-The complete list of PRs that were used to enhance Airsonic can be seen on the PRs page. At some point an automatic changelog generator will be added to keep track.
-
-Airsonic-Advanced will occasionally backport features introduced in the base Airsonic fork, but is generally much more modern and bleeding edge than Airsonic.
-
 Usage
 -----
 ### Stand-alone binaries
@@ -49,11 +44,6 @@ Airsonic-Advanced can be downloaded from
 [GitHub](https://github.com/thewriteway/airsonic-advanced/releases).
 
 You need a _minimum_ Java Runtime Environment (JRE) of 21
-
-Airsonic-Advanced is run similarly to (and in lieu of) vanilla Airsonic.
-
-Vanilla Airsonic can be downloaded from
-[GitHub](https://github.com/airsonic/airsonic/releases).
 
 Please use the [Airsonic documentation](https://airsonic.github.io/docs/) for instructions on running Airsonic. For the most part (currently) Airsonic-Advanced shares similar running instructions unless stated otherwise. Notable exceptions are available as comments or resolutions in the Issues page (please search).
 
@@ -63,6 +53,16 @@ You may compile the code yourself by using maven. One of the repositories does n
 mvn clean compile package verify
 ```
 The main binary would be in `airsonic-main/target`
+
+### Docker Instructions
+  - Pull docker image from ```ghcr.io/thewriteway/airsonic-advanced:latest```
+  - Publish Port ```4040``` for access
+  - Bind ```/var/airsonic``` for configuration
+  - Bind ```/var/music``` for music folders
+
+### Default Admin account
+
+On first install and when using Docker the airsonic admin password is generated on startup and shown in the console logs or docker logs.
 
 ### Configuration
 
