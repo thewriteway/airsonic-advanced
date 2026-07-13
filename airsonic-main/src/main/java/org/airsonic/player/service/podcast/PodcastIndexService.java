@@ -67,6 +67,9 @@ public class PodcastIndexService {
         return Collections.emptyList();
     }
 
+    // the PodcastIndex API mandates SHA-1 for the Authorization header
+    // (https://podcastindex-org.github.io/docs-api/#auth); it is not used to protect data at rest
+    @SuppressWarnings("java:S4790")
     private HttpUriRequest createRequest(String url, String apiKey, String apiSecret) {
         HttpPost request = new HttpPost(url);
         request.setHeader("User-Agent", "Airsonic/" + versionService.getLocalVersion());

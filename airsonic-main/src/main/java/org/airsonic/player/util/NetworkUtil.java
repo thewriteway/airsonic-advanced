@@ -30,10 +30,12 @@ import org.springframework.web.util.UrlPathHelper;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 public class NetworkUtil {
 
@@ -125,6 +127,52 @@ public class NetworkUtil {
         int port = url.getPort();
         String userInfo = url.getUserInfo();
         return new URI(scheme, userInfo, host, port, urlPathHelper.getContextPath(request), null, null);
+    }
+
+    /**
+     * Validates a user-supplied URL before the server fetches it, to prevent server-side
+     * request forgery (javasecurity:S5144): only http/https is accepted and the host must
+     * not resolve to a loopback, private, link-local or otherwise non-public address.
+     *
+     * @param url the URL to validate
+     * @return the validated URL, unchanged
+     * @throws IllegalArgumentException if the URL is malformed, uses another scheme, or
+     *         points at a non-public address
+     */
+    public static String validateUrlForServerRequest(String url) {
+        URI uri;
+        try {
+            uri = new URI(url);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Malformed URL");
+        }
+        String scheme = uri.getScheme();
+        if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+            throw new IllegalArgumentException("Only http and https URLs may be fetched");
+        }
+        if (uri.getHost() == null) {
+            throw new IllegalArgumentException("URL has no host");
+        }
+        InetAddress[] addresses;
+        try {
+            addresses = InetAddress.getAllByName(uri.getHost());
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("URL host cannot be resolved");
+        }
+        for (InetAddress address : addresses) {
+            if (address.isLoopbackAddress() || address.isAnyLocalAddress() || address.isLinkLocalAddress()
+                    || address.isSiteLocalAddress() || address.isMulticastAddress()
+                    || isUniqueLocalAddress(address)) {
+                throw new IllegalArgumentException("URL points at a non-public address");
+            }
+        }
+        return url;
+    }
+
+    // IPv6 unique local addresses (fc00::/7) are not covered by isSiteLocalAddress()
+    private static boolean isUniqueLocalAddress(InetAddress address) {
+        byte[] bytes = address.getAddress();
+        return bytes.length == 16 && (bytes[0] & 0xFE) == 0xFC;
     }
 
     /**

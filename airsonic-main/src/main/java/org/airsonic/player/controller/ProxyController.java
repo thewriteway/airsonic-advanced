@@ -20,6 +20,7 @@
 package org.airsonic.player.controller;
 
 import org.airsonic.player.util.FileUtil;
+import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -51,6 +52,12 @@ public class ProxyController {
     @GetMapping
     public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String url = ServletRequestUtils.getRequiredStringParameter(request, "url");
+        try {
+            url = NetworkUtil.validateUrlForServerRequest(url);
+        } catch (IllegalArgumentException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+            return null;
+        }
 
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(15000)

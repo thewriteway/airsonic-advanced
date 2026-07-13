@@ -227,6 +227,9 @@ public class LastFMScrobbler {
         return executePostRequest(url, params);
     }
 
+    // the Audioscrobbler 1.2.1 submission protocol mandates this MD5 construction
+    // (https://www.last.fm/api/submissions); it cannot be changed without breaking scrobbling
+    @SuppressWarnings("java:S4790")
     private String calculateAuthenticationToken(String password, long timestamp) {
         return DigestUtils.md5Hex(DigestUtils.md5Hex(password) + timestamp);
     }

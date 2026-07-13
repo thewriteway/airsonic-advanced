@@ -387,7 +387,10 @@ public class TranscodingService {
         String pathString = path.toString();
         Path tmpFile = null;
         if (Util.isWindows() && !mediaFile.isVideo() && !StringUtils.isAsciiPrintable(path.toString()) && Strings.CS.contains(command, "%s")) {
-            tmpFile = Files.createTempFile("airsonic", "." + MoreFiles.getFileExtension(path));
+            // the extension stems from a scanned file name; restrict it to alphanumerics so no
+            // path-relevant characters can flow into the temp file name (javasecurity:S2083)
+            String extension = MoreFiles.getFileExtension(path).replaceAll("[^A-Za-z0-9]", "");
+            tmpFile = Files.createTempFile("airsonic", "." + extension);
             tmpFile.toFile().deleteOnExit();
             Files.copy(path, tmpFile, StandardCopyOption.REPLACE_EXISTING);
             LOG.info("Created tmp file: {}", tmpFile);
