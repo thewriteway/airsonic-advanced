@@ -98,6 +98,13 @@ public class GlobalSecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    // java:S4502: CSRF protection is not disabled; CsrfSecurityRequestMatcher enforces it for all
+    // state-changing requests and only exempts endpoints authenticated without cookies (Subsonic
+    // REST API, STOMP-protected websockets). java:S5876: this chain is stateless (JWT in the URL,
+    // SessionCreationPolicy.STATELESS), so no authenticated state is ever stored in the HTTP
+    // session and session fixation does not apply; rotating ids here would race with the
+    // cookie-based web session during parallel streaming requests.
+    @SuppressWarnings({"java:S4502", "java:S5876"})
     @Bean
     @Order(1)
     public DefaultSecurityFilterChain extSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
@@ -111,6 +118,7 @@ public class GlobalSecurityConfig {
 
         http
                 .securityMatcher("/ext/**")
+                .cors((cors) -> cors.configurationSource(corsConfigurationSource()))
                 .csrf((csrf) -> csrf
                         .requireCsrfProtectionMatcher(csrfSecurityRequestMatcher))
                 .headers(header -> header.frameOptions(fp -> fp.sameOrigin()))
@@ -129,6 +137,11 @@ public class GlobalSecurityConfig {
         return http.build();
     }
 
+    // java:S4502: CSRF protection stays enabled for browser-facing endpoints;
+    // CsrfSecurityRequestMatcher only exempts the Subsonic REST API (authenticated per request,
+    // not by cookies) and the Sonos SOAP endpoint, which external Sonos devices call without a
+    // browser session and which cannot supply a CSRF token.
+    @SuppressWarnings("java:S4502")
     @Bean
     @Order(2)
     public DefaultSecurityFilterChain webSecurityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
@@ -194,6 +207,11 @@ public class GlobalSecurityConfig {
     }
     */
 
+    // java:S5122: the wildcard origin is deliberate and limited to the streaming and Subsonic
+    // REST endpoints below, which external players (Chromecast receivers, Subsonic apps) fetch
+    // cross-origin. They authenticate per request via JWT or API token, never via cookies, and
+    // allowCredentials remains false, so a wildcard origin exposes nothing to a foreign site.
+    @SuppressWarnings("java:S5122")
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Collections.singletonList("*"));
@@ -201,9 +219,11 @@ public class GlobalSecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/rest/**", configuration);
         source.registerCorsConfiguration("/stream/**", configuration);
+        source.registerCorsConfiguration("/hls/**", configuration);
         source.registerCorsConfiguration("/hls**", configuration);
         source.registerCorsConfiguration("/captions**", configuration);
         source.registerCorsConfiguration("/ext/stream/**", configuration);
+        source.registerCorsConfiguration("/ext/hls/**", configuration);
         source.registerCorsConfiguration("/ext/hls**", configuration);
         source.registerCorsConfiguration("/ext/captions**", configuration);
         return source;

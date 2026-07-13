@@ -155,7 +155,8 @@ public class HLSController {
 
         response.setContentType("application/x-mpegurl");
         response.setCharacterEncoding(StringUtil.ENCODING_UTF8);
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        // CORS for this endpoint is handled centrally by the security filter chains
+        // (GlobalSecurityConfig#corsConfigurationSource), no manual wildcard header (java:S5122)
         List<Pair<Integer, Dimension>> bitRates = parseBitRates(request).stream()
                 .map(b -> b.getRight() != null ? b
                         : Pair.of(b.getLeft(), TranscodingService.getSuitableVideoSize(mediaFile.getWidth(),

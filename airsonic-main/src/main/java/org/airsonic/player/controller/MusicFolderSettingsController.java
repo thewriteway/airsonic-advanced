@@ -35,6 +35,7 @@ import org.airsonic.player.service.MediaScannerService;
 import org.airsonic.player.service.PlaylistService;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.service.search.IndexManager;
+import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,14 +137,14 @@ public class MusicFolderSettingsController {
             int migrated = mediaFolderService.migrateRootPath(migrateOld, migrateNew);
             success = migrated > 0;
             if (migrated == 0) {
-                LOG.warn("No music folders matched root {} for migration", migrateOld);
+                LOG.warn("No music folders matched root {} for migration", StringUtil.sanitizeForLog(migrateOld));
             } else {
                 LOG.info("Music folder migration finished, starting media library scan");
                 mediaFolderService.clearMusicFolderCache();
                 mediaScannerService.scanLibrary();
             }
         } catch (Exception e) {
-            LOG.warn("Could not migrate music folder roots {} -> {}", migrateOld, migrateNew, e);
+            LOG.warn("Could not migrate music folder roots {} -> {}", StringUtil.sanitizeForLog(migrateOld), StringUtil.sanitizeForLog(migrateNew), e);
             success = false;
         }
         redirectAttributes.addFlashAttribute("settings_toast", success);

@@ -9,6 +9,7 @@ import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.repository.CoverArtRepository;
 import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.service.cache.CoverArtCache;
+import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -198,6 +199,7 @@ public class CoverArtService {
     }
 
     private void saveCoverArt(MediaFile dir, String url) throws Exception {
+        url = NetworkUtil.validateUrlForServerRequest(url);
         RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectTimeout(20 * 1000) // 20 seconds
                 .setSocketTimeout(20 * 1000) // 20 seconds

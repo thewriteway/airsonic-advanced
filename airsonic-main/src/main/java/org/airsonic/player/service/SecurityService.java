@@ -112,11 +112,15 @@ public class SecurityService implements UserDetailsService {
         return loadUserByUsername(username, true);
     }
 
+    // java:S5804: throwing UsernameNotFoundException here does not allow user enumeration;
+    // the authentication providers keep Spring Security's default hideUserNotFoundExceptions
+    // behaviour, which converts it to the same BadCredentialsException a wrong password yields
+    @SuppressWarnings("java:S5804")
     public UserDetails loadUserByUsername(String username, boolean caseSensitive)
             throws UsernameNotFoundException, DataAccessException {
         User user = getUserByName(username, caseSensitive);
         if (user == null) {
-            throw new UsernameNotFoundException("User \"" + username + "\" was not found.");
+            throw new UsernameNotFoundException("User was not found.");
         }
 
         List<GrantedAuthority> authorities = getGrantedAuthorities(user);
@@ -324,6 +328,9 @@ public class SecurityService implements UserDetailsService {
                                 Collectors.maxBy(Comparator.comparing(c -> c.getUpdated())), o -> o.orElse(null))));
     }
 
+    // java:S6437: no credential is hard-coded here; this deliberately probes whether the admin
+    // account still uses the well-known default password so the UI can warn the admin to change it
+    @SuppressWarnings("java:S6437")
     public boolean checkDefaultAdminCredsPresent() {
         return userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC).parallelStream()
                 .anyMatch(c -> PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
@@ -712,7 +719,7 @@ public class SecurityService implements UserDetailsService {
                 boolean credentialsNonExpired, boolean accountNonLocked,
                 Collection<? extends GrantedAuthority> authorities) {
             super(username,
-                    DigestUtils.md5Hex(
+                    DigestUtils.sha256Hex(
                             creds.stream().map(x -> x.getEncoder() + "/" + x.getCredential() + "/" + x.getExpiration())
                                     .collect(Collectors.joining())),
                     enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
