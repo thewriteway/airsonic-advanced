@@ -361,6 +361,20 @@ public final class StringUtil {
         return filename;
     }
 
+    /**
+     * Sanitizes a value before it is written to the log, so that user-supplied
+     * input cannot forge new log entries or corrupt the log output.
+     *
+     * @param s The value to sanitize.
+     * @return The value with line breaks and other control characters replaced by underscores.
+     */
+    public static String sanitizeForLog(String s) {
+        if (s == null) {
+            return null;
+        }
+        return s.replaceAll("[\\p{Cntrl}\\u2028\\u2029]", "_");
+    }
+
     public static String removeMarkup(String s) {
         if (s == null) {
             return null;

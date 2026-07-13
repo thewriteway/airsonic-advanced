@@ -35,7 +35,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -69,17 +71,20 @@ public class PodcastChannelController {
     private static final Set<PodcastStatus> LOCKABLE_STATUSES = EnumSet.of(PodcastStatus.SKIPPED, PodcastStatus.COMPLETED, PodcastStatus.NEW);
     private static final Set<PodcastStatus> UNLOCKABLE_STATUSES = EnumSet.of(PodcastStatus.SKIPPED, PodcastStatus.COMPLETED, PodcastStatus.NEW, PodcastStatus.ERROR, PodcastStatus.DELETED);
 
-    @ModelAttribute
-    public User getUser(HttpServletRequest request) {
-        return securityService.getCurrentUser(request);
+    @InitBinder("command")
+    public void initCommandBinder(WebDataBinder binder) {
+        // only the episode selection may be bound from the request; the user and
+        // channel are populated server-side (prevents mass assignment, java:S4684)
+        binder.setAllowedFields("episodes*");
     }
 
     @GetMapping
-    protected ModelAndView get(@ModelAttribute User user,
+    protected ModelAndView get(HttpServletRequest request,
             @RequestParam(name = "id", required = true) Integer channelId,
             @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(name = "size", required = false, defaultValue = "10") Integer size) throws Exception {
 
+        User user = securityService.getCurrentUser(request);
         PodcastChannelCommand command = new PodcastChannelCommand();
         UserSettings settings = personalSettingsService.getUserSettings(user.getUsername());
         command.setUser(user);
@@ -89,18 +94,20 @@ public class PodcastChannelController {
         command.setPartyModeEnabled(settings.getPartyModeEnabled());
 
         ModelAndView result = new ModelAndView();
+        result.addObject("user", user);
         result.addObject("command", command);
         result.addObject("pages", episodes);
         return result;
     }
 
     @PostMapping(params = "delete")
-    protected String deleteEpisodes(@ModelAttribute User user,
+    protected String deleteEpisodes(HttpServletRequest request,
             @ModelAttribute(name = "channelId") Integer channelId,
             @RequestParam(name = "page", defaultValue = "0") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
             @ModelAttribute("command") PodcastChannelCommand command) throws Exception {
 
+        User user = securityService.getCurrentUser(request);
         if (!user.isPodcastRole()) {
             throw new AccessDeniedException("Podcast is forbidden for user " + user.getUsername());
         }
@@ -119,12 +126,13 @@ public class PodcastChannelController {
     }
 
     @PostMapping(params = "download")
-    protected String downloadEpisodes(@ModelAttribute User user,
+    protected String downloadEpisodes(HttpServletRequest request,
             @ModelAttribute(name = "channelId") Integer channelId,
             @RequestParam(name = "page", defaultValue = "0") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
             @ModelAttribute("command") PodcastChannelCommand command) throws Exception {
 
+        User user = securityService.getCurrentUser(request);
         if (!user.isPodcastRole()) {
             throw new AccessDeniedException("Podcast is forbidden for user " + user.getUsername());
         }
@@ -143,12 +151,13 @@ public class PodcastChannelController {
     }
 
     @PostMapping(params = "lock")
-    protected String lockEpisodes(@ModelAttribute User user,
+    protected String lockEpisodes(HttpServletRequest request,
             @ModelAttribute(name = "channelId") Integer channelId,
             @RequestParam(name = "page", defaultValue = "0") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
             @ModelAttribute("command") PodcastChannelCommand command) throws Exception {
 
+        User user = securityService.getCurrentUser(request);
         if (!user.isPodcastRole()) {
             throw new AccessDeniedException("Podcast is forbidden for user " + user.getUsername());
         }
@@ -167,12 +176,13 @@ public class PodcastChannelController {
     }
 
     @PostMapping(params = "unlock")
-    protected String unlockEpisodes(@ModelAttribute User user,
+    protected String unlockEpisodes(HttpServletRequest request,
             @ModelAttribute(name = "channelId") Integer channelId,
             @RequestParam(name = "page", defaultValue = "0") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
             @ModelAttribute("command") PodcastChannelCommand command) throws Exception {
 
+        User user = securityService.getCurrentUser(request);
         if (!user.isPodcastRole()) {
             throw new AccessDeniedException("Podcast is forbidden for user " + user.getUsername());
         }

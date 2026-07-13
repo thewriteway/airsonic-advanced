@@ -55,6 +55,16 @@ public class StringUtilTestCase {
     }
 
     @Test
+    public void testSanitizeForLog() {
+        assertNull(StringUtil.sanitizeForLog(null));
+        assertEquals("", StringUtil.sanitizeForLog(""));
+        assertEquals("C:/music/library", StringUtil.sanitizeForLog("C:/music/library"));
+        assertEquals("evil_2026-07-13 INFO forged entry", StringUtil.sanitizeForLog("evil\n2026-07-13 INFO forged entry"));
+        assertEquals("a_b_c_d", StringUtil.sanitizeForLog("a\rb\nc\td"));
+        assertEquals("x_y_z", StringUtil.sanitizeForLog("x\u2028y\u2029z"));
+    }
+
+    @Test
     public void testFormatBytes() {
         Locale locale = Locale.ENGLISH;
         assertEquals("918 B", StringUtil.formatBytes(918L, locale), "Error in formatBytes()");

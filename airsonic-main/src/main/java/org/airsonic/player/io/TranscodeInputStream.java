@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 /**
@@ -129,10 +130,18 @@ public class TranscodeInputStream extends InputStream {
         }
 
         if (tmpFile != null) {
+            // the tmp file is created by the transcoder in the system temp directory; refuse to
+            // delete anything outside of it in case the path was tampered with (javasecurity:S2083)
+            Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir")).toAbsolutePath().normalize();
+            Path target = tmpFile.toAbsolutePath().normalize();
+            if (!target.startsWith(tmpDir)) {
+                LOG.warn("Refusing to delete tmp file outside the temp directory: {}", target);
+                return;
+            }
             try {
-                Files.deleteIfExists(tmpFile);
+                Files.deleteIfExists(target);
             } catch (IOException e) {
-                LOG.warn("Failed to delete tmp file: {}", tmpFile);
+                LOG.warn("Failed to delete tmp file: {}", target);
             }
         }
     }

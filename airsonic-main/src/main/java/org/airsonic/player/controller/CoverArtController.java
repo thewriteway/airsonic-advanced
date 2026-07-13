@@ -210,7 +210,7 @@ public class CoverArtController {
     }
 
     private Path getCachedImage(CoverArtRequest request, int size) throws IOException {
-        String hash = DigestUtils.md5Hex(request.getKey() + "-" + COVERART_VERSION);
+        String hash = DigestUtils.sha256Hex(request.getKey() + "-" + COVERART_VERSION);
         String encoding = request.getCoverArt() != null ? "jpeg" : "png";
         Path cachedImage = getImageCacheDirectory(size).resolve(hash + "." + encoding);
 

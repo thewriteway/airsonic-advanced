@@ -621,10 +621,10 @@ function tt_MkTipContent(a)
 {
 	if(tt_t2t)
 	{
-		if(tt_aV[COPYCONTENT])
-			tt_sContent = tt_t2t.innerHTML;
-		else
-			tt_sContent = "";
+		// For COPYCONTENT the content is cloned from the source element as DOM nodes
+		// in tt_MkTipSubDivs(); never copy its markup through an HTML string, since
+		// re-parsing DOM-derived text as HTML enables DOM-based XSS.
+		tt_sContent = "";
 	}
 	else
 		tt_sContent = a[0];
@@ -636,17 +636,6 @@ function tt_MkTipSubDivs()
 	sTbTrTd = ' cellspacing="0" cellpadding="0" border="0" style="' + sCss + '"><tbody style="' + sCss + '"><tr><td ';
 
 	tt_aElt[0].style.width = tt_GetClientW() + "px";
-	// Ensure that plain text passed to Tip() is not reinterpreted as HTML.
-	function tt_SafeContent(content) {
-		try {
-			if (typeof content !== 'string') return content;
-			// If content contains HTML-like characters, assume caller intended HTML
-			if (content.indexOf('<') === -1 && content.indexOf('&') === -1) {
-				return content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-			}
-		} catch (e) {}
-		return content;
-	}
 
 	tt_aElt[0].innerHTML =
 		(''
@@ -668,7 +657,7 @@ function tt_MkTipSubDivs()
 			: '')
 		+ '<div id="WzBoDy" style="position:relative;z-index:0;">'
 		+ '<table' + sTbTrTd + 'id="WzBoDyI" style="' + sCss + '">'
-		+ tt_SafeContent(tt_sContent)
+		+ tt_sContent
 		+ '</td></tr></tbody></table></div>'
 		+ (tt_aV[SHADOW]
 			? ('<div id="WzTtShDwR" style="position:absolute;overflow:hidden;"></div>'
@@ -676,9 +665,22 @@ function tt_MkTipSubDivs()
 			: '')
 		);
 	tt_GetSubDivRefs();
-	// Convert DOM node to tip
-	if(tt_t2t && !tt_aV[COPYCONTENT])
-		tt_El2Tip();
+	if(tt_t2t)
+	{
+		if(tt_aV[COPYCONTENT])
+		{
+			// Copy the content of the "text-to-tip" element by cloning its DOM nodes;
+			// its markup must not be re-parsed via innerHTML (DOM-based XSS).
+			var aNodes = tt_t2t.childNodes;
+			for(var iNode = 0; iNode < aNodes.length; ++iNode)
+				tt_aElt[6].appendChild(aNodes[iNode].cloneNode(true));
+		}
+		else
+		{
+			// Convert DOM node to tip
+			tt_El2Tip();
+		}
+	}
 	tt_ExtCallFncs(0, "SubDivsCreated");
 }
 function tt_GetSubDivRefs()

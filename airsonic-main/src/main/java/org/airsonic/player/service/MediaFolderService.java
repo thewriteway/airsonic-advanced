@@ -10,6 +10,7 @@ import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.repository.MusicFolderRepository;
 import org.airsonic.player.repository.UserRepository;
 import org.airsonic.player.util.FileUtil;
+import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -438,8 +439,12 @@ public class MediaFolderService {
         char oldSeparator = ignoreCase ? '\\' : '/';
         char newSeparator = isWindowsStylePath(newPrefix.replace('\\', '/')) ? '\\' : '/';
 
+        // the roots come from a request parameter, sanitize them before logging
+        String safeOldPrefix = StringUtil.sanitizeForLog(oldPrefix);
+        String safeNewPrefix = StringUtil.sanitizeForLog(newPrefix);
+
         List<MusicFolder> allFolders = musicFolderRepository.findAll();
-        LOG.info("Migrating music folder roots {} -> {} ({} folders to check)", oldPrefix, newPrefix, allFolders.size());
+        LOG.info("Migrating music folder roots {} -> {} ({} folders to check)", safeOldPrefix, safeNewPrefix, allFolders.size());
 
         int migrated = 0;
         for (MusicFolder folder : allFolders) {
@@ -449,7 +454,8 @@ public class MediaFolderService {
             }
             String remainder = stored.substring(oldPrefix.length()).replace('/', newSeparator).replace('\\', newSeparator);
             String newPath = newPrefix + remainder;
-            LOG.info("Migrating music folder '{}' (id {}): {} -> {}", folder.getName(), folder.getId(), stored, newPath);
+            LOG.info("Migrating music folder '{}' (id {}): {} -> {}", StringUtil.sanitizeForLog(folder.getName()), folder.getId(),
+                    StringUtil.sanitizeForLog(stored), StringUtil.sanitizeForLog(newPath));
             musicFolderRepository.updatePathById(folder.getId(), newPath, Instant.now());
             if (oldSeparator != newSeparator) {
                 LOG.info("Converting path separators of media files in folder '{}' to '{}', this may take a while on large libraries", folder.getName(), newSeparator);
@@ -464,7 +470,7 @@ public class MediaFolderService {
             clearMusicFolderCache();
             clearMediaFileCache();
         }
-        LOG.info("Music folder root migration complete: {} of {} folders migrated from {} to {}", migrated, allFolders.size(), oldPrefix, newPrefix);
+        LOG.info("Music folder root migration complete: {} of {} folders migrated from {} to {}", migrated, allFolders.size(), safeOldPrefix, safeNewPrefix);
         return migrated;
     }
 

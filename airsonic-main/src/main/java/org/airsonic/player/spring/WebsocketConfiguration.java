@@ -419,7 +419,10 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
         @Override
         public String getRequestedSessionId() {
-            return getOriginalRequest().getServletRequest().getRequestedSessionId();
+            // The session id requested by the client is unvalidated and must not be trusted
+            // (java:S2254); expose the id of the session actually established by the container.
+            HttpSession session = getOriginalRequest().getServletRequest().getSession(false);
+            return session == null ? null : session.getId();
         }
 
         @Override
