@@ -95,7 +95,7 @@ public class SecurityServiceTest {
 
         // given
         CredentialsCommand command = new CredentialsCommand();
-        command.setEncoder("hex");
+        command.setEncoder("encrypted-AES-GCM");
         command.setCredential("testPassword");
         command.setApp(App.LASTFM);
         command.setExpiration(new Date());
@@ -111,8 +111,8 @@ public class SecurityServiceTest {
         verify(userCredentialRepository).save(argumentCaptor.capture());
         UserCredential uc = argumentCaptor.getValue();
         assertEquals(TEST_USER_NAME, uc.getUser().getUsername());
-        assertEquals("hex", uc.getEncoder());
-        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), uc.getCredential());
+        assertEquals("encrypted-AES-GCM", uc.getEncoder());
+        assertTrue(PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").matches("testPassword", uc.getCredential()));
         assertEquals(App.LASTFM, uc.getApp());
         assertEquals("testComment", uc.getComment());
     }
@@ -122,7 +122,7 @@ public class SecurityServiceTest {
         // given
         CredentialsManagementCommand command = new CredentialsManagementCommand();
         command.setCredentials(List.of(mockedCredentialsCommand));
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, "testPassword", "hex", App.LASTFM);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, "testPassword", "legacynoop", App.LASTFM);
         userCredentialRepository.saveAndFlush(userCredential);
         when(mockedCredentialsCommand.getHash()).thenReturn(Integer.toString(userCredential.hashCode()));
         when(mockedCredentialsCommand.getMarkedForDeletion()).thenReturn(true);
@@ -146,7 +146,7 @@ public class SecurityServiceTest {
         userCredentialRepository.saveAndFlush(userCredential);
         when(mockedCredentialsCommand.getHash()).thenReturn(Integer.toString(userCredential.hashCode()));
         when(mockedCredentialsCommand.getMarkedForDeletion()).thenReturn(false);
-        when(mockedCredentialsCommand.getEncoder()).thenReturn("hex");
+        when(mockedCredentialsCommand.getEncoder()).thenReturn("bcrypt");
         when(mockedCredentialsCommand.getExpirationInstant()).thenReturn(null);
 
         // when
@@ -156,8 +156,8 @@ public class SecurityServiceTest {
         assertTrue(result);
         verify(userCredentialRepository).save(any(UserCredential.class));
         UserCredential actual = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.LASTFM).get(0);
-        assertEquals("hex", actual.getEncoder());
-        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
+        assertEquals("bcrypt", actual.getEncoder());
+        assertTrue(PasswordEncoderConfig.ENCODERS.get("bcrypt").matches("testPassword", actual.getCredential()));
         assertEquals("test", actual.getComment());
     }
 
@@ -167,11 +167,11 @@ public class SecurityServiceTest {
         // given
         CredentialsManagementCommand command = new CredentialsManagementCommand();
         command.setCredentials(List.of(mockedCredentialsCommand));
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, "testPassword", "hex", App.LASTFM);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, "testPassword", "legacynoop", App.LASTFM);
         userCredentialRepository.saveAndFlush(userCredential);
         when(mockedCredentialsCommand.getHash()).thenReturn(Integer.toString(userCredential.hashCode()));
         when(mockedCredentialsCommand.getMarkedForDeletion()).thenReturn(false);
-        when(mockedCredentialsCommand.getEncoder()).thenReturn("hex");
+        when(mockedCredentialsCommand.getEncoder()).thenReturn("bcrypt");
         when(mockedCredentialsCommand.getExpirationInstant()).thenReturn(null);
 
         // when
@@ -181,8 +181,8 @@ public class SecurityServiceTest {
         assertTrue(result);
         verify(userCredentialRepository).save(any(UserCredential.class));
         UserCredential actual = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.LASTFM).get(0);
-        assertEquals("hex", actual.getEncoder());
-        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
+        assertEquals("bcrypt", actual.getEncoder());
+        assertTrue(PasswordEncoderConfig.ENCODERS.get("bcrypt").matches("testPassword", actual.getCredential()));
         assertEquals("test", actual.getComment());
     }
 
@@ -202,7 +202,7 @@ public class SecurityServiceTest {
     public void recoverCredentialWithExistingUser() {
 
         // given
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").encode("oldPassword"), "encrypted-AES-GCM", App.AIRSONIC);
         userCredentialRepository.saveAndFlush(userCredential);
 
         // when
@@ -213,9 +213,11 @@ public class SecurityServiceTest {
         verify(userRepository).save(any(User.class));
         verify(userCredentialRepository).save(any(UserCredential.class));
 
-        UserCredential actual = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.AIRSONIC).get(0);
-        assertEquals("hex", actual.getEncoder());
-        assertEquals(PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), actual.getCredential());
+        String preferredEncoder = securityService.getPreferredPasswordEncoder(true);
+        List<UserCredential> actuals = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.AIRSONIC);
+        assertEquals(2, actuals.size());
+        assertTrue(actuals.stream().anyMatch(c -> preferredEncoder.equals(c.getEncoder())
+                && PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches("testPassword", c.getCredential())));
 
         User actualUser = userRepository.findByUsername(TEST_USER_NAME).get();
         assertFalse(actualUser.isLdapAuthenticated());
@@ -226,7 +228,7 @@ public class SecurityServiceTest {
     public void deleteCredentialWithLastAirsonicCredsShouldReturnFalse() {
 
         // given
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").encode("testPassword"), "encrypted-AES-GCM", App.AIRSONIC);
         userCredentialRepository.saveAndFlush(userCredential);
 
         // when
@@ -241,9 +243,9 @@ public class SecurityServiceTest {
     public void deleteCredentialSuccessShouldReturnTrue() {
 
         // given
-        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.LASTFM);
+        UserCredential userCredential = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").encode("testPassword"), "encrypted-AES-GCM", App.LASTFM);
         userCredentialRepository.saveAndFlush(userCredential);
-        UserCredential userCredential2 = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("hex").encode("testPassword"), "hex", App.AIRSONIC);
+        UserCredential userCredential2 = new UserCredential(testUser, TEST_USER_NAME, PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").encode("testPassword"), "encrypted-AES-GCM", App.AIRSONIC);
         userCredentialRepository.saveAndFlush(userCredential2);
 
         // when

@@ -66,7 +66,8 @@ public class AirsonicScanConfigTest {
 
         @Test
         public void testParallelismProperty() {
-            Integer expectedParallelism = Runtime.getRuntime().availableProcessors() + 1;
+            // default is IO-bound: capped at available processors or 8, whichever is smaller
+            Integer expectedParallelism = Math.max(1, Math.min(Runtime.getRuntime().availableProcessors(), 8));
             assertEquals(expectedParallelism, scanConfig.getParallelism());
         }
 

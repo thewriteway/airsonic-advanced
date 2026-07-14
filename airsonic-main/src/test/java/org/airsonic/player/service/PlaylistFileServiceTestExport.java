@@ -19,14 +19,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -99,14 +99,15 @@ public class PlaylistFileServiceTestExport {
         playlist.setPlaylistMediaFiles(playlistMediaFiles);
         when(playlistRepository.findById(eq(23))).thenReturn(Optional.of(playlist));
         when(settingsService.getPlaylistExportFormat()).thenReturn("m3u");
-        when(mediaFolderService.getMusicFolderById(any())).thenReturn(mockedFolder);
         when(mockedFolder.getPath()).thenReturn(Paths.get("/"));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         playlistFileService.exportPlaylist(23, outputStream);
-        byte[] actual = outputStream.toByteArray();
-        byte[] expected = getClass().getResourceAsStream("/PLAYLISTS/23.m3u").readAllBytes();
-        assertArrayEquals(expected, actual);
+        // compare line-wise with normalized separators so the test is stable across platforms
+        List<String> actualLines = outputStream.toString(StandardCharsets.UTF_8).replace('\\', '/').lines().toList();
+        List<String> expectedLines = new String(getClass().getResourceAsStream("/PLAYLISTS/23.m3u").readAllBytes(),
+                StandardCharsets.UTF_8).lines().toList();
+        assertEquals(expectedLines, actualLines);
     }
 
     private List<MediaFile> getPlaylistFiles() {
@@ -116,18 +117,21 @@ public class PlaylistFileServiceTestExport {
         mf1.setId(142);
         mf1.setPath("/some/path/to_album/to_artist/name - of - song.mp3");
         mf1.setPresent(true);
+        mf1.setFolder(mockedFolder);
         mediaFiles.add(mf1);
 
         MediaFile mf2 = new MediaFile();
         mf2.setId(1235);
         mf2.setPath("/some/path/to_album2/to_artist/another song.mp3");
         mf2.setPresent(true);
+        mf2.setFolder(mockedFolder);
         mediaFiles.add(mf2);
 
         MediaFile mf3 = new MediaFile();
         mf3.setId(198403);
         mf3.setPath("/some/path/to_album2/to_artist/another song2.mp3");
         mf3.setPresent(false);
+        mf3.setFolder(mockedFolder);
         mediaFiles.add(mf3);
 
         return mediaFiles;

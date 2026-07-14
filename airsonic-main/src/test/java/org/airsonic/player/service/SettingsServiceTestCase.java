@@ -82,7 +82,12 @@ public class SettingsServiceTestCase {
     @BeforeEach
     public void setUpEach() throws IOException {
         TestCaseUtils.cleanAirsonicHomeForTest();
-        FileUtils.deleteDirectory(airsonicHome.toFile());
+        try {
+            FileUtils.deleteDirectory(airsonicHome.toFile());
+        } catch (IOException e) {
+            // on Windows the cached Spring contexts keep airsonic.log and cache/.lock open;
+            // everything else (the settings files this test cares about) is still deleted
+        }
         Files.createDirectories(airsonicHome);
         ConfigurationPropertiesService.reset();
         cueConfig.setEnabled(true);

@@ -2,6 +2,7 @@ package org.airsonic.player.parser.lyrics;
 
 import org.junit.jupiter.api.Test;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
@@ -18,7 +19,12 @@ class LrcParserTest {
     private Path getResourcePath(String resourceName) {
         URL url = getClass().getClassLoader().getResource("MEDIAS/lyrics/" + resourceName);
         assertNotNull(url);
-        return Path.of(url.getPath());
+        try {
+            // URL.getPath() yields "/C:/..." on Windows, which Path.of cannot parse
+            return Path.of(url.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Test

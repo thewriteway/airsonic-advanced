@@ -338,13 +338,13 @@ public class MediaFolderServiceTest {
 
         // child update
         verify(mockedChildFile).setFolder(newFolder);
-        verify(mockedChildFile).setPath("child/test.mp3");
+        verify(mockedChildFile).setPath("child" + File.separator + "test.mp3");
         verify(mockedChildFile).setParentPath("child");
         verify(mediaFileRepository).save(mockedChildFile);
 
         // cover art update
         verify(mockedCoverArt).setFolder(newFolder);
-        verify(mockedCoverArt).setPath("child/test.jpg");
+        verify(mockedCoverArt).setPath("child" + File.separator + "test.jpg");
         verify(coverArtRepository).save(mockedCoverArt);
     }
 
@@ -658,13 +658,13 @@ public class MediaFolderServiceTest {
 
         // child update
         verify(mockedChildFile).setFolder(musicFolder);
-        verify(mockedChildFile).setPath("child/test.mp3");
+        verify(mockedChildFile).setPath("child" + File.separator + "test.mp3");
         verify(mockedChildFile).setParentPath("child");
         verify(mediaFileRepository).save(mockedChildFile);
 
         // cover art update
         verify(mockedCoverArt).setFolder(musicFolder);
-        verify(mockedCoverArt).setPath("child/test.jpg");
+        verify(mockedCoverArt).setPath("child" + File.separator + "test.jpg");
         verify(coverArtRepository).save(mockedCoverArt);
 
     }

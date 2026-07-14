@@ -32,7 +32,9 @@ import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.RatingService;
 import org.airsonic.player.service.SearchService;
+import org.airsonic.player.service.SecurityService;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -101,9 +103,23 @@ public class AlbumApiTest {
     @Autowired
     private PlayerService playerService;
 
+    @Autowired
+    private SecurityService securityService;
+
     @BeforeAll
     public static void beforeAll() {
         System.setProperty("airsonic.home", tempAirsonicHome.toString());
+    }
+
+    /**
+     * The admin user is created at startup with a random (or env-provided) password,
+     * so give it the well-known test password these tests authenticate with.
+     */
+    @BeforeEach
+    public void ensureTestAdminCredential() {
+        if (!securityService.checkDefaultAdminCredsPresent()) {
+            securityService.recoverCredential(AIRSONIC_USER, AIRSONIC_PASSWORD, "Test admin credential");
+        }
     }
 
     MusicFolder testFolder = new MusicFolder(1, Paths.get("/test/folder"), "Test Folder", MusicFolder.Type.MEDIA, true, Instant.now());
