@@ -26,7 +26,7 @@
 
 
             <tr>
-                <td style="padding-left:1em"><a th:href="${shareInfo.shareUrl}" target="_blank" th:text="${share.name}"></a></td>
+                <td style="padding-left:1em"><a th:href="${shareInfo.shareUrl}" target="_blank" rel="noopener noreferrer" th:text="${share.name}"></a></td>
                 <td style="padding-left:1em" th:text="${share.username}"></td>
                 <td style="padding-left:1em"><input type="text" th:name="|description[${share.id}]|" size="40" th:value="${share.description}"/></td>
                 <td style="padding-left:1em" th:text="${#temporals.format(share.lastVisited, 'SHORT')}"></td>
