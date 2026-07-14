@@ -162,12 +162,12 @@
             </tr>
             <tr>
                 <td th:text="#{usersettings.password}"></td>
-                <td><input type="password" th:field="*{password}" style="width:15em"/></td>
+                <td><input type="password" th:field="*{password}" autocomplete="new-password" style="width:15em"/></td>
                 <td class="warning" th:errors="*{password}"></td>
             </tr>
             <tr>
                 <td th:text="#{usersettings.confirmpassword}"></td>
-                <td><input type="password" th:field="*{confirmPassword}" style="width:15em"/></td>
+                <td><input type="password" th:field="*{confirmPassword}" autocomplete="new-password" style="width:15em"/></td>
                 <td/>
             </tr>
         </table>
@@ -186,12 +186,12 @@
         <table id="passwordChangeTable" style="display:none">
             <tr>
                 <td th:text="#{usersettings.newpassword}"></td>
-                <td><input type="password" th:field="*{password}" /></td>
+                <td><input type="password" th:field="*{password}" autocomplete="new-password" /></td>
                 <td class="warning" th:errors="*{password}"></td>
             </tr>
             <tr>
                 <td th:text="#{usersettings.confirmpassword}"></td>
-                <td><input type="password" th:field="*{confirmPassword}" /></td>
+                <td><input type="password" th:field="*{confirmPassword}" autocomplete="new-password" /></td>
                 <td/>
             </tr>
         </table>
