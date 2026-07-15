@@ -299,13 +299,13 @@ public class PersonalSettingsServiceTest {
         String mimeType = StringUtil.getMimeType(FilenameUtils.getExtension(fileName));
         assertEquals(mimeType, actual.getMimeType());
         Path persistedPath = (Paths.get("$[AIRSONIC_HOME]", "avatars", USER_NAME,
-                fileName + "." + StringUtils.substringAfter(mimeType, "/")));
+                FilenameUtils.getBaseName(fileName) + "." + StringUtils.substringAfter(mimeType, "/")));
         assertEquals(persistedPath, actual.getPath());
         assertNotNull(actual.getCreatedDate());
 
         // assert saved file
         Path savedPath = tempDir
-                .resolve(Paths.get("avatars", USER_NAME, fileName + "." + StringUtils.substringAfter(mimeType, "/")));
+                .resolve(Paths.get("avatars", USER_NAME, FilenameUtils.getBaseName(fileName) + "." + StringUtils.substringAfter(mimeType, "/")));
         assertTrue(Files.exists(savedPath));
         assertTrue(result.isEmpty());
 
@@ -337,12 +337,12 @@ public class PersonalSettingsServiceTest {
         assertEquals(64, actual.getHeight());
         String mimeType = StringUtil.getMimeType("jpeg");
         assertEquals(mimeType, actual.getMimeType());
-        Path persistedPath = (Paths.get("$[AIRSONIC_HOME]", "avatars", USER_NAME, fileName + ".jpeg"));
+        Path persistedPath = (Paths.get("$[AIRSONIC_HOME]", "avatars", USER_NAME, FilenameUtils.getBaseName(fileName) + ".jpeg"));
         assertEquals(persistedPath, actual.getPath());
         assertNotNull(actual.getCreatedDate());
 
         // assert saved file
-        Path savedPath = tempDir.resolve(Paths.get("avatars", USER_NAME, fileName + ".jpeg"));
+        Path savedPath = tempDir.resolve(Paths.get("avatars", USER_NAME, FilenameUtils.getBaseName(fileName) + ".jpeg"));
         assertTrue(Files.exists(savedPath));
         assertTrue((boolean) result.get("resized"));
     }

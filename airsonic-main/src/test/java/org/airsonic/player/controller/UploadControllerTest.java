@@ -41,8 +41,8 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.mock.web.MockMultipartFile;
@@ -51,7 +51,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.nio.file.AccessDeniedException;
@@ -153,7 +153,7 @@ class UploadControllerTest {
         // Create request
         MockMultipartFile file1 = new MockMultipartFile("file", "test.txt", "text/plain", "Test file".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "test2.txt", "text/plain", "Test file 2".getBytes());
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .multipart("/upload")
                 .file(file1)
                 .file(file2)
@@ -205,7 +205,7 @@ class UploadControllerTest {
         // Create request
         MockMultipartFile file1 = new MockMultipartFile("file", "test.txt", "text/plain", "Test file".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "test2.txt", "text/plain", "Test file 2".getBytes());
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .multipart("/upload")
                 .file(file1)
                 .file(file2)
@@ -263,7 +263,7 @@ class UploadControllerTest {
         // Create request
         MockMultipartFile file1 = new MockMultipartFile("file", "test.txt", "text/plain", "Test file".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "test2.txt", "text/plain", "Test file 2".getBytes());
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .multipart("/upload")
                 .file(file1)
                 .file(file2)
@@ -315,7 +315,7 @@ class UploadControllerTest {
         // Create request
         MockMultipartFile file1 = new MockMultipartFile("file", "test.txt", "text/plain", "Test file".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "test2.txt", "text/plain", "Test file 2".getBytes());
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .multipart("/upload")
                 .file(file1)
                 .file(file2)
@@ -369,7 +369,7 @@ class UploadControllerTest {
         // Create request
         MockMultipartFile file1 = new MockMultipartFile("file", "test.txt", "text/plain", "Test file".getBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "test2.txt", "text/plain", "Test file 2".getBytes());
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .multipart("/upload")
                 .file(file1)
                 .file(file2)
@@ -423,7 +423,7 @@ class UploadControllerTest {
         // Create request
         MockMultipartFile file1 = new MockMultipartFile("file", fileName, "text/plain", resource.getInputStream().readAllBytes());
         MockMultipartFile file2 = new MockMultipartFile("file", "test2.txt", "text/plain", "Test file 2".getBytes());
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .multipart("/upload")
                 .file(file1)
                 .file(file2)

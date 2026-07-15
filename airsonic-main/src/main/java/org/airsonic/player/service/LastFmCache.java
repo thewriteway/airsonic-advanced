@@ -24,6 +24,8 @@ import de.umass.lastfm.cache.FileSystemCache;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.LambdaUtils;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -40,6 +42,8 @@ import java.util.stream.Stream;
  * @version $Id$
  */
 public class LastFmCache extends Cache {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LastFmCache.class);
 
     private final Path cacheDir;
     private final long ttl;
@@ -100,7 +104,9 @@ public class LastFmCache extends Cache {
         if (!Files.exists(cacheDir)) {
             try {
                 Files.createDirectories(cacheDir);
-            } catch (IOException ignore) {}
+            } catch (IOException e) {
+                LOG.warn("Could not create Last.fm cache directory {}", cacheDir, e);
+            }
         }
     }
 

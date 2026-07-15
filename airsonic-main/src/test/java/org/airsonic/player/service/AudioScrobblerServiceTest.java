@@ -23,9 +23,9 @@ import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserCredential;
 import org.airsonic.player.domain.UserCredential.App;
 import org.airsonic.player.domain.UserSettings;
+import org.airsonic.player.security.PasswordEncoderConfig;
 import org.airsonic.player.service.scrobbler.LastFMScrobbler;
 import org.airsonic.player.service.scrobbler.ListenBrainzScrobbler;
-import org.airsonic.player.util.StringUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -67,9 +67,11 @@ class AudioScrobblerServiceTest {
     @Mock
     private UserSettings mockedUserSettings;
 
-    private UserCredential lastFmCredential = new UserCredential(new User("testUser", "test@example.com"), "lastFmUser", StringUtil.utf8HexEncode("lastFmPassword"), "hex", App.LASTFM);
+    private UserCredential lastFmCredential = new UserCredential(new User("testUser", "test@example.com"), "lastFmUser",
+            PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").encode("lastFmPassword"), "encrypted-AES-GCM", App.LASTFM);
 
-    private UserCredential listenBreinzCredential = new UserCredential(new User("testUser", "test@example.com"), "listenBreinz", StringUtil.utf8HexEncode("listenBrainzPassword"), "hex", App.LISTENBRAINZ);
+    private UserCredential listenBreinzCredential = new UserCredential(new User("testUser", "test@example.com"), "listenBreinz",
+            PasswordEncoderConfig.ENCODERS.get("encrypted-AES-GCM").encode("listenBrainzPassword"), "encrypted-AES-GCM", App.LISTENBRAINZ);
 
     @Test
     void registerWithNullMediaFileShouldNotDoNothing() {

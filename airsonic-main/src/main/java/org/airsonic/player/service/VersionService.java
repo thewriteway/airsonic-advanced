@@ -20,20 +20,24 @@
  */
 package org.airsonic.player.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.airsonic.player.domain.Version;
 import org.airsonic.player.domain.dto.GitHubRelease;
 import org.apache.commons.lang3.Strings;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.*;
 import java.time.Instant;
@@ -223,13 +227,17 @@ public class VersionService {
         LOG.debug("Starting to read latest version");
         // Set up the RestClient to fetch the latest version from GitHub
         // Use HttpComponentsClientHttpRequestFactory for better control over timeouts
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-        factory.setConnectTimeout(10000);
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+                        .setDefaultConnectionConfig(ConnectionConfig.custom()
+                                .setConnectTimeout(Timeout.ofSeconds(10))
+                                .build())
+                        .build())
+                .build();
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
         factory.setReadTimeout(10000);
-        // Set up the ObjectMapper to handle Java 8 time types
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModules(new JavaTimeModule());
-        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter(objectMapper);
+        // Jackson 3 handles Java 8 time types out of the box
+        JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(JsonMapper.builder().build());
         RestClient restClient = RestClient.builder()
             .defaultHeaders(
                 httpHeaders -> {
@@ -237,10 +245,7 @@ public class VersionService {
                     httpHeaders.set("User-Agent", "Airsonic/" + getLocalVersion());
                 }
             )
-            .messageConverters(converters -> {
-                converters.clear();
-                converters.add(converter);
-            })
+            .messageConverters(List.of(converter))
             .baseUrl(VERSION_URL)
             .requestFactory(factory)
             .build();

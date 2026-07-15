@@ -10,7 +10,7 @@ import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
-import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
+import org.springframework.boot.web.server.servlet.ConfigurableServletWebServerFactory;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -50,7 +50,7 @@ public class Application extends SpringBootServletInitializer implements WebServ
         // ensure this class does not have any direct dependencies on any Tomcat
         // specific classes.
         try {
-            Class<?> tomcatESCF = Class.forName("org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory");
+            Class<?> tomcatESCF = Class.forName("org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory");
             if (tomcatESCF.isInstance(container)) {
                 LOG.info("Detected Tomcat web server");
                 LOG.debug("Attempting to optimize tomcat");

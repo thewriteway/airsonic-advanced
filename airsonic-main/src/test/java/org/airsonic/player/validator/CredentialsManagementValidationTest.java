@@ -25,12 +25,14 @@ public class CredentialsManagementValidationTest {
         cc.setConfirmCredential("c");
         assertThat(v.validate(cc, Default.class, CredentialCreateChecks.class)).isEmpty();
 
+        // legacy/plaintext encoders were removed from the registry and are no longer valid
         cc.setEncoder("legacyhex");
-        assertThat(v.validate(cc, Default.class, CredentialCreateChecks.class)).isEmpty();
+        assertThat(v.validate(cc, Default.class, CredentialCreateChecks.class)).isNotEmpty();
 
         cc.setEncoder("noop");
-        assertThat(v.validate(cc, Default.class, CredentialCreateChecks.class)).isEmpty();
+        assertThat(v.validate(cc, Default.class, CredentialCreateChecks.class)).isNotEmpty();
 
+        cc.setEncoder("encrypted-AES-GCM");
         cc.setApp(App.LASTFM);
         assertThat(v.validate(cc, Default.class, CredentialCreateChecks.class)).isEmpty();
     }

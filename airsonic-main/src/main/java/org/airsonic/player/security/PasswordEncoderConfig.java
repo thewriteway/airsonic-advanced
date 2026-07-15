@@ -90,7 +90,7 @@ public class PasswordEncoderConfig {
         // Force the use of argon2 as the default encoder
         DelegatingPasswordEncoder pEncoder = new DelegatingPasswordEncoder("argon2", ENCODERS) {
             @Override
-            public boolean upgradeEncoding(String prefixEncodedPassword) {
+            protected boolean upgradeEncodingNonNull(String prefixEncodedPassword) {
                 // Always promote to argon2 if it's not already
                 if (!prefixEncodedPassword.startsWith("{argon2}")) {
                     return true;

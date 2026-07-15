@@ -194,6 +194,7 @@ public class ListenBrainzScrobbler {
                     registrationData = queue.take();
                     scrobble(registrationData);
                 } catch (ClientProtocolException x) {
+                    LOG.warn("Failed to scrobble '{}' to ListenBrainz.", registrationData == null ? null : registrationData.title, x);
                 } catch (IOException x) {
                     handleNetworkError(registrationData, x);
                 } catch (Exception x) {

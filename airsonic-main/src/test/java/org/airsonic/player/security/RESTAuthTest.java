@@ -1,13 +1,15 @@
 package org.airsonic.player.security;
 
 import org.airsonic.player.config.AirsonicHomeConfig;
+import org.airsonic.player.service.SecurityService;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,9 +35,23 @@ public class RESTAuthTest {
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private SecurityService securityService;
+
     @BeforeAll
     public static void beforeAll() {
         System.setProperty("airsonic.home", tempDir.toString());
+    }
+
+    /**
+     * The admin user is created at startup with a random (or env-provided) password,
+     * so give it the well-known test password these tests authenticate with.
+     */
+    @BeforeEach
+    public void ensureTestAdminCredential() {
+        if (!securityService.checkDefaultAdminCredsPresent()) {
+            securityService.recoverCredential(USERNAME, PASSWORD, "Test admin credential");
+        }
     }
 
     @Test

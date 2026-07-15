@@ -11,14 +11,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.nio.file.Path;
@@ -80,7 +80,7 @@ public class ImportPlaylistControllerTest {
 
         MockMultipartFile file = new MockMultipartFile("file", FILE_NAME, "text/plain", CONTENTS.getBytes());
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/importPlaylist")
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/importPlaylist")
                 .file(file)
                 .with(csrf());
 
@@ -112,7 +112,7 @@ public class ImportPlaylistControllerTest {
         MockMultipartFile file = new MockMultipartFile("file", "", "text/plain", CONTENTS.getBytes());
 
         // Act
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/importPlaylist")
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/importPlaylist")
                 .file(file)
                 .with(csrf());
 
@@ -136,7 +136,7 @@ public class ImportPlaylistControllerTest {
         MockMultipartFile file = new MockMultipartFile("file", FILE_NAME, "text/plain", new byte[1024 * 1024 * 6]);
 
         // Act
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/importPlaylist")
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/importPlaylist")
                 .file(file)
                 .with(csrf());
 

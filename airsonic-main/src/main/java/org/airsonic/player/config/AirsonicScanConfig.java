@@ -58,7 +58,7 @@ public class AirsonicScanConfig {
     }
 
     /**
-     * Get parallelism. If not set, use availableProcessors + 1
+     * Get parallelism. If not set, defaults to available processors capped at 8.
      *
      * @return parallelism
      */

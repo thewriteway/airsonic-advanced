@@ -39,15 +39,17 @@ import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.MusicIndexService;
 import org.airsonic.player.service.PlayerService;
+import org.airsonic.player.service.SecurityService;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -119,6 +121,9 @@ public class ArtistApiTest {
     @Autowired
     private PlayerService playerService;
 
+    @Autowired
+    private SecurityService securityService;
+
     @TempDir
     private static Path tempAirsonicHome;
 
@@ -151,6 +156,17 @@ public class ArtistApiTest {
     @BeforeAll
     public static void beforeAll() {
         System.setProperty("airsonic.home", tempAirsonicHome.toString());
+    }
+
+    /**
+     * The admin user is created at startup with a random (or env-provided) password,
+     * so give it the well-known test password these tests authenticate with.
+     */
+    @BeforeEach
+    public void ensureTestAdminCredential() {
+        if (!securityService.checkDefaultAdminCredsPresent()) {
+            securityService.recoverCredential(AIRSONIC_USER, AIRSONIC_PASSWORD, "Test admin credential");
+        }
     }
 
     /*

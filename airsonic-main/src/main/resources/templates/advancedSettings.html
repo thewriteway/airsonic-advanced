@@ -78,9 +78,9 @@
         <tr>
             <td th:text="#{advancedsettings.smtpUser}"></td>
             <td>
-                <input th:value="*{smtpUser}" size="20"/>
+                <input th:field="*{smtpUser}" size="20"/>
                 <label th:text="#{advancedsettings.smtpPassword}"></label>
-                <input type="password"  th:value="*{smtpPassword}" size="20"/>
+                <input type="password" th:field="*{smtpPassword}" autocomplete="new-password" size="20"/>
                 <th:block th:replace="~{helpToolTip(topic=smtpCredentials)}" />
             </td>
         </tr>
@@ -130,7 +130,7 @@
         <tr>
             <td th:text="#{advancedsettings.ldapsearchfilter}"></td>
             <td colspan="3">
-                <input th:value="*{ldapSearchFilter}" size="70"/>
+                <input th:field="*{ldapSearchFilter}" size="70"/>
                 <th:block th:replace="~{helpToolTip(topic=ldapsearchfilter)}" />
             </td>
         </tr>
@@ -142,7 +142,7 @@
             </td>
             <td th:text="#{advancedsettings.ldapmanagerpassword}"></td>
             <td>
-                <input type="password" th:field="*{ldapManagerPassword}" size="20"/>
+                <input type="password" th:field="*{ldapManagerPassword}" autocomplete="new-password" size="20"/>
                 <th:block th:replace="~{helpToolTip(topic=ldapmanagerdn)}" />
             </td>
         </tr>

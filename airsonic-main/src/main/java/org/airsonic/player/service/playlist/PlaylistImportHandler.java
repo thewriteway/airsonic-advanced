@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public abstract class PlaylistImportHandler implements Ordered {
 
     List<MediaFile> getMediaFiles(String pathInPlaylist) {
         if (StringUtils.isNotBlank(pathInPlaylist)) {
-            Path path = Paths.get(pathInPlaylist);
+            Path path = toPath(pathInPlaylist);
             if (path.isAbsolute()) {
                 // there's only one path to look up
                 MediaFile m = mediaFileService.getMediaFile(path);
@@ -72,5 +73,22 @@ public abstract class PlaylistImportHandler implements Ordered {
         }
 
         return emptyList();
+    }
+
+    /**
+     * Playlist entries may be plain paths or file: URIs (e.g. exported by other players).
+     * Paths.get() cannot parse file: URIs — on Windows the "C:" colon is even an invalid
+     * path character — so convert them explicitly.
+     */
+    private static Path toPath(String pathInPlaylist) {
+        if (StringUtils.startsWithIgnoreCase(pathInPlaylist, "file:")) {
+            try {
+                return Paths.get(URI.create(pathInPlaylist.replace(" ", "%20")));
+            } catch (Exception e) {
+                // not a well-formed URI (e.g. "file://C:\dir\song.mp3"); strip the scheme instead
+                return Paths.get(pathInPlaylist.replaceFirst("(?i)^file://", ""));
+            }
+        }
+        return Paths.get(pathInPlaylist);
     }
 }
