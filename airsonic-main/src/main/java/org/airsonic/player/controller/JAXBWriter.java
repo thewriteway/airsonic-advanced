@@ -28,6 +28,7 @@ import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.subsonic.restapi.Error;
 import org.subsonic.restapi.ObjectFactory;
 import org.subsonic.restapi.Response;
@@ -48,6 +49,7 @@ import java.time.Instant;
 import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import static org.airsonic.player.util.XMLUtil.createSAXBuilder;
 import static org.springframework.web.bind.ServletRequestUtils.getStringParameter;
@@ -63,6 +65,7 @@ public class JAXBWriter {
     private final jakarta.xml.bind.JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
     private static final String restProtocolVersion = parseRESTProtocolVersion();
+    private static final String serverVersion = parseServerVersion();
 
     private final String SERVER_TYPE = "Airsonic-Advanced";
 
@@ -117,11 +120,25 @@ public class JAXBWriter {
         return restProtocolVersion;
     }
 
+    private static String parseServerVersion() {
+        // JAXBWriter is not a Spring bean, so the version is read from build.properties directly
+        // instead of going through VersionService.
+        try {
+            Properties build = PropertiesLoaderUtils.loadAllProperties("build.properties");
+            return build.getProperty("version") + "." + build.getProperty("timestamp");
+        } catch (Exception x) {
+            LOG.warn("Failed to resolve server version for REST envelope.", x);
+            return "unknown";
+        }
+    }
+
     public Response createResponse(boolean ok) {
         Response response = new ObjectFactory().createResponse();
         response.setStatus(ok ? ResponseStatus.OK : ResponseStatus.FAILED);
         response.setVersion(restProtocolVersion);
         response.setType(SERVER_TYPE);
+        response.setOpenSubsonic(true);
+        response.setServerVersion(serverVersion);
         return response;
     }
 

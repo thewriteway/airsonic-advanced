@@ -35,8 +35,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -64,7 +64,7 @@ public class RESTRequestParameterProcessingFilter extends AbstractAuthentication
 
     private static final RequestMatcher requiresAuthenticationRequestMatcher = new AndRequestMatcher(
         new RegexRequestMatcher("/rest/.+", null),
-        new NegatedRequestMatcher(new AntPathRequestMatcher("/rest/getOpenSubsonicExtensions*"))
+        new NegatedRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher("/rest/getOpenSubsonicExtensions*"))
     );
     private static final Version serverVersion = new Version(JAXBWriter.getRestProtocolVersion());
 
