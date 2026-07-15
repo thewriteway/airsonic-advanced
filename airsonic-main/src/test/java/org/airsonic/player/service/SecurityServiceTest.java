@@ -213,11 +213,11 @@ public class SecurityServiceTest {
         verify(userRepository).save(any(User.class));
         verify(userCredentialRepository).save(any(UserCredential.class));
 
-        String preferredEncoder = securityService.getPreferredPasswordEncoder(true);
-        List<UserCredential> actuals = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.AIRSONIC);
-        assertEquals(2, actuals.size());
-        assertTrue(actuals.stream().anyMatch(c -> preferredEncoder.equals(c.getEncoder())
-                && PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches("testPassword", c.getCredential())));
+        List<UserCredential> credentials = userCredentialRepository.findByUserUsernameAndApp(TEST_USER_NAME, App.AIRSONIC);
+        assertEquals(1, credentials.size());
+        UserCredential actual = credentials.get(0);
+        assertEquals("bcrypt", actual.getEncoder());
+        assertTrue(PasswordEncoderConfig.ENCODERS.get("bcrypt").matches("testPassword", actual.getCredential()));
 
         User actualUser = userRepository.findByUsername(TEST_USER_NAME).get();
         assertFalse(actualUser.isLdapAuthenticated());
