@@ -363,7 +363,7 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
         @Override
         public Enumeration<String> getHeaderNames() {
             return Optional.ofNullable(getOriginalRequest().getServletRequest().getHeaderNames())
-                    .orElse(Collections.enumeration(getOriginalRequest().getHeaders().keySet()));
+                    .orElse(Collections.enumeration(getOriginalRequest().getHeaders().headerNames()));
         }
 
         @Override

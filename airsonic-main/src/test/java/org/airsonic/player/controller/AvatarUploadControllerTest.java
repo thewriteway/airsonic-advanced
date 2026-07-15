@@ -15,8 +15,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,7 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.nio.file.Path;
@@ -87,7 +87,7 @@ public class AvatarUploadControllerTest {
         MockMultipartFile multipartFile = new MockMultipartFile("file", FILE_NAME, "text/plain", "".getBytes());
 
         // execute
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/avatarUpload").file(multipartFile).with(csrf());
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/avatarUpload").file(multipartFile).with(csrf());
         MvcResult result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andExpect(view().name("avatarUploadResult"))
@@ -112,7 +112,7 @@ public class AvatarUploadControllerTest {
         when(personalSettingsService.getCustomAvatar(eq(USERNAME))).thenReturn(expectedAvatar);
 
         // when
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/avatarUpload")
+        MockMultipartHttpServletRequestBuilder request = MockMvcRequestBuilders.multipart("/avatarUpload")
                 .file(multipartFile)
                 .with(csrf());
         MvcResult result = mockMvc.perform(request)
