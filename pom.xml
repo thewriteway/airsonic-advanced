@@ -419,6 +419,8 @@
                                 <ignoredUsedUndeclaredDependency>commons-logging:commons-logging:*</ignoredUsedUndeclaredDependency>
                             </ignoredUsedUndeclaredDependencies>
                             <ignoredUnusedDeclaredDependencies>
+                                <!-- Needed at compile time so ajc (aspectj-maven-plugin) finds aspectjrt on the classpath -->
+                                <ignoredUnusedDeclaredDependency>org.aspectj:aspectjrt:*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>com.google.code.findbugs:jsr305:*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>com.fasterxml.jackson.module:jackson-module-jaxb-annotations</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>taglibs:string:jar*</ignoredUnusedDeclaredDependency>
