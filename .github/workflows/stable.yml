@@ -4,15 +4,22 @@ on:
   push:
     branches: [ stable/** ]
 
+permissions:
+  contents: write
+  packages: write
+
 env:
   REGISTRY_IMAGE: ghcr.io/thewriteway/airsonic-advanced
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      HAS_GPG_KEY: ${{ secrets.GPG_SIGNING_PRIVATE_KEY != '' }}
     strategy:
       fail-fast: false
       matrix:
+        cfg:
         - jdk: 21
           platform: linux/amd64
           docker_version: 21
@@ -71,8 +78,10 @@ jobs:
           echo "minor=$minor" >> $GITHUB_OUTPUT
           echo "major=$major" >> $GITHUB_OUTPUT
       - name: Import GPG Key for signing
+        if: env.HAS_GPG_KEY == 'true'
         run: echo "${{ secrets.GPG_SIGNING_PRIVATE_KEY }}" | gpg --quiet --batch --yes --import
       - name: Sign artifacts
+        if: env.HAS_GPG_KEY == 'true'
         run: |
           echo "${{ secrets.GPG_SIGNING_PASSPHRASE }}" | gpg --quiet --batch --yes --pinentry-mode loopback --clearsign --passphrase-fd 0 airsonic-main/target/artifacts-checksums.sha;
       - name: Login to GitHub Container Registry
@@ -96,6 +105,7 @@ jobs:
             gitcommit-${{ github.sha }}
       - name: Build and push multiplatform images to Dockerhub
         uses: docker/build-push-action@v7
+        id: build
         with:
           file: install/docker/Dockerfile
           context: install/docker
@@ -105,6 +115,11 @@ jobs:
           push: true
           labels: ${{steps.docker-meta.outputs.labels}}
           outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+      - name: Export image digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{steps.build.outputs.digest}}"
+          touch "/tmp/digests/${digest#sha256:}"
       - name: Upload digest
         uses: actions/upload-artifact@v7
         with:
