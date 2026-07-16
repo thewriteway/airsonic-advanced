@@ -133,9 +133,22 @@ public class CoverArtServiceTest {
 
     @Test
     public void testsaveWithCoverArt() {
+        when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1)).thenReturn(Optional.empty());
         CoverArt coverArt = new CoverArt(1, EntityType.MEDIA_FILE, "path/to/image.jpg", mockedFolder, false);
         coverArtService.upsert(coverArt);
         verify(coverArtRepository, times(1)).save(coverArt);
+    }
+
+    @Test
+    public void testUpsertUpdatesExistingCoverArtWithoutSave() {
+        CoverArt existing = new CoverArt(1, EntityType.MEDIA_FILE, "path/to/old-image.jpg", null, false);
+        when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1)).thenReturn(Optional.of(existing));
+        CoverArt coverArt = new CoverArt(1, EntityType.MEDIA_FILE, "path/to/image.jpg", mockedFolder, true);
+        coverArtService.upsert(coverArt);
+        verify(coverArtRepository, never()).save(any(CoverArt.class));
+        assertEquals("path/to/image.jpg", existing.getPath());
+        assertEquals(mockedFolder, existing.getFolder());
+        assertTrue(existing.getOverridden());
     }
 
     @Test
@@ -217,12 +230,12 @@ public class CoverArtServiceTest {
         assertNull(mediaFile.getArt());
     }
 
-    @ParameterizedTest
-    @MethodSource("coverArtWillBeOverriddenForMediaFile")
-    void testPersistIfNeededWithMediaFileShouldOverrideExistingCoverArt(CoverArt existingCoverArt) {
+    @Test
+    void testPersistIfNeededWithMediaFileShouldUpdateExistingCoverArt() {
         MediaFile mediaFile = new MediaFile();
         mediaFile.setId(1);
 
+        CoverArt existingCoverArt = new CoverArt(1, EntityType.MEDIA_FILE, "path/to/art.jpg", null, false);
         when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1)).thenReturn(Optional.of(existingCoverArt));
 
         CoverArt artToPersist = new CoverArt(-1, EntityType.MEDIA_FILE, "path/to/updated-art.jpg", null, false);
@@ -230,7 +243,24 @@ public class CoverArtServiceTest {
 
         coverArtService.persistIfNeeded(mediaFile);
 
-        verify(coverArtRepository).findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1);
+        verify(coverArtRepository, never()).save(any(CoverArt.class));
+        assertNull(mediaFile.getArt());
+        assertEquals("path/to/updated-art.jpg", existingCoverArt.getPath());
+        assertFalse(existingCoverArt.getOverridden());
+    }
+
+    @Test
+    void testPersistIfNeededWithMediaFileShouldSaveNewCoverArt() {
+        MediaFile mediaFile = new MediaFile();
+        mediaFile.setId(1);
+
+        when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, 1)).thenReturn(Optional.empty());
+
+        CoverArt artToPersist = new CoverArt(-1, EntityType.MEDIA_FILE, "path/to/updated-art.jpg", null, false);
+        mediaFile.setArt(artToPersist);
+
+        coverArtService.persistIfNeeded(mediaFile);
+
         verify(coverArtRepository).save(coverArtCaptor.capture());
         assertNull(mediaFile.getArt());
         CoverArt persistedCoverArt = coverArtCaptor.getValue();
@@ -238,10 +268,6 @@ public class CoverArtServiceTest {
         assertEquals(mediaFile.getId(), persistedCoverArt.getEntityId());
         assertEquals("path/to/updated-art.jpg", persistedCoverArt.getPath());
         assertFalse(persistedCoverArt.getOverridden());
-    }
-
-    private static Stream<CoverArt> coverArtWillBeOverriddenForMediaFile() {
-        return Stream.of(new CoverArt(1, EntityType.MEDIA_FILE, "path/to/art.jpg", null, false), CoverArt.NULL_ART);
     }
 
     @ParameterizedTest
@@ -270,12 +296,12 @@ public class CoverArtServiceTest {
         assertNull(album.getArt());
     }
 
-    @ParameterizedTest
-    @MethodSource("coverArtWillBeOverriddenForAlbum")
-    void testPersistIfNeededWithAlbumShouldOverrideExistingCoverArt(CoverArt existingCoverArt) {
+    @Test
+    void testPersistIfNeededWithAlbumShouldUpdateExistingCoverArt() {
         Album album = new Album();
         album.setId(1);
 
+        CoverArt existingCoverArt = new CoverArt(1, EntityType.ALBUM, "path/to/art.jpg", null, false);
         when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ALBUM, 1)).thenReturn(Optional.of(existingCoverArt));
 
         CoverArt artToPersist = new CoverArt(-1, EntityType.ALBUM, "path/to/updated-art.jpg", null, false);
@@ -283,7 +309,24 @@ public class CoverArtServiceTest {
 
         coverArtService.persistIfNeeded(album);
 
-        verify(coverArtRepository).findByEntityTypeAndEntityId(EntityType.ALBUM, 1);
+        verify(coverArtRepository, never()).save(any(CoverArt.class));
+        assertNull(album.getArt());
+        assertEquals("path/to/updated-art.jpg", existingCoverArt.getPath());
+        assertFalse(existingCoverArt.getOverridden());
+    }
+
+    @Test
+    void testPersistIfNeededWithAlbumShouldSaveNewCoverArt() {
+        Album album = new Album();
+        album.setId(1);
+
+        when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ALBUM, 1)).thenReturn(Optional.empty());
+
+        CoverArt artToPersist = new CoverArt(-1, EntityType.ALBUM, "path/to/updated-art.jpg", null, false);
+        album.setArt(artToPersist);
+
+        coverArtService.persistIfNeeded(album);
+
         verify(coverArtRepository).save(coverArtCaptor.capture());
         assertNull(album.getArt());
         CoverArt persistedCoverArt = coverArtCaptor.getValue();
@@ -291,10 +334,6 @@ public class CoverArtServiceTest {
         assertEquals(album.getId(), persistedCoverArt.getEntityId());
         assertEquals("path/to/updated-art.jpg", persistedCoverArt.getPath());
         assertFalse(persistedCoverArt.getOverridden());
-    }
-
-    private static Stream<CoverArt> coverArtWillBeOverriddenForAlbum() {
-        return Stream.of(new CoverArt(1, EntityType.ALBUM, "path/to/art.jpg", null, false), CoverArt.NULL_ART);
     }
 
     @ParameterizedTest
@@ -323,12 +362,12 @@ public class CoverArtServiceTest {
         assertNull(artist.getArt());
     }
 
-    @ParameterizedTest
-    @MethodSource("coverArtWillBeOverriddenForArtist")
-    void testPersistIfNeededWithArtistShouldOverrideExistingCoverArt(CoverArt existingCoverArt) {
+    @Test
+    void testPersistIfNeededWithArtistShouldUpdateExistingCoverArt() {
         Artist artist = new Artist();
         artist.setId(1);
 
+        CoverArt existingCoverArt = new CoverArt(1, EntityType.ARTIST, "path/to/art.jpg", null, false);
         when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ARTIST, 1)).thenReturn(Optional.of(existingCoverArt));
 
         CoverArt artToPersist = new CoverArt(-1, EntityType.ARTIST, "path/to/updated-art.jpg", null, false);
@@ -336,7 +375,24 @@ public class CoverArtServiceTest {
 
         coverArtService.persistIfNeeded(artist);
 
-        verify(coverArtRepository).findByEntityTypeAndEntityId(EntityType.ARTIST, 1);
+        verify(coverArtRepository, never()).save(any(CoverArt.class));
+        assertNull(artist.getArt());
+        assertEquals("path/to/updated-art.jpg", existingCoverArt.getPath());
+        assertFalse(existingCoverArt.getOverridden());
+    }
+
+    @Test
+    void testPersistIfNeededWithArtistShouldSaveNewCoverArt() {
+        Artist artist = new Artist();
+        artist.setId(1);
+
+        when(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ARTIST, 1)).thenReturn(Optional.empty());
+
+        CoverArt artToPersist = new CoverArt(-1, EntityType.ARTIST, "path/to/updated-art.jpg", null, false);
+        artist.setArt(artToPersist);
+
+        coverArtService.persistIfNeeded(artist);
+
         verify(coverArtRepository).save(coverArtCaptor.capture());
         assertNull(artist.getArt());
         CoverArt persistedCoverArt = coverArtCaptor.getValue();
@@ -344,10 +400,6 @@ public class CoverArtServiceTest {
         assertEquals(artist.getId(), persistedCoverArt.getEntityId());
         assertEquals("path/to/updated-art.jpg", persistedCoverArt.getPath());
         assertFalse(persistedCoverArt.getOverridden());
-    }
-
-    private static Stream<CoverArt> coverArtWillBeOverriddenForArtist() {
-        return Stream.of(new CoverArt(1, EntityType.ARTIST, "path/to/art.jpg", null, false), CoverArt.NULL_ART);
     }
 
 }

@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,15 @@ public class CoverArtService {
     @Transactional
     public void upsert(CoverArt art) {
         coverArtCache.removeCoverArt(art);
-        coverArtRepository.save(art);
+        // Update the managed entity instead of merging the detached one, so the
+        // read-only artist/album/mediaFile associations are never marked dirty (HHH000502).
+        coverArtRepository.findByEntityTypeAndEntityId(art.getEntityType(), art.getEntityId())
+            .ifPresentOrElse(existing -> {
+                existing.setPath(art.getPath());
+                existing.setFolder(art.getFolder());
+                existing.setOverridden(art.getOverridden());
+                existing.setUpdated(Instant.now());
+            }, () -> coverArtRepository.save(art));
     }
 
     /**
