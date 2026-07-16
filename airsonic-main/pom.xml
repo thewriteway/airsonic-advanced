@@ -366,20 +366,6 @@
             <version>3.0.3</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.seamless</groupId>
-            <artifactId>seamless-util</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-collections</groupId>
-                    <artifactId>commons-collections</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.activation</groupId>
-                    <artifactId>activation</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
 
         <dependency>
             <groupId>de.u-mass</groupId>

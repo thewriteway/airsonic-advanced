@@ -1,0 +1,2 @@
+# Maven repository artifacts must stay byte-identical so their .sha1 checksums validate
+repo/** -text

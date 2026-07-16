@@ -60,7 +60,6 @@ import org.jupnp.model.message.UpnpOperation;
 import org.jupnp.model.message.UpnpRequest;
 import org.jupnp.protocol.ProtocolFactory;
 import org.jupnp.transport.spi.UpnpStream;
-import org.seamless.util.Exceptions;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -222,7 +221,7 @@ public abstract class HttpServerConnectionUpnpStream extends UpnpStream {
             } catch (RuntimeException ex) {
                 log.fine("Exception occurred during UPnP stream processing: " + ex);
                 if (log.isLoggable(Level.FINE)) {
-                    log.log(Level.FINE, "Cause: " + Exceptions.unwrap(ex), Exceptions.unwrap(ex));
+                    log.log(Level.FINE, "Cause: " + unwrap(ex), unwrap(ex));
                 }
 
                 log.fine("Sending HTTP response: " + HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -275,5 +274,14 @@ public abstract class HttpServerConnectionUpnpStream extends UpnpStream {
     }
 
     abstract protected Connection createConnection();
+
+    /** Returns the root cause of the given throwable (replacement for org.seamless.util.Exceptions.unwrap). */
+    private static Throwable unwrap(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause;
+    }
 
 }
