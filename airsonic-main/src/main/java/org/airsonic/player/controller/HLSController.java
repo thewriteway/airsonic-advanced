@@ -44,7 +44,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.bind.DefaultValue;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -336,7 +336,7 @@ public class HLSController {
                 this.mediaFileService.incrementPlayCount(player, mediaFile);
         };
 
-        Resource resource = new MonitoredResource(new PathResource(segmentFile),
+        Resource resource = new MonitoredResource(new FileSystemResource(segmentFile),
                 settingsService.getDownloadBitrateLimiter(), statusSupplier, statusCloser, inputStreamInit);
 
         return ResponseEntity.ok().headers(headers).body(resource);

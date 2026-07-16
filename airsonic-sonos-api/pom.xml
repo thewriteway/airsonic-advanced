@@ -32,6 +32,14 @@
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-codegen-plugin</artifactId>
                 <version>${cxf.version}</version><!-- 4.x is not compatible with eclispse MoXY-->
+                <dependencies>
+                    <!-- SLF4J provider for the forked wsdl2java process, avoids "No SLF4J providers were found" -->
+                    <dependency>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-simple</artifactId>
+                        <version>${slf4j.version}</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <id>generate-sources</id>

@@ -18,7 +18,6 @@ import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
-import org.springframework.web.util.UrlPathHelper;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.Servlet;
@@ -141,9 +140,6 @@ public class ServletConfiguration implements WebMvcConfigurer {
     @Bean
     public SimpleUrlHandlerMapping podcastMapping(PodcastController podcastController) {
         SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
-        UrlPathHelper urlPathHelper = new UrlPathHelper();
-        urlPathHelper.setAlwaysUseFullPath(true);
-        mapping.setUrlPathHelper(urlPathHelper);
 
         Properties properties = new Properties();
         properties.put("/podcast/**", podcastController);

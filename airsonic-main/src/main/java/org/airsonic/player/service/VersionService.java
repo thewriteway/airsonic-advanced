@@ -245,7 +245,7 @@ public class VersionService {
                     httpHeaders.set("User-Agent", "Airsonic/" + getLocalVersion());
                 }
             )
-            .messageConverters(List.of(converter))
+            .configureMessageConverters(converters -> converters.withJsonConverter(converter))
             .baseUrl(VERSION_URL)
             .requestFactory(factory)
             .build();

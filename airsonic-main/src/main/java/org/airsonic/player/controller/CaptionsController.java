@@ -19,8 +19,8 @@ import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -255,7 +255,7 @@ public class CaptionsController {
 
     private Resource getExternalResource(Path captionsFile, String format) throws IOException {
         if (CAPTION_FORMAT_VTT.equals(format)) {
-            return new PathResource(captionsFile);
+            return new FileSystemResource(captionsFile);
         } else {
             return new InputStreamResource(BOMInputStream.builder().setInputStream(Files.newInputStream(captionsFile)).get());
         }
