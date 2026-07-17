@@ -156,6 +156,8 @@
                                             <spring_datasource_url>${env.spring_datasource_url}</spring_datasource_url>
                                             <spring_datasource_username>${env.spring_datasource_username}</spring_datasource_username>
                                             <spring_datasource_password>${env.spring_datasource_password}</spring_datasource_password>
+                                            <!-- Scanner.java authenticates as admin/admin; without this the server generates a random admin password -->
+                                            <AIRSONIC_ADMIN_PASSWORD>admin</AIRSONIC_ADMIN_PASSWORD>
                                         </env>
                                         <volumes>
                                             <bind>

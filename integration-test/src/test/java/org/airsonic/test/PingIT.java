@@ -21,6 +21,8 @@ public class PingIT {
 
         assertThat(response.getBody(),
                 isIdenticalTo(Input.fromStream(getClass().getResourceAsStream("/blobs/ping/missing-auth.xml")))
-                        .ignoreWhitespace());
+                        .ignoreWhitespace()
+                        // serverVersion contains a build timestamp, so its value can't be pinned in the blob
+                        .withAttributeFilter(attr -> !"serverVersion".equals(attr.getName())));
     }
 }
