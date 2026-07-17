@@ -132,17 +132,17 @@ public class PodcastDownloadClientTest {
         when(podcastPersistenceService.prepareDownloadEpisode(1)).thenReturn(mockedEpisode);
         when(podcastPersistenceService.isEpisodeDeleted(1)).thenReturn(false);
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
-        when(mockedEpisode.getUrl()).thenReturn("http://test.com/test.mp3");
+        when(mockedEpisode.getUrl()).thenReturn("https://file-examples.com/storage/fe0badd45a6a5a3b79ae1a1/2017/11/file_example_MP3_700KB.mp3");
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
         when(mockedEpisode.getTitle()).thenReturn("testEpisode");
         when(mockedChannel.getMediaFile()).thenReturn(mockedChannelMediaFile);
         when(mockedChannelMediaFile.getFolder()).thenReturn(mockedMusicFolder);
         when(mockedMusicFolder.getPath()).thenReturn(tempFolder);
         when(mockedChannelMediaFile.getFullPath()).thenReturn(tempFolder);
-        when(securityService.isWriteAllowed(Paths.get("test.mp3"), mockedMusicFolder)).thenReturn(true);
+        when(securityService.isWriteAllowed(Paths.get("file_example_MP3_700KB.mp3"), mockedMusicFolder)).thenReturn(true);
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
         when(mediaFileService.getMediaFile(any(Path.class), eq(mockedMusicFolder))).thenReturn(mockedEpisodeMediaFile);
-        when(mockedEpisodeMediaFile.getFullPath()).thenReturn(tempFolder.resolve("test.mp3"));
+        when(mockedEpisodeMediaFile.getFullPath()).thenReturn(tempFolder.resolve("file_example_MP3_700KB.mp3"));
 
         // when
         try (MockedStatic<HttpClients> mockedHttpClients = Mockito.mockStatic(HttpClients.class,
@@ -167,7 +167,7 @@ public class PodcastDownloadClientTest {
         // verify media file is refreshed by updateTag
         verify(mediaFileService).refreshMediaFile(mockedEpisodeMediaFile);
         // verify file is downloaded
-        assertTrue(tempFolder.resolve("test.mp3").toFile().exists());
+        assertTrue(tempFolder.resolve("file_example_MP3_700KB.mp3").toFile().exists());
 
     }
 
@@ -179,13 +179,13 @@ public class PodcastDownloadClientTest {
         when(podcastPersistenceService.prepareDownloadEpisode(1)).thenReturn(mockedEpisode);
         when(podcastPersistenceService.isEpisodeDeleted(1)).thenReturn(false);
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
-        when(mockedEpisode.getUrl()).thenReturn("http://test.com/test.mp3");
+        when(mockedEpisode.getUrl()).thenReturn("https://file-examples.com/storage/fe0badd45a6a5a3b79ae1a1/2017/11/file_example_MP3_700KB.mp3");
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
         when(mockedChannel.getMediaFile()).thenReturn(mockedChannelMediaFile);
         when(mockedChannelMediaFile.getFolder()).thenReturn(mockedMusicFolder);
         when(mockedMusicFolder.getPath()).thenReturn(tempFolder);
         when(mockedChannelMediaFile.getFullPath()).thenReturn(tempFolder);
-        when(securityService.isWriteAllowed(Paths.get("test.mp3"), mockedMusicFolder)).thenReturn(true);
+        when(securityService.isWriteAllowed(Paths.get("file_example_MP3_700KB.mp3"), mockedMusicFolder)).thenReturn(true);
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
         when(mediaFileService.getMediaFile(any(Path.class), eq(mockedMusicFolder))).thenReturn(mockedEpisodeMediaFile);
         when(mockedEpisodeMediaFile.getDuration()).thenReturn(null);
@@ -213,7 +213,7 @@ public class PodcastDownloadClientTest {
         // verify media file is refreshed by updateTag
         verify(mediaFileService, never()).refreshMediaFile(mockedEpisodeMediaFile);
         // verify file is downloaded
-        assertTrue(tempFolder.resolve("test.mp3").toFile().exists());
+        assertTrue(tempFolder.resolve("file_example_MP3_700KB.mp3").toFile().exists());
 
     }
 
@@ -227,13 +227,13 @@ public class PodcastDownloadClientTest {
                 .thenReturn(false)
                 .thenReturn(true);
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
-        when(mockedEpisode.getUrl()).thenReturn("http://test.com/test.mp3");
+        when(mockedEpisode.getUrl()).thenReturn("https://file-examples.com/storage/fe0badd45a6a5a3b79ae1a1/2017/11/file_example_MP3_700KB.mp3");
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
         when(mockedChannel.getMediaFile()).thenReturn(mockedChannelMediaFile);
         when(mockedChannelMediaFile.getFolder()).thenReturn(mockedMusicFolder);
         when(mockedMusicFolder.getPath()).thenReturn(tempFolder);
         when(mockedChannelMediaFile.getFullPath()).thenReturn(tempFolder);
-        when(securityService.isWriteAllowed(Paths.get("test.mp3"), mockedMusicFolder)).thenReturn(true);
+        when(securityService.isWriteAllowed(Paths.get("file_example_MP3_700KB.mp3"), mockedMusicFolder)).thenReturn(true);
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
 
         // when
@@ -258,7 +258,7 @@ public class PodcastDownloadClientTest {
         // verify media file is refreshed by updateTag
         verifyNoInteractions(mediaFileService);
         // verify file is downloaded
-        assertFalse(tempFolder.resolve("test.mp3").toFile().exists());
+        assertFalse(tempFolder.resolve("file_example_MP3_700KB.mp3").toFile().exists());
 
     }
 
@@ -281,13 +281,13 @@ public class PodcastDownloadClientTest {
         // given
         when(podcastPersistenceService.prepareDownloadEpisode(1)).thenReturn(mockedEpisode);
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
-        when(mockedEpisode.getUrl()).thenReturn("http://test.com/test.mp3");
+        when(mockedEpisode.getUrl()).thenReturn("https://file-examples.com/storage/fe0badd45a6a5a3b79ae1a1/2017/11/file_example_MP3_700KB.mp3");
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
         when(mockedChannel.getMediaFile()).thenReturn(mockedChannelMediaFile);
         when(mockedChannelMediaFile.getFolder()).thenReturn(mockedMusicFolder);
         when(mockedMusicFolder.getPath()).thenReturn(tempFolder);
         when(mockedChannelMediaFile.getFullPath()).thenReturn(tempFolder);
-        when(securityService.isWriteAllowed(Paths.get("test.mp3"), mockedMusicFolder)).thenReturn(true);
+        when(securityService.isWriteAllowed(Paths.get("file_example_MP3_700KB.mp3"), mockedMusicFolder)).thenReturn(true);
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
 
         // when
@@ -311,13 +311,13 @@ public class PodcastDownloadClientTest {
         // given
         when(podcastPersistenceService.prepareDownloadEpisode(1)).thenReturn(mockedEpisode);
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
-        when(mockedEpisode.getUrl()).thenReturn("http://test.com/test.mp3");
+        when(mockedEpisode.getUrl()).thenReturn("https://file-examples.com/storage/fe0badd45a6a5a3b79ae1a1/2017/11/file_example_MP3_700KB.mp3");
         when(mockedEpisode.getChannel()).thenReturn(mockedChannel);
         when(mockedChannel.getMediaFile()).thenReturn(mockedChannelMediaFile);
         when(mockedChannelMediaFile.getFolder()).thenReturn(mockedMusicFolder);
         when(mockedMusicFolder.getPath()).thenReturn(tempFolder);
         when(mockedChannelMediaFile.getFullPath()).thenReturn(tempFolder);
-        when(securityService.isWriteAllowed(Paths.get("test.mp3"), mockedMusicFolder)).thenReturn(true);
+        when(securityService.isWriteAllowed(Paths.get("file_example_MP3_700KB.mp3"), mockedMusicFolder)).thenReturn(true);
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
 
         // when
@@ -336,7 +336,7 @@ public class PodcastDownloadClientTest {
         verify(podcastPersistenceService).updateEpisode(mockedEpisode);
         verify(mockedEpisode).setStatus(PodcastStatus.ERROR);
         verify(mockedEpisode).setErrorMessage(
-                String.format("Failed to download Podcast from http://test.com/test.mp3. Status code: %d", status));
+                String.format("Failed to download Podcast from https://file-examples.com/storage/fe0badd45a6a5a3b79ae1a1/2017/11/file_example_MP3_700KB.mp3. Status code: %d", status));
     }
 
 }
