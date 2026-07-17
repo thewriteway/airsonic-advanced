@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -50,11 +49,12 @@ public class Scanner {
     }
 
     public static UriComponentsBuilder addRestParameters(UriComponentsBuilder builder) {
+        // Salted-token auth (s/t params) requires the server to decode the stored password,
+        // which is impossible now that credentials are stored with bcrypt by default.
         return builder.queryParam("c", "inttest")
                 .queryParam("v", "1.15.0")
                 .queryParam("u", "admin")
-                .queryParam("s", "int")
-                .queryParam("t", DigestUtils.md5Hex("admin" + "int"));
+                .queryParam("p", "admin");
     }
 
     public static void doScan() throws Exception {
