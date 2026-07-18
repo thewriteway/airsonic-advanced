@@ -14,6 +14,8 @@ import org.springframework.web.servlet.view.RedirectView;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,11 @@ import java.util.Map;
 @Controller
 @RequestMapping({"/login", "/login.view"})
 public class LoginController {
+
+    // Detects Docker (/.dockerenv) and Podman (/run/.containerenv) so the generated-password
+    // hint can point at container logs instead of the console
+    private static final boolean IN_CONTAINER = Files.exists(Paths.get("/.dockerenv"))
+            || Files.exists(Paths.get("/run/.containerenv"));
 
     @Autowired
     private SecurityService securityService;
@@ -55,6 +62,9 @@ public class LoginController {
         } else {
             map.put("insecure", false);
         }
+
+        map.put("generatedAdminPassword", securityService.checkGeneratedAdminCredsPresent());
+        map.put("docker", IN_CONTAINER);
 
         return new ModelAndView("login", "model", map);
     }

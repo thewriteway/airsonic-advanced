@@ -52,6 +52,12 @@
                 </div>
             </th:block>
 
+            <th:block th:if="${model.generatedAdminPassword}">
+                <div class="loginmessagebottom">
+                    <p th:utext="${model.docker} ? #{login.generatedpassword.docker} : #{login.generatedpassword.native}"></p>
+                </div>
+            </th:block>
+
         </div>
     </form>
 
