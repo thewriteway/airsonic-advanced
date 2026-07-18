@@ -84,10 +84,7 @@ public class JWTRequestParameterProcessingFilter implements Filter {
             return;
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Authentication success. Updating SecurityContextHolder to contain: "
-                    + authResult);
-        }
+        LOG.debug("Authentication success. Updating SecurityContextHolder to contain: {}", authResult);
 
         SecurityContextHolder.getContext().setAuthentication(authResult);
 

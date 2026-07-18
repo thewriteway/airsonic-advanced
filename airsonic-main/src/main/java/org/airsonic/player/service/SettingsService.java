@@ -477,9 +477,8 @@ public class SettingsService {
     }
 
     private void logServerInfo() {
-        LOG.info("Java: " + Runtime.version() +
-                ", OS: " + System.getProperty("os.name") +
-                ", Memory (max bytes): " + Runtime.getRuntime().maxMemory());
+        LOG.info("Java: {}, OS: {}, Memory (max bytes): {}",
+                Runtime.version(), System.getProperty("os.name"), Runtime.getRuntime().maxMemory());
     }
 
     public void save() {
@@ -1187,7 +1186,7 @@ public class SettingsService {
                     } else if (elements.length == 3) {
                         themes.add(new Theme(elements[0], elements[1], elements[2]));
                     } else {
-                        LOG.warn("Failed to parse theme from line: [" + line + "].");
+                        LOG.warn("Failed to parse theme from line: [{}].", line);
                     }
                 }
             } catch (IOException x) {

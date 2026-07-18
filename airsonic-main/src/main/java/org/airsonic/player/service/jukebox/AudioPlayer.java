@@ -199,7 +199,7 @@ public class AudioPlayer implements AutoCloseable {
                     }
                 }
             } catch (Throwable x) {
-                LOG.warn("Error when copying audio data: " + x, x);
+                LOG.warn("Error when copying audio data", x);
             } finally {
                 close();
             }

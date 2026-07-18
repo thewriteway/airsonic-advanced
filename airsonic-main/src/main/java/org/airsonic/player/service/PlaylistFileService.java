@@ -93,7 +93,7 @@ public class PlaylistFileService {
             doImportPlaylists();
             LOG.info("Completed playlist import.");
         } catch (Throwable x) {
-            LOG.warn("Failed to import playlists: " + x, x);
+            LOG.warn("Failed to import playlists", x);
         }
     }
 

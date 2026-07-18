@@ -70,8 +70,8 @@ public class FolderBasedContentDirectory extends CustomContentDirectory {
     public BrowseResult browse(String objectId, BrowseFlag browseFlag, String filter, long firstResult,
             long maxResults, SortCriterion[] orderby) throws ContentDirectoryException {
 
-        LOG.info("UPnP request - objectId: " + objectId + ", browseFlag: " + browseFlag + ", filter: " + filter +
-                ", firstResult: " + firstResult + ", maxResults: " + maxResults);
+        LOG.info("UPnP request - objectId: {}, browseFlag: {}, filter: {}, firstResult: {}, maxResults: {}",
+                objectId, browseFlag, filter, firstResult, maxResults);
 
         // maxResult == 0 means all.
         if (maxResults == 0) {
@@ -96,7 +96,7 @@ public class FolderBasedContentDirectory extends CustomContentDirectory {
             return browseFlag == BrowseFlag.METADATA ? browseMediaFileMetadata(mediaFile) : browseMediaFile(mediaFile, firstResult, maxResults);
 
         } catch (Throwable x) {
-            LOG.error("UPnP error: " + x, x);
+            LOG.error("UPnP error", x);
             throw new ContentDirectoryException(ContentDirectoryErrorCode.CANNOT_PROCESS, x.toString());
         }
     }

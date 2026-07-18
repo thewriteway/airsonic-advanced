@@ -82,7 +82,7 @@ public class LastFMScrobbler {
         }
 
         if (queue.size() >= MAX_PENDING_REGISTRATION) {
-            LOG.warn("Last.fm scrobbler queue is full. Ignoring " + mediaFile);
+            LOG.warn("Last.fm scrobbler queue is full. Ignoring {}", mediaFile);
             return;
         }
 
@@ -94,7 +94,7 @@ public class LastFMScrobbler {
         try {
             queue.put(registrationData);
         } catch (InterruptedException x) {
-            LOG.warn("Interrupted while queuing Last.fm scrobble: " + x.toString());
+            LOG.warn("Interrupted while queuing Last.fm scrobble: {}", x.toString());
         }
     }
 
@@ -138,12 +138,13 @@ public class LastFMScrobbler {
         }
 
         if (lines[0].startsWith("FAILED")) {
-            LOG.warn("Failed to scrobble song '" + registrationData.title + "' at Last.fm: " + lines[0]);
+            LOG.warn("Failed to scrobble song '{}' at Last.fm: {}", registrationData.title, lines[0]);
         } else if (lines[0].startsWith("BADSESSION")) {
-            LOG.warn("Failed to scrobble song '" + registrationData.title + "' at Last.fm.  Invalid session.");
+            LOG.warn("Failed to scrobble song '{}' at Last.fm.  Invalid session.", registrationData.title);
         } else if (lines[0].startsWith("OK")) {
-            LOG.info("Successfully registered " + (registrationData.submission ? "submission" : "now playing") +
-                      " for song '" + registrationData.title + "' for user " + registrationData.username + " at Last.fm: " + registrationData.time);
+            LOG.info("Successfully registered {} for song '{}' for user {} at Last.fm: {}",
+                      registrationData.submission ? "submission" : "now playing",
+                      registrationData.title, registrationData.username, registrationData.time);
         }
     }
 
@@ -173,27 +174,27 @@ public class LastFMScrobbler {
         String[] lines = executeGetRequest(uri);
 
         if (lines[0].startsWith("BANNED")) {
-            LOG.warn("Failed to scrobble song '" + registrationData.title + "' at Last.fm. Client version is banned.");
+            LOG.warn("Failed to scrobble song '{}' at Last.fm. Client version is banned.", registrationData.title);
             return null;
         }
 
         if (lines[0].startsWith("BADAUTH")) {
-            LOG.warn("Failed to scrobble song '" + registrationData.title + "' at Last.fm. Wrong username or password.");
+            LOG.warn("Failed to scrobble song '{}' at Last.fm. Wrong username or password.", registrationData.title);
             return null;
         }
 
         if (lines[0].startsWith("BADTIME")) {
-            LOG.warn("Failed to scrobble song '" + registrationData.title + "' at Last.fm. Bad timestamp, please check local clock.");
+            LOG.warn("Failed to scrobble song '{}' at Last.fm. Bad timestamp, please check local clock.", registrationData.title);
             return null;
         }
 
         if (lines[0].startsWith("FAILED")) {
-            LOG.warn("Failed to scrobble song '" + registrationData.title + "' at Last.fm: " + lines[0]);
+            LOG.warn("Failed to scrobble song '{}' at Last.fm: {}", registrationData.title, lines[0]);
             return null;
         }
 
         if (!lines[0].startsWith("OK")) {
-            LOG.warn("Failed to scrobble song '" + registrationData.title + "' at Last.fm.  Unknown response: " + lines[0]);
+            LOG.warn("Failed to scrobble song '{}' at Last.fm.  Unknown response: {}", registrationData.title, lines[0]);
             return null;
         }
 
@@ -275,7 +276,7 @@ public class LastFMScrobbler {
                 } catch (IOException x) {
                     handleNetworkError(registrationData, x.toString());
                 } catch (Exception x) {
-                    LOG.warn("Error in Last.fm registration: " + x.toString());
+                    LOG.warn("Error in Last.fm registration: {}", x.toString());
                 }
             }
         }
@@ -283,15 +284,15 @@ public class LastFMScrobbler {
         private void handleNetworkError(RegistrationData registrationData, String errorMessage) {
             try {
                 queue.put(registrationData);
-                LOG.info("Last.fm registration for '" + registrationData.title +
-                         "' encountered network error: " + errorMessage + ".  Will try again later. In queue: " + queue.size());
+                LOG.info("Last.fm registration for '{}' encountered network error: {}.  Will try again later. In queue: {}",
+                         registrationData.title, errorMessage, queue.size());
             } catch (InterruptedException x) {
-                LOG.error("Failed to reschedule Last.fm registration for '" + registrationData.title + "': " + x.toString());
+                LOG.error("Failed to reschedule Last.fm registration for '{}': {}", registrationData.title, x.toString());
             }
             try {
                 sleep(60L * 1000L);  // Wait 60 seconds.
             } catch (InterruptedException x) {
-                LOG.error("Failed to sleep after Last.fm registration failure for '" + registrationData.title + "': " + x.toString());
+                LOG.error("Failed to sleep after Last.fm registration failure for '{}': {}", registrationData.title, x.toString());
             }
         }
     }

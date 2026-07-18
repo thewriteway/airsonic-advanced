@@ -198,7 +198,7 @@ public class ListenBrainzScrobbler {
                 } catch (IOException x) {
                     handleNetworkError(registrationData, x);
                 } catch (Exception x) {
-                    LOG.warn("Error in ListenBrainz registration: " + x.toString());
+                    LOG.warn("Error in ListenBrainz registration: {}", x.toString());
                 }
             }
         }

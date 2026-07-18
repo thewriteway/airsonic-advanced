@@ -120,7 +120,7 @@ public class UPnPService {
             createService();
             LOG.info("Successfully started UPnP service on port {}!", settingsService.getUPnpPort());
         } catch (Throwable x) {
-            LOG.error("Failed to start UPnP service: " + x, x);
+            LOG.error("Failed to start UPnP service", x);
         }
     }
 
@@ -143,7 +143,7 @@ public class UPnPService {
                 upnpService.getRegistry().addDevice(createMediaServerDevice());
                 LOG.info("Enabling UPnP/DLNA media server");
             } catch (Exception x) {
-                LOG.error("Failed to start UPnP/DLNA media server: " + x, x);
+                LOG.error("Failed to start UPnP/DLNA media server", x);
             }
         } else {
             ensureServiceStopped();

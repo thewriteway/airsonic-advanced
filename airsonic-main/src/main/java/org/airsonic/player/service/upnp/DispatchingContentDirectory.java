@@ -50,8 +50,8 @@ public class DispatchingContentDirectory extends CustomContentDirectory {
             long maxResults, SortCriterion[] orderBy)
             throws ContentDirectoryException {
 
-        LOG.info("UPnP request - objectId: " + objectId + ", browseFlag: " + browseFlag + ", filter: " + filter
-                + ", firstResult: " + firstResult + ", maxResults: " + maxResults);
+        LOG.info("UPnP request - objectId: {}, browseFlag: {}, filter: {}, firstResult: {}, maxResults: {}",
+                objectId, browseFlag, filter, firstResult, maxResults);
 
         if (objectId == null)
             throw new ContentDirectoryException(ContentDirectoryErrorCode.CANNOT_PROCESS, "objectId is null");
@@ -84,7 +84,7 @@ public class DispatchingContentDirectory extends CustomContentDirectory {
             }
             return returnValue;
         } catch (Throwable x) {
-            LOG.error("UPnP error: " + x, x);
+            LOG.error("UPnP error", x);
             throw new ContentDirectoryException(ContentDirectoryErrorCode.CANNOT_PROCESS, x.toString());
         }
     }
