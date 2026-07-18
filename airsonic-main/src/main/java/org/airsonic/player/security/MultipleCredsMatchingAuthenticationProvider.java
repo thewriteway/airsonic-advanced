@@ -83,8 +83,8 @@ public class MultipleCredsMatchingAuthenticationProvider extends DaoAuthenticati
                 // Re-encode from the presented plaintext; the stored credential is a hash and
                 // must never be fed back through an encoder (that would corrupt it)
                 String encoded = getPasswordEncoder().encode(presentedPassword);
-                int idEnd = encoded.indexOf('}');
-                if (encoded.startsWith("{") && idEnd > 1) {
+                int idEnd = encoded == null ? -1 : encoded.indexOf('}');
+                if (idEnd > 1 && encoded.startsWith("{")) {
                     c.setEncoder(encoded.substring(1, idEnd));
                     c.setCredential(encoded.substring(idEnd + 1));
                     c.setUpdated(Instant.now());

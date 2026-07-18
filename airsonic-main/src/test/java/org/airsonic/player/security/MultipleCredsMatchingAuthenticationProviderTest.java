@@ -98,18 +98,40 @@ class MultipleCredsMatchingAuthenticationProviderTest {
         when(cred.getCredential()).thenReturn("encoded");
         when(cred.getExpiration()).thenReturn(null);
         when(cred.getComment()).thenReturn("old");
-        when(cred.updateEncoder(anyString(), eq(true))).thenReturn(true);
 
         when(userDetail.getCredentials()).thenReturn(Collections.singletonList(cred));
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("user", "pass");
 
         when(passwordEncoder.matches(eq("pass"), anyString())).thenReturn(true);
         when(passwordEncoder.upgradeEncoding(anyString())).thenReturn(true);
+        when(passwordEncoder.encode("pass")).thenReturn("{argon2}upgraded");
 
         provider.additionalAuthenticationChecks(userDetail, authentication);
 
+        // The upgraded credential must be re-encoded from the presented plaintext,
+        // never from the stored hash
+        verify(cred).setEncoder("argon2");
+        verify(cred).setCredential("upgraded");
         verify(cred).setComment(contains("Automatically upgraded by system"));
         verify(userCredentialRepository).save(cred);
+    }
+
+    @Test
+    void shouldSkipUpgradeWhenReencodingFails() {
+        when(cred.getEncoder()).thenReturn("bcrypt");
+        when(cred.getCredential()).thenReturn("encoded");
+        when(cred.getExpiration()).thenReturn(null);
+
+        when(userDetail.getCredentials()).thenReturn(Collections.singletonList(cred));
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("user", "pass");
+
+        when(passwordEncoder.matches(eq("pass"), anyString())).thenReturn(true);
+        when(passwordEncoder.upgradeEncoding(anyString())).thenReturn(true);
+        when(passwordEncoder.encode("pass")).thenReturn(null);
+
+        provider.additionalAuthenticationChecks(userDetail, authentication);
+
+        verify(userCredentialRepository, never()).save(any());
     }
 
     @Test
