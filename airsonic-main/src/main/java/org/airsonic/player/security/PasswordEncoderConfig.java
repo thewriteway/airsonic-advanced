@@ -91,11 +91,14 @@ public class PasswordEncoderConfig {
         DelegatingPasswordEncoder pEncoder = new DelegatingPasswordEncoder("argon2", ENCODERS) {
             @Override
             protected boolean upgradeEncodingNonNull(String prefixEncodedPassword) {
-                // Always promote to argon2 if it's not already
-                if (!prefixEncodedPassword.startsWith("{argon2}")) {
-                    return true;
+                // Leave decodable credentials alone: the user opted into two-way encryption
+                // (required for salted-token auth used by Subsonic apps) and promoting them
+                // to a one-way hash would silently revoke that capability
+                if (DECODABLE_ENCODERS.stream().anyMatch(e -> prefixEncodedPassword.startsWith("{" + e + "}"))) {
+                    return false;
                 }
-                return false;
+                // Promote everything else (legacy, bcrypt, ...) to argon2
+                return !prefixEncodedPassword.startsWith("{argon2}");
             }
         };
 

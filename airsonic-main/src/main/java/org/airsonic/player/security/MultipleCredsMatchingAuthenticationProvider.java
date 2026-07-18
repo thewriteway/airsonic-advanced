@@ -80,8 +80,15 @@ public class MultipleCredsMatchingAuthenticationProvider extends DaoAuthenticati
         // perform upgrade if needed for password-based auth
         if ("".equals(encoderSpecialization) && getPasswordEncoder().upgradeEncoding("{" + matchedCred.get().getEncoder() + "}" + matchedCred.get().getCredential())) {
             matchedCred.ifPresent(c -> {
-                c.setComment(c.getComment() + " | Automatically upgraded by system");
-                if (c.updateEncoder(c.getEncoder(), true)) {
+                // Re-encode from the presented plaintext; the stored credential is a hash and
+                // must never be fed back through an encoder (that would corrupt it)
+                String encoded = getPasswordEncoder().encode(presentedPassword);
+                int idEnd = encoded.indexOf('}');
+                if (encoded.startsWith("{") && idEnd > 1) {
+                    c.setEncoder(encoded.substring(1, idEnd));
+                    c.setCredential(encoded.substring(idEnd + 1));
+                    c.setUpdated(Instant.now());
+                    c.setComment(c.getComment() + " | Automatically upgraded by system");
                     userCredentialRepository.save(c);
                 } else {
                     logger.debug("Password needs to be upgraded, but failed");
