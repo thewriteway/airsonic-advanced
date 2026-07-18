@@ -1,6 +1,7 @@
 package org.airsonic.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -15,7 +16,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.subsonic.restapi.Child;
@@ -40,11 +40,18 @@ public class Scanner {
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
             .build();
     public static final RestTemplate rest = new RestTemplate();
-    static {
-        for (int i = 0; i < rest.getMessageConverters().size(); i++) {
-            if (rest.getMessageConverters().get(i).getClass() == MappingJackson2HttpMessageConverter.class) {
-                rest.getMessageConverters().set(i, new MappingJackson2HttpMessageConverter(MAPPER));
-            }
+
+    /**
+     * Fetches the response as a string and parses it with our own mapper. Binding via the
+     * RestTemplate message converters is unreliable here: Spring 7 prefers a Jackson 3
+     * converter that lacks our root-unwrapping config and silently returns an empty object.
+     */
+    private static SubsonicResponse getForSubsonicResponse(String url) {
+        String body = rest.getForObject(url, String.class);
+        try {
+            return MAPPER.readValue(body, SubsonicResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse response: " + body, e);
         }
     }
 
@@ -77,10 +84,9 @@ public class Scanner {
     }
 
     private static boolean isScanning() {
-        return rest.getForObject(
+        return getForSubsonicResponse(
                 addRestParameters(UriComponentsBuilder.fromUriString(SERVER + "/rest/getScanStatus"))
-                        .queryParam("f", "json").toUriString(),
-                SubsonicResponse.class)
+                        .queryParam("f", "json").toUriString())
             .getScanStatus().isScanning();
     }
 
@@ -94,11 +100,10 @@ public class Scanner {
     }
 
     public static List<Child> getMediaFilesInMusicFolder() {
-        List<MusicFolder> musicFolder = rest.getForObject(
+        List<MusicFolder> musicFolder = getForSubsonicResponse(
                 addRestParameters(UriComponentsBuilder.fromUriString(SERVER + "/rest/getMusicFolders"))
                         .queryParam("f", "json")
-                        .toUriString(),
-                SubsonicResponse.class)
+                        .toUriString())
             .getMusicFolders().getMusicFolder();
 
         MusicFolder music = musicFolder.stream().filter(folder -> Objects.equals(folder.getName(), "Music")).findFirst()
@@ -107,12 +112,11 @@ public class Scanner {
     }
 
     private static List<Child> getMediaFiles(int folderId) {
-        return rest.getForObject(
+        return getForSubsonicResponse(
                 addRestParameters(UriComponentsBuilder.fromUriString(SERVER + "/rest/getIndexes"))
                         .queryParam("f", "json")
                         .queryParam("musicFolderId", folderId)
-                        .toUriString(),
-                SubsonicResponse.class)
+                        .toUriString())
             .getIndexes().getChild();
     }
 
