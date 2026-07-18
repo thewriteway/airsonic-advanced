@@ -35,6 +35,7 @@ import java.util.Properties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag("EmbeddedTestCategory")
 @ExtendWith(MockitoExtension.class)
@@ -87,12 +88,18 @@ public class VersionServiceTest {
     @Test
     public void testIsNewFinalVersionAvailable() throws Exception {
         VersionService versionService = new VersionService();
+        // Requires the live GitHub releases API; skip when unreachable or rate-limited
+        assumeTrue(versionService.getLatestFinalVersion() != null,
+                "GitHub releases API unavailable; skipping");
         assertTrue(versionService.isNewFinalVersionAvailable());
     }
 
     @Test
     public void testIsNewBetaVersionAvailable() throws Exception {
         VersionService versionService = new VersionService();
+        // Requires the live GitHub releases API; skip when unreachable or rate-limited
+        assumeTrue(versionService.getLatestBetaVersion() != null,
+                "GitHub releases API unavailable; skipping");
         assertTrue(versionService.isNewBetaVersionAvailable());
     }
 }
