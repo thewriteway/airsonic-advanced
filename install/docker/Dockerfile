@@ -13,7 +13,7 @@ RUN mv WEB-INF/classes/META-INF cMETA-INF
 RUN mv WEB-INF/classes/liquibase cliquibase
 FROM eclipse-temurin:${IMAGE_JAVA_VERSION}-jre-resolute
 LABEL description="Airsonic-Advanced is a free, web-based media streamer, providing ubiquitous access to your music." \
-      url="https://github.com/kagemomiji/airsonic-advanced"
+      url="https://github.com/thewriteway/airsonic-advanced"
 ENV AIRSONIC_PORT=4040 AIRSONIC_DIR=/var CONTEXT_PATH=/ UPNP_PORT=4041 PUID=0 PGID=0
 WORKDIR $AIRSONIC_DIR
 RUN apt-get update \

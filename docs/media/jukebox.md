@@ -156,7 +156,7 @@ docker run \
     --device /dev/snd \
     -v /home/airsonic/sound.properties:/opt/java/openjdk/conf/sound.properties \
     -p 4040:4040 \
-    ghcr.io/kagemomiji/airsonic-advanced
+    ghcr.io/thewriteway/airsonic-advanced
 
 ## Use Jukebox with Pulseaudio
 
