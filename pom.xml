@@ -27,7 +27,7 @@
         <cxf.version>4.2.2</cxf.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <lucene.version>10.5.0</lucene.version>
-        <logback.version>1.5.37</logback.version>
+        <logback.version>1.5.38</logback.version>
         <!-- override Spring Boot managed version until it ships >= 42.7.11 (CVE-2026-42198) -->
         <postgresql.version>42.7.11</postgresql.version>
         <docker.container.repo>ghcr.io/thewriteway/airsonic-advanced</docker.container.repo>
