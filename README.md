@@ -130,6 +130,21 @@ See the [First start guide](docs/first_start/README.md) for recommended setup st
 
 Airsonic organizes your music according to how it is organized on disk (not by embedded tags, although tags are read for presentation and search). It is recommended that music folders are organized in an **"artist/album/song"** manner. Add folders under `Settings` > `Media folders`. See [how media is categorized](docs/media/rule.md).
 
+### Third-party apps and token authentication
+
+Most Subsonic-compatible apps (DSub, Substreamer, play:Sub, Ultrasonic, ...) log in with **token authentication**: instead of sending your password, they send a random salt `s` and a token `t`, where `t = md5(password + salt)`. For the server to check that token it has to compute the same MD5, which means it must be able to recover your actual password — a one-way hash such as bcrypt or argon2 makes this impossible.
+
+Airsonic-Advanced stores new credentials with a **non-decodable** (one-way hashed) encoder by default, and the old plaintext/hex storage formats have been removed for security reasons. The consequence is that **a newly created account cannot use token authentication until you explicitly give it a decodable credential**. Symptoms are an app that refuses to connect with *"Wrong username or password"* while the same credentials work fine in the web UI; the server replies with Subsonic error code `41` ("try authenticating via non-hashed password"), which some clients (e.g. DSub) use to switch to password auth automatically.
+
+You have two ways to resolve this:
+
+1. **Let the app use password authentication.** Most apps have a setting for this, and some switch automatically on error `41`. Your password is then sent on every request, so **only do this over HTTPS** (see the [reverse proxy notes](#reverse-proxy-notes)); over plain HTTP it is exposed on the wire.
+2. **Give the account a decodable credential.** Go to `Settings` > `Credentials`, and under *Add credentials* choose app `Airsonic`, encoder `Decodable` (`encrypted-AES-GCM`) and your password. Token authentication then works for that account. Optionally delete the old hashed credential afterwards — credentials are immutable, so an existing hashed credential cannot be converted in place, it has to be replaced.
+
+Admins can make option 2 the default for everyone by unchecking *"Use non-decodable passwords wherever possible"* under `Settings` > `Credentials` > *Admin Controls*.
+
+Decodable credentials are encrypted with AES-GCM using a key stored in your Airsonic configuration directory — they are not plaintext, but anyone with access to the server files and that key can recover the passwords. This is an unavoidable trade-off: token authentication cannot work without it. If you would rather not make that trade-off, use option 1 behind HTTPS.
+
 Documentation
 -------------
 
