@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($p = 'airsonic-main\\\\src\\\\test\\\\java\\\\org\\\\airsonic\\\\player\\\\util\\\\StringUtilTestCase.java'; $bs=[string][char]92; $newLine = '        assertEquals\\(\"x_y_z\", StringUtil.sanitizeForLog\\(\"x' + $bs + 'u2028y' + $bs + 'u2029z\"\\)\\);'; $lines = Get-Content $p; for \\($i=0; $i -lt $lines.Count; $i++\\) { if \\($lines[$i] -match 'x_y_z'\\) { $lines[$i] = $newLine } }; Set-Content $p $lines -Encoding utf8NoBOM; Select-String -Path $p -Pattern 'x_y_z' | ForEach-Object Line)",
+      "PowerShell(mvn -pl airsonic-main test \"-Dtest=StringUtilTestCase\" -DfailIfNoTests=false -q 2>&1 | Select-Object -Last 25; \"EXIT: $LASTEXITCODE\")",
+      "PowerShell(Get-Content 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-user-Documents-GitHub-airsonic-advanced\\\\a1b4bf6c-9da6-489e-abbe-ddd4ad8a5078\\\\tasks\\\\bymwcw7xi.output' -Tail 5; mvn dependency:get \"-Dartifact=org.postgresql:postgresql:42.7.11\" -q 2>&1 | Select-Object -Last 5; \"GET EXIT: $LASTEXITCODE\")",
+      "PowerShell(gh api \"repos/thewriteway/airsonic-advanced/code-scanning/alerts?state=open&per_page=100\" -q '[.[] | select\\(\\(.rule.security_severity_level // .rule.severity\\) == \"high\"\\)] | .[] | [.number, .rule.id, .most_recent_instance.location.path, .most_recent_instance.location.start_line, .most_recent_instance.message.text[0:120]] | @tsv' 2>&1)",
+      "PowerShell(gh api \"repos/thewriteway/airsonic-advanced/code-scanning/alerts/85\" -q '{msg: .most_recent_instance.message.text, state: .state, instances_url: .instances_url}')",
+      "PowerShell(gh api \"repos/thewriteway/airsonic-advanced/code-scanning/alerts/85/instances\" -q '.[0].location')"
+    ]
+  }
+}
