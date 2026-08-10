@@ -1,19 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
-  "forkProcessing": "enabled",
-  "dependencyDashboard": true,
-  "assignees": ["thewriteway"],
-  "separateMinorPatch": true,
-  "separateMajorMinor": true,
-  "packageRules": [
-    {
-      "updateTypes": ["minor", "patch"]
-    },
-    {
-      "datasources": ["maven"],
-      "packagePatterns": ["*"]
-    }
+  "extends": [
+    "config:recommended",
+    ":configMigration"
   ],
-  "repositories": ["thewriteway/airsonic-advanced"]
+  "forkProcessing": "enabled",
+  "assignees": ["thewriteway"],
+  "separateMinorPatch": true
 }
