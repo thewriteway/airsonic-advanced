@@ -120,6 +120,9 @@ local.properties
 *.iml
 .idea
 
+# VS Code
+.vscode/
+
 # External tool builders
 .externalToolBuilders/
 
