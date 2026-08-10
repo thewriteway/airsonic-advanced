@@ -150,6 +150,8 @@ Everything beyond this page is collected in **[Advanced Topics](docs/ADVANCED.md
 - [Clients and third-party apps](docs/ADVANCED.md#clients-and-third-party-apps) — Subsonic apps, [Sonos](docs/SONOS.md), [Chromecast](docs/CHROMECAST.md)
 - [Troubleshooting](docs/ADVANCED.md#troubleshooting) — cue sheet playback, blank pages / mixed content over HTTPS, app login failures
 
+Planning to send a patch? See **[Contributing](docs/CONTRIBUTING.md)** — ground rules, building a `.war`, and what makes a pull request easy to review and merge.
+
 Reverse proxy notes
 -------------------
 
@@ -192,3 +194,5 @@ Community
 ---------
 
 Bugs, feature requests and discussions pertaining to thewriteway/airsonic-advanced may be raised as issues on the [project's GitHub page](https://github.com/thewriteway/airsonic-advanced/issues).
+
+Contributions are welcome — please read the [contributing guidelines](docs/CONTRIBUTING.md) before opening a pull request.

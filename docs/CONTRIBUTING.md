@@ -1,36 +1,55 @@
+# Contributing
+
+thewriteway/airsonic-advanced development is a community project, and
+contributions are welcomed. This page covers the ground rules, how to build the
+project, and what makes a pull request easy to accept.
+
+# Guidelines for contributing
+
+Here are a few guidelines you should follow before submitting:
+
+  1.  **License Acceptance** All contributions must be licensed as [GNU GPLv3](https://github.com/thewriteway/airsonic-advanced/blob/main/LICENSE.txt) to be accepted. Use [`git commit --signoff`](https://jk.gs/git-commit.html) to acknowledge this.
+  2.  **No Breakage** New features or changes to existing ones must not degrade the user experience. This means do not introduce bugs, remove functionality, or make large changes to existing themes/UI without prior discussion in an Issue.
+  3.  **Coding standards** Language best-practices should be followed, comment generously, and avoid "clever" algorithms. Refactoring existing messes is great, but watch out for breakage.
+  4.  **Be bold!** Without contributions, this project will vanish. If you just want to help out, try [submitting a patch](https://github.com/thewriteway/airsonic-advanced/issues?q=is%3Aissue+is%3Aopen+label%3Apatches-welcome) for an open Issue.
+  5.  **Stay relevant** Issues or commentary that is off-topic or tangential to thewriteway/airsonic-advanced development is subject to moderation. Questions should be focused on improving documentation to solve a problem. Visit [GitHub Discussions](https://github.com/thewriteway/airsonic-advanced/discussions).
+
 # Getting a .war
 
-Airsonic is using [Maven](https://maven.apache.org/) to manage its build
-process. Any version above 3.3+ should do the job.
+Airsonic uses [Maven](https://maven.apache.org/) to manage its build process.
+You will need Maven and a JDK of **21** or later installed; the build does not
+ship a Maven wrapper.
 
-Recent versions of Mavens block http repos. One dependency we use is on an http repo (clingline). As such we specify our own Maven settings file to allow Maven to fetch artifacts from the http repo.
+Two dependencies are not published to Maven Central (`chameleon` and `natpmp`);
+they are vendored in the `repo/` folder at the root of the checkout and are
+resolved from there automatically, so no extra Maven configuration is needed.
 
-If you want to run the testsuite and get a `.war` is everything went fine,
-you this command:
+To run the testsuite and get a `.war` if everything went fine, use this command:
 
 ```
- mvn clean package
+mvn clean package
 ```
 
-If you don't care about the result of the testsuite, but only
-want a `.war` as quick as possible, you can use this instead:
+If you don't care about the result of the testsuite, but only want a `.war` as
+quickly as possible, you can use this instead:
 
 ```
 mvn -DskipTests -Dcheckstyle.skip=true clean package
 ```
 
+The main binary will be in `airsonic-main/target`.
 
 # Suggesting modifications
 
-Airsonic's source code is hosted on [github](https://github.com/airsonic/airsonic/),
-who provides a [lot of documentation](https://help.github.com/en) on how
-to contribute to projects hosted there.
+Airsonic-Advanced's source code is hosted on
+[GitHub](https://github.com/thewriteway/airsonic-advanced), which provides a
+[lot of documentation](https://docs.github.com/en) on how to contribute to
+projects hosted there.
 
 Keep in mind that this is a non-funded community-driven project maintained by
 a relatively small group of contributors who have many other responsibilities
 and demands on their time. Development, maintenance, and administration of the
 project is done on a best-effort basis, as time and other constraints permit.
-
 
 # Getting your pull-requests reviewed and merged
 
@@ -75,26 +94,17 @@ And finally:
 	conflict) before your PR is accepted and merged, you are expected to address
 	and resolve those issues or the PR may be rejected.
 
-Once all concerns have been addressed, having a change accepted usually
-requires two (or more, depending on complexity and impact) [core
-contributors](https://github.com/airsonic/airsonic/graphs/contributors): one to
-explicitly approve the pull-request, and another to perform the actual merge.
-
-If you keep sending great code, you might be invited to become a *core
-contributor*.
-
 Normal releases do not happen on any fixed schedule. They happen when the
 maintainers collectively decide that enough changes and testing have taken
 place that a new release is warranted. Bugfix releases (when a problem has been
-discovered that is likely to impact users significantly), may happen more
+discovered that is likely to impact users significantly) may happen more
 quickly if needed. Even after acceptance, the inclusion of larger changes may
 be delayed until a major version release in order to ensure that the impact to
 users is minimized and that stability is maintained.
 
 # Getting help
 
-The documentation is hosted [here](https://airsonic.github.io/) (you can
-contribute to it [here](https://github.com/airsonic/documentation)), and aims
-at being comprehensive. You can also use [irc](irc://irc.freenode.net/airsonic)
-and [reddit](https://www.reddit.com/r/airsonic/) if you want to discuss or ask
-questions.
+[Advanced Topics](ADVANCED.md) covers configuration, reverse proxies, the
+jukebox, clients and troubleshooting. For anything not answered there, use
+[GitHub Discussions](https://github.com/thewriteway/airsonic-advanced/discussions)
+or raise an [issue](https://github.com/thewriteway/airsonic-advanced/issues).
