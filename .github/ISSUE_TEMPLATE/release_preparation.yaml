@@ -22,7 +22,7 @@ body:
       description: "Tasks to be completed before starting the release process"
       options:
         - label: "Ensure README.md is updated"
-        - label: "Ensure CHANGELOG.md is updated"
+        - label: "Ensure docs/ are updated"
         - label: "Verify all dependencies are up to date"
         - label: "Ensure no critical bugs are present"
 

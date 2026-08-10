@@ -103,9 +103,9 @@ services:
 | `JAVA_OPTS` | _(empty)_ | Extra JVM arguments, e.g. `-Dserver.forward-headers-strategy=native` when running behind a reverse proxy |
 | `AIRSONIC_ADMIN_PASSWORD` | _(unset)_ | Sets the initial `admin` password on first startup; if unset, a strong random password is generated and written to the logs |
 
-The container also accepts any of the application [configuration environment variables](docs/configures/detail.md) (e.g. `AIRSONIC_SCAN_PARALLELISM`, `AIRSONIC_CUE_ENABLED`).
+The container also accepts any of the application [configuration environment variables](docs/ADVANCED.md#configuration-reference) (e.g. `AIRSONIC_SCAN_PARALLELISM`, `AIRSONIC_CUE_ENABLED`).
 
-For jukebox (audio output on the server) inside Docker, see [Jukebox](docs/media/jukebox.md).
+For jukebox (audio output on the server) inside Docker, see [Jukebox](docs/ADVANCED.md#using-docker).
 
 ### Building from source
 
@@ -124,47 +124,31 @@ Getting started
 
 On first install (including Docker) an `admin` account is created automatically. Unless you set the password explicitly via the `AIRSONIC_ADMIN_PASSWORD` environment variable before the first startup, a strong random password is generated and shown in the console/docker logs. Change it afterwards under `Settings` > `Users`.
 
-See the [First start guide](docs/first_start/README.md) for recommended setup steps (running as a dedicated user, creating accounts, adding media folders).
+See the [First start guide](docs/ADVANCED.md#first-start) for recommended setup steps (running as a dedicated user, creating accounts, adding media folders).
 
 ### Media folders
 
-Airsonic organizes your music according to how it is organized on disk (not by embedded tags, although tags are read for presentation and search). It is recommended that music folders are organized in an **"artist/album/song"** manner. Add folders under `Settings` > `Media folders`. See [how media is categorized](docs/media/rule.md).
+Airsonic organizes your music according to how it is organized on disk (not by embedded tags, although tags are read for presentation and search). It is recommended that music folders are organized in an **"artist/album/song"** manner. Add folders under `Settings` > `Media folders`. See [how media is categorized](docs/ADVANCED.md#categorization-rules).
 
 ### Third-party apps and token authentication
 
-Most Subsonic-compatible apps (DSub, Substreamer, play:Sub, Ultrasonic, ...) log in with **token authentication**: instead of sending your password, they send a random salt `s` and a token `t`, where `t = md5(password + salt)`. For the server to check that token it has to compute the same MD5, which means it must be able to recover your actual password — a one-way hash such as bcrypt or argon2 makes this impossible.
+Most Subsonic-compatible apps (DSub, Substreamer, play:Sub, Ultrasonic, ...) log in with **token authentication**, which requires the server to store your password in a reversible format. Airsonic-Advanced hashes new passwords by default, so a freshly created account cannot use token auth until you give it a decodable credential — the app reports *"Wrong username or password"* even though the same credentials work in the web UI.
 
-Airsonic-Advanced stores new credentials with a **non-decodable** (one-way hashed) encoder by default, and the old plaintext/hex storage formats have been removed for security reasons. The consequence is that **a newly created account cannot use token authentication until you explicitly give it a decodable credential**. Symptoms are an app that refuses to connect with *"Wrong username or password"* while the same credentials work fine in the web UI; the server replies with Subsonic error code `41` ("try authenticating via non-hashed password"), which some clients (e.g. DSub) use to switch to password auth automatically.
-
-You have two ways to resolve this:
-
-1. **Let the app use password authentication.** Most apps have a setting for this, and some switch automatically on error `41`. Your password is then sent on every request, so **only do this over HTTPS** (see the [reverse proxy notes](#reverse-proxy-notes)); over plain HTTP it is exposed on the wire.
-2. **Give the account a decodable credential.** Go to `Settings` > `Credentials`, and under *Add credentials* choose app `Airsonic`, encoder `Decodable` (`encrypted-AES-GCM`) and your password. Token authentication then works for that account. Optionally delete the old hashed credential afterwards — credentials are immutable, so an existing hashed credential cannot be converted in place, it has to be replaced.
-
-Admins can make option 2 the default for everyone by unchecking *"Use non-decodable passwords wherever possible"* under `Settings` > `Credentials` > *Admin Controls*.
-
-Decodable credentials are encrypted with AES-GCM using a key stored in your Airsonic configuration directory — they are not plaintext, but anyone with access to the server files and that key can recover the passwords. This is an unavoidable trade-off: token authentication cannot work without it. If you would rather not make that trade-off, use option 1 behind HTTPS.
+The fix is either to switch the app to password authentication (over HTTPS) or to add a decodable credential under `Settings` > `Credentials`. See [Token authentication](docs/ADVANCED.md#token-authentication) for the full explanation and both procedures.
 
 Documentation
 -------------
 
-Full documentation lives in the [docs](docs/README.md) folder:
+Everything beyond this page is collected in **[Advanced Topics](docs/ADVANCED.md)** — a single manual covering:
 
-- **[First start](docs/first_start/README.md)** — process user, user accounts, media folders
-- **Web UI**
-  - [Media](docs/webui/media.md) — browsing, artist view, editing artist names
-  - [Podcast](docs/webui/podcast.md) — podcast channel management, episode locking and downloading
-  - [Lyrics](docs/webui/lyrics.md) — lyrics from chartlyrics.com, LRC files, and manual input
-- **[Configuration](docs/configures/README.md)** — Java options, environment variables, `airsonic.properties`, web interface
-  - [Detail configuration](docs/configures/detail.md) — all `airsonic.*` options with defaults and matching environment variables
-- **Reverse proxy**
-  - [Prerequisites](docs/proxy/README.md) — TLS, forward headers, expected `X-Forwarded-*` headers
-  - [Apache](docs/proxy/apache.md); for [Nginx](https://airsonic.github.io/docs/proxy/nginx/), [HAProxy](https://airsonic.github.io/docs/proxy/haproxy) and [Caddy](https://airsonic.github.io/docs/proxy/caddy) see the upstream Airsonic docs
-- **Media**
-  - [Rule](docs/media/rule.md) — how directories and files are categorized into Artist/Album/Song/Video
-  - [Cover art / artist image](docs/media/coverart.md) — sources, quality and concurrency settings
-  - [Jukebox](docs/media/jukebox.md) — playing audio on the server, incl. systemd, Docker and PulseAudio setups
-- **[Troubleshooting](docs/troubleshooting.md)** — cue sheet playback, blank pages / mixed content over HTTPS
+- [First start](docs/ADVANCED.md#first-start) — process user, user accounts, media folders
+- [How media is organized](docs/ADVANCED.md#how-media-is-organized) — categorization into Artist/Album/Song/Video, cover art and artist images
+- [Web UI](docs/ADVANCED.md#web-ui) — artist view and artist name editing, podcast channel management, lyrics from chartlyrics.com / LRC files / manual input
+- [Configuration](docs/ADVANCED.md#configuration) — Java options, environment variables, `airsonic.properties`, web interface, and a reference for every `airsonic.*` option
+- [Reverse proxy](docs/ADVANCED.md#reverse-proxy) — TLS, forward headers, websockets, Apache, and pointers for Nginx/HAProxy/Caddy
+- [Jukebox](docs/ADVANCED.md#jukebox) — playing audio on the server, incl. systemd, Docker and PulseAudio setups
+- [Clients and third-party apps](docs/ADVANCED.md#clients-and-third-party-apps) — Subsonic apps, [Sonos](docs/SONOS.md), [Chromecast](docs/CHROMECAST.md)
+- [Troubleshooting](docs/ADVANCED.md#troubleshooting) — cue sheet playback, blank pages / mixed content over HTTPS, app login failures
 
 Reverse proxy notes
 -------------------
@@ -177,7 +161,7 @@ Additionally, the server needs to forward headers, for which the following prope
 server.forward-headers-strategy=native
 ```
 
-(`framework` is also accepted; see the [proxy prerequisites](docs/proxy/README.md) for details.)
+(`framework` is also accepted; see [Reverse proxy](docs/ADVANCED.md#reverse-proxy) for the full setup, including a worked Apache example.)
 
 Compatibility notes
 -------------------

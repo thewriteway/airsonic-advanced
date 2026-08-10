@@ -1,7 +1,7 @@
 Release Steps
 =============
 
-1. Ensure changelog is up to date
+1. Ensure the documentation is up to date (`README.md` and `docs/`)
 
 2. Create a new minor branch if not already exists. Checkout branch
 
@@ -36,7 +36,7 @@ Release Steps
    - Draft new Relase
    - Choose existing tag
    - Title is "Airsonic X.Y.Z"
-   - Contents are the relevant entry of the CHANGELOG.md file
+   - Contents are the notes produced by GitHub's "Generate release notes" button, edited as needed
    - Upload `airsonic.war` and `artifacts-checksums.sha.asc`
 
 10. Update latest docker tag
