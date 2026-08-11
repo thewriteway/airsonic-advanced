@@ -51,9 +51,9 @@
     </pluginRepositories>
 
     <scm>
-        <connection>scm:git:git://github.com/kagemomiji/airsonic-advanced.git</connection>
-        <developerConnection>scm:git:git@github.com:kagemomiji/airsonic-advanced.git</developerConnection>
-        <url>https://github.com/kagemomiji/airsonic-advanced.git</url>
+        <connection>scm:git:git://github.com/thewriteway/airsonic-advanced.git</connection>
+        <developerConnection>scm:git:git@github.com:thewriteway/airsonic-advanced.git</developerConnection>
+        <url>https://github.com/thewriteway/airsonic-advanced.git</url>
     </scm>
 
     <modules>
