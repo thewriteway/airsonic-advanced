@@ -27,7 +27,7 @@
         <cxf.version>4.2.3</cxf.version>
         <snakeyaml.version>2.6</snakeyaml.version>
         <lucene.version>10.5.0</lucene.version>
-        <logback.version>1.5.38</logback.version>
+        <logback.version>1.6.1</logback.version>
         <!-- override Spring Boot managed version until it ships >= 42.7.11 (CVE-2026-42198) -->
         <postgresql.version>42.7.11</postgresql.version>
         <docker.container.repo>ghcr.io/thewriteway/airsonic-advanced</docker.container.repo>
@@ -158,7 +158,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>4.2.1</version>
+                <version>4.2.2</version>
             </dependency>
             <dependency>
                 <groupId>com.google.j2objc</groupId>
@@ -193,7 +193,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
-                <version>4.5.0</version>
+                <version>4.6.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.lucene</groupId>
@@ -234,7 +234,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.48.1</version>
+                    <version>0.49.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -273,7 +273,7 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>13.8.0</version>
+                            <version>13.10.0</version>
                         </dependency>
                     </dependencies>
                 </plugin>
