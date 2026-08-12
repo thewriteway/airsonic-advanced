@@ -222,9 +222,41 @@ public class VersionService {
     /**
      * Resolves the latest available Airsonic version by inspecting github.
      */
-    private void readLatestVersion() throws IOException {
+    private void readLatestVersion() {
 
         LOG.debug("Starting to read latest version");
+        List<GitHubRelease> releases = new ArrayList<>(fetchReleases());
+
+        // Sort releases by published date
+        releases.sort((a, b) -> {
+            if (a.getPublishedAt() == null || b.getPublishedAt() == null) {
+                return 0; // Can't compare, so treat as equal
+            }
+            return b.getPublishedAt().compareTo(a.getPublishedAt()); // Descending order
+        });
+
+        Optional<GitHubRelease> betaR = releases.stream().findFirst();
+        Optional<GitHubRelease> finalR = releases.stream().filter(x -> !(x.isDraft()) && !(x.isPrerelease())).findFirst();
+        Optional<GitHubRelease> currentR = releases.stream().filter(x ->
+            Strings.CS.equals(build.getProperty("version") + "." + build.getProperty("timestamp"), x.getTagName()) ||
+            Strings.CS.equals(build.getProperty("version"), x.getTagName())).findAny();
+
+        LOG.debug("Got {} for beta version", betaR.map(GitHubRelease::getTagName).orElse(null));
+        LOG.debug("Got {} for final version", finalR.map(GitHubRelease::getTagName).orElse(null));
+
+        latestBetaVersion = betaR.map(releaseToVersionMapper).orElse(null);
+        latestFinalVersion = finalR.map(releaseToVersionMapper).orElse(null);
+        localVersion = currentR.map(releaseToVersionMapper).orElse(localVersion);
+    }
+
+    /**
+     * Fetches all releases from the GitHub releases API, paging through the results.
+     *
+     * Visible for testing, so that tests can supply releases without hitting the network.
+     *
+     * @return The releases, in the order returned by GitHub, or an empty list if they can't be fetched.
+     */
+    List<GitHubRelease> fetchReleases() {
         // Set up the RestClient to fetch the latest version from GitHub
         // Use HttpComponentsClientHttpRequestFactory for better control over timeouts
         CloseableHttpClient httpClient = HttpClients.custom()
@@ -302,25 +334,6 @@ public class VersionService {
             }
         }
 
-        // Sort releases by published date
-        releases.sort((a, b) -> {
-            if (a.getPublishedAt() == null || b.getPublishedAt() == null) {
-                return 0; // Can't compare, so treat as equal
-            }
-            return b.getPublishedAt().compareTo(a.getPublishedAt()); // Descending order
-        });
-
-        Optional<GitHubRelease> betaR = releases.stream().findFirst();
-        Optional<GitHubRelease> finalR = releases.stream().filter(x -> !(x.isDraft()) && !(x.isPrerelease())).findFirst();
-        Optional<GitHubRelease> currentR = releases.stream().filter(x ->
-            Strings.CS.equals(build.getProperty("version") + "." + build.getProperty("timestamp"), x.getTagName()) ||
-            Strings.CS.equals(build.getProperty("version"), x.getTagName())).findAny();
-
-        LOG.debug("Got {} for beta version", betaR.map(GitHubRelease::getTagName).orElse(null));
-        LOG.debug("Got {} for final version", finalR.map(GitHubRelease::getTagName).orElse(null));
-
-        latestBetaVersion = betaR.map(releaseToVersionMapper).orElse(null);
-        latestFinalVersion = finalR.map(releaseToVersionMapper).orElse(null);
-        localVersion = currentR.map(releaseToVersionMapper).orElse(localVersion);
+        return releases;
     }
 }

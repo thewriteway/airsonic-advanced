@@ -20,6 +20,7 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.domain.Version;
+import org.airsonic.player.domain.dto.GitHubRelease;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -30,12 +31,16 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.doReturn;
 
 @Tag("EmbeddedTestCategory")
 @ExtendWith(MockitoExtension.class)
@@ -86,20 +91,65 @@ public class VersionServiceTest {
     }
 
     @Test
+    public void testGetLatestVersionsPicksMostRecentlyPublished() throws Exception {
+        VersionService versionService = versionServiceReturning(
+                release("11.0.1-SNAPSHOT.20230601000000", true, "2023-06-01T00:00:00Z"),
+                release("11.0.0", false, "2023-05-20T00:00:00Z"),
+                release("10.6.2", false, "2023-05-09T14:02:55Z"));
+
+        assertEquals("11.0.0", versionService.getLatestFinalVersion().toString());
+        assertEquals("11.0.1-SNAPSHOT.20230601000000", versionService.getLatestBetaVersion().toString());
+    }
+
+    @Test
     public void testIsNewFinalVersionAvailable() throws Exception {
-        VersionService versionService = new VersionService();
-        // Requires the live GitHub releases API; skip when unreachable or rate-limited
-        assumeTrue(versionService.getLatestFinalVersion() != null,
-                "GitHub releases API unavailable; skipping");
+        VersionService versionService = versionServiceReturning(
+                release("11.0.0", false, "2023-05-20T00:00:00Z"));
+
         assertTrue(versionService.isNewFinalVersionAvailable());
     }
 
     @Test
+    public void testIsNewFinalVersionAvailableWhenLocalIsUpToDate() throws Exception {
+        VersionService versionService = versionServiceReturning(
+                release("10.6.1", false, "2023-04-01T00:00:00Z"));
+
+        assertFalse(versionService.isNewFinalVersionAvailable());
+    }
+
+    @Test
     public void testIsNewBetaVersionAvailable() throws Exception {
-        VersionService versionService = new VersionService();
-        // Requires the live GitHub releases API; skip when unreachable or rate-limited
-        assumeTrue(versionService.getLatestBetaVersion() != null,
-                "GitHub releases API unavailable; skipping");
+        VersionService versionService = versionServiceReturning(
+                release("11.0.1-SNAPSHOT.20230601000000", true, "2023-06-01T00:00:00Z"),
+                release("11.0.0", false, "2023-05-20T00:00:00Z"));
+
         assertTrue(versionService.isNewBetaVersionAvailable());
+    }
+
+    @Test
+    public void testNoVersionAvailableWhenReleasesCannotBeFetched() throws Exception {
+        VersionService versionService = versionServiceReturning();
+
+        assertNull(versionService.getLatestFinalVersion());
+        assertNull(versionService.getLatestBetaVersion());
+        assertFalse(versionService.isNewFinalVersionAvailable());
+        assertFalse(versionService.isNewBetaVersionAvailable());
+    }
+
+    /**
+     * Returns a VersionService that resolves the given releases instead of calling the GitHub API.
+     */
+    private VersionService versionServiceReturning(GitHubRelease... releases) throws Exception {
+        VersionService versionService = Mockito.spy(new VersionService());
+        doReturn(List.of(releases)).when(versionService).fetchReleases();
+        return versionService;
+    }
+
+    private GitHubRelease release(String tagName, boolean prerelease, String publishedAt) {
+        GitHubRelease release = new GitHubRelease();
+        release.setTagName(tagName);
+        release.setPrerelease(prerelease);
+        release.setPublishedAt(Instant.parse(publishedAt));
+        return release;
     }
 }
