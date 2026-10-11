@@ -3,6 +3,7 @@ package org.airsonic.player;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.actuate.autoconfigure.endpoint.jmx.JmxEndpointAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,6 +12,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.server.servlet.ConfigurableServletWebServerFactory;
+import org.springframework.boot.web.server.servlet.Session;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -41,9 +43,19 @@ public class Application extends SpringBootServletInitializer implements WebServ
         return doConfigure(application);
     }
 
+    @Autowired
+    private AirsonicHomeConfig homeConfig;
+
     @Override
     public void customize(ConfigurableServletWebServerFactory container) {
         LOG.trace("Servlet container is {}", container.getClass().getCanonicalName());
+        // Persisted sessions default to a hashed dir under java.io.tmpdir, which Spring Boot
+        // refuses to use if another account (e.g. an elevated run) created it first. Keep them
+        // in airsonic.home instead unless server.servlet.session.store-dir is set explicitly.
+        Session session = container.getSettings().getSession();
+        if (session.getStoreDir() == null) {
+            session.setStoreDir(homeConfig.getAirsonicHome().resolve("sessions").toFile());
+        }
         // Yes, there is a good reason we do this.
         // We cannot count on the tomcat classes being on the classpath which will
         // happen if the war is deployed to another app server like Jetty. So, we
