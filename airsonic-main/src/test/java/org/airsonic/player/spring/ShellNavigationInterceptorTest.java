@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ShellNavigationInterceptorTest {
+class ShellNavigationInterceptorTest {
 
     private final ShellNavigationInterceptor interceptor = new ShellNavigationInterceptor();
 
@@ -22,7 +22,7 @@ public class ShellNavigationInterceptorTest {
     }
 
     @Test
-    public void forwardsPageNavigationToShell() throws Exception {
+    void forwardsPageNavigationToShell() throws Exception {
         MockHttpServletRequest request = navigation("GET", "/main.view");
         request.setQueryString("id=3");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -34,7 +34,7 @@ public class ShellNavigationInterceptorTest {
     }
 
     @Test
-    public void passesShellRequestsThrough() throws Exception {
+    void passesShellRequestsThrough() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/main.view");
         request.addHeader("Sec-Fetch-Dest", "empty");
         request.addHeader("Sec-Fetch-Mode", "cors");
@@ -46,7 +46,7 @@ public class ShellNavigationInterceptorTest {
     }
 
     @Test
-    public void passesOtherNavigationsThrough() throws Exception {
+    void passesOtherNavigationsThrough() throws Exception {
         MockHttpServletRequest[] requests = {
             navigation("GET", "/download.view"),
             navigation("GET", "/index"),

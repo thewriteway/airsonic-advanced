@@ -19,7 +19,8 @@
 
     var config = window.ShellConfig;
     var pages = new Set(config.pages);
-    var regions = {};
+    // a Map, so that frame names taken from the pages (target="...") never hit Object.prototype
+    var regions = new Map();
     var hiddenFrame = null;
 
     function resolve(url, base) {
@@ -137,18 +138,17 @@
      */
     Region.prototype.load = function (url, options) {
         options = options || {};
-        var region = this;
-        var sequence = ++region.sequence;
+        var sequence = ++this.sequence;
         var hash = resolve(url).hash;
-        region.element.setAttribute("aria-busy", "true");
+        this.element.setAttribute("aria-busy", "true");
 
         return fetch(url, {
             method: options.method || "GET",
             body: options.body,
             credentials: "same-origin",
-            headers: {"X-Airsonic-Shell": region.name}
-        }).then(function (response) {
-            if (sequence !== region.sequence) {
+            headers: {"X-Airsonic-Shell": this.name}
+        }).then((response) => {
+            if (sequence !== this.sequence) {
                 return null;
             }
             if (isLoginPage(response.url)) {
@@ -162,30 +162,29 @@
                 }
                 return null;
             }
-            return response.text().then(function (html) {
-                if (sequence === region.sequence) {
+            return response.text().then((html) => {
+                if (sequence === this.sequence) {
                     var finalUrl = resolve(response.url);
                     if (!finalUrl.hash && hash && response.url.split("#")[0] === url.split("#")[0]) {
                         finalUrl.hash = hash;
                     }
-                    return region.render(html, finalUrl.href, options);
+                    return this.render(html, finalUrl.href, options);
                 }
             });
-        }).catch(function (error) {
-            console.error("Could not load " + url + " into the " + region.name + " region", error);
-        }).finally(function () {
-            if (sequence === region.sequence) {
-                region.element.removeAttribute("aria-busy");
+        }).catch((error) => {
+            console.error("Could not load " + url + " into the " + this.name + " region", error);
+        }).finally(() => {
+            if (sequence === this.sequence) {
+                this.element.removeAttribute("aria-busy");
             }
         });
     };
 
     Region.prototype.render = function (html, url, options) {
-        var region = this;
         var doc = new DOMParser().parseFromString(html, "text/html");
-        region.url = url;
+        this.url = url;
 
-        if (region.history) {
+        if (this.history) {
             var historyMode = options.history || "push";
             var state = {shell: url};
             if (historyMode === "push" && url !== location.href) {
@@ -206,25 +205,25 @@
                 document.head.appendChild(copy);
             }
         });
-        region.styles.forEach(function (style) {
+        this.styles.forEach(function (style) {
             style.remove();
         });
-        region.styles = Array.prototype.map.call(doc.head.querySelectorAll("style"), function (parsed) {
+        this.styles = Array.prototype.map.call(doc.head.querySelectorAll("style"), (parsed) => {
             var style = document.createElement("style");
             style.textContent = parsed.textContent;
-            style.dataset.shellRegion = region.name;
+            style.dataset.shellRegion = this.name;
             document.head.appendChild(style);
             return style;
         });
 
         // Release jQuery data and handlers of the previous page, then show the new body.
         if (window.jQuery) {
-            window.jQuery(region.content).empty();
+            window.jQuery(this.content).empty();
         }
-        region.content.className = "shell-content " + doc.body.className;
-        region.content.setAttribute("style", doc.body.getAttribute("style") || "");
+        this.content.className = "shell-content " + doc.body.className;
+        this.content.setAttribute("style", doc.body.getAttribute("style") || "");
         // copy first: adopting a node removes it from the live childNodes list
-        region.content.replaceChildren.apply(region.content, Array.from(doc.body.childNodes).map(function (node) {
+        this.content.replaceChildren.apply(this.content, Array.from(doc.body.childNodes).map(function (node) {
             return document.adoptNode(node);
         }));
 
@@ -233,23 +232,23 @@
         if (anchorTarget) {
             anchorTarget.scrollIntoView();
         } else {
-            region.element.scrollTop = 0;
+            this.element.scrollTop = 0;
         }
 
         var scripts = Array.prototype.slice.call(doc.head.querySelectorAll("script"))
-            .concat(Array.prototype.slice.call(region.content.querySelectorAll("script")));
+            .concat(Array.prototype.slice.call(this.content.querySelectorAll("script")));
         var onload = doc.body.getAttribute("onload");
         return scripts.reduce(function (previous, script) {
             return previous.then(function () {
                 return runScript(script, url);
             });
-        }, Promise.resolve()).then(function () {
+        }, Promise.resolve()).then(() => {
             // jQuery ready handlers run asynchronously; the load event used to come after them.
-            setTimeout(function () {
+            setTimeout(() => {
                 if (onload) {
                     runInline(onload);
                 }
-                region.element.dispatchEvent(new CustomEvent("shell:load", {detail: {url: url}}));
+                this.element.dispatchEvent(new CustomEvent("shell:load", {detail: {url: url}}));
             });
         });
     };
@@ -308,13 +307,13 @@
     /** The region a link or form navigates: its target frame, else the region it is in, else main for pages. */
     function targetRegion(element, target, url) {
         if (target && target !== "_self") {
-            return regions[target] || null;
+            return regions.get(target) || null;
         }
         var container = element.closest("[data-shell-region]");
         if (container) {
-            return regions[container.dataset.shellRegion] || null;
+            return regions.get(container.dataset.shellRegion) || null;
         }
-        return isPage(url) ? regions.main : null;
+        return isPage(url) ? regions.get("main") : null;
     }
 
     function onClick(event) {
@@ -336,7 +335,7 @@
         }
         if (!isPage(link.href)) {
             // a link to a download in a region: only intercept when it names a frame that no longer exists
-            if (target && regions[target]) {
+            if (target && regions.has(target)) {
                 event.preventDefault();
                 openInHiddenFrame(link.href);
             }
@@ -351,8 +350,9 @@
         var action = (submitter && submitter.hasAttribute("formaction")) ? submitter.formAction : form.action;
         var method = ((submitter && submitter.getAttribute("formmethod")) || form.getAttribute("method") || "get").toLowerCase();
         var url = resolve(action);
-        if (url.origin !== location.origin || isLoginPage(url) || /\/logout$/.test(url.pathname)
-            || (method === "get" && !isPage(url))) {
+        var sameOrigin = url.origin === location.origin;
+        var authentication = isLoginPage(url) || /\/logout$/.test(url.pathname);
+        if (!sameOrigin || authentication || (method === "get" && !isPage(url))) {
             return null;
         }
         var region = targetRegion(form, target, url.href);
@@ -385,17 +385,31 @@
     }
 
     function onPopState(event) {
-        if (event.state && event.state.shell && event.state.shell !== regions.main.url) {
-            regions.main.load(event.state.shell, {history: "none"});
+        var main = regions.get("main");
+        if (event.state && event.state.shell && event.state.shell !== main.url) {
+            main.load(event.state.shell, {history: "none"});
         }
+    }
+
+    /** Lets buttons styled as links use the link color of the selected theme. */
+    function exposeLinkColor() {
+        var link = document.createElement("a");
+        link.href = config.base;
+        link.hidden = true;
+        document.body.appendChild(link);
+        document.documentElement.style.setProperty("--shell-link-color", getComputedStyle(link).color);
+        link.remove();
     }
 
     function init() {
         hiddenFrame = document.getElementById("shell-hidden");
+        exposeLinkColor();
         document.querySelectorAll("[data-shell-region]").forEach(function (element) {
             var name = element.dataset.shellRegion;
-            regions[name] = new Region(name, element, {history: name === "main"});
-            window[name] = frameProxy(regions[name]);
+            var region = new Region(name, element, {history: name === "main"});
+            regions.set(name, region);
+            // stands in for the frame of that name (window.main, window.left, ...)
+            Object.defineProperty(window, name, {value: frameProxy(region), configurable: true, writable: true});
         });
 
         // form.submit() does not fire a submit event, so the pages calling it need the same treatment
@@ -409,10 +423,10 @@
         document.addEventListener("submit", onSubmit);
         window.addEventListener("popstate", onPopState);
 
-        Object.keys(regions).forEach(function (name) {
-            var src = regions[name].element.dataset.shellSrc;
+        regions.forEach(function (region) {
+            var src = region.element.dataset.shellSrc;
             if (src) {
-                regions[name].load(src, {history: "replace"});
+                region.load(src, {history: "replace"});
             }
         });
     }
@@ -421,7 +435,7 @@
         regions: regions,
         isPage: isPage,
         navigate: function (url) {
-            return regions.main.navigate(url);
+            return regions.get("main").navigate(url);
         }
     };
 

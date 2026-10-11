@@ -6,17 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ShellPagesTest {
+class ShellPagesTest {
 
     @Test
-    public void isPageAcceptsBothMappingStyles() {
+    void isPageAcceptsBothMappingStyles() {
         assertTrue(ShellPages.isPage("/home"));
         assertTrue(ShellPages.isPage("/home.view"));
         assertTrue(ShellPages.isPage("main.view?id=3"));
     }
 
     @Test
-    public void isPageRejectsEverythingElse() {
+    void isPageRejectsEverythingElse() {
         assertFalse(ShellPages.isPage("/index"));
         assertFalse(ShellPages.isPage("/left"));
         assertFalse(ShellPages.isPage("/download.view?id=3"));
@@ -26,13 +26,13 @@ public class ShellPagesTest {
     }
 
     @Test
-    public void toMainUrlKeepsPagesAndQuery() {
+    void toMainUrlKeepsPagesAndQuery() {
         assertEquals("main.view?id=3", ShellPages.toMainUrl("/main.view?id=3"));
         assertEquals("personalSettings.view", ShellPages.toMainUrl("personalSettings.view"));
     }
 
     @Test
-    public void toMainUrlFallsBackToDefault() {
+    void toMainUrlFallsBackToDefault() {
         assertEquals(ShellPages.DEFAULT_MAIN, ShellPages.toMainUrl(null));
         assertEquals(ShellPages.DEFAULT_MAIN, ShellPages.toMainUrl("javascript:alert(1)"));
         assertEquals(ShellPages.DEFAULT_MAIN, ShellPages.toMainUrl("//evil.example/home"));

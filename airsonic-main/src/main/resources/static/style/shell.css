@@ -129,6 +129,31 @@ body.shell {
     margin-right: 0;
 }
 
+/* Buttons that look like the links and nav items around them. */
+.shell-link-button, .shell-nav-button {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.shell-link-button {
+    text-align: left;
+    color: var(--shell-link-color, inherit);
+}
+
+/* Labels for screen readers only. */
+.shell-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
 /* Index letters stay reachable at the bottom of the left region. */
 .shell-left-index {
     position: sticky;
