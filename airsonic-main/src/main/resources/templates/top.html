@@ -129,7 +129,8 @@
         </a>
 
         <form class="shell-search" method="post" th:action="@{/search}" target="main" name="searchForm" role="search">
-            <input required type="search" name="query" id="query" size="28" th:placeholder="#{top.search}" th:attr="aria-label=#{top.search}"
+            <label for="query" class="shell-visually-hidden" th:text="#{top.search}">Search</label>
+            <input required type="search" name="query" id="query" size="28" th:placeholder="#{top.search}"
                    onclick="select();" oninput="TopNav.triggerInstantSearch();">
             <button type="submit" class="shell-icon-button" th:title="#{top.search}">
                 <img th:src="${themes?.get('searchImage') ?: 'icons/default_light/search.svg'}" th:alt="#{top.search}">
@@ -142,14 +143,14 @@
                 <img th:unless="${model.showAvatar}" th:src="${themes?.get('userImage') ?: 'icons/default_light/user.svg'}" th:alt="#{status.user}">
                 <span class="topHeader" th:text="${model.user.username}"></span>
             </a>
-            <a id="connectionStatus" class="shell-nav-item" href="javascript:void(0)" onclick="TopNav.toggleConnection();">
+            <button type="button" id="connectionStatus" class="shell-nav-item shell-nav-button" onclick="TopNav.toggleConnection()">
                 <img th:src="${themes?.get('disconnectedImage') ?: 'icons/default_light/disconnected.svg'}" alt="">
                 <div class="detail" th:utext="#{top.disconnected}">Disconnected</div>
-            </a>
-            <a class="shell-nav-item" href="javascript:void(0)" onclick="TopNav.logout();">
+            </button>
+            <button type="button" class="shell-nav-item shell-nav-button" onclick="TopNav.logout()">
                 <img th:src="${themes?.get('logoutImage') ?: 'icons/default_light/logout.svg'}" alt="">
                 <div class="detail" th:utext="#{top.logout}">Logout</div>
-            </a>
+            </button>
         </div>
     </nav>
     <form id="logoutForm" th:action="@{/logout}" method="POST" target="_top" hidden></form>

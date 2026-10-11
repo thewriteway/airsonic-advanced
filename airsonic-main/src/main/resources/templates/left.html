@@ -14,7 +14,7 @@
                 });
 
                 if (/*[[${model.musicFolderChanged}]]*/ false) {
-                    if (main.location.href.indexOf("/home") != -1) {
+                    if (main.location.href.includes("/home")) {
                         main.location.reload();
                     }
                 }
@@ -96,16 +96,15 @@
 </head>
 
 <body class="bgcolor2 leftframe" onload="LeftNav.init()">
-<a id="left-top"></a>
-
-<div style="padding-bottom:1.5em">
+<div id="left-top" style="padding-bottom:1.5em">
     <a th:href="@{/home}" target="main">
       <img th:src="${themes?.get('logoImage') ?: 'icons/default_light/logo.png'}" style="width:196px" th:title="#{top.help}" alt="">
     </a>
 </div>
 
 <div style="padding-bottom:1.0em" th:if="${#lists.size(model.musicFolders) > 1}">
-<select name="musicFolderId" style="width:100%" onchange="LeftNav.selectMusicFolder(this.value)">
+<label for="musicFolderId" class="shell-visually-hidden" th:text="#{settingsheader.musicFolder}">Media folders</label>
+<select id="musicFolderId" name="musicFolderId" style="width:100%" onchange="LeftNav.selectMusicFolder(this.value)">
         <option value="-1" th:text="#{left.allfolders}">All folders</option>
         <option th:each="musicFolder:${model.musicFolders}" th:selected="${model.selectedMusicFolder?.id == musicFolder.id}"
                     th:value="${musicFolder.id}" th:text="${musicFolder.name}">folder name</option>
@@ -138,8 +137,8 @@
     <div id="playlists"></div>
     <div id="playlistOverflow" style="display:none"></div>
     <div style="padding-top: 0.3em"></div>
-    <div class="forward" id="showAllPlaylists" style="display: none"><a href="#" onclick="LeftNav.showAllPlaylists(); return false;" th:text="#{left.showallplaylists}">show all</a></div>
-    <div class="forward"><a href="#" onclick="LeftNav.createEmptyPlaylist(); return false;" th:text="#{left.createplaylist}">create</a></div>
+    <div class="forward" id="showAllPlaylists" style="display: none"><button type="button" class="shell-link-button" onclick="LeftNav.showAllPlaylists()" th:text="#{left.showallplaylists}">show all</button></div>
+    <div class="forward"><button type="button" class="shell-link-button" onclick="LeftNav.createEmptyPlaylist()" th:text="#{left.createplaylist}">create</button></div>
     <div class="forward"><a th:href="@{/importPlaylist}" target="main" th:text="#{left.importplaylist}">import</a></div>
 </div>
 
