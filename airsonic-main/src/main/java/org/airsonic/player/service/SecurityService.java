@@ -479,13 +479,12 @@ public class SecurityService implements UserDetailsService {
     }
 
     /**
-     * Increment the number of bytes downloaded by the given user.
+     * Increment the number of bytes streamed by the given user.
      *
-     * @param username             user name.
-     * @param deltaBytesDownloaded number of bytes downloaded.
+     * @param username           user name.
+     * @param deltaBytesStreamed number of bytes streamed.
      * @return updated user.
      */
-    // TODO: This is not security related. Move to a different service.
     @Transactional
     public User incrementBytesStreamed(String username, long deltaBytesStreamed) {
         User user = getUserByName(username);
@@ -497,13 +496,12 @@ public class SecurityService implements UserDetailsService {
     }
 
     /**
-     * Increment the number of bytes streamed by the given user.
+     * Increment the number of bytes downloaded by the given user.
      *
-     * @param username           user name.
-     * @param deltaBytesStreamed number of bytes streamed.
+     * @param username             user name.
+     * @param deltaBytesDownloaded number of bytes downloaded.
      * @return updated user.
      */
-    // TODO: This is not security related. Move to a different service.
     @Transactional
     public User incrementBytesDownloaded(String username, long deltaBytesDownloaded) {
         User user = getUserByName(username);
@@ -521,7 +519,6 @@ public class SecurityService implements UserDetailsService {
      * @param deltaBytesUploaded number of bytes uploaded.
      * @return updated user.
      */
-    // TODO: This is not security related. Move to a different service.
     @Transactional
     public User incrementBytesUploaded(String username, long deltaBytesUploaded) {
         User user = getUserByName(username);

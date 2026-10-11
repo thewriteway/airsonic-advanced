@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.controller;
 
-import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.config.RequestConfig;
@@ -66,19 +65,16 @@ public class ProxyController {
         HttpGet method = new HttpGet(url);
         method.setConfig(requestConfig);
 
-        InputStream in = null;
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            try (CloseableHttpResponse resp = client.execute(method)) {
-                int statusCode = resp.getStatusLine().getStatusCode();
-                if (statusCode != OK.value()) {
-                    response.sendError(statusCode);
-                } else {
-                    in = resp.getEntity().getContent();
+        try (CloseableHttpClient client = HttpClients.createDefault();
+             CloseableHttpResponse resp = client.execute(method)) {
+            int statusCode = resp.getStatusLine().getStatusCode();
+            if (statusCode != OK.value()) {
+                response.sendError(statusCode);
+            } else {
+                try (InputStream in = resp.getEntity().getContent()) {
                     IOUtils.copy(in, response.getOutputStream());
                 }
             }
-        } finally {
-            FileUtil.closeQuietly(in);
         }
         return null;
     }

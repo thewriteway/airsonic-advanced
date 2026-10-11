@@ -76,7 +76,7 @@ public class QueryFactory {
     };
 
     /*
-     *  XXX 3.x -> 8.x :
+     *  Lucene 3.x -> 8.x migration:
      *  "SpanOr" has been changed to "Or".
      *   - Path comparison is more appropriate with "Or".
      *   - If "SpanOr" is maintained, the DOC design needs to be changed.
@@ -91,7 +91,7 @@ public class QueryFactory {
     };
 
     /*
-     *  XXX 3.x -> 8.x :
+     *  Lucene 3.x -> 8.x migration:
      * In order to support wildcards,
      * MultiFieldQueryParser has been replaced by the following process.
      *
@@ -151,7 +151,7 @@ public class QueryFactory {
     }
 
     /*
-     * XXX 3.x -> 8.x :
+     * Lucene 3.x -> 8.x migration:
      * RangeQuery has been changed to not allow null.
      */
     private final BiFunction<Integer, Integer, Query> toYearRangeQuery =
@@ -242,7 +242,7 @@ public class QueryFactory {
             stream.incrementToken();
 
             /*
-             *  XXX 3.x -> 8.x :
+             *  Lucene 3.x -> 8.x migration:
              * In order to support wildcards,
              * QueryParser has been replaced by the following process.
              */

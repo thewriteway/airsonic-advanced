@@ -89,7 +89,7 @@ public class AnalyzerFactoryTestCase {
         String expected = "b︴c";
 
         /*
-         * XXX 3.x -> 8.x :
+         * Lucene 3.x -> 8.x migration:
          * The definition of punctuation has changed.
          */
         Arrays.stream(IndexType.values()).flatMap(i -> Arrays.stream(i.getFields())).forEach(n -> {
@@ -274,7 +274,7 @@ public class AnalyzerFactoryTestCase {
         String queryFullWidth = "ＴＨＩＳ　ＩＳ　ＦＵＬＬ－ＷＩＤＴＨ　ＳＥＮＴＥＮＣＥＳ.";
         terms = toTermString(queryFullWidth);
         /*
-         * XXX 3.x -> 8.x :
+         * Lucene 3.x -> 8.x migration:
          *
          * This is not a change due to the library but an intentional change.
          * The filter order has been changed properly
@@ -454,7 +454,7 @@ public class AnalyzerFactoryTestCase {
         assertEquals(5, terms.size());
 
         /*
-         * XXX 3.x -> 8.x : _id3_artist_　in UAX#29.
+         * Lucene 3.x -> 8.x migration: _id3_artist_　in UAX#29.
          * Since the effect is large, trim with Filter.
          */
         assertEquals("id3_artist", terms.get(0));
@@ -469,7 +469,7 @@ public class AnalyzerFactoryTestCase {
         assertEquals(5, terms.size());
 
         /*
-         * XXX 3.x -> 8.x : _id3_artist_　in UAX#29.
+         * Lucene 3.x -> 8.x migration: _id3_artist_　in UAX#29.
          * Since the effect is large, trim with Filter.
          */
         assertEquals("id3_artist", terms.get(0));
@@ -498,18 +498,18 @@ public class AnalyzerFactoryTestCase {
         assertEquals(asList("abc", "def"), toTermString("~ABC~DEF~"));
         assertEquals(asList("abc", "def"), toTermString("*ABC*DEF*"));
         assertEquals(asList("abc", "def"), toTermString("?ABC?DEF?"));
-        assertEquals(asList("abc:def"), toTermString(":ABC:DEF:"));             // XXX 3.x -> 8.x : abc def -> abc:def
+        assertEquals(asList("abc:def"), toTermString(":ABC:DEF:"));             // Lucene 3.x -> 8.x migration: abc def -> abc:def
         assertEquals(asList("abc", "def"), toTermString("-ABC-DEF-"));
         assertEquals(asList("abc", "def"), toTermString("/ABC/DEF/"));
         /*
-         * XXX 3.x -> 8.x : _abc_def_　in UAX#29.
+         * Lucene 3.x -> 8.x migration: _abc_def_　in UAX#29.
          * Since the effect is large, trim with Filter.
          */
-        assertEquals(asList("abc_def"), toTermString("_ABC_DEF_"));             // XXX 3.x -> 8.x : abc def -> abc_def
+        assertEquals(asList("abc_def"), toTermString("_ABC_DEF_"));             // Lucene 3.x -> 8.x migration: abc def -> abc_def
         assertEquals(asList("abc", "def"), toTermString(",ABC,DEF,"));
         assertEquals(asList("abc.def"), toTermString(".ABC.DEF."));
-        assertEquals(asList("abc", "def"), toTermString("&ABC&DEF&"));          // XXX 3.x -> 8.x : abc&def -> abc def
-        assertEquals(asList("abc", "def"), toTermString("@ABC@DEF@"));          // XXX 3.x -> 8.x : abc@def -> abc def
+        assertEquals(asList("abc", "def"), toTermString("&ABC&DEF&"));          // Lucene 3.x -> 8.x migration: abc&def -> abc def
+        assertEquals(asList("abc", "def"), toTermString("@ABC@DEF@"));          // Lucene 3.x -> 8.x migration: abc@def -> abc def
         assertEquals(asList("abc'def"), toTermString("'ABC'DEF'"));
 
         // trim and delimiter and number
@@ -529,15 +529,15 @@ public class AnalyzerFactoryTestCase {
         assertEquals(asList("abc1", "def"), toTermString("*ABC1*DEF*"));
         assertEquals(asList("abc1", "def"), toTermString("?ABC1?DEF?"));
         assertEquals(asList("abc1", "def"), toTermString(":ABC1:DEF:"));
-        assertEquals(asList("abc1", "def"), toTermString(",ABC1,DEF,"));        // XXX 3.x -> 8.x : abc1,def -> abc1 def
-        assertEquals(asList("abc1", "def"), toTermString("-ABC1-DEF-"));        // XXX 3.x -> 8.x : abc1-def -> abc1 def
-        assertEquals(asList("abc1", "def"), toTermString("/ABC1/DEF/"));        // XXX 3.x -> 8.x : abc1/def -> abc1 def
+        assertEquals(asList("abc1", "def"), toTermString(",ABC1,DEF,"));        // Lucene 3.x -> 8.x migration: abc1,def -> abc1 def
+        assertEquals(asList("abc1", "def"), toTermString("-ABC1-DEF-"));        // Lucene 3.x -> 8.x migration: abc1-def -> abc1 def
+        assertEquals(asList("abc1", "def"), toTermString("/ABC1/DEF/"));        // Lucene 3.x -> 8.x migration: abc1/def -> abc1 def
         /*
-         * XXX 3.x -> 8.x : _abc1_def_　in UAX#29.
+         * Lucene 3.x -> 8.x migration: _abc1_def_　in UAX#29.
          * Since the effect is large, trim with Filter.
          */
         assertEquals(asList("abc1_def"), toTermString("_ABC1_DEF_"));
-        assertEquals(asList("abc1", "def"), toTermString(".ABC1.DEF."));        // XXX 3.x -> 8.x : abc1.def -> abc1 def
+        assertEquals(asList("abc1", "def"), toTermString(".ABC1.DEF."));        // Lucene 3.x -> 8.x migration: abc1.def -> abc1 def
         assertEquals(asList("abc1", "def"), toTermString("&ABC1&DEF&"));
         assertEquals(asList("abc1", "def"), toTermString("@ABC1@DEF@"));
         assertEquals(asList("abc1", "def"), toTermString("'ABC1'DEF'"));
@@ -562,7 +562,7 @@ public class AnalyzerFactoryTestCase {
         assertEquals("analysis", terms.get(3));
 
         /*
-         * XXX 3.x -> 8.x :
+         * Lucene 3.x -> 8.x migration:
          * we ve -> we've
          */
         query = "We’ve been here before.";

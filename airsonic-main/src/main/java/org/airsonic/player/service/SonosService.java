@@ -56,10 +56,10 @@ import jakarta.xml.ws.handler.MessageContext;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.TimeUnit;
 
 import static org.airsonic.player.service.sonos.SonosServiceRegistration.AuthenticationType;
 
@@ -561,7 +561,7 @@ public class SonosService implements SonosSoap {
         return null;
     }
 
-    private Cache<String, Triple<String, String, Instant>> sonosLinkCache = CacheBuilder.newBuilder().expireAfterWrite(7, TimeUnit.MINUTES).<String, Triple<String, String, Instant>>build();
+    private Cache<String, Triple<String, String, Instant>> sonosLinkCache = CacheBuilder.newBuilder().expireAfterWrite(Duration.ofMinutes(7)).<String, Triple<String, String, Instant>>build();
 
     // The link code must be exactly 32 characters long
     private String createLinkCode() {

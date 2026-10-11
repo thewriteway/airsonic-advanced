@@ -19,8 +19,10 @@
 package org.airsonic.player.service;
 
 import com.google.common.collect.ImmutableMap;
+import org.airsonic.player.ajax.PlayQueueInfo;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.PlayQueue;
+import org.airsonic.player.domain.PlayQueue.RepeatStatus;
 import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.SavedPlayQueue;
 import org.airsonic.player.repository.SavedPlayQueueRepository;
@@ -47,9 +49,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -245,7 +249,51 @@ public class PlayQueueServiceTest {
         assertEquals("testuser", savedPlayQueue.getChangedBy());
     }
 
-    // TODO: test methods include broadcastPlayQueue
+    @Nested
+    class BroadcastTests {
 
+        private final PlayQueue playQueue = new PlayQueue();
 
+        @BeforeEach
+        public void setup() {
+            when(mockedPlayer.getPlayQueue()).thenReturn(playQueue);
+            when(mockedPlayer.getUsername()).thenReturn("testuser");
+            when(mockedPlayer.getId()).thenReturn(1);
+            when(webSocketClient.sendToUser(anyString(), anyString(), any())).thenReturn(CompletableFuture.completedFuture(null));
+        }
+
+        @Test
+        public void testClearBroadcastsUpdatedPlayQueue() {
+            // given
+            playQueue.addFiles(false, new MediaFile());
+
+            // when
+            playQueueService.clear(mockedPlayer);
+
+            // then
+            assertEquals(0, playQueue.size());
+            ArgumentCaptor<PlayQueueInfo> infoCaptor = ArgumentCaptor.forClass(PlayQueueInfo.class);
+            verify(webSocketClient).sendToUser(eq("testuser"), eq("/queue/playqueues/1/updated"), infoCaptor.capture());
+            PlayQueueInfo info = infoCaptor.getValue();
+            assertTrue(info.getEntries().isEmpty());
+            assertEquals(playQueue.getStatus(), info.getPlayStatus());
+            // nothing to start, so no skip message is sent to the player
+            assertEquals(-1, info.getStartPlayerAt());
+            verify(webSocketClient, never()).sendToUser(anyString(), eq("/queue/playqueues/1/skip"), any(), any());
+        }
+
+        @Test
+        public void testToggleRepeatSendsNextRepeatStatus() {
+            // given
+            playQueue.setRepeatStatus(RepeatStatus.OFF);
+
+            // when
+            playQueueService.toggleRepeat(mockedPlayer);
+
+            // then
+            RepeatStatus expected = RepeatStatus.getNext(RepeatStatus.OFF);
+            assertEquals(expected, playQueue.getRepeatStatus());
+            verify(webSocketClient).sendToUser("testuser", "/queue/playqueues/1/repeat", expected);
+        }
+    }
 }

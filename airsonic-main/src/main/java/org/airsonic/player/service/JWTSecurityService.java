@@ -47,7 +47,6 @@ public class JWTSecurityService {
     public static final String JWT_PARAM_NAME = "jwt";
     public static final String CLAIM_PATH = "path";
 
-    // TODO make this configurable
     public static final int DEFAULT_DAYS_VALID_FOR = 7;
     private static SecureRandom secureRandom = new SecureRandom();
 

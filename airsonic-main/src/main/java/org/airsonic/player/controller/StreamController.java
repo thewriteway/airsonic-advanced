@@ -276,8 +276,11 @@ public class StreamController {
 
         Supplier<TransferStatus> statusSupplier = () -> status;
         Consumer<TransferStatus> statusCloser = s -> {
-            securityService.incrementBytesStreamed(user.getUsername(), s.getBytesTransferred());
             statusService.removeStreamStatus(s);
+            // JWT streams signed for the anonymous subject (DLNA/UPnP, shares) have no backing user
+            if (user != null) {
+                securityService.incrementBytesStreamed(user.getUsername(), s.getBytesTransferred());
+            }
         };
 
         InputStream monitoredStream = new MonitoredInputStream(

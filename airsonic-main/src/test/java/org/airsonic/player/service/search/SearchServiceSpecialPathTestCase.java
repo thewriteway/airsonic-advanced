@@ -52,13 +52,13 @@ public class SearchServiceSpecialPathTestCase {
             musicFolders = new ArrayList<>();
 
             Path musicDir = MusicFolderTestData.resolveBaseMediaPath().resolve("Search").resolve("SpecialPath").resolve("accessible");
-            musicFolders.add(new MusicFolder(1, musicDir, "accessible", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS)));
+            musicFolders.add(new MusicFolder(null, musicDir, "accessible", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS)));
 
             Path music2Dir = MusicFolderTestData.resolveBaseMediaPath().resolve("Search").resolve("SpecialPath").resolve("accessible's");
-            musicFolders.add(new MusicFolder(2, music2Dir, "accessible's", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS)));
+            musicFolders.add(new MusicFolder(null, music2Dir, "accessible's", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS)));
 
             Path music3Dir = MusicFolderTestData.resolveBaseMediaPath().resolve("Search").resolve("SpecialPath").resolve("accessible+s");
-            musicFolders.add(new MusicFolder(3, music3Dir, "accessible+s", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS)));
+            musicFolders.add(new MusicFolder(null, music3Dir, "accessible+s", Type.MEDIA, true, Instant.now().truncatedTo(ChronoUnit.MICROS)));
         }
         return musicFolders;
     }
@@ -122,7 +122,7 @@ public class SearchServiceSpecialPathTestCase {
                 .filter(m -> "accessible+s".equals(m.getName()))
                 .collect(Collectors.toList());
         randomAlbums = searchService.getRandomAlbums(Integer.MAX_VALUE, folder03);
-        assertEquals(1, folder03.size(), "Albums in \"accessible+s\" ");
+        assertEquals(1, randomAlbums.size(), "Albums in \"accessible+s\" ");
 
     }
 

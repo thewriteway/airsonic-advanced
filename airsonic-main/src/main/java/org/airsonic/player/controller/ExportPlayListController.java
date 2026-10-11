@@ -35,10 +35,13 @@ public class ExportPlayListController {
 
         int id = ServletRequestUtils.getRequiredIntParameter(request, "id");
         Playlist playlist = playlistService.getPlaylist(id);
+        if (playlist == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return null;
+        }
         if (!playlistService.isReadAllowed(playlist, securityService.getCurrentUsername(request))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
-
         }
         response.setContentType("application/x-download");
         response.setHeader("Content-Disposition", "attachment; filename=\"" + StringUtil.fileSystemSafe(playlist.getName()) + ".m3u8\"");

@@ -102,16 +102,17 @@ public class PodcastSettingsController {
 
     @PostMapping
     protected String doSubmitAction(@ModelAttribute PodcastSettingsCommand command, RedirectAttributes redirectAttributes) {
-        PodcastRule defaultRule = command.getRules().stream().filter(r -> r.getId().equals(-1)).findFirst().get();
-        settingsService.setPodcastUpdateInterval(defaultRule.getInterval());
-        settingsService.setPodcastEpisodeRetentionCount(defaultRule.getEpisodeRetentionCount());
-        settingsService.setPodcastEpisodeDownloadCount(defaultRule.getEpisodeDownloadCount());
-        settingsService.save();
-        podcastManagementService.scheduleDefault();
+        command.getRules().stream().filter(PodcastSettingsController::isDefaultRule).findFirst().ifPresent(defaultRule -> {
+            settingsService.setPodcastUpdateInterval(defaultRule.getInterval());
+            settingsService.setPodcastEpisodeRetentionCount(defaultRule.getEpisodeRetentionCount());
+            settingsService.setPodcastEpisodeDownloadCount(defaultRule.getEpisodeDownloadCount());
+            settingsService.save();
+            podcastManagementService.scheduleDefault();
+        });
 
         boolean success = mediaFolderService.enablePodcastFolder(command.getFolderId());
 
-        command.getRules().stream().filter(r -> !r.getId().equals(-1)).forEach(r -> {
+        command.getRules().stream().filter(r -> !isDefaultRule(r)).forEach(r -> {
             if (r.getDelete()) {
                 podcastManagementService.deleteChannelRule(r.getId());
             } else {
@@ -126,5 +127,9 @@ public class PodcastSettingsController {
 
         redirectAttributes.addFlashAttribute("settings_toast", success);
         return "redirect:podcastSettings.view";
+    }
+
+    private static boolean isDefaultRule(PodcastRule rule) {
+        return Integer.valueOf(-1).equals(rule.getId());
     }
 }

@@ -481,7 +481,6 @@
                       success: player => {
                           pq.onStop();
                           // emulate callback because callbacks for the player will be deregistered by the time call returns
-                          // TODO if error happens, we won't receive it
                           pq.playQueuePlayStatusCallback("STOPPED");
                     
                           //reset everything
@@ -660,8 +659,7 @@
                     const nowPlayingStreamUrl = "stream?player=" + nowPlayingInfo.playerId + "&id=" + nowPlayingInfo.mediaFileId;
                     if (nowPlayingInfo != null && nowPlayingStreamUrl != this.currentStreamUrl && nowPlayingInfo.playerId == this.player.id) {
                         if (this.player.tech != 'WEB') {
-                            // TODO this should be keying off skip callbacks (and skip callbacks should be getting emitted)
-                            // otherwise there is an issue with the same song appearing multiple times on the playqueue (we'll always select the first)
+                            // matched by stream URL, so if a song is queued more than once the first occurrence is selected
                             this.currentStreamUrl = nowPlayingInfo.streamUrl;
                             this.currentSongIndex = this.getCurrentSongIndex();
                         
@@ -806,8 +804,7 @@
                 },
             
                 /**
-                 * Toggle play/pause
-                 * TODO: Nobody calls this
+                 * Toggle play/pause (bound to the space key in keyboard_shortcuts.js)
                  */
                 onToggleStartStop() {
                     if (this.player.tech == 'WEB') {

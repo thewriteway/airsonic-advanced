@@ -147,7 +147,7 @@ public class FFmpegParser extends MetaDataParser {
                 Chapter chapter = mapper.convertValue(chapterJson, Chapter.class);
                 metaData.addChapter(chapter);
             }
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Error when parsing metadata in {}", file, x);
         }
 

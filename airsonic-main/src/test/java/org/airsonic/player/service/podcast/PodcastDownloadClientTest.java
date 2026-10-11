@@ -121,7 +121,7 @@ public class PodcastDownloadClientTest {
     private ResourceLoader resourceLoader;
 
     @BeforeAll
-    private static void init() {
+    public static void init() {
         System.setProperty("airsonic.home", airsonicFolder.toString());
     }
 

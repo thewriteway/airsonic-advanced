@@ -54,9 +54,19 @@ public class QueryFactoryTestCase {
     private static final List<MusicFolder> SINGLE_FOLDERS = Arrays.asList(MUSIC_FOLDER1);
     private static final List<MusicFolder> MULTI_FOLDERS = Arrays.asList(MUSIC_FOLDER1, MUSIC_FOLDER2);
 
+    /*
+     * Expected term clauses for QUERY_ENG_ONLY ("ABC DEF"). Each token matches as a prefix (wildcard) and, with
+     * half the boost, as an exact term, so exact matches rank higher (kagemomiji/airsonic-advanced#317).
+     */
+    private static final String ARTIST_TERMS = "+((artist:abc*) ((artist:abc)^0.5) (artist:def*) ((artist:def)^0.5))";
+    private static final String ALBUM_TERMS = "+(((album:abc)^0.55 artist:abc*) ((album:abc*)^1.1 (artist:abc)^0.5) "
+            + "((album:def)^0.55 artist:def*) ((album:def*)^1.1 (artist:def)^0.5))";
+    private static final String SONG_TERMS = "+(((title:abc)^0.55 artist:abc*) ((title:abc*)^1.1 (artist:abc)^0.5) "
+            + "((title:def)^0.55 artist:def*) ((title:def*)^1.1 (artist:def)^0.5))";
+
 
     /*
-     * XXX 3.x -> 8.x :
+     * Lucene 3.x -> 8.x migration:
      * It does not change the basic functional requirements for the query.
      * However, some minor improvements are included.
      *
@@ -89,11 +99,11 @@ public class QueryFactoryTestCase {
 
         Query query = queryFactory.search(criteria, SINGLE_FOLDERS, IndexType.ARTIST);
         assertEquals(
-                "+((artist:abc*) (artist:def*)) +(folder:" + PATH1 + ")",
+                ARTIST_TERMS + " +(folder:" + PATH1 + ")",
                 query.toString(), "SearchArtist");
 
         query = queryFactory.search(criteria, MULTI_FOLDERS, IndexType.ARTIST);
-        assertEquals("+((artist:abc*) (artist:def*)) +(folder:" + PATH1
+        assertEquals(ARTIST_TERMS + " +(folder:" + PATH1
                 + " folder:" + PATH2 + ")", query.toString(), "SearchArtist");
     }
 
@@ -106,13 +116,13 @@ public class QueryFactoryTestCase {
 
         Query query = queryFactory.search(criteria, SINGLE_FOLDERS, IndexType.ALBUM);
         assertEquals(
-                "+(((album:abc*)^1.1 artist:abc*) ((album:def*)^1.1 artist:def*)) +(folder:" + PATH1
+                ALBUM_TERMS + " +(folder:" + PATH1
                         + ")",
                 query.toString(), "SearchAlbum");
 
         query = queryFactory.search(criteria, MULTI_FOLDERS, IndexType.ALBUM);
         assertEquals(
-                "+(((album:abc*)^1.1 artist:abc*) ((album:def*)^1.1 artist:def*)) +(folder:" + PATH1
+                ALBUM_TERMS + " +(folder:" + PATH1
                         + " folder:" + PATH2 + ")",
                 query.toString(), "SearchAlbum");
     }
@@ -126,11 +136,11 @@ public class QueryFactoryTestCase {
 
         Query query = queryFactory.search(criteria, SINGLE_FOLDERS, IndexType.SONG);
         assertEquals(
-                "+(((title:abc*)^1.1 artist:abc*) ((title:def*)^1.1 artist:def*)) +(folder:" + PATH1 + ")",
+                SONG_TERMS + " +(folder:" + PATH1 + ")",
                 query.toString(), "SearchSong");
 
         query = queryFactory.search(criteria, MULTI_FOLDERS, IndexType.SONG);
-        assertEquals("+(((title:abc*)^1.1 artist:abc*) ((title:def*)^1.1 artist:def*)) +(folder:" + PATH1
+        assertEquals(SONG_TERMS + " +(folder:" + PATH1
                 + " folder:" + PATH2 + ")", query.toString(), "SearchSong");
     }
 
@@ -142,14 +152,14 @@ public class QueryFactoryTestCase {
         criteria.setQuery(QUERY_ENG_ONLY);
 
         Query query = queryFactory.search(criteria, SINGLE_FOLDERS, IndexType.ARTIST_ID3);
-        assertEquals("+((artist:abc*) (artist:def*)) +(folderId:"
-                + FID1 + ")", query.toString(), "SearchSong");
+        assertEquals(ARTIST_TERMS + " +(folderId:"
+                + FID1 + ")", query.toString(), "SearchArtistId3");
 
         query = queryFactory.search(criteria, MULTI_FOLDERS, IndexType.ARTIST_ID3);
         assertEquals(
-                "+((artist:abc*) (artist:def*)) +(folderId:" + FID1
+                ARTIST_TERMS + " +(folderId:" + FID1
                         + " folderId:" + FID2 + ")",
-                query.toString(), "SearchSong");
+                query.toString(), "SearchArtistId3");
     }
 
     @Test
@@ -161,13 +171,13 @@ public class QueryFactoryTestCase {
 
         Query query = queryFactory.search(criteria, SINGLE_FOLDERS, IndexType.ALBUM_ID3);
         assertEquals(
-                "+(((album:abc*)^1.1 artist:abc*) ((album:def*)^1.1 artist:def*)) "
+                ALBUM_TERMS + " "
                         + "+(folderId:" + FID1 + ")",
                 query.toString(), "SearchAlbumId3");
 
         query = queryFactory.search(criteria, MULTI_FOLDERS, IndexType.ALBUM_ID3);
         assertEquals(
-                "+(((album:abc*)^1.1 artist:abc*) ((album:def*)^1.1 artist:def*)) +(folderId:"
+                ALBUM_TERMS + " +(folderId:"
                         + FID1 + " folderId:"
                         + FID2 + ")",
                 query.toString(), "SearchAlbumId3");

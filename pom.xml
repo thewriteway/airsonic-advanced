@@ -22,6 +22,9 @@
     </parent>
 
     <properties>
+        <!-- minimum supported Java (bytecode target and API level); enforced by maven-enforcer requireJavaVersion -->
+        <java.version>21</java.version>
+        <docker.java.version>21</docker.java.version>
         <failOnDependencyWarning>true</failOnDependencyWarning>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cxf.version>4.2.3</cxf.version>
@@ -31,6 +34,8 @@
         <!-- override Spring Boot managed version until it ships >= 42.7.11 (CVE-2026-42198) -->
         <postgresql.version>42.7.11</postgresql.version>
         <docker.container.repo>ghcr.io/thewriteway/airsonic-advanced</docker.container.repo>
+        <!-- extra JVM flags for forked test JVMs; set by JDK-specific profiles -->
+        <surefire.jdk.flags></surefire.jdk.flags>
     </properties>
 
 
@@ -299,12 +304,8 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.6.0</version>
                     <configuration>
-                        <!-- #1186 Temporarily skip a test. -->
-                        <excludes>
-                            <exclude>org.airsonic.player.service.search.*TestCase.java</exclude>
-                        </excludes>
                         <!-- see https://github.com/mockito/mockito/issues/3037#issuecomment-1930132240-->
-                        <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+                        <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar} ${surefire.jdk.flags}</argLine>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -338,8 +339,12 @@
                     <encoding>UTF-8</encoding>
                     <verbose>false</verbose>
                     <showWarnings>true</showWarnings>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <!-- release checks API usage against java.version even when building on a newer JDK -->
+                    <release>${java.version}</release>
+                    <compilerArgs>
+                        <!-- list each deprecated / for-removal API use so JDK upgrades don't surprise us -->
+                        <arg>-Xlint:deprecation,removal</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -433,6 +438,10 @@
                         <configuration>
                             <rules>
                                 <dependencyConvergence/>
+                                <requireJavaVersion>
+                                    <version>[21,)</version>
+                                    <message>Airsonic-Advanced requires JDK 21 or newer to build.</message>
+                                </requireJavaVersion>
                             </rules>
                         </configuration>
                         <goals>
@@ -465,13 +474,15 @@
             </modules>
         </profile>
         <profile>
-            <id>default-java</id>
+            <!-- JDK 24+ (JEP 471/472): Byte Buddy, used by Mockito, still calls sun.misc.Unsafe memory-access
+                 methods and libraries may call restricted native methods. Allow both explicitly so tests keep
+                 working when the JDK default changes from "warn" to "deny". The Unsafe flag is unknown to JDK 21. -->
+            <id>jdk24-test-flags</id>
             <activation>
-                <jdk>[21,)</jdk>
+                <jdk>[24,)</jdk>
             </activation>
             <properties>
-                <java.version>21</java.version>
-                <docker.java.version>21</docker.java.version>
+                <surefire.jdk.flags>--sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED</surefire.jdk.flags>
             </properties>
         </profile>
     </profiles>

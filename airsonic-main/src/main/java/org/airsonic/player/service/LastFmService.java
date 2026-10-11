@@ -117,7 +117,7 @@ public class LastFmService {
                 }
             }
 
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find similar artists for {}", artistName, x);
         }
         return result;
@@ -165,7 +165,7 @@ public class LastFmService {
                 }
             }
 
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find similar artists for {}", artist.getName(), x);
         }
         return result;
@@ -252,7 +252,7 @@ public class LastFmService {
                                  "",
                                  "",
                                  "");
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find artist bio for {}", artistName, x);
             return null;
         }
@@ -301,7 +301,7 @@ public class LastFmService {
                 }
             }
             return result;
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find top songs for {}", artistName, x);
             return Collections.emptyList();
         }
@@ -349,7 +349,7 @@ public class LastFmService {
                                  info.getImageURL(ImageSize.MEDIUM),
                                  info.getImageURL(ImageSize.LARGE),
                                  info.getImageURL(ImageSize.MEGA));
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find album notes for {} - {}", artist, album, x);
             return null;
         }
@@ -380,7 +380,7 @@ public class LastFmService {
                     .map(this::convert)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to search for cover art for {} - {}", artist, album, x);
             return Collections.emptyList();
         }
@@ -410,7 +410,7 @@ public class LastFmService {
             String biography = processWikiText(info.getWikiSummary());
             String redirectedArtistName = getRedirectedArtist(biography);
             return redirectedArtistName != null ? redirectedArtistName : artistName;
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find artist bio for {}", artistName, x);
             return null;
         }

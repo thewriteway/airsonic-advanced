@@ -405,7 +405,7 @@ public class MediaFolderService {
 
     @CacheEvict(cacheNames = { "mediaFilePathCache", "mediaFileIdCache" }, allEntries = true)
     public void clearMediaFileCache() {
-        // TODO: optimize cache eviction
+        // eviction is done by @CacheEvict
     }
 
     /**

@@ -50,7 +50,7 @@ public class SearchServiceImpl implements SearchService {
     @Autowired
     private SearchServiceUtilities util;
 
-    // TODO Should be changed to SecureRandom?
+    // only used to shuffle results, so it doesn't need to be a SecureRandom
     private final Random random = new Random(System.currentTimeMillis());
 
     /**

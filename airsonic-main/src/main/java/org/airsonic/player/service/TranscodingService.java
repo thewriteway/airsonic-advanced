@@ -416,7 +416,6 @@ public class TranscodingService {
                 Optional.ofNullable(videoTranscodingSettings).map(VideoTranscodingSettings::getHlsSegmentIndex).map(String::valueOf).orElse(null),
                 Optional.ofNullable(videoTranscodingSettings).map(VideoTranscodingSettings::getHlsSegmentFilename).orElse(null),
                 pathString,
-                // TODO: this shouldn't be part of videosettings
                 Optional.ofNullable(videoTranscodingSettings).map(VideoTranscodingSettings::getOutputFilename).orElse(null));
 
         ProcessBuilder builder = transformTranscodingVariables(command, vars);

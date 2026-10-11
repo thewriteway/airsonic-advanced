@@ -97,12 +97,12 @@ public class PodcastDownloadClientIntegrationTest {
     private String folderPath;
 
     @BeforeAll
-    private static void init() {
+    public static void init() {
         System.setProperty("airsonic.home", airsonicFolder.toString());
     }
 
     @BeforeEach
-    private void setUp() throws IOException {
+    public void setUp() throws IOException {
         MusicFolder podcastFolder = musicFolderRepository.findAll().stream()
                 .filter(folder -> folder.getType() == MusicFolder.Type.PODCAST).findFirst().orElse(null);
         folderPath = podcastFolder.getPath().toString();
@@ -139,7 +139,7 @@ public class PodcastDownloadClientIntegrationTest {
     }
 
     @AfterEach
-    private void tearDown() throws IOException {
+    public void tearDown() throws IOException {
         musicFolderRepository.findAll().stream().filter(folder -> folder.getType() == MusicFolder.Type.PODCAST)
                 .findFirst().ifPresent(folder -> {
                     folder.setPath(Path.of(folderPath));

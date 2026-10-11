@@ -67,7 +67,7 @@ public class PodcastManagementService {
                 asyncWebSocketClient.send("/topic/podcasts/updated", channelId);
             }
             schedule();
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.error("Failed to initialize PodcastService", x);
         }
     }

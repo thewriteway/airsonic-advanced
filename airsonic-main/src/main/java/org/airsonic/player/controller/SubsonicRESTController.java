@@ -29,6 +29,8 @@ import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.i18n.LocaleResolver;
 import org.airsonic.player.service.*;
+import org.airsonic.player.service.metadata.MetaData;
+import org.airsonic.player.service.metadata.Track;
 import org.airsonic.player.service.podcast.PodcastDownloadClient;
 import org.airsonic.player.service.search.IndexType;
 import org.airsonic.player.util.NetworkUtil;
@@ -43,6 +45,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -114,6 +117,8 @@ public class SubsonicRESTController {
     private StreamController streamController;
     @Autowired
     private HLSController hlsController;
+    @Autowired
+    private CaptionsController captionsController;
     @Autowired
     private ShareService shareService;
     @Autowired
@@ -1001,17 +1006,6 @@ public class SubsonicRESTController {
         Boolean shared = getBooleanParameter(request, "public");
         playlistService.updatePlaylist(id, name, comment, shared);
 
-        // TODO: Add later
-//            for (String usernameToAdd : ServletRequestUtils.getStringParameters(request, "usernameToAdd")) {
-//                if (securityService.getUserByName(usernameToAdd) != null) {
-//                    playlistService.addPlaylistUser(id, usernameToAdd);
-//                }
-//            }
-//            for (String usernameToRemove : ServletRequestUtils.getStringParameters(request, "usernameToRemove")) {
-//                if (securityService.getUserByName(usernameToRemove) != null) {
-//                    playlistService.deletePlaylistUser(id, usernameToRemove);
-//                }
-//            }
         List<MediaFile> songs = playlistService.getFilesInPlaylist(id);
         boolean songsChanged = false;
 
@@ -2165,15 +2159,62 @@ public class SubsonicRESTController {
     }
 
     @RequestMapping({"/getVideoInfo", "/getVideoInfo.view"})
-    public void getVideoInfo(HttpServletRequest request, HttpServletResponse response) {
+    public void getVideoInfo(Authentication authentication, HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        error(request, response, ErrorCode.GENERIC, "getVideoInfo is not yet implemented");
+        int id = getRequiredIntParameter(request, "id");
+        MediaFile video = getAccessibleVideo(authentication, id);
+
+        VideoInfo result = new VideoInfo();
+        result.setId(String.valueOf(id));
+
+        // Caption ids are list positions so external caption file paths aren't exposed
+        List<CaptionsController.CaptionInfo> captionInfos = captionsController.listCaptions(video, NetworkUtil.getBaseUrl(request));
+        for (int i = 0; i < captionInfos.size(); i++) {
+            Captions captions = new Captions();
+            captions.setId(String.valueOf(i));
+            captions.setName(captionInfos.get(i).getLanguage());
+            result.getCaptions().add(captions);
+        }
+
+        MetaData metaData = captionsController.getVideoMetaData(video);
+        if (metaData != null) {
+            for (Track track : metaData.getAudioTracks()) {
+                AudioTrack audioTrack = new AudioTrack();
+                audioTrack.setId(String.valueOf(track.getId()));
+                audioTrack.setName(track.getLanguageName());
+                audioTrack.setLanguageCode(track.getLanguage());
+                result.getAudioTrack().add(audioTrack);
+            }
+        }
+
+        Response res = createResponse();
+        res.setVideoInfo(result);
+        jaxbWriter.writeResponse(request, response, res);
     }
 
     @RequestMapping({"/getCaptions", "/getCaptions.view"})
-    public void getCaptions(HttpServletRequest request, HttpServletResponse response) {
-        request = wrapRequest(request);
-        error(request, response, ErrorCode.GENERIC, "getCaptions is not yet implemented");
+    public ResponseEntity<Resource> getCaptions(Authentication authentication,
+            @RequestParam("id") int id,
+            @RequestParam(required = false, name = "format") String format,
+            HttpServletRequest request) throws Exception {
+        HttpServletRequest wrappedRequest = wrapRequest(request);
+        getAccessibleVideo(authentication, id);
+        try {
+            return captionsController.handleRequest(authentication, id, null, format, wrappedRequest);
+        } catch (NotFoundException | IllegalArgumentException e) {
+            throw new APIException(ErrorCode.NOT_FOUND, e.getMessage());
+        }
+    }
+
+    private MediaFile getAccessibleVideo(Authentication authentication, int id) throws APIException {
+        MediaFile video = mediaFileService.getMediaFile(id);
+        if (video == null || !video.isVideo()) {
+            throw new APIException(ErrorCode.NOT_FOUND, "Video not found: " + id);
+        }
+        if (!securityService.isFolderAccessAllowed(video, authentication.getName())) {
+            throw new APIException(ErrorCode.NOT_AUTHORIZED, "Access denied to video " + id);
+        }
+        return video;
     }
 
     @RequestMapping({"/startScan", "/startScan.view"})

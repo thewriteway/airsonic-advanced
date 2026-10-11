@@ -178,7 +178,7 @@
 
     <p th:each="artist : ${entry.value}" class="dense truncate" style="padding-left:2px">
         <span th:title="${artist.name}">
-<!--            TODO CDC is mediafiles always a single element?-->
+<!--            an artist can have several folders (one per music folder); link to the first -->
             <a target="main"
                th:href="@{/main(id=${artist.mediaFiles[0].id})}"
                th:text="${#strings.abbreviate(artist.name, 35)}">artist.name</a>

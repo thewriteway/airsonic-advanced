@@ -73,6 +73,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -1342,7 +1343,7 @@ public class MediaFileService {
             String ext = FilenameUtils.getExtension(cueFile.toString()).toLowerCase();
             switch (ext) {
                 case "cue":
-                    Charset cs = Charset.forName("UTF-8"); // default to UTF-8
+                    Charset cs = StandardCharsets.UTF_8; // default to UTF-8
                     // attempt to detect encoding for cueFile, fallback to UTF-8
                     int THRESHOLD = 35; // 0-100, the higher the more certain the guess
                     CharsetDetector cd = new CharsetDetector();

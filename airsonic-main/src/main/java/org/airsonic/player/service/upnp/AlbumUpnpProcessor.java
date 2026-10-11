@@ -103,7 +103,6 @@ public class AlbumUpnpProcessor extends UpnpContentProcessor <Album, MediaFile> 
         }
         container.setParentID(getRootId());
         container.setTitle(album.getName());
-        // TODO: correct artist?
         if (album.getArtist() != null) {
             container.setArtists(getAlbumArtists(album.getArtist()));
         }

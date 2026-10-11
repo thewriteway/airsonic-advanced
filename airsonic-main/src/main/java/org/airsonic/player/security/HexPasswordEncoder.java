@@ -7,7 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.nio.charset.StandardCharsets;
 
 public final class HexPasswordEncoder implements PasswordEncoder, PasswordDecoder {
-    private final static Base16 hex = new Base16(true);
+    private final static Base16 hex = Base16.builder().setLowerCase(true).get();
 
     @Override
     public String encode(CharSequence rawPassword) {

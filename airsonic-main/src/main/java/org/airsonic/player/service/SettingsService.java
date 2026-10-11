@@ -44,9 +44,9 @@ import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -462,7 +462,7 @@ public class SettingsService {
     @PostConstruct
     public void init() {
         transcodeExecutableCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(8, TimeUnit.HOURS)
+            .expireAfterAccess(Duration.ofHours(8))
             .build(new CacheLoader<String, String>() {
                 @Override
                 public String load(String executable) throws Exception {
@@ -1136,7 +1136,7 @@ public class SettingsService {
         String country = getProperty(KEY_LOCALE_COUNTRY, DEFAULT_LOCALE_COUNTRY);
         String variant = getProperty(KEY_LOCALE_VARIANT, DEFAULT_LOCALE_VARIANT);
 
-        return new Locale(language, country, variant);
+        return Locale.of(language, country, variant);
     }
 
     /**

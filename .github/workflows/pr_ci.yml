@@ -45,10 +45,11 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - jdk: 17
+          - jdk: 21
             services: {}
             env: {}
-          - jdk: 21
+          # latest LTS: build and test on JDK 25 (still targeting java.version 21 bytecode)
+          - jdk: 25
             services: {}
             env: {}
           # external dbs

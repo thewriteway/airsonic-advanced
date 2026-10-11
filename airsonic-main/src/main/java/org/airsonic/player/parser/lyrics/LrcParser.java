@@ -25,18 +25,27 @@ import org.slf4j.LoggerFactory;
 import jakarta.annotation.Nullable;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class LrcParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(LrcParser.class);
+
+    // Extended format meta information lines, e.g. [ar:Artist]
+    private static final Pattern META_LINE = Pattern.compile("\\[\\w+?:.*\\]");
+    // A2 extension word timing directly after the line time tag
+    private static final Pattern A2_AFTER_TIME_TAG = Pattern.compile("(^\\[\\d{2}:\\d{2}(\\.\\d{2,3})?\\])\\s*<.*?>");
+    // Any remaining <...> word timing
+    private static final Pattern A2_WORD_TAG = Pattern.compile("\\s<.*?>");
 
     /**
      * Parses a LRC file and returns a list of LyricsLine objects.
@@ -67,22 +76,23 @@ public class LrcParser {
      * @return A list of LyricsLine objects parsed from the LRC file.
      */
     public LrcFile parse(Path lrcFilePath) {
-        if (lrcFilePath == null || !lrcFilePath.toFile().exists()) {
+        if (lrcFilePath == null || !Files.exists(lrcFilePath)) {
             LOG.warn("LRC file does not exist: {}", lrcFilePath);
             return null;
         }
         List<LyricsLine> lines = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(lrcFilePath.toFile()))) {
+        // InputStreamReader replaces malformed bytes rather than failing like Files.newBufferedReader
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(lrcFilePath), StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 // Ignore extended format meta information lines
-                if (line.matches("\\[\\w+?:.*\\]")) {
+                if (META_LINE.matcher(line).matches()) {
                     continue;
                 }
                 // Remove A2 Extension part (e.g., <...> after time tag)
-                line = line.replaceAll("(^\\[\\d{2}:\\d{2}(\\.\\d{2,3})?\\])\\s*<.*?>", "$1");
+                line = A2_AFTER_TIME_TAG.matcher(line).replaceAll("$1");
                 // Also remove any <...> that may appear after the time tag
-                line = line.replaceAll("\\s<.*?>", "");
+                line = A2_WORD_TAG.matcher(line).replaceAll("");
 
                 String[] parts = line.split("]");
                 for (int i = 0; i < parts.length - 1; i++) {

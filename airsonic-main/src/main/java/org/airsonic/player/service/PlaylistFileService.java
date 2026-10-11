@@ -3,6 +3,8 @@ package org.airsonic.player.service;
 import chameleon.playlist.SpecificPlaylist;
 import chameleon.playlist.SpecificPlaylistFactory;
 import chameleon.playlist.SpecificPlaylistProvider;
+import com.ibm.icu.text.CharsetDetector;
+import com.ibm.icu.text.CharsetMatch;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Playlist;
 import org.airsonic.player.domain.User;
@@ -19,9 +21,11 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,6 +37,8 @@ import java.util.stream.Stream;
 public class PlaylistFileService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlaylistFileService.class);
+    // 0-100: minimum confidence before a detected charset is trusted over UTF-8
+    private static final int CHARSET_DETECTION_THRESHOLD = 35;
 
     private final PlaylistService playlistService;
     private final SettingsService settingsService;
@@ -92,7 +98,7 @@ public class PlaylistFileService {
             LOG.info("Starting playlist import.");
             doImportPlaylists();
             LOG.info("Completed playlist import.");
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to import playlists", x);
         }
     }
@@ -142,8 +148,10 @@ public class PlaylistFileService {
      */
     public Playlist importPlaylist(User user, String playlistName, String fileName, Path file, InputStream inputStream, Playlist existingPlaylist) throws Exception {
 
-        // TODO: handle other encodings
-        final SpecificPlaylist inputSpecificPlaylist = SpecificPlaylistFactory.getInstance().readFrom(inputStream, "UTF-8");
+        // .m3u files are often Latin-1/Windows-1252 rather than UTF-8, so detect the encoding
+        BufferedInputStream bufferedInput = new BufferedInputStream(inputStream);
+        String encoding = detectEncoding(bufferedInput, fileName);
+        final SpecificPlaylist inputSpecificPlaylist = SpecificPlaylistFactory.getInstance().readFrom(bufferedInput, encoding);
         if (inputSpecificPlaylist == null) {
             throw new Exception("Unsupported playlist " + fileName);
         }
@@ -209,6 +217,26 @@ public class PlaylistFileService {
         PlaylistExportHandler handler = getExportHandler(provider);
         SpecificPlaylist specificPlaylist = handler.handle(id, provider);
         specificPlaylist.writeTo(out, StringUtil.ENCODING_UTF8);
+    }
+
+    /**
+     * Guesses the character encoding of a playlist, falling back to UTF-8.
+     *
+     * @param in       stream supporting mark/reset; it is reset to its start afterwards
+     * @param fileName playlist file name, for logging
+     * @return the Java charset name to decode the playlist with
+     */
+    private static String detectEncoding(BufferedInputStream in, String fileName) {
+        try {
+            CharsetMatch match = new CharsetDetector().setText(in).detect();
+            if (match != null && match.getConfidence() > CHARSET_DETECTION_THRESHOLD) {
+                LOG.debug("Detected charset {} for playlist {}", match.getName(), fileName);
+                return match.getName();
+            }
+        } catch (IOException e) {
+            LOG.debug("Failed to detect charset for playlist {}, using UTF-8", fileName, e);
+        }
+        return StandardCharsets.UTF_8.name();
     }
 
     private PlaylistImportHandler getImportHandler(SpecificPlaylist playlist) {

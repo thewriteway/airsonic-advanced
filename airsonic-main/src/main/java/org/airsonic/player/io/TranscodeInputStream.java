@@ -76,13 +76,10 @@ public class TranscodeInputStream extends InputStream {
             new Thread(name + " TranscodedInputStream copy thread") {
                 @Override
                 public void run() {
-                    try {
-                        IOUtils.copy(in, processOutputStream);
+                    try (InputStream source = in; OutputStream sink = processOutputStream) {
+                        IOUtils.copy(source, sink);
                     } catch (IOException x) {
                         // Intentionally ignored. Will happen if the remote player closes the stream.
-                    } finally {
-                        FileUtil.closeQuietly(in);
-                        FileUtil.closeQuietly(processOutputStream);
                     }
                 }
             }.start();

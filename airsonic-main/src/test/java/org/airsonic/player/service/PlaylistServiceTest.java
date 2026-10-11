@@ -50,7 +50,7 @@ public class PlaylistServiceTest {
     private User sharedUser;
 
     @BeforeEach
-    private void setUp() {
+    public void setUp() {
         playlist = new Playlist();
         playlist.setId(1);
         playlist.setName("Test Playlist");

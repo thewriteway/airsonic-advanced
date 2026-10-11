@@ -83,7 +83,7 @@ public class DispatchingContentDirectory extends CustomContentDirectory {
                         : processor.browseObject(itemId, filter, firstResult, maxResults, orderBy);
             }
             return returnValue;
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.error("UPnP error", x);
             throw new ContentDirectoryException(ContentDirectoryErrorCode.CANNOT_PROCESS, x.toString());
         }

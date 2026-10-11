@@ -52,11 +52,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides services for maintaining the set of players.
@@ -88,19 +87,14 @@ public class PlayerService {
         deleteOldPlayers(60);
     }
 
-    private Map<Integer, PlayQueue> playlists = Collections.synchronizedMap(new HashMap<Integer, PlayQueue>());
+    private final Map<Integer, PlayQueue> playlists = new ConcurrentHashMap<>();
 
     /**
      * Adds a playlist to the given player.
      * @param player The player to add the playlist to.
      */
     private void addPlaylist(Player player) {
-        PlayQueue playQueue = playlists.get(player.getId());
-        if (playQueue == null) {
-            playQueue = new PlayQueue();
-            playlists.put(player.getId(), playQueue);
-        }
-        player.setPlayQueue(playQueue);
+        player.setPlayQueue(playlists.computeIfAbsent(player.getId(), k -> new PlayQueue()));
     }
 
     /**

@@ -38,13 +38,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.message.BasicStatusLine;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.DefaultedHttpParams;
-import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.BasicHttpProcessor;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.HttpRequestHandlerMapper;
 import org.apache.http.protocol.HttpService;
 import org.apache.http.protocol.ResponseConnControl;
 import org.apache.http.protocol.ResponseContent;
@@ -56,7 +54,6 @@ import org.jupnp.model.message.StreamRequestMessage;
 import org.jupnp.model.message.StreamResponseMessage;
 import org.jupnp.model.message.UpnpHeaders;
 import org.jupnp.model.message.UpnpMessage;
-import org.jupnp.model.message.UpnpOperation;
 import org.jupnp.model.message.UpnpRequest;
 import org.jupnp.protocol.ProtocolFactory;
 import org.jupnp.transport.spi.UpnpStream;
@@ -64,6 +61,7 @@ import org.jupnp.transport.spi.UpnpStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,33 +75,29 @@ public abstract class HttpServerConnectionUpnpStream extends UpnpStream {
     final private static Logger log = Logger.getLogger(UpnpStream.class.getName());
 
     protected final HttpServerConnection connection;
-    protected final BasicHttpProcessor httpProcessor = new BasicHttpProcessor();
+    protected final HttpProcessor httpProcessor;
     protected final HttpService httpService;
-    protected final HttpParams params;
 
     protected HttpServerConnectionUpnpStream(ProtocolFactory protocolFactory,
-                                             HttpServerConnection connection,
-                                             final HttpParams params) {
+                                             HttpServerConnection connection) {
         super(protocolFactory);
         this.connection = connection;
-        this.params = params;
 
-        // The Date header is recommended in UDA, need to document the requirement in StreamServer interface?
-        httpProcessor.addInterceptor(new ResponseDate());
-
-        // The Server header is only required for Control so callers have to add it to UPnPMessage
-        // httpProcessor.addInterceptor(new ResponseServer());
-
-        httpProcessor.addInterceptor(new ResponseContent());
-        httpProcessor.addInterceptor(new ResponseConnControl());
+        httpProcessor = HttpProcessorBuilder.create()
+                // The Date header is recommended in UDA, need to document the requirement in StreamServer interface?
+                .add(new ResponseDate())
+                // The Server header is only required for Control so callers have to add it to UPnPMessage
+                // .add(new ResponseServer())
+                .add(new ResponseContent())
+                .add(new ResponseConnControl())
+                .build();
 
         httpService =
                 new UpnpHttpService(
                         httpProcessor,
-                        new DefaultConnectionReuseStrategy(),
-                        new DefaultHttpResponseFactory()
+                        DefaultConnectionReuseStrategy.INSTANCE,
+                        DefaultHttpResponseFactory.INSTANCE
                 );
-        httpService.setParams(params);
     }
 
     public HttpServerConnection getConnection() {
@@ -145,7 +139,8 @@ public abstract class HttpServerConnectionUpnpStream extends UpnpStream {
     protected class UpnpHttpService extends HttpService {
 
         public UpnpHttpService(HttpProcessor processor, ConnectionReuseStrategy reuse, HttpResponseFactory responseFactory) {
-            super(processor, reuse, responseFactory);
+            // No handler mapper: requests are dispatched by the doService() override below
+            super(processor, reuse, responseFactory, (HttpRequestHandlerMapper) null);
         }
 
         @Override
@@ -246,14 +241,13 @@ public abstract class HttpServerConnectionUpnpStream extends UpnpStream {
                 log.fine("Response status line: " + httpResponse.getStatusLine());
 
                 // Headers
-                httpResponse.setParams(getResponseParams(requestMessage.getOperation()));
                 HeaderUtil.add(httpResponse, responseMsg.getHeaders());
 
                 // Entity
                 if (responseMsg.hasBody() && responseMsg.getBodyType().equals(UpnpMessage.BodyType.BYTES)) {
                     httpResponse.setEntity(new ByteArrayEntity(responseMsg.getBodyBytes()));
                 } else if (responseMsg.hasBody() && responseMsg.getBodyType().equals(UpnpMessage.BodyType.STRING)) {
-                    StringEntity responseEntity = new StringEntity(responseMsg.getBodyString(), "UTF-8");
+                    StringEntity responseEntity = new StringEntity(responseMsg.getBodyString(), StandardCharsets.UTF_8);
                     httpResponse.setEntity(responseEntity);
                 }
 
@@ -264,11 +258,6 @@ public abstract class HttpServerConnectionUpnpStream extends UpnpStream {
             }
 
             responseSent(responseMsg);
-        }
-
-        protected HttpParams getResponseParams(UpnpOperation operation) {
-            HttpParams localParams = new BasicHttpParams();
-            return new DefaultedHttpParams(localParams, params);
         }
 
     }

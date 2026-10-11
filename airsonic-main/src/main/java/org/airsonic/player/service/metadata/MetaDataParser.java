@@ -125,9 +125,7 @@ public abstract class MetaDataParser {
     }
 
     /**
-     * Guesses the album for the given file.
-     *
-     * TODO: public as it is used in EditTagsController
+     * Guesses the album for the given file. Also used by EditTagsController.
      */
     public String guessAlbum(Path file, String artist) {
         Path parent = file.getParent();
@@ -139,9 +137,7 @@ public abstract class MetaDataParser {
     }
 
     /**
-     * Guesses the title for the given file.
-     *
-     * TODO: public as it is used in EditTagsController
+     * Guesses the title for the given file. Also used by EditTagsController.
      */
     public static String guessTitle(Path file) {
         return StringUtils.trim(FilenameUtils.getBaseName(file.toString()));

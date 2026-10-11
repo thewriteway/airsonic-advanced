@@ -581,7 +581,6 @@ public class SonosHelper {
         result.setMimeType(StringUtil.getMimeType(suffix, true));
         result.setTitle(song.getTitle());
         result.setIsFavorite(song.getStarredDate() != null);
-//        result.setDynamic();// TODO: For starred songs
 
         AlbumArtUrl albumArtURI = new AlbumArtUrl();
         albumArtURI.setValue(getCoverArtUrl(String.valueOf(song.getId()), username, request));
@@ -682,8 +681,7 @@ public class SonosHelper {
             playerService.createPlayer(player);
             players = playerService.getPlayersForUserAndClientId(username, AIRSONIC_CLIENT_ID);
 
-            // @FIXME when a new transcoding choice can be set we can put the right transcoding here for Sonos player.
-            // Now, we remove transcoding for Sonos player
+            // Sonos players stream the original files, so no transcodings are assigned
             transcodingService.setTranscodingsForPlayerByIds(players.get(0), new ArrayList<>());
         }
 

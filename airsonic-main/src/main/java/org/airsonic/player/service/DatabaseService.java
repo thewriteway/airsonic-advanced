@@ -108,7 +108,7 @@ public class DatabaseService {
     public void init() {
         try {
             schedule();
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.error("Failed to initialize DatabaseService", x);
         }
     }

@@ -35,11 +35,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,9 +77,9 @@ public class StatusService {
                 Instant.now().plus(3, ChronoUnit.HOURS), Duration.ofHours(3), true);
     }
 
-    private final List<TransferStatus> streamStatuses = Collections.synchronizedList(new ArrayList<>());
-    private final List<TransferStatus> downloadStatuses = Collections.synchronizedList(new ArrayList<>());
-    private final List<TransferStatus> uploadStatuses = Collections.synchronizedList(new ArrayList<>());
+    private final List<TransferStatus> streamStatuses = new CopyOnWriteArrayList<>();
+    private final List<TransferStatus> downloadStatuses = new CopyOnWriteArrayList<>();
+    private final List<TransferStatus> uploadStatuses = new CopyOnWriteArrayList<>();
     private final Set<PlayStatus> activeLocalPlays = ConcurrentHashMap.newKeySet();
 
     // Maps from player ID to latest inactive stream status.
@@ -108,20 +108,19 @@ public class StatusService {
 
     public List<TransferStatus> getAllStreamStatuses() {
         List<TransferStatus> snapshot = new ArrayList<>(streamStatuses);
-        Set<Integer> playerIds = snapshot.parallelStream()
+        Set<Integer> playerIds = snapshot.stream()
                 .map(x -> x.getPlayer().getId())
-                .collect(Collectors.toCollection(() -> ConcurrentHashMap.newKeySet()));
+                .collect(Collectors.toSet());
         // Add inactive status for those players that have no active status.
         return Stream.concat(
-                snapshot.parallelStream(),
-                inactiveStreamStatuses.values().parallelStream()
+                snapshot.stream(),
+                inactiveStreamStatuses.values().stream()
                         .filter(s -> !playerIds.contains(s.getPlayer().getId())))
                 .collect(Collectors.toList());
     }
 
     public List<TransferStatus> getStreamStatusesForPlayer(Player player) {
-        // unsynchronized stream access, but should be okay, we'll just be a bit behind
-        return streamStatuses.parallelStream()
+        return streamStatuses.stream()
                 .filter(s -> s.getPlayer().getId().equals(player.getId()))
                 .collect(Collectors.toList());
     }

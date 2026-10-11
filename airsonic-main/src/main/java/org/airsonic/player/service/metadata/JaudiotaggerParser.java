@@ -170,7 +170,7 @@ public class JaudiotaggerParser extends MetaDataParser {
 
             audioFile.commit();
 
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to update tags for file {}", file, x);
             throw new RuntimeException("Failed to update tags for file " + file + ". " + x.getMessage(), x);
         }

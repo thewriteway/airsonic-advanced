@@ -95,7 +95,7 @@ public class FolderBasedContentDirectory extends CustomContentDirectory {
             MediaFile mediaFile = mediaFileService.getMediaFile(mediaFileId);
             return browseFlag == BrowseFlag.METADATA ? browseMediaFileMetadata(mediaFile) : browseMediaFile(mediaFile, firstResult, maxResults);
 
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.error("UPnP error", x);
             throw new ContentDirectoryException(ContentDirectoryErrorCode.CANNOT_PROCESS, x.toString());
         }
@@ -242,7 +242,6 @@ public class FolderBasedContentDirectory extends CustomContentDirectory {
         MusicAlbum container = new MusicAlbum();
         container.setAlbumArtURIs(new URI[]{upnpUtil.getAlbumArtURI(album.getId())});
 
-        // TODO: correct artist?
         if (album.getArtist() != null) {
             container.setArtists(new PersonWithRole[]{new PersonWithRole(album.getArtist())});
         }

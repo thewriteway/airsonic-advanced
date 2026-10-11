@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -162,7 +163,7 @@ public class ListenBrainzScrobbler {
 
     private boolean executeJsonPostRequest(String url, String token, String json) throws ClientProtocolException, IOException {
         HttpPost request = new HttpPost(url);
-        request.setEntity(new StringEntity(json, "UTF-8"));
+        request.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
         request.setHeader("Authorization", "token " + token);
         request.setHeader("Content-type", "application/json; charset=utf-8");
 
@@ -188,11 +189,13 @@ public class ListenBrainzScrobbler {
 
         @Override
         public void run() {
-            while (true) {
+            while (!isInterrupted()) {
                 RegistrationData registrationData = null;
                 try {
                     registrationData = queue.take();
                     scrobble(registrationData);
+                } catch (InterruptedException x) {
+                    interrupt();
                 } catch (ClientProtocolException x) {
                     LOG.warn("Failed to scrobble '{}' to ListenBrainz.", registrationData == null ? null : registrationData.title, x);
                 } catch (IOException x) {
@@ -201,19 +204,17 @@ public class ListenBrainzScrobbler {
                     LOG.warn("Error in ListenBrainz registration: {}", x.toString());
                 }
             }
+            LOG.debug("ListenBrainz registration thread stopped");
         }
 
         private void handleNetworkError(RegistrationData registrationData, Exception error) {
             try {
                 queue.put(registrationData);
                 LOG.info("ListenBrainz registration for '{}' encountered network error. Will try again later. In queue: {}", registrationData.title, queue.size(), error);
-            } catch (InterruptedException x) {
-                LOG.error("Failed to reschedule ListenBrainz registration for '{}'", registrationData.title, x);
-            }
-            try {
                 sleep(60L * 1000L);  // Wait 60 seconds.
             } catch (InterruptedException x) {
-                LOG.error("Failed to sleep after ListenBrainz registration failure for '{}'", registrationData.title, x);
+                LOG.debug("Interrupted while rescheduling ListenBrainz registration for '{}'", registrationData.title);
+                interrupt();
             }
         }
     }

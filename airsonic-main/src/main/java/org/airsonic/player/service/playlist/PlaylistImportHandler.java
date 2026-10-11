@@ -6,6 +6,7 @@ import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.SettingsService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
@@ -81,7 +82,7 @@ public abstract class PlaylistImportHandler implements Ordered {
      * path character — so convert them explicitly.
      */
     private static Path toPath(String pathInPlaylist) {
-        if (StringUtils.startsWithIgnoreCase(pathInPlaylist, "file:")) {
+        if (Strings.CI.startsWith(pathInPlaylist, "file:")) {
             try {
                 return Paths.get(URI.create(pathInPlaylist.replace(" ", "%20")));
             } catch (Exception e) {

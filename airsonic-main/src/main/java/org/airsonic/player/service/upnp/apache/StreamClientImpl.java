@@ -22,28 +22,27 @@
 package org.airsonic.player.service.upnp.apache;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.DefaultedHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.jupnp.model.message.StreamRequestMessage;
 import org.jupnp.model.message.StreamResponseMessage;
@@ -63,7 +62,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Implementation based on <a href="http://hc.apache.org/">Apache HTTP Components 4.2</a>.
+ * Implementation based on <a href="http://hc.apache.org/">Apache HTTP Components 4.5</a>.
  * <p>
  * This implementation <em>DOES NOT WORK</em> on Android. Read the Cling manual for
  * alternatives on Android.
@@ -76,39 +75,53 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
     final private static Logger log = Logger.getLogger(StreamClient.class.getName());
 
     final protected StreamClientConfigurationImpl configuration;
-    final protected PoolingClientConnectionManager clientConnectionManager;
-    final protected DefaultHttpClient httpClient;
-    final protected HttpParams globalParams = new BasicHttpParams();
+    final protected PoolingHttpClientConnectionManager clientConnectionManager;
+    final protected CloseableHttpClient httpClient;
 
     public StreamClientImpl(StreamClientConfigurationImpl configuration) throws InitializationException {
         this.configuration = configuration;
 
-        HttpProtocolParams.setContentCharset(globalParams, getConfiguration().getContentCharset());
-        HttpProtocolParams.setUseExpectContinue(globalParams, false);
-
         // These are some safety settings, we should never run into these timeouts as we
         // do our own expiration checking
-        HttpConnectionParams.setConnectionTimeout(globalParams, (getConfiguration().getTimeoutSeconds() + 5) * 1000);
-        HttpConnectionParams.setSoTimeout(globalParams, (getConfiguration().getTimeoutSeconds() + 5) * 1000);
+        int timeoutMillis = (getConfiguration().getTimeoutSeconds() + 5) * 1000;
 
-        HttpConnectionParams.setStaleCheckingEnabled(globalParams, getConfiguration().getStaleCheckingEnabled());
-        if (getConfiguration().getSocketBufferSize() != -1)
-            HttpConnectionParams.setSocketBufferSize(globalParams, getConfiguration().getSocketBufferSize());
+        RequestConfig requestConfig = RequestConfig.custom()
+            .setExpectContinueEnabled(false)
+            .setConnectTimeout(timeoutMillis)
+            .setSocketTimeout(timeoutMillis)
+            .build();
 
         // Only register 80, not 443 and SSL
-        SchemeRegistry registry = new SchemeRegistry();
-        registry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
-
-        clientConnectionManager = new PoolingClientConnectionManager(registry);
+        clientConnectionManager = new PoolingHttpClientConnectionManager(
+            RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .build()
+        );
         clientConnectionManager.setMaxTotal(getConfiguration().getMaxTotalConnections());
         clientConnectionManager.setDefaultMaxPerRoute(getConfiguration().getMaxTotalPerRoute());
+        clientConnectionManager.setDefaultSocketConfig(SocketConfig.custom().setSoTimeout(timeoutMillis).build());
+        if (getConfiguration().getSocketBufferSize() != -1) {
+            clientConnectionManager.setDefaultConnectionConfig(
+                ConnectionConfig.custom().setBufferSize(getConfiguration().getSocketBufferSize()).build()
+            );
+        }
+        // Replaces the stale connection check: when enabled, validate any pooled connection idle for 1ms or
+        // more before reusing it; when disabled, never (the pool would otherwise validate after 2s idle)
+        clientConnectionManager.setValidateAfterInactivity(getConfiguration().getStaleCheckingEnabled() ? 1 : 0);
 
-        httpClient = new DefaultHttpClient(clientConnectionManager, globalParams);
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create()
+            .setConnectionManager(clientConnectionManager)
+            .setDefaultRequestConfig(requestConfig)
+            // DefaultHttpClient neither requested nor decoded compressed content
+            .disableContentCompression()
+            // The user agent is set per request, see createRequest()
+            .disableDefaultUserAgent();
         if (getConfiguration().getRequestRetryCount() != -1) {
-            httpClient.setHttpRequestRetryHandler(
+            clientBuilder.setRetryHandler(
                 new DefaultHttpRequestRetryHandler(getConfiguration().getRequestRetryCount(), false)
             );
         }
+        httpClient = clientBuilder.build();
     }
 
     @Override
@@ -120,7 +133,7 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
     @Override
     protected HttpUriRequest createRequest(StreamRequestMessage requestMessage) {
         UpnpRequest requestOperation = requestMessage.getOperation();
-        HttpUriRequest request;
+        HttpRequestBase request;
         switch (requestOperation.getMethod()) {
             case GET:
                 request = new HttpGet(requestOperation.getURI());
@@ -142,27 +155,41 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
                 };
                 break;
             case POST:
-                HttpEntityEnclosingRequest post = new HttpPost(requestOperation.getURI());
+                HttpPost post = new HttpPost(requestOperation.getURI());
                 post.setEntity(createHttpRequestEntity(requestMessage));
-                request = (HttpUriRequest) post; // Fantastic API
+                request = post;
                 break;
             case NOTIFY:
-                HttpEntityEnclosingRequest notify = new HttpPost(requestOperation.getURI()) {
+                HttpPost notify = new HttpPost(requestOperation.getURI()) {
                     @Override
                     public String getMethod() {
                         return UpnpRequest.Method.NOTIFY.getHttpName();
                     }
                 };
                 notify.setEntity(createHttpRequestEntity(requestMessage));
-                request = (HttpUriRequest) notify; // Fantastic API
+                request = notify;
                 break;
             default:
                 throw new RuntimeException("Unknown HTTP method: " + requestOperation.getHttpMethodName());
         }
 
+        request.setProtocolVersion(
+            requestOperation.getHttpMinorVersion() == 0 ? HttpVersion.HTTP_1_0 : HttpVersion.HTTP_1_1
+        );
+
         // Headers
-        request.setParams(getRequestParams(requestMessage));
         HeaderUtil.add(request, requestMessage.getHeaders());
+
+        // HttpClient adds HOST header automatically in its default processor
+
+        // Add the default user agent if not already set on the message
+        if (!requestMessage.getHeaders().containsKey(UpnpHeader.Type.USER_AGENT)
+                && !request.containsHeader(HttpHeaders.USER_AGENT)) {
+            request.addHeader(
+                HttpHeaders.USER_AGENT,
+                getConfiguration().getUserAgentValue(requestMessage.getUdaMajorVersion(), requestMessage.getUdaMinorVersion())
+            );
+        }
 
         return request;
     }
@@ -189,8 +216,8 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
     @Override
     protected boolean logExecutionException(Throwable t) {
         if (t instanceof IllegalStateException) {
-            // TODO: Document when/why this happens and why we can ignore it, violating the
-            // logging rules of the StreamClient#sendRequest() method
+            // HttpClient throws this when the connection manager has been shut down or the request was
+            // aborted (e.g. by a timeout) mid-flight; both are expected during stop/timeout, so only log at FINE
             if (log.isLoggable(Level.FINE))
                 log.fine("Illegal state: " + t.getMessage());
             return true;
@@ -264,26 +291,5 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
                 return responseMessage;
             }
         };
-    }
-
-    protected HttpParams getRequestParams(StreamRequestMessage requestMessage) {
-        HttpParams localParams = new BasicHttpParams();
-
-        localParams.setParameter(
-            CoreProtocolPNames.PROTOCOL_VERSION,
-            requestMessage.getOperation().getHttpMinorVersion() == 0 ? HttpVersion.HTTP_1_0 : HttpVersion.HTTP_1_1
-        );
-
-        // DefaultHttpClient adds HOST header automatically in its default processor
-
-        // Add the default user agent if not already set on the message
-        if (!requestMessage.getHeaders().containsKey(UpnpHeader.Type.USER_AGENT)) {
-            HttpProtocolParams.setUserAgent(
-                localParams,
-                getConfiguration().getUserAgentValue(requestMessage.getUdaMajorVersion(), requestMessage.getUdaMinorVersion())
-            );
-        }
-
-        return new DefaultedHttpParams(localParams, globalParams);
     }
 }

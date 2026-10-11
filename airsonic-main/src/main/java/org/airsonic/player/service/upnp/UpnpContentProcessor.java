@@ -65,12 +65,6 @@ public abstract class UpnpContentProcessor<T extends Object, U extends Object> {
     public BrowseResult browseRoot(String filter, long firstResult, long maxResults, SortCriterion[] orderBy) throws Exception {
         DIDLContent didl = new DIDLContent();
         List<T> allItems = getAllItems();
-        if (filter != null) {
-            // filter items (not implemented yet)
-        }
-        if (orderBy != null) {
-            // sort items (not implemented yet)
-        }
         List<T> selectedItems = Util.subList(allItems, firstResult, maxResults);
         for (T item : selectedItems) {
             addItem(didl, item);
@@ -95,12 +89,6 @@ public abstract class UpnpContentProcessor<T extends Object, U extends Object> {
     public BrowseResult browseObject(String id, String filter, long firstResult, long maxResults, SortCriterion[] orderBy) throws Exception {
         T item = getItemById(id);
         List<U> allChildren = getChildren(item);
-        if (filter != null) {
-            // filter items (not implemented yet)
-        }
-        if (orderBy != null) {
-            // sort items (not implemented yet)
-        }
         List<U> selectedChildren = Util.subList(allChildren, firstResult, maxResults);
 
         DIDLContent didl = new DIDLContent();

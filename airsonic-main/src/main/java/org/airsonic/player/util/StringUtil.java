@@ -232,7 +232,7 @@ public final class StringUtil {
      * @throws IOException If an I/O error occurs.
      */
     public static String[] readLines(InputStream in) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             List<String> result = new ArrayList<String>();
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 line = line.trim();
@@ -241,9 +241,6 @@ public final class StringUtil {
                 }
             }
             return result.toArray(new String[result.size()]);
-
-        } finally {
-            FileUtil.closeQuietly(in);
         }
     }
 
@@ -262,29 +259,21 @@ public final class StringUtil {
         while (elements.size() < 3) {
             elements.add("");
         }
-        return new Locale(elements.get(0), elements.get(1), elements.get(2));
+        return Locale.of(elements.get(0), elements.get(1), elements.get(2));
     }
 
     /**
      * URL-encodes the input value using UTF-8.
      */
     public static String urlEncode(String s) {
-        try {
-            return URLEncoder.encode(s, StringUtil.ENCODING_UTF8);
-        } catch (UnsupportedEncodingException x) {
-            throw new RuntimeException(x);
-        }
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
     /**
      * URL-decodes the input value using UTF-8.
      */
     public static String urlDecode(String s) {
-        try {
-            return URLDecoder.decode(s, StringUtil.ENCODING_UTF8);
-        } catch (UnsupportedEncodingException x) {
-            throw new RuntimeException(x);
-        }
+        return URLDecoder.decode(s, StandardCharsets.UTF_8);
     }
 
     /**

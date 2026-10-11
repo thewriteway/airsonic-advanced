@@ -204,7 +204,7 @@ public class DocumentFactory {
      * @since legacy
      */
     /*
-     *  XXX 3.x -> 8.x :
+     *  Lucene 3.x -> 8.x migration:
      *  Only null check specification of createArtistId3Document is different from legacy.
      *  (The reason is only to simplify the function.)
      *

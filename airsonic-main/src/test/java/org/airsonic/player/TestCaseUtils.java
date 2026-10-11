@@ -67,7 +67,6 @@ public class TestCaseUtils {
      * @param mediaScannerService
      */
     public static void execScan(MediaScannerService mediaScannerService) {
-        // TODO create a synchronous scan
         mediaScannerService.scanLibrary();
 
         waitForScanFinish(mediaScannerService);
