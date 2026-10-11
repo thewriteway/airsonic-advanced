@@ -30,7 +30,7 @@
                 buttons: {
                     /*[+
                     [(#{common.delete})]: function() {
-                        location.href = "[(@{/podcastReceiverAdmin.view(channelId=${command.channel.id}, deleteChannel=${command.channel.id})})]";
+                        top.main.location.href = "[(@{/podcastReceiverAdmin.view(channelId=${command.channel.id}, deleteChannel=${command.channel.id})})]";
                     },
                     [(#{common.cancel})]: function() {
                         $(this).dialog("close");
@@ -38,7 +38,7 @@
                     +]*/
                     /*[-*/
                     "Delete": function() {
-                        location.href = "podcastReceiverAdmin.view?channelId=0" +
+                        top.main.location.href = "podcastReceiverAdmin.view?channelId=0" +
                                 "&deleteChannel=0";
                     },
                     "Cancel": function() {
@@ -65,10 +65,10 @@
 
         function refreshChannels() {
             /*[+
-            location.href = "[(@{/podcastReceiverAdmin.view(refresh,channelId=${command.channel.id})})]";
+            top.main.location.href = "[(@{/podcastReceiverAdmin.view(refresh,channelId=${command.channel.id})})]";
             +]*/
             /*[-*/
-            location.href = "podcastReceiverAdmin.view?refresh&channelId=0";
+            top.main.location.href = "podcastReceiverAdmin.view?refresh&channelId=0";
             /*-]*/
         }
 

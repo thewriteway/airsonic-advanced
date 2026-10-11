@@ -1,144 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:replace="~{head :: common_head}" />
-    <th:block th:replace="~{jquery}" />
-    <script type="text/javascript" th:src="@{/script/utils.js}"></script>
-
     <script type="text/javascript" th:inline="javascript">
-        // Pass the evaluated Thymeleaf URL to JS variable
-        const nowPlayingStatusUrl = /*[[@{/nowPlaying/status}]]*/ "/nowPlaying/status";
+        var RightInfo = {
+            // Pass the evaluated Thymeleaf URL to JS variable
+            nowPlayingStatusUrl: /*[[@{/nowPlaying/status}]]*/ "/nowPlaying/status",
+            showNowPlaying: /*[[${model.showNowPlaying}]]*/ false,
+            // status updates are applied one at a time, in the order they arrive
+            pending: Promise.resolve(),
 
-        class TaskQueue {
-          constructor() {
-            this.q = [];
-            this.running = false;
-          }
-          enqueue(task) {
-            return new Promise((resolve, reject) => {
-              this.q.push(async () => {
-                try {
-                  resolve(await task());
-                } catch (e) {
-                  reject(e);
-                }
-              });
-              if (!this.running) this._run();
-            });
-          }
-          async _run() {
-            this.running = true;
-            while (this.q.length) {
-              const t = this.q.shift();
-              await t();   // 1件終わるまで次を実行しない
-            }
-            this.running = false;
-          }
-        }
-
-        function scanningStatus(msg) {
-            var scanInfo = JSON.parse(msg.body);
-            $("#scanCount").text(scanInfo.count);
-            if (scanInfo.scanning) {
-                $("#scanningStatus").show();
-            } else {
-                $("#scanningStatus").hide();
-            }
-        }
-
-        function init() {
-            let showNowPlaying = /*[[${model.showNowPlaying}]]*/ false;
-            let sub;
-            if(!showNowPlaying) {
-                sub = {
+            init() {
+                var sub = {
                     // no need to populate initial because the updates will occur frequently enough and are self-sufficient
-                    '/topic/scanStatus': scanningStatus
+                    '/topic/scanStatus': msg => this.scanningStatus(JSON.parse(msg.body))
+                };
+                if (this.showNowPlaying) {
+                    Object.assign(sub, {
+                        '/topic/nowPlaying/current/add': msg => this.enqueue(() => this.addStatus(JSON.parse(msg.body), 'NowPlaying')),
+                        '/topic/nowPlaying/current/remove': msg => this.enqueue(() => this.removeStatus(JSON.parse(msg.body), 'NowPlaying')),
+                        '/topic/nowPlaying/recent/add': msg => this.enqueue(() => this.addStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
+                        '/topic/nowPlaying/recent/remove': msg => this.enqueue(() => this.removeStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
+                        // Add existing (initial population, one time)
+                        '/app/nowPlaying/current': msg => this.populate(JSON.parse(msg.body), 'NowPlaying'),
+                        '/app/nowPlaying/recent': msg => this.populate(JSON.parse(msg.body), 'RecentlyPlayed')
+                    });
                 }
-            } else {
-                sub = {
-                    // no need to populate initial because the updates will occur frequently enough and are self-sufficient
-                    '/topic/scanStatus': scanningStatus,
-                    '/topic/nowPlaying/current/add': function (msg) {
-                        enqueueAdd(JSON.parse(msg.body), 'nowPlaying');
-                    },
-                    '/topic/nowPlaying/current/remove': function (msg) {
-                        enqueueRemove(JSON.parse(msg.body), 'nowPlaying');
-                    },
-                    '/topic/nowPlaying/recent/add': function (msg) {
-                        enqueueAdd(JSON.parse(msg.body), 'recentlyPlayed');
-                    },
-                    '/topic/nowPlaying/recent/remove': function (msg) {
-                        enqueueRemove(JSON.parse(msg.body), 'recentlyPlayed');
-                    },
-                    // Add existing (initial population, one time)
-                    '/app/nowPlaying/current': function (msg) {
-                        $('#nowPlayingTable').empty();
-                        enqueueRemove({}, 'nowPlaying');
-                        var statuses = JSON.parse(msg.body);
-                        for (var i = 0; i < statuses.length; i++) {
-                            enqueueAdd(statuses[i], 'nowPlaying');
-                        }
-                    },
-                    '/app/nowPlaying/recent': function (msg) {
-                        $('#recentlyPlayedTable').empty();
-                        enqueueRemove({}, 'recentlyPlayed');
-                        var statuses = JSON.parse(msg.body);
-                        for (var i = 0; i < statuses.length; i++) {
-                            enqueueAdd(statuses[i], 'recentlyPlayed');
-                        }
-                    }
+                StompClient.subscribe("right.html", sub);
+            },
+
+            scanningStatus(scanInfo) {
+                $("#scanCount").text(scanInfo.count);
+                $("#scanningStatus").toggle(scanInfo.scanning);
+            },
+
+            enqueue(task) {
+                this.pending = this.pending.then(task).catch(e => console.log("Could not update now playing", e));
+                return this.pending;
+            },
+
+            populate(statuses, table) {
+                this.enqueue(() => {
+                    $('#right' + table + 'Table').empty();
+                    this.updateTableVisibility(table);
+                });
+                statuses.forEach(status => this.enqueue(() => this.addStatus(status, table)));
+            },
+
+            async addStatus(status, table) {
+                const tableRoot = document.getElementById('right' + table + 'Table');
+                if (!tableRoot) {
+                    return;
                 }
+                const res = await fetch(this.nowPlayingStatusUrl + "?id=" + status.transferId, { credentials: 'same-origin' });
+                if (!res.ok) {
+                    return;
+                }
+                const tpl = document.createElement('template');
+                tpl.innerHTML = (await res.text()).trim();
 
+                tableRoot.querySelectorAll('.playstatus-' + status.transferId).forEach(el => el.remove());
+                tableRoot.append(tpl.content);
+                this.updateTableVisibility(table);
+            },
+
+            removeStatus(status, table) {
+                const tableRoot = document.getElementById('right' + table + 'Table');
+                if (!tableRoot) {
+                    return;
+                }
+                tableRoot.querySelectorAll('.playstatus-' + status.transferId + '.mediafile-' + status.mediaFileId).forEach(el => el.remove());
+                this.updateTableVisibility(table);
+            },
+
+            updateTableVisibility(table) {
+                $('#right' + table).toggle($('#right' + table + 'Table').find('tr').length > 0);
             }
-
-            top.StompClient.subscribe("right.html", sub);
-        }
-
-        const queue = new TaskQueue();
-
-        function enqueueAdd(status, table) {
-          return queue.enqueue(() => addStatus(status, table));
-        }
-        function enqueueRemove(status, table) {
-          return queue.enqueue(() => removeStatus(status, table));
-        }
-
-
-        async function addStatus(status, table) {
-            const tableRoot = document.getElementById(table + 'Table');
-            if (!tableRoot) {
-                return;
-            }
-            const selector = '.playstatus-' + status.transferId;
-
-            const statusUrl = nowPlayingStatusUrl + "?id=" + status.transferId;
-            const res = await fetch(statusUrl, { credentials: 'same-origin' });
-
-            if (!res.ok) {
-                return;
-            }
-            const html = await res.text();
-            const tpl = document.createElement('template');
-            tpl.innerHTML = html.trim();
-
-            tableRoot.querySelectorAll(selector).forEach(el => el.remove());
-            tableRoot.append(tpl.content);
-            updateTableVisibility(table);
         };
-
-        function removeStatus(status, table) {
-            const tableRoot = document.getElementById(table + 'Table');
-            if (!tableRoot) return;
-            tableRoot.querySelectorAll('.playstatus-' + status.transferId + '.mediafile-' + status.mediaFileId).forEach(el => el.remove());
-            updateTableVisibility(table);
-        }
-        function updateTableVisibility(table) {
-            const hasRows = $('#' + table + 'Table').find('tr').length > 0;
-            $('#' + table).toggle(hasRows);
-        }
     </script>
 </head>
-<body class="bgcolor1 rightframe" style="padding-top:2em" onload="init()">
+<body class="bgcolor1 rightframe" style="padding-top:2em" onload="RightInfo.init()">
 
     <div th:if="${model.newVersionAvailable}" class="warning" style="padding-bottom: 1em"
         th:utext="#{top.upgrade(${model.brand}, ${model.latestVersion}, ${model.latestVersion.url})}">
@@ -148,14 +88,14 @@
         <img th:src="${themes?.get('scanningImage') ?: 'icons/default_light/spinner.gif'}" title="" alt=""> <span th:text="#{main.scanning}"></span> <span id="scanCount"></span>
     </div>
 
-    <div id="nowPlaying" style='display:none'>
+    <div id="rightNowPlaying" style='display:none'>
         <h2 th:text="#{main.nowplaying}"></h2>
-        <table id="nowPlayingTable" style='width:100%'></table>
+        <table id="rightNowPlayingTable" style='width:100%'></table>
     </div>
 
-    <div id="recentlyPlayed" style='display:none'>
+    <div id="rightRecentlyPlayed" style='display:none'>
         <h2 th:text="#{main.recentlyplayed}"></h2>
-        <table id="recentlyPlayedTable" style='width:100%'></table>
+        <table id="rightRecentlyPlayedTable" style='width:100%'></table>
     </div>
 
 </body>

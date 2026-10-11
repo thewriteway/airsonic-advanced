@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 
@@ -111,7 +112,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     @Bean
     public FilterRegistrationBean<Filter> noCacheFilterRegistration() {
         FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(noCacheFilter());
-        registration.addUrlPatterns("/statusChart.view", "/userChart.view", "/playQueue.view", "/podcastChannels.view", "/podcastChannel.view", "/help.view", "/top.view", "/home.view");
+        registration.addUrlPatterns("/statusChart.view", "/userChart.view", "/playQueue.view", "/podcastChannels.view", "/podcastChannel.view", "/help.view", "/home.view");
         registration.addInitParameter("Cache-Control", "no-cache, post-check=0, pre-check=0");
         registration.addInitParameter("Pragma", "no-cache");
         registration.addInitParameter("Expires", "Thu, 01 Dec 1994 16:00:00 GMT");
@@ -146,6 +147,11 @@ public class ServletConfiguration implements WebMvcConfigurer {
         mapping.setMappings(properties);
 
         return mapping;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new ShellNavigationInterceptor());
     }
 
     @Autowired

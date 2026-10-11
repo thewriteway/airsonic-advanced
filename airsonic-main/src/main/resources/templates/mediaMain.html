@@ -88,15 +88,15 @@
 
     function getMediaDirectoryCallback(mediaDirObj) {
         if (mediaDirObj.contentType == 'notFound') {
-            window.location = 'notFound';
+            top.main.location.replace('notFound');
             return;
         }
         if (mediaDirObj.contentType == 'home') {
-            window.location = 'home';
+            top.main.location.replace('home');
             return;
         }
         if (mediaDirObj.contentType == 'accessDenied') {
-            window.location = 'accessDenied';
+            top.main.location.replace('accessDenied');
             return;
         }
 
@@ -1067,7 +1067,7 @@
         } else if (id == "unstar" && selectedIndexes.length > 0) {
             onStar(filesTable, selectedIndexes, false);
         } else if (id == "share" && selectedIndexes.length > 0) {
-            location.href = "createShare.view?id=" + mediaDir.id  + "&" + querize(selectedIndexes, "i");
+            top.main.location.href = "createShare.view?id=" + mediaDir.id  + "&" + querize(selectedIndexes, "i");
         } else if (id == "download" && selectedIndexes.length > 0) {
             location.href = "download.view?id=" + mediaDir.id  + "&" + querize(selectedIndexes, "i");
         } else if (id == "appendPlaylist" && selectedIndexes.length > 0) {
@@ -1176,7 +1176,7 @@
     }
 
     function editTagsPage() {
-        window.location = "editTags.view?id=" + mediaDir.id;
+        top.main.location.href = "editTags.view?id=" + mediaDir.id;
     }
 
     function downloadAll() {
@@ -1184,7 +1184,7 @@
     }
 
     function shareAlbum() {
-        location.href = "createShare.view?id=" + mediaDir.id;
+        top.main.location.href = "createShare.view?id=" + mediaDir.id;
     }
 
     function searchExternally(vendor) {

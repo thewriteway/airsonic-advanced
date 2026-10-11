@@ -47,7 +47,7 @@ $(document).ready(function() {
             <tr>
                 <td><b th:text="#{playersettings.title}"></b></td>
                 <td>
-                    <select name="player" onchange="location='playerSettings.view?id=' + options[selectedIndex].value;">
+                    <select name="player" onchange="top.main.location.href='playerSettings.view?id=' + options[selectedIndex].value;">
                         <option th:each="player:${command.players}" th:selected="${player.id eq command.playerId}"
                                 th:value="${player.id}" th:text="${player.description}"></option>
                     </select>

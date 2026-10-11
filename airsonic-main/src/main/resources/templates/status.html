@@ -10,7 +10,7 @@
       }
     </style>
 <script th:inline="javascript">
-  const labels = {
+  var labels = {
     null: '[(#{common.unknown})]',
     'download': '[(#{status.download})]',
     'upload': '[(#{status.upload})]',
@@ -22,7 +22,7 @@
     'FIXED_RATE': '[(#{status.scheduledfixedrate})]',
   };
 
-  const transferTypeColors = {
+  var transferTypeColors = {
     // yellow
     stream: {
       bg: 'rgba(255, 205, 86, 0.5)',
@@ -40,7 +40,7 @@
     }
   };
 
-  const transfersConfigTemplate = {
+  var transfersConfigTemplate = {
     type: 'scatter',
     options: {
       responsive: true,
@@ -121,7 +121,7 @@
    });
   }
 
-  const userChartConfig = {
+  var userChartConfig = {
     type: 'bar',
     data: {
       datasets: [{

@@ -46,7 +46,7 @@
     <tr>
         <td><b th:text="#{usersettings.title}"></b></td>
         <td>
-            <select name="username" onchange="location='userSettings.view?userIndex=' + (selectedIndex - 1);">
+            <select name="username" onchange="top.main.location.href='userSettings.view?userIndex=' + (selectedIndex - 1);">
                 <option value="" th:text="|-- #{usersettings.newuser} --|">-- New User --</option>
                 <option th:each="user:${command.users}"
                         th:text="${user.username}" th:selected="${user.username eq command.username}"

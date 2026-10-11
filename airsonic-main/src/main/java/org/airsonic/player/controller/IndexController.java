@@ -1,5 +1,6 @@
 package org.airsonic.player.controller;
 
+import org.airsonic.player.domain.AvatarScheme;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserSettings;
 import org.airsonic.player.service.PersonalSettingsService;
@@ -41,6 +42,12 @@ public class IndexController {
         map.put("keyboardShortcutsEnabled", userSettings.getKeyboardShortcutsEnabled());
         map.put("showSideBar", userSettings.getShowSideBar());
         map.put("brand", settingsService.getBrand());
+        map.put("showAvatar", userSettings.getAvatarScheme() != AvatarScheme.NONE);
+
+        // page shown in the main region: forwarded deep link, or explicit ?main= parameter
+        String main = (String) request.getAttribute(ShellPages.MAIN_ATTRIBUTE);
+        map.put("mainUrl", ShellPages.toMainUrl(main != null ? main : request.getParameter("main")));
+        map.put("shellPages", ShellPages.PAGES);
 
         //Add settings from PlayQueueController as well
         map.put("visibility", userSettings.getPlayqueueVisibility());

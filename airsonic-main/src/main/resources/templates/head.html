@@ -27,7 +27,11 @@
             <script type="text/javascript">
                 function changeLocation(dest) {
                     const safeDest = DOMPurify.sanitize(dest);
-                    location.href = safeDest;
+                    if (window.Shell) {
+                        Shell.navigate(safeDest);
+                    } else {
+                        location.href = safeDest;
+                    }
                 }
             </script>
         </th:block>

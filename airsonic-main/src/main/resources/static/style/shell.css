@@ -1,0 +1,154 @@
+/*
+ * Layout of the application shell (index.html). Colors and fonts come from the selected theme;
+ * this file only places the regions.
+ */
+
+body.shell {
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Each region scrolls on its own, like the frames did. */
+.shell-upper {
+    flex: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.shell-lower {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+.shell-left {
+    flex: none;
+    width: clamp(200px, 16%, 320px);
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.shell-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.shell-main-right {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+.shell-main {
+    flex: 4;
+    min-width: 0;
+    overflow: auto;
+}
+
+.shell-right {
+    flex: 1;
+    min-width: 180px;
+    overflow: auto;
+}
+
+.shell-center > .playqueue-container {
+    flex: none;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+/* Stands in for the body margin each page had in its frame. */
+.shell-content {
+    margin: 0.75em;
+}
+
+.shell-upper > .shell-content {
+    margin: 0.4em 1em 0 1em;
+}
+
+/* Dim the page being replaced while the next one loads. */
+.shell-main[aria-busy="true"] > .shell-content {
+    opacity: 0.6;
+    transition: opacity 0.2s 0.15s;
+}
+
+/* Top bar */
+.shell-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.25em 1em;
+    padding: 5px 0;
+}
+
+.shell-nav-item {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    min-width: 3em;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.shell-nav-item img {
+    max-width: 24px;
+    max-height: 30px;
+}
+
+.shell-search {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.25em;
+    margin: 0 0 0 1em;
+}
+
+.shell-topbar-end {
+    display: flex;
+    align-items: center;
+    gap: 1.5em;
+    margin-left: auto;
+    padding-left: 1em;
+}
+
+.shell-icon-button {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin-right: 3.5em;
+    cursor: pointer;
+}
+
+.shell-search .shell-icon-button {
+    margin-right: 0;
+}
+
+/* Index letters stay reachable at the bottom of the left region. */
+.shell-left-index {
+    position: sticky;
+    bottom: 0;
+    margin: 1.5em -0.75em -0.75em -0.75em;
+    padding: 0.25em 0.75em;
+    border-top: 1px solid black;
+}
+
+@media (max-width: 1100px) {
+    .shell-topbar .topHeader {
+        display: none;
+    }
+    .shell-icon-button {
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .shell-right {
+        display: none;
+    }
+}

@@ -1,108 +1,102 @@
 <!DOCTYPE html>
-<html><head>
-    <th:block th:replace="~{head :: common_head}" />
-    <th:block th:replace="~{jquery}" />
+<html xmlns:th="http://www.thymeleaf.org"><head>
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
-        function init() {
-            top.StompClient.subscribe("left.html", {
-                '/user/queue/playlists/deleted': function(msg) {
-                    deletedPlaylistCallback(JSON.parse(msg.body));
-                },
-                '/topic/playlists/deleted': function(msg) {
-                    deletedPlaylistCallback(JSON.parse(msg.body));
-                },
-                '/user/queue/playlists/updated': function(msg) {
-                    updatedPlaylistCallback(JSON.parse(msg.body));
-                },
-                '/topic/playlists/updated': function(msg) {
-                    updatedPlaylistCallback(JSON.parse(msg.body));
-                },
-                // Add existing (initial population, one time)
-                '/app/playlists/readable': function(msg) {
-                    populatePlaylistCallback(JSON.parse(msg.body));
+        var LeftNav = {
+            init() {
+                StompClient.subscribe("left.html", {
+                    '/user/queue/playlists/deleted': msg => this.deletedPlaylistCallback(JSON.parse(msg.body)),
+                    '/topic/playlists/deleted': msg => this.deletedPlaylistCallback(JSON.parse(msg.body)),
+                    '/user/queue/playlists/updated': msg => this.updatedPlaylistCallback(JSON.parse(msg.body)),
+                    '/topic/playlists/updated': msg => this.updatedPlaylistCallback(JSON.parse(msg.body)),
+                    // Add existing (initial population, one time)
+                    '/app/playlists/readable': msg => this.populatePlaylistCallback(JSON.parse(msg.body))
+                });
+
+                if (/*[[${model.musicFolderChanged}]]*/ false) {
+                    if (main.location.href.indexOf("/home") != -1) {
+                        main.location.reload();
+                    }
                 }
-            });
 
-            var mainLocation = top.main.location.href;
-            if (/*[[${model.musicFolderChanged}]]*/ false) {
-                if (mainLocation.indexOf("/home") != -1) {
-                    top.main.location.href = mainLocation;
-                }
-            }
+                $('.radio-play').on('click', function(evt) {
+                    playQueue.onPlayInternetRadio($(this).data("id"), 0);
+                    evt.preventDefault();
+                });
+            },
 
-            $('.radio-play').on('click', function(evt) {
-                top.playQueue.onPlayInternetRadio($(this).data("id"), 0);
-                evt.preventDefault();
-            });
-        }
+            selectMusicFolder(musicFolderId) {
+                left.location.href = "left?musicFolderId=" + musicFolderId;
+            },
 
-        function createEmptyPlaylist() {
-            showAllPlaylists();
-            top.StompClient.send("/app/playlists/create/empty", "");
-        }
+            createEmptyPlaylist() {
+                this.showAllPlaylists();
+                StompClient.send("/app/playlists/create/empty", "");
+            },
 
-        function showAllPlaylists() {
-            $('#playlistOverflow').show('blind');
-            $('#showAllPlaylists').hide('blind');
-        }
+            showAllPlaylists() {
+                $('#playlistOverflow').show('blind');
+                $('#showAllPlaylists').hide('blind');
+            },
 
-        function populatePlaylistCallback(playlists) {
-            $("#playlists").empty();
-            $("#playlistOverflow").empty();
-            for (var i = 0; i < playlists.length; i++) {
-                var playlist = playlists[i];
+            playlistNode(playlist) {
                 var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
-                var node = $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
+                return $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
                         playlist.id + "'>" + playlistName + "</a></p>");
-                var overflow = i > 9;
-                if (!overflow) {
-                    node.addClass("nonoverflown");
+            },
+
+            populatePlaylistCallback(playlists) {
+                $("#playlists").empty();
+                $("#playlistOverflow").empty();
+                for (var i = 0; i < playlists.length; i++) {
+                    var node = this.playlistNode(playlists[i]);
+                    var overflow = i > 9;
+                    if (!overflow) {
+                        node.addClass("nonoverflown");
+                    }
+
+                    //append only if not already there
+                    if ($("#playlistid-" + playlists[i].id).length == 0) {
+                        node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
+                    }
                 }
 
-                //append only if not already there
-                if ($("#playlistid-" + playlist.id).length == 0) {
+                if (playlists.length > 10 && !$('#playlistOverflow').is(":visible")) {
+                    $('#showAllPlaylists').show();
+                }
+            },
+
+            updatedPlaylistCallback(playlist) {
+                var oldNode = $("#playlistid-" + playlist.id);
+                var node = this.playlistNode(playlist);
+                if (oldNode.length == 0) {
+                    var overflow = $(".playlist").length > 10;
+                    if (!overflow) {
+                        node.toggleClass("nonoverflown");
+                    }
                     node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
+                } else {
+                    if (oldNode.hasClass("nonoverflown")) {
+                        node.addClass("nonoverflown");
+                    }
+                    oldNode.replaceWith(node);
                 }
-            }
+            },
 
-            if (playlists.length > 10 && !$('#playlistOverflow').is(":visible")) {
-                $('#showAllPlaylists').show();
-            }
-        }
-
-        function updatedPlaylistCallback(playlist) {
-            var oldNode = $("#playlistid-" + playlist.id);
-            var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
-            var node = $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
-                        playlist.id + "'>" + playlistName + "</a></p>");
-            if (oldNode.length == 0) {
-                var overflow = $(".playlist").length > 10;
-                if (!overflow) {
-                    node.toggleClass("nonoverflown");
+            deletedPlaylistCallback(id) {
+                var node = $("#playlistid-" + id);
+                if (node.hasClass("nonoverflown")) {
+                    // move one element over to take the place
+                    $("#playlistOverflow").children().first().addClass("nonoverflown").appendTo("#playlists");
                 }
-                node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
-            } else {
-                if (oldNode.hasClass("nonoverflown")) {
-                    node.addClass("nonoverflown");
-                }
-                oldNode.replaceWith(node);
+                node.remove();
             }
-        }
-
-        function deletedPlaylistCallback(id) {
-            var node = $("#playlistid-" + id);
-            if (node.hasClass("nonoverflown")) {
-                // move one element over to take the place
-                $("#playlistOverflow").children().first().addClass("nonoverflown").appendTo("#playlists");
-            }
-            node.remove();
-        }
+        };
     </script>
 </head>
 
-<body class="bgcolor2 leftframe" onload="init()">
-<a id="top"></a>
+<body class="bgcolor2 leftframe" onload="LeftNav.init()">
+<a id="left-top"></a>
 
 <div style="padding-bottom:1.5em">
     <a th:href="@{/home}" target="main">
@@ -111,7 +105,7 @@
 </div>
 
 <div style="padding-bottom:1.0em" th:if="${#lists.size(model.musicFolders) > 1}">
-<select name="musicFolderId" style="width:100%" onchange="location='left?musicFolderId=' + options[selectedIndex].value;">
+<select name="musicFolderId" style="width:100%" onchange="LeftNav.selectMusicFolder(this.value)">
         <option value="-1" th:text="#{left.allfolders}">All folders</option>
         <option th:each="musicFolder:${model.musicFolders}" th:selected="${model.selectedMusicFolder?.id == musicFolder.id}"
                     th:value="${musicFolder.id}" th:text="${musicFolder.name}">folder name</option>
@@ -144,8 +138,8 @@
     <div id="playlists"></div>
     <div id="playlistOverflow" style="display:none"></div>
     <div style="padding-top: 0.3em"></div>
-    <div class="forward" id="showAllPlaylists" style="display: none"><a href="#" onclick="showAllPlaylists()" th:text="#{left.showallplaylists}">show all</a></div>
-    <div class="forward"><a href="#" onclick="createEmptyPlaylist()" th:text="#{left.createplaylist}">create</a></div>
+    <div class="forward" id="showAllPlaylists" style="display: none"><a href="#" onclick="LeftNav.showAllPlaylists(); return false;" th:text="#{left.showallplaylists}">show all</a></div>
+    <div class="forward"><a href="#" onclick="LeftNav.createEmptyPlaylist(); return false;" th:text="#{left.createplaylist}">create</a></div>
     <div class="forward"><a th:href="@{/importPlaylist}" target="main" th:text="#{left.importplaylist}">import</a></div>
 </div>
 
@@ -171,7 +165,7 @@
                 <h2 style="padding:0;margin:0;border:0" th:text="${entry.key.index}">index</h2>
             </th>
             <th style="text-align:right;">
-                <a href="#top"><img th:src="${themes?.get('upImage') ?: 'icons/default_light/up.svg'}" alt="" style="height:18px;"></a>
+                <a href="#left-top"><img th:src="${themes?.get('upImage') ?: 'icons/default_light/up.svg'}" alt="" style="height:18px;"></a>
             </th>
         </tr>
     </table>
@@ -204,10 +198,8 @@
 th:utext="#{left.statistics(${model.statistics.artistCount}, ${model.statistics.albumCount}, ${model.statistics.songCount}, ${model.bytes}, ${model.hours})}">
 </div>
 
-<div style="height:5em"></div>
 
-<div class="bgcolor2" style="opacity: 1.0; clear: both; position: fixed; bottom: 0px; right: 0; left: 0;
-      padding: 0.25em 0.75em 0.25em 0.75em; border-top:1px solid black; max-width: 850px;">
+<div class="bgcolor2 shell-left-index">
     <th:block th:each="index: ${model.indexes}">
         <a th:href="|#${index.index}|" th:text="${index.index}">A</a>
     </th:block>

@@ -381,7 +381,7 @@
         function deletedPlaylistCallback(id) {
             $().toastmessage('showSuccessToast', '[(#{playlist.toast.deletedplaylist})] ' + id);
             if (playlistId == id) {
-                location = "playlists.view";
+                top.main.location.href = "playlists.view";
             }
         }
 

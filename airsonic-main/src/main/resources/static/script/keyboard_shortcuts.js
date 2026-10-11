@@ -8,7 +8,7 @@ if (top.keyboardShortcutsEnabled) {
   Mousetrap.bind('q',     function() { top.playQueue.onTogglePlayQueue(!top.playQueue.isVisible); });
 
   Mousetrap.bind('/',     function() { parent.frames.upper.$("#query").focus(); });
-  Mousetrap.bind('m',     function() { parent.frames.upper.toggleLeftFrameVisible(); });
+  Mousetrap.bind('m',     function() { top.TopNav.toggleSideBar(); });
 
   Mousetrap.bind('g h', function() { parent.frames.main.location.href = "home.view?"; });
   Mousetrap.bind('g p', function() { parent.frames.main.location.href = "playlists.view?"; });

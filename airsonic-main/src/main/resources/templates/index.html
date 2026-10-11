@@ -1,89 +1,44 @@
 <!DOCTYPE html>
-<html><head>
+<html xmlns:th="http://www.thymeleaf.org"><head>
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{websocket}" />
-    <th:blodk th:replace="~{playQueue::head}"/>
+    <th:block th:replace="~{playQueue::head}"/>
     <link rel="alternate" type="application/rss+xml" title="Airsonic Podcast" th:href="@{/podcast.view(suffix=.rss)}">
-    <style>
-        iframe {
-            border: none;
-        }
-        .entire-panel {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        .main-navigation {
-            width: 100%;
-        }
-        .lower {
-            flex: 100%;
-            display: flex;
-            flex-direction: row;
-            height: 100%;
-        }
-        div.left-nav-container {
-            width: 16%;
-            min-width: 16%;
-        }
-        .left-navigation {
-            width: 100%;
-            height: 100%;
-        }
-        div.non-left-navigation-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 84%;
-        }
-        .main-right-container {
-            flex: 1;
-            display: flex;
-            flex-direction: row;
-        }
-        .playqueue-container {
-            padding-left: 1em;
-            padding-right: 1em;
-        }
-        .main-panel {
-            flex: 80%;
-        }
-        .right-info-container {
-            flex: 20%;
-        }
-        .right-info {
-            width: 100%;
-            height: 100%;
-        }
-        .hidden-panel {
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/style/shell.css}" type="text/css">
+    <script type="text/javascript" th:inline="javascript">
+        var ShellConfig = {
+            base: /*[[@{/}]]*/ "/",
+            pages: /*[[${model.shellPages}]]*/ []
+        };
+        // only ever shown in their own regions, never in main
+        ShellConfig.pages.push("left", "right");
+    </script>
+    <script type="text/javascript" th:src="@{/script/shell.js}"></script>
 </head>
 
-<body class="bgcolor2" style="height: 100%; margin: 0; overflow-y: hidden" th:with="mainParam=${param.main}">
-    <div class="entire-panel">
-        <iframe id="upper" name="upper" th:src="@{/top}" onload="this.style.height=(this.contentWindow.document.body.clientHeight+15)+'px';" class="bgcolor2 main-navigation"></iframe>
+<body class="bgcolor2 shell">
+    <header class="shell-upper bgcolor2 topframe" data-shell-region="upper">
+        <div class="shell-content" th:insert="~{top :: region}"></div>
+    </header>
 
-        <div class="lower">
-            <div class="bgcolor2 left-nav-container" th:style="${!model.showSideBar ? 'display: none;' : ''}">
-                <iframe id="left" name="left" th:src="@{/left}" class="left-navigation"></iframe>
+    <div class="shell-lower">
+        <nav id="shell-left" class="shell-left bgcolor2" data-shell-region="left" th:data-shell-src="@{/left}"
+             th:style="${!model.showSideBar ? 'display: none;' : ''}">
+            <div class="shell-content"></div>
+        </nav>
+        <div class="shell-center">
+            <div class="shell-main-right">
+                <main class="shell-main bgcolor1" data-shell-region="main" th:data-shell-src="@{/} + ${model.mainUrl}">
+                    <div class="shell-content"></div>
+                </main>
+                <aside th:if="${model.showRight}" class="shell-right bgcolor1" data-shell-region="right" th:data-shell-src="@{/right}">
+                    <div class="shell-content"></div>
+                </aside>
             </div>
-            <div class="non-left-navigation-container">
-                <div class="main-right-container">
-                    <iframe id="main" name="main" th:src="${mainParam} ?: @{/nowPlaying.view}"
-                            class="bgcolor1 main-panel" allowfullscreen></iframe>
-                    <div class="bgcolor1 right-info-container" th:style="${!model.showRight ? 'display: none;' : ''}">
-                        <iframe id="right" name="right" th:src="@{/right}" class="right-info"></iframe>
-                    </div>
-                </div>
-                <div class="bgcolor2 playqueue-container" th:replace="~{playQueue::container}">
-                </div>
-           </div>
-       </div>
+            <div class="bgcolor2 playqueue-container" th:replace="~{playQueue::container}"></div>
+        </div>
+    </div>
 
-       <iframe id="hidden" name="hidden" class="hidden-panel"></iframe>
-   </div>
+    <iframe id="shell-hidden" name="hidden" title="" hidden></iframe>
 </body>
 </html>

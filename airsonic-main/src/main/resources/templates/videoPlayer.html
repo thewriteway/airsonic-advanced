@@ -116,7 +116,7 @@
                     }
                     let shareRole = /*[[${model.user.shareRole} == true]]*/ false;
 					if(shareRole) {
-						$("#share").on('click', () => location.href = "createShare.view?id=" + videoModel.videoId);
+						$("#share").on('click', () => top.main.location.href = "createShare.view?id=" + videoModel.videoId);
 					}
 					let downloadRole = /*[[${model.user.downloadRole} == true]]*/ false;
 					if(downloadRole) {
