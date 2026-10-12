@@ -2,9 +2,9 @@
  * Status page: renders the report of /statistics/summary and, for administrators, /actuator/health.
  *
  * The page may be shown inside the application shell, where every page shares one document and
- * this script stays loaded. StatusPage.init() is therefore called on every visit and stops what a
- * previous visit started (refresh timer, listeners, charts); the refresh loop also stops itself as
- * soon as the page is no longer in the document.
+ * this script stays loaded. status.html therefore mounts it on every visit (StatusPage.mount), and
+ * unmounting the page stops what the visit started (refresh timer, listeners, charts); the refresh
+ * loop also stops itself as soon as the page is no longer in the document.
  *
  * All values are inserted as text, never as HTML: paths, tags and user names are user controlled.
  * Values from the server are never used as property names either: lookups by name go through Maps.
@@ -741,9 +741,14 @@
     function clearCache(name) {
         var url = state.config.urls.caches + (name ? "/" + encodeURIComponent(name) : "");
         var question = name ? message("cacheclearconfirm", name) : message("cacheclearallconfirm");
-        if (!window.confirm(question)) {
-            return;
-        }
+        Page.confirm(question).then(function (ok) {
+            if (ok) {
+                deleteCache(url, name);
+            }
+        });
+    }
+
+    function deleteCache(url, name) {
         var headers = [[state.config.csrf.header, state.config.csrf.token]];
         fetch(url, {method: "DELETE", credentials: "same-origin", headers: headers}).then(function (response) {
             if (!response.ok) {
@@ -988,7 +993,16 @@
         refresh(true);
     }
 
-    window.StatusPage = {init: init, stop: stop, refresh: function () {
-        return state ? refresh() : Promise.resolve();
-    }};
+    window.StatusPage = {
+        init: init,
+        stop: stop,
+        /** Starts the page for a mounted page object (page.js) and stops it when the page is unmounted. */
+        mount: function (page, config) {
+            init(config);
+            page.onDestroy(stop);
+        },
+        refresh: function () {
+            return state ? refresh() : Promise.resolve();
+        }
+    };
 })();

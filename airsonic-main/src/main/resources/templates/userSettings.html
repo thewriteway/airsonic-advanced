@@ -5,40 +5,35 @@
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
-    <script type="text/javascript">
-        function init() {
-            enablePasswordChangeFields();
-            let settings_reload = /*[[${settings_reload == true}]]*/ false;
-            if(settings_reload) {
-                parent.frames.left.location.href="left.view?";
-            }
-        }
-        function enablePasswordChangeFields() {
-            var changePasswordCheckbox = $("#passwordChange");
-            var ldapCheckbox = $("#ldapAuthenticated");
-            var passwordChangeTable = $("#passwordChangeTable");
-            var passwordChangeCheckboxTable = $("#passwordChangeCheckboxTable");
+    <script type="text/javascript" th:inline="javascript">
+        Page.define("userSettings", function (page) {
+            function enablePasswordChangeFields() {
+                var changePasswordCheckbox = $("#passwordChange");
+                var ldapCheckbox = $("#ldapAuthenticated");
+                var ldapChecked = ldapCheckbox.is(":checked");
 
-            if (changePasswordCheckbox && changePasswordCheckbox.is(":checked") && (ldapCheckbox == null || !ldapCheckbox.is(":checked"))) {
-                passwordChangeTable.show();
-            } else {
-                passwordChangeTable.hide();
-            }
-
-            if (changePasswordCheckbox) {
-                if (ldapCheckbox && ldapCheckbox.is(":checked")) {
-                    passwordChangeCheckboxTable.hide();
-                } else {
-                    passwordChangeCheckboxTable.show();
+                $("#passwordChangeTable").toggle(changePasswordCheckbox.is(":checked") && !ldapChecked);
+                if (changePasswordCheckbox.length) {
+                    $("#passwordChangeCheckboxTable").toggle(!ldapChecked);
                 }
             }
-        }
+
+            page.actions({
+                enablePasswordChangeFields: enablePasswordChangeFields,
+                selectUser(select) {
+                    Page.navigate("userSettings.view?userIndex=" + (select.selectedIndex - 1));
+                }
+            });
+
+            enablePasswordChangeFields();
+            if (/*[[${settings_reload == true}]]*/ false) {
+                Page.loadRegion("left", "left");
+            }
+        });
     </script>
 </head>
 
-<body class="mainframe bgcolor1" onload="init()">
-<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
-<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+<body class="mainframe bgcolor1 settings-page" data-page="userSettings">
 
 <th:block th:replace="~{settingsHeader::header(cat='user',toast=${settings_toast})}" />
 
@@ -46,7 +41,7 @@
     <tr>
         <td><b th:text="#{usersettings.title}"></b></td>
         <td>
-            <select name="username" onchange="top.main.location.href='userSettings.view?userIndex=' + (selectedIndex - 1);">
+            <select name="username" data-on-change="selectUser" th:aria-label="#{usersettings.title}">
                 <option value="" th:text="|-- #{usersettings.newuser} --|">-- New User --</option>
                 <option th:each="user:${command.users}"
                         th:text="${user.username}" th:selected="${user.username eq command.username}"
@@ -141,7 +136,7 @@
     <table th:if="*{ldapEnabled and !admin}">
         <tr>
             <td><input type="checkbox" name="ldapAuthenticated" id="ldapAuthenticated" class="checkbox"
-                       onclick="enablePasswordChangeFields()"/></td>
+                       data-on-change="enablePasswordChangeFields"/></td>
             <td><label for="ldapAuthenticated" th:text="#{usersettings.ldap}"></label></td>
             <td><th:block th:replace="~{helpToolTip((topic=ldap))}" /></td>
         </tr>
@@ -177,7 +172,7 @@
         <div style="display:none"><input th:field="*{username}"/></div>
         <table id="passwordChangeCheckboxTable">
             <tr>
-                <td><input type="checkbox" name="passwordChange" id="passwordChange" onclick="enablePasswordChangeFields();" class="checkbox"/></td>
+                <td><input type="checkbox" name="passwordChange" id="passwordChange" data-on-change="enablePasswordChangeFields" class="checkbox"/></td>
                 <td><label for="passwordChange" th:text="|#{credentialsettings.addcredentials} #{credentialsettings.credentialsnotremoved}|"></label></td>
                 <td><th:block th:replace="~{helpToolTip((topic=credentialsadd))}" /></td>
             </tr>

@@ -14,7 +14,7 @@
 
 <div th:utext="${#messages.msg('notFound.text')}"></div>
 
-<div class="forward" style="float:left;padding-right:10pt"><a href="javascript:top.location.reload(true)" th:text="${#messages.msg('notFound.reload')}"/></a></div>
+<div class="forward" style="float:left;padding-right:10pt"><a href="#" data-on-click="reloadApplication" th:text="${#messages.msg('notFound.reload')}"></a></div>
 <div class="forward" style="float:left"><a th:href="@{/musicFolderSettings.view}" th:text="${#messages.msg('notFound.scan')}"></a></div>
 
 </body>

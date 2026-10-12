@@ -5,39 +5,27 @@
     <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
-
-        function toggleStar(mediaFileId, imageId) {
-            if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]") != -1) {
-                $(imageId).attr("src", "[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]");
-                top.StompClient.send("/app/rate/mediafile/unstar", JSON.stringify([mediaFileId]));
-            }
-            else if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]") != -1) {
-                $(imageId).attr("src", "[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]");
-                top.StompClient.send("/app/rate/mediafile/star", JSON.stringify([mediaFileId]));
-            }
-        }
-
-        function onSavePlaylist() {
-            top.StompClient.send("/app/playlists/create/starred", "");
-        }
-
-        function init() {
-            top.StompClient.subscribe("starred.html", {
-                '/user/queue/playlists/create/starred': function(msg) {
-                    var playlistId = JSON.parse(msg.body);
-                    top.main.location.href = "playlist.view?id=" + playlistId;
-                    $().toastmessage("showSuccessToast", "[(#{playlist.toast.saveasplaylist})]");
+        Page.define("starred", function (page) {
+            page.actions({
+                savePlaylist() {
+                    StompClient.send("/app/playlists/create/starred", "");
+                },
+                playAll() {
+                    top.playQueue.onPlayStarred();
                 }
             });
-        }
 
-        function onPlayAll() {
-            top.playQueue.onPlayStarred();
-        }
-
+            page.subscribe({
+                '/user/queue/playlists/create/starred': function(msg) {
+                    var playlistId = JSON.parse(msg.body);
+                    Page.navigate("playlist.view?id=" + playlistId);
+                    $().toastmessage("showSuccessToast", /*[[#{playlist.toast.saveasplaylist}]]*/ "");
+                }
+            });
+        });
     </script>
 </head>
-<body class="mainframe bgcolor1" onload="init()">
+<body class="mainframe bgcolor1" data-page="starred">
 
 <h1>
     <img th:src="${themes?.get('starredImage') ?: 'icons/default_light/starred.svg'}" alt="">
@@ -118,10 +106,10 @@
     </table>
 
     <div class="forward" style="float:left;padding-right:1.5em">
-        <a href="#" onclick="onSavePlaylist()" th:text="#{playlist.save}"></a>
+        <a href="#" data-on-click="savePlaylist" th:text="#{playlist.save}"></a>
     </div>
     <div class="forward" style="float: left">
-        <a href="#" onclick="onPlayAll()" th:text="#{main.playall}"></a>
+        <a href="#" data-on-click="playAll" th:text="#{main.playall}"></a>
     </div>
     <div style="clear: both"></div>
 
@@ -142,7 +130,7 @@
                     asTable=true
                 )}" /> 
                 <td class="truncate">
-                    <a th:href="@{/videoPlayer(id=${video.id})}">${#strings.escapeXml(video.name)}</a>
+                    <a th:href="@{/videoPlayer(id=${video.id})}" th:text="${video.name}"></a>
                 </td>
             </tr>
         </th:block>

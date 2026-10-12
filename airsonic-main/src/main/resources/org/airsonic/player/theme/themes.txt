@@ -8,6 +8,9 @@
 # The original Airsonic theme.
 default "Airsonic Default" default_light
 
+# The default theme, dark when the device prefers dark colors.
+auto "Automatic (follows the system)" default_light
+
 # Theme with dark colors.
 midnight "2 Minutes To Midnight" default_dark
 midnight_darkreader "2 Minutes To Midnight (Dark Reader)" midnight

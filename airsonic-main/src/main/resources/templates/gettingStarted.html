@@ -3,13 +3,16 @@
 <html><head>
     <th:block th:replace="~{head :: common_head}" />
     <script type="text/javascript" th:inline="javascript">
-        function hideGettingStarted() {
-            alert("[(#{gettingStarted.hidealert})]");
-            top.main.location.href = "gettingStarted.view?hide";
-        }
+        Page.define("gettingStarted", function (page) {
+            page.actions({
+                hide() {
+                    Page.alert(/*[[#{gettingStarted.hidealert}]]*/ "").then(() => Page.navigate("gettingStarted.view?hide"));
+                }
+            });
+        });
     </script>
 </head>
-<body class="mainframe bgcolor1">
+<body class="mainframe bgcolor1" data-page="gettingStarted">
 
 <h1 style="padding-bottom:0.5em">
     <img th:src="${themes?.get('homeImage') ?: 'icons/default_light/home.svg'}" alt="">
@@ -45,6 +48,6 @@
 
 </table>
 
-<div class="forward"><a href="javascript:hideGettingStarted()" th:text="#{gettingStarted.hide}"></a></div>
+<div class="forward"><a href="#" data-on-click="hide" th:text="#{gettingStarted.hide}"></a></div>
 
 </body></html>

@@ -4,7 +4,7 @@
     <th:block th:replace="~{jquery}" />
     <title th:text="#{lyrics.title}"></title>
 </head>
-<body class="mainframe bgcolor1" onload="init();">
+<body class="mainframe bgcolor1">
 
 <table>
     <tr>
@@ -26,8 +26,7 @@
         </div>
         <div style="text-align:left; margin-top:1em;">
             <button type="submit" tabindex="3" th:text="#{common.save}"></button>
-            <button type="button"
-                    th:onclick="|location.href='@{/lyrics(id=${view.id})}'|"
+            <button type="button" data-on-click="navigate" th:data-href="@{/lyrics(id=${view.id})}"
                     tabindex="4" th:text="#{common.cancel}"></button>
         </div>
     </form>
@@ -35,7 +34,7 @@
 
 <hr/>
 <p style="text-align:center">
-    <a href="javascript:self.close()">[<span th:text="#{common.close}"></span>]</a>
+    <a href="#" data-on-click="closeWindow">[<span th:text="#{common.close}"></span>]</a>
 </p>
 
 </body>

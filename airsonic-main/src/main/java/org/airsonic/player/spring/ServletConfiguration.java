@@ -3,6 +3,7 @@ package org.airsonic.player.spring;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.controller.PodcastController;
 import org.airsonic.player.filter.BootstrapVerificationFilter;
+import org.airsonic.player.filter.ContentSecurityPolicyFilter;
 import org.airsonic.player.filter.MetricsFilter;
 import org.airsonic.player.filter.ParameterDecodingFilter;
 import org.airsonic.player.filter.RESTFilter;
@@ -124,6 +125,20 @@ public class ServletConfiguration implements WebMvcConfigurer {
     @Bean
     public ResponseHeaderFilter noCacheFilter() {
         return new ResponseHeaderFilter();
+    }
+
+    @Bean
+    public FilterRegistrationBean<Filter> contentSecurityPolicyFilterRegistration() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(new ContentSecurityPolicyFilter());
+        registration.addUrlPatterns("/*");
+        registration.setName("ContentSecurityPolicyFilter");
+        registration.setOrder(2);
+        return registration;
+    }
+
+    @Bean
+    public CspNonceDialect cspNonceDialect() {
+        return new CspNonceDialect();
     }
 
     @Bean

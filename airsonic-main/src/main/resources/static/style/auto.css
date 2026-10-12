@@ -1,0 +1,45 @@
+/*
+ * CSS stylesheet for the "Automatic" theme: the default theme, with dark colors when the device
+ * prefers a dark color scheme. The light icons of the default theme are lightened in dark mode.
+ */
+
+@import "default.css";
+@import "mediaelement-dark.css" (prefers-color-scheme: dark);
+
+:root {
+    color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg1: #1f2023;
+        --bg2: #2b2d31;
+        --fg: #e3e3e3;
+        --fg-detail: #b4b6ba;
+        --fg-strong: #e3e3e3;
+        --link: #8ab4f8;
+        --link-hover: #f6ad55;
+        --border: #5c5f66;
+        --warning: #ff6b6b;
+        --accent: #f6ad55;
+        --row-hover: #36383d;
+        --row-playing: #2c4a6e;
+        --row-playing-hover: #345a85;
+        --button-bg: #3a3c42;
+        --button-fg: #e3e3e3;
+        --button-active-bg: #4a4d55;
+    }
+
+    img[src*="icons/default_light/"]:not([src$=".png"]):not([src$=".gif"]) {
+        filter: invert(1) brightness(1.37);
+    }
+
+    .coverart {
+        background-color: var(--bg2);
+        color: var(--fg);
+    }
+
+    .coverart .caption1 a:link, .coverart .caption1 a:visited {
+        color: var(--fg);
+    }
+}

@@ -8,7 +8,7 @@
 <table th:object="${model}" th:fragment="table">
     <tr>
         <td th:if="*{!#strings.isEmpty(musicFolder)}" style="padding-right: 2em;">
-            <div th:style="|border:1px solid #${themes?.get('detailColor')}; padding-left: 0.5em;padding-right: 0.5em|"
+            <div style="border:1px solid var(--fg-detail); padding-left: 0.5em;padding-right: 0.5em"
             th:text="*{musicFolder.name}">
             </div>
         </td>
@@ -36,7 +36,7 @@
             <th:block th:if="*{listType eq 'decade'}" >
                 <td th:text="#{home.decade.text}"></td>
                 <td style="padding-right: 2em">
-                    <select onchange="changeLocation(this.options[selectedIndex].value)">
+                    <select data-on-change="navigateToValue" th:aria-label="#{home.decade.text}">
                         <option th:each="item: *{decades}" th:selected="${model.decade eq item}"
                          th:value="@{/home(listType=*{listType}, decade=${item})}" th:text="${item}">1990</option>
                     </select>
@@ -47,7 +47,7 @@
                 <td style="padding-right: 2em">
                     <select name="genre"
                             th:data-listtype="*{listType}"
-                            th:onchange="changeLocation(this.options[selectedIndex].value)">
+                            data-on-change="navigateToValue" th:aria-label="#{home.genre.text}">
                         <option th:each="item: *{genres}" 
                             th:value="@{/home(listType=*{listType}, genre=${item.name})}"
                             th:selected="${model.genre eq item.name}"
@@ -58,14 +58,14 @@
         </th:block>
 
         <td style="padding-right: 2em;">
-            <a href="javascript:refresh()">
+            <a href="#" data-on-click="refresh">
                 <img th:src="${themes?.get('refreshImage') ?: 'icons/default_light/refresh.svg'}" th:alt="#{common.refresh}" style="height:16px;">
                 <span th:text="#{common.refresh}"></span>
             </a>
         </td>
 
         <td th:if="${!#strings.isEmpty(model.albums)}">
-            <a href="javascript:playShuffle()">
+            <a href="#" data-on-click="playShuffle">
               <img th:src="${themes?.get('shuffleImage') ?: 'icons/default_light/shuffle.svg'}" th:alt="#{home.shuffle}" style="height:16px;">
                 <span th:text="#{home.shuffle}"></span>
             </a>

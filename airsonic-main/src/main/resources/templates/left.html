@@ -2,54 +2,23 @@
 <html xmlns:th="http://www.thymeleaf.org"><head>
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
-        var LeftNav = {
-            init() {
-                StompClient.subscribe("left.html", {
-                    '/user/queue/playlists/deleted': msg => this.deletedPlaylistCallback(JSON.parse(msg.body)),
-                    '/topic/playlists/deleted': msg => this.deletedPlaylistCallback(JSON.parse(msg.body)),
-                    '/user/queue/playlists/updated': msg => this.updatedPlaylistCallback(JSON.parse(msg.body)),
-                    '/topic/playlists/updated': msg => this.updatedPlaylistCallback(JSON.parse(msg.body)),
-                    // Add existing (initial population, one time)
-                    '/app/playlists/readable': msg => this.populatePlaylistCallback(JSON.parse(msg.body))
-                });
-
-                if (/*[[${model.musicFolderChanged}]]*/ false) {
-                    if (main.location.href.includes("/home")) {
-                        main.location.reload();
-                    }
-                }
-
-                $('.radio-play').on('click', function(evt) {
-                    playQueue.onPlayInternetRadio($(this).data("id"), 0);
-                    evt.preventDefault();
-                });
-            },
-
-            selectMusicFolder(musicFolderId) {
-                left.location.href = "left?musicFolderId=" + musicFolderId;
-            },
-
-            createEmptyPlaylist() {
-                this.showAllPlaylists();
-                StompClient.send("/app/playlists/create/empty", "");
-            },
-
-            showAllPlaylists() {
-                $('#playlistOverflow').show('blind');
-                $('#showAllPlaylists').hide('blind');
-            },
-
-            playlistNode(playlist) {
+        Page.define("left", function (page) {
+            function playlistNode(playlist) {
                 var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
                 return $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
                         playlist.id + "'>" + playlistName + "</a></p>");
-            },
+            }
 
-            populatePlaylistCallback(playlists) {
+            function showAllPlaylists() {
+                $('#playlistOverflow').show();
+                $('#showAllPlaylists').hide();
+            }
+
+            function populatePlaylistCallback(playlists) {
                 $("#playlists").empty();
                 $("#playlistOverflow").empty();
                 for (var i = 0; i < playlists.length; i++) {
-                    var node = this.playlistNode(playlists[i]);
+                    var node = playlistNode(playlists[i]);
                     var overflow = i > 9;
                     if (!overflow) {
                         node.addClass("nonoverflown");
@@ -64,11 +33,11 @@
                 if (playlists.length > 10 && !$('#playlistOverflow').is(":visible")) {
                     $('#showAllPlaylists').show();
                 }
-            },
+            }
 
-            updatedPlaylistCallback(playlist) {
+            function updatedPlaylistCallback(playlist) {
                 var oldNode = $("#playlistid-" + playlist.id);
-                var node = this.playlistNode(playlist);
+                var node = playlistNode(playlist);
                 if (oldNode.length == 0) {
                     var overflow = $(".playlist").length > 10;
                     if (!overflow) {
@@ -81,9 +50,9 @@
                     }
                     oldNode.replaceWith(node);
                 }
-            },
+            }
 
-            deletedPlaylistCallback(id) {
+            function deletedPlaylistCallback(id) {
                 var node = $("#playlistid-" + id);
                 if (node.hasClass("nonoverflown")) {
                     // move one element over to take the place
@@ -91,11 +60,41 @@
                 }
                 node.remove();
             }
-        };
+
+            page.actions({
+                selectMusicFolder(select) {
+                    left.location.href = "left?musicFolderId=" + select.value;
+                },
+                showAllPlaylists: showAllPlaylists,
+                createEmptyPlaylist() {
+                    showAllPlaylists();
+                    StompClient.send("/app/playlists/create/empty", "");
+                },
+                playRadio(link) {
+                    playQueue.onPlayInternetRadio(link.dataset.id, 0);
+                    return false;
+                }
+            });
+
+            page.subscribe({
+                '/user/queue/playlists/deleted': msg => deletedPlaylistCallback(JSON.parse(msg.body)),
+                '/topic/playlists/deleted': msg => deletedPlaylistCallback(JSON.parse(msg.body)),
+                '/user/queue/playlists/updated': msg => updatedPlaylistCallback(JSON.parse(msg.body)),
+                '/topic/playlists/updated': msg => updatedPlaylistCallback(JSON.parse(msg.body)),
+                // Add existing (initial population, one time)
+                '/app/playlists/readable': msg => populatePlaylistCallback(JSON.parse(msg.body))
+            });
+
+            if (/*[[${model.musicFolderChanged}]]*/ false) {
+                if (main.location.href.includes("/home")) {
+                    main.location.reload();
+                }
+            }
+        });
     </script>
 </head>
 
-<body class="bgcolor2 leftframe" onload="LeftNav.init()">
+<body class="bgcolor2 leftframe" data-page="left">
 <div id="left-top" style="padding-bottom:1.5em">
     <a th:href="@{/home}" target="main">
       <img th:src="${themes?.get('logoImage') ?: 'icons/default_light/logo.png'}" style="width:196px" th:title="#{top.help}" alt="">
@@ -104,7 +103,7 @@
 
 <div style="padding-bottom:1.0em" th:if="${#lists.size(model.musicFolders) > 1}">
 <label for="musicFolderId" class="shell-visually-hidden" th:text="#{settingsheader.musicFolder}">Media folders</label>
-<select id="musicFolderId" name="musicFolderId" style="width:100%" onchange="LeftNav.selectMusicFolder(this.value)">
+<select id="musicFolderId" name="musicFolderId" style="width:100%" data-on-change="selectMusicFolder">
         <option value="-1" th:text="#{left.allfolders}">All folders</option>
         <option th:each="musicFolder:${model.musicFolders}" th:selected="${model.selectedMusicFolder?.id == musicFolder.id}"
                     th:value="${musicFolder.id}" th:text="${musicFolder.name}">folder name</option>
@@ -137,17 +136,16 @@
     <div id="playlists"></div>
     <div id="playlistOverflow" style="display:none"></div>
     <div style="padding-top: 0.3em"></div>
-    <div class="forward" id="showAllPlaylists" style="display: none"><button type="button" class="shell-link-button" onclick="LeftNav.showAllPlaylists()" th:text="#{left.showallplaylists}">show all</button></div>
-    <div class="forward"><button type="button" class="shell-link-button" onclick="LeftNav.createEmptyPlaylist()" th:text="#{left.createplaylist}">create</button></div>
+    <div class="forward" id="showAllPlaylists" style="display: none"><button type="button" class="shell-link-button" data-on-click="showAllPlaylists" th:text="#{left.showallplaylists}">show all</button></div>
+    <div class="forward"><button type="button" class="shell-link-button" data-on-click="createEmptyPlaylist" th:text="#{left.createplaylist}">create</button></div>
     <div class="forward"><a th:href="@{/importPlaylist}" target="main" th:text="#{left.importplaylist}">import</a></div>
 </div>
 
 <th:block th:unless="${#lists.isEmpty(model.radios)}">
     <h2 class="bgcolor1" style="padding-left: 2px" th:utext="#{left.radio}">radio</h2>
-    <iframe id="radio-playlist-data" style="display:none;"></iframe>
     <th:block th:each="radio : ${model.radios}">
         <p class="dense truncate" style="padding-left: 2px">
-        <a target="hidden" th:href="${radio.streamUrl}" class="radio-play" th:data-id="${radio.id}">
+        <a target="hidden" th:href="${radio.streamUrl}" class="radio-play" th:data-id="${radio.id}" data-on-click="playRadio">
             <img th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}" th:alt="#{common.play}" th:title="#{common.play}"></a>
             <span style="vertical-align: middle">
                 <span th:if="${#strings.isEmpty(radio.homepageUrl)}" th:title="${radio.name}" th:text="${radio.name}">name</span>

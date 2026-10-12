@@ -29,16 +29,30 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Serves the application shell when the browser navigates directly to a main pane page, for
  * instance after a reload or when following a deep link. The shell then loads the page into its
- * main region. Requests made by the shell itself (fetch) are not top level navigations and are
- * passed through untouched.
+ * main region. Requests made by the shell itself (fetch) are not top level navigations; they carry
+ * the {@value #SHELL_HEADER} header and are rendered as fragments, without the parts of the page the
+ * shell already has (see {@link #FRAGMENT_ATTRIBUTE}).
  */
 public class ShellNavigationInterceptor implements HandlerInterceptor {
+
+    /** Request header the shell sends with the name of the region it loads a page into. */
+    public static final String SHELL_HEADER = "X-Airsonic-Shell";
+
+    /** Request attribute (template variable) telling the templates to leave out the common head. */
+    public static final String FRAGMENT_ATTRIBUTE = "shellFragment";
 
     private static final UrlPathHelper URL_PATH_HELPER = new UrlPathHelper();
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (request.getDispatcherType() != DispatcherType.REQUEST || !"GET".equals(request.getMethod())) {
+        if (request.getDispatcherType() != DispatcherType.REQUEST) {
+            return true;
+        }
+        if (request.getHeader(SHELL_HEADER) != null) {
+            request.setAttribute(FRAGMENT_ATTRIBUTE, Boolean.TRUE);
+            response.addHeader("Vary", SHELL_HEADER);
+        }
+        if (!"GET".equals(request.getMethod())) {
             return true;
         }
         String path = URL_PATH_HELPER.getPathWithinApplication(request);
@@ -46,7 +60,7 @@ public class ShellNavigationInterceptor implements HandlerInterceptor {
             return true;
         }
         // The same URL answers with the shell or the bare page depending on who is asking.
-        response.addHeader("Vary", "Sec-Fetch-Dest");
+        response.addHeader("Vary", "Sec-Fetch-Dest, " + SHELL_HEADER);
         if (!"document".equals(request.getHeader("Sec-Fetch-Dest"))
                 || !"navigate".equals(request.getHeader("Sec-Fetch-Mode"))) {
             return true;

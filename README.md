@@ -184,9 +184,7 @@ Airsonic-Advanced and Airsonic are free software and licensed under the [GNU Gen
 
 The [Subsonic source code](https://github.com/airsonic/subsonic-svn) was released under the GPLv3 through version 6.0-beta1. Beginning with 6.0-beta2, source is no longer provided. Binaries of Subsonic are only available under a commercial license. There is a [Subsonic Premium](http://www.subsonic.org/pages/premium.jsp) service which adds functionality not available in Airsonic. Subsonic also offers RPM, Deb, Exe, and other pre-built packages that Airsonic [currently does not](https://github.com/airsonic/airsonic/issues/65).
 
-The cover zooming feature is provided by [jquery.fancyzoom](https://github.com/keegnotrub/jquery.fancyzoom), released under [MIT License](http://www.opensource.org/licenses/mit-license.php).
-
-The icons are from the amazing [feather](https://feathericons.com/) project, and are licensed under [MIT license](https://github.com/feathericons/feather/blob/master/LICENSE).
+The icons are from the amazing [feather](https://feathericons.com/) project, and are licensed under [MIT license](https://github.com/feathericons/feather/blob/master/LICENSE). The icons drawn by the pages themselves come from its successor [Lucide](https://lucide.dev/), licensed under the [ISC license](https://github.com/lucide-icons/lucide/blob/main/LICENSE).
 
 The cover art functionality supporting multiple image file formats is powered by the [TwelveMonkeys](https://github.com/haraldk/TwelveMonkeys) library, which is released under the [BSD3 License](https://github.com/haraldk/TwelveMonkeys/blob/main/LICENSE.md).
 

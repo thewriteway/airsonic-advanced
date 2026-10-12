@@ -11,7 +11,7 @@ PARAMETERS
   showLink: Whether to make the cover art image link to the album page.
   showZoom: Whether to display a link for zooming the cover art.
   showChange: Whether to display a link for changing the cover art.
-  appearAfter: Fade in after this many milliseconds, or nil if no fading in should happen.
+  appearAfter: Fade in after this many milliseconds (default 0).
   hideOverflow: Hide cover art overflow when height is greater than width
 */-->
 <th:block th:fragment="art" th:with="
@@ -20,10 +20,6 @@ PARAMETERS
     caption2=${caption2?:''},
     caption3=${caption3?:''},
     size=${coverArtSize},
-    divId=${'div'+#strings.randomAlphanumeric(5)},
-    imgId=${'img'+#strings.randomAlphanumeric(5)},
-    playId=${'play'+#strings.randomAlphanumeric(5)},
-    addId=${'add'+#strings.randomAlphanumeric(5)},
     appearAfter=${appearAfter?:0}
 ">
     <th:block th:remove="all">
@@ -32,33 +28,23 @@ PARAMETERS
         <div class="coverart dropshadow" th:with="
             size=${!#strings.isEmpty(coverArtSize) ? coverArtSize+'px':'auto'}
         ">
-            <div th:style="|width:${size};max-width:${size};height:${size};max-height:${size};cursor:pointer;${hideOverflow == true?'overflow:hidden;':''}|"
-                 th:title="${caption1}" th:id="${divId}">
+            <div class="coverart-frame" th:style="|width:${size};max-width:${size};height:${size};max-height:${size};${hideOverflow == true?'overflow:hidden;':''}|"
+                 th:title="${caption1}">
 
-                <div style="position: relative; width: 0; height: 0">
-                    <img alt="Play overlay"
-                         th:src="${themes?.get('playOverlayImage') ?: 'icons/default_light/play_overlay.svg'}"
-                         th:id="${playId}"
-                         style="position: relative; top: 8px; left: 8px; z-index: 2; display:none" >
-                </div>
+                <img alt="" class="coverart-overlay coverart-play"
+                     th:src="${themes?.get('playOverlayImage') ?: 'icons/default_light/play_overlay.svg'}"
+                     th:data-album-id="${albumId}" th:data-playlist-id="${playlistId}" th:data-podcast-channel-id="${podcastChannelId}"
+                     data-on-click="playCoverArt" th:title="#{common.play}">
 
-                <th:block th:if="${!#strings.isEmpty(albumId) or !#strings.isEmpty(playlistId)}">
-                  <div style="position: relative; width: 0; height: 0">
-                      <img alt="Add overlay"
-                           th:src="${themes?.get('addOverlayImage') ?: 'icons/default_light/add_overlay.svg'}"
-                           th:id="${addId}"
-                           style="position: relative; top: 8px; left: 48px; z-index: 2; display:none" >
-                  </div>
-                </th:block>
+                <img th:if="${!#strings.isEmpty(albumId) or !#strings.isEmpty(playlistId)}" alt="" class="coverart-overlay coverart-add"
+                     th:src="${themes?.get('addOverlayImage') ?: 'icons/default_light/add_overlay.svg'}"
+                     th:data-album-id="${albumId}" th:data-playlist-id="${playlistId}"
+                     data-on-click="addCoverArt" th:title="#{main.addlast}">
 
                 <a th:if="${showLink}" th:href="${targetUrl}" th:title="${caption1}">
-                    <img th:src="${coverArtUrl}" th:id="${imgId}" th:alt="${caption1}" style="display:none" loading="lazy">
+                    <img class="coverart-image" th:src="${coverArtUrl}" th:alt="${caption1}" th:style="|animation-delay:${appearAfter}ms|" loading="lazy">
                 </a>
-                <img th:unless="${showLink}" th:src="${coverArtUrl}" th:id="${imgId}" th:alt="${caption1}" style="display:none" loading="lazy">
-
-                <a th:if="${showZoom}" th:href="@{/coverArt(id=${albumId})}" class="fancy" rel="zoom" th:title="${param.caption1}">
-                    <img th:src="${coverArtUrl}" th:id="${imgId}" th:alt="${captionh1}" style="display:none" loading="lazy">
-                </a>
+                <img th:unless="${showLink}" class="coverart-image" th:src="${coverArtUrl}" th:alt="${caption1}" th:style="|animation-delay:${appearAfter}ms|" loading="lazy">
             </div>
 
             <div th:if="${!#strings.isEmpty(caption1)}" class="caption1" th:style="|width:${coverArtSize - 16}px|">
@@ -79,53 +65,10 @@ PARAMETERS
                 </th:block>
 
                 <th:block th:if="${showZoom}">
-                    <a class="detail" rel="zoom" th:title="${caption1}" th:href="@{/coverArt(id=${albumId})}" th:text="#{coverart.zoom}">zoom</a>
+                    <a class="detail" data-on-click="zoomImage" th:title="${caption1}" th:href="@{/coverArt(id=${albumId})}" th:text="#{coverart.zoom}">zoom</a>
                 </th:block>
             </div>
         </th:block>
-
-        <script type="text/javascript" th:inline="javascript">
-            $(document).ready(function () {
-                setTimeout("$('#[(${imgId})]').fadeIn(500)", /*[[(${appearAfter ?: 0 })]]*/ 0);
-            });
-
-            $("#[(${divId})]").mouseenter(function () {
-                $("#[(${playId})]").show();
-                $("#[(${addId})]").show();
-                $("#[(${imgId})]").stop();
-                $("#[(${imgId})]").animate({opacity: 0.7}, 150);
-            });
-            $("#[(${divId})]").mouseleave(function () {
-                $("#[(${playId})]").hide();
-                $("#[(${addId})]").hide();
-                $("#[(${imgId})]").stop();
-                $("#[(${imgId})]").animate({opacity: 1.0}, 150);
-            });
-            $("#[(${playId})]").click(function () {
-                let albumIdClick = /*[[${albumId}]]*/ null;
-                if(albumIdClick) {
-                    top.playQueue.onPlay(/*[[(${albumId})]]*/ 0);
-                }
-                let playlistIdClick = /*[[${playlistId}]]*/ null;
-                if(playlistIdClick) {
-                    top.playQueue.onPlayPlaylist(/*[[(${playlistId})]]*/ 0);
-                }
-                let podcastChannelIdClick = /*[[${podcastChannelId}]]*/ null;
-                if(podcastChannelIdClick) {
-                    top.playQueue.onPlayPodcastChannel(/*[[(${podcastChannelId})]]*/ 0);
-                }
-            });
-            $("#[(${addId})]").click(function () {
-                let albumIdClick = /*[[${albumId}]]*/ null;
-                if(albumIdClick) {
-                    top.playQueue.onAdd(/*[[${albumId}]]*/ 0);
-                }
-                let playlistIdClick = /*[[${playlistId}]]*/ null;
-                if(playlistIdClick) {
-                    top.playQueue.onAddPlaylist(/*[[${playlistId}]]*/ 0);
-                }
-            });
-        </script>
 
         </th:block>
     </th:block>

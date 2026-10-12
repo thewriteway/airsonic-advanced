@@ -3,86 +3,112 @@
 <body>
 <th:block th:fragment="region">
     <script type="text/javascript" th:inline="javascript">
-        var TopNav = {
-            showSideBar: /*[[${model.showSideBar}]]*/ false,
-            previousQuery: "",
-            instantSearchTimeout: null,
-            connectionImages: {
+        Page.define("top", function (page) {
+            var showSideBar = /*[[${model.showSideBar}]]*/ false;
+            var previousQuery = "";
+            var instantSearchTimeout = null;
+            var connectionImages = {
                 connected: /*[[${themes?.get('connectedImage') ?: 'icons/default_light/connected.svg'}]]*/ "icons/default_light/connected.svg",
                 disconnected: /*[[${themes?.get('disconnectedImage') ?: 'icons/default_light/disconnected.svg'}]]*/ "icons/default_light/disconnected.svg",
                 connecting: /*[[${themes?.get('connectingImage') ?: 'icons/default_light/cloudwait.svg'}]]*/ "icons/default_light/cloudwait.svg"
-            },
-            connectionTexts: {
+            };
+            var connectionTexts = {
                 connected: /*[[#{top.connected}]]*/ "Connected",
                 disconnected: /*[[#{top.disconnected}]]*/ "Disconnected",
                 connecting: /*[[#{top.connecting}]]*/ "Connecting"
-            },
+            };
 
-            init() {
-                StompClient.subscribe("top.html", {
-                    "/user/queue/settings/sidebar": msg => this.sideBarCallback(JSON.parse(msg.body))
-                });
-                StompClient.onConnect.push(() => this.setConnectionStatus("connected"));
-                StompClient.onDisconnect.push(() => this.setConnectionStatus("disconnected"));
-                StompClient.onConnecting.push(() => this.setConnectionStatus("connecting"));
-                if (StompClient.state == "connected") {
-                    this.setConnectionStatus("connected");
-                }
-            },
-
-            setConnectionStatus(state) {
-                $("#connectionStatus img").attr("src", this.connectionImages[state]);
-                $("#connectionStatus div").text(this.connectionTexts[state]);
-            },
-
-            toggleConnection() {
-                this.setConnectionStatus("connecting");
-                if (StompClient.state == "connected") {
-                    StompClient.disconnect();
-                } else if (StompClient.state == "dc") {
-                    StompClient.connect();
-                }
-            },
-
-            triggerInstantSearch() {
-                window.clearTimeout(this.instantSearchTimeout);
-                this.instantSearchTimeout = window.setTimeout(() => this.executeInstantSearch(), 300);
-            },
-
-            executeInstantSearch() {
-                var query = $("#query").val().trim();
-                if (query.length > 1 && query != this.previousQuery) {
-                    this.previousQuery = query;
-                    document.searchForm.submit();
-                }
-            },
-
-            sideBarCallback(show) {
-                if (this.showSideBar != show) {
-                    this.setSideBarVisible(show);
-                }
-            },
-
-            toggleSideBar() {
-                this.setSideBarVisible(!this.showSideBar);
-                StompClient.send("/app/settings/sidebar", this.showSideBar);
-            },
-
-            setSideBarVisible(show) {
-                this.showSideBar = show;
-                $(".shell-left")[show ? "show" : "hide"]("slide", {direction: "left"}, 100);
-                $("#sideBarToggle").attr("aria-expanded", String(show));
-            },
-
-            logout() {
-                $("#logoutForm")[0].submit();
+            function setConnectionStatus(state) {
+                $("#connectionStatus img").attr("src", connectionImages[state]);
+                $("#connectionStatus div").text(connectionTexts[state]);
             }
-        };
-        $(() => TopNav.init());
+
+            function setSideBarVisible(show) {
+                showSideBar = show;
+                document.body.classList.toggle("shell-sidebar-hidden", !show);
+                $("#sideBarToggle").attr("aria-expanded", String(show));
+            }
+
+            // on narrow screens the left region is a drawer that does not change the sidebar setting
+            var narrow = window.matchMedia("(max-width: 760px)");
+
+            function setDrawerOpen(open) {
+                document.body.classList.toggle("shell-drawer-open", open);
+                $("#sideBarToggle").attr("aria-expanded", String(open));
+            }
+
+            function toggleSideBar() {
+                if (narrow.matches) {
+                    setDrawerOpen(!document.body.classList.contains("shell-drawer-open"));
+                    return;
+                }
+                setSideBarVisible(!showSideBar);
+                StompClient.send("/app/settings/sidebar", showSideBar);
+            }
+
+            // the drawer closes once a page is shown, and when the screen gets wide again
+            page.listen(document.querySelector('[data-shell-region="main"]'), "shell:load", () => setDrawerOpen(false));
+            page.listen(narrow, "change", () => {
+                setDrawerOpen(false);
+                $("#sideBarToggle").attr("aria-expanded", String(!narrow.matches && showSideBar));
+            });
+            Page.actions({closeDrawer: () => setDrawerOpen(false)});
+
+            function executeInstantSearch() {
+                var query = $("#query").val().trim();
+                if (query.length > 1 && query != previousQuery) {
+                    previousQuery = query;
+                    document.searchForm.requestSubmit();
+                }
+            }
+
+            page.actions({
+                toggleSideBar: toggleSideBar,
+                toggleConnection() {
+                    setConnectionStatus("connecting");
+                    if (StompClient.state == "connected") {
+                        StompClient.disconnect();
+                    } else if (StompClient.state == "dc") {
+                        StompClient.connect();
+                    }
+                },
+                selectQuery(input) {
+                    input.select();
+                },
+                instantSearch() {
+                    page.clearTimer(instantSearchTimeout);
+                    instantSearchTimeout = page.setTimeout(executeInstantSearch, 300);
+                },
+                logout() {
+                    document.getElementById("logoutForm").submit();
+                }
+            });
+
+            page.subscribe({
+                "/user/queue/settings/sidebar": msg => {
+                    var show = JSON.parse(msg.body);
+                    if (showSideBar != show) {
+                        setSideBarVisible(show);
+                    }
+                }
+            });
+            StompClient.onConnect.push(() => setConnectionStatus("connected"));
+            StompClient.onDisconnect.push(() => setConnectionStatus("disconnected"));
+            StompClient.onConnecting.push(() => setConnectionStatus("connecting"));
+            if (StompClient.state == "connected") {
+                setConnectionStatus("connected");
+            }
+            if (narrow.matches) {
+                $("#sideBarToggle").attr("aria-expanded", "false");
+            }
+
+            // used by the keyboard shortcuts
+            window.TopNav = {toggleSideBar: toggleSideBar};
+        });
     </script>
 
     <nav class="shell-topbar">
-        <button type="button" id="sideBarToggle" class="shell-icon-button" onclick="TopNav.toggleSideBar()"
+        <button type="button" id="sideBarToggle" class="shell-icon-button" data-on-click="toggleSideBar"
                 th:attr="aria-expanded=${model.showSideBar}" aria-controls="shell-left" th:title="#{more.keyboard.sidebar}">
             <img th:src="${themes?.get('sidebarImage') ?: 'icons/default_light/sidebar.svg'}" alt="">
         </button>
@@ -131,7 +157,7 @@
         <form class="shell-search" method="post" th:action="@{/search}" target="main" name="searchForm" role="search">
             <label for="query" class="shell-visually-hidden" th:text="#{top.search}">Search</label>
             <input required type="search" name="query" id="query" size="28" th:placeholder="#{top.search}"
-                   onclick="select();" oninput="TopNav.triggerInstantSearch();">
+                   data-on-click="selectQuery" data-on-input="instantSearch">
             <button type="submit" class="shell-icon-button" th:title="#{top.search}">
                 <img th:src="${themes?.get('searchImage') ?: 'icons/default_light/search.svg'}" th:alt="#{top.search}">
             </button>
@@ -143,11 +169,11 @@
                 <img th:unless="${model.showAvatar}" th:src="${themes?.get('userImage') ?: 'icons/default_light/user.svg'}" th:alt="#{status.user}">
                 <span class="topHeader" th:text="${model.user.username}"></span>
             </a>
-            <button type="button" id="connectionStatus" class="shell-nav-item shell-nav-button" onclick="TopNav.toggleConnection()">
+            <button type="button" id="connectionStatus" class="shell-nav-item shell-nav-button" data-on-click="toggleConnection">
                 <img th:src="${themes?.get('disconnectedImage') ?: 'icons/default_light/disconnected.svg'}" alt="">
                 <div class="detail" th:utext="#{top.disconnected}">Disconnected</div>
             </button>
-            <button type="button" class="shell-nav-item shell-nav-button" onclick="TopNav.logout()">
+            <button type="button" class="shell-nav-item shell-nav-button" data-on-click="logout">
                 <img th:src="${themes?.get('logoutImage') ?: 'icons/default_light/logout.svg'}" alt="">
                 <div class="detail" th:utext="#{top.logout}">Logout</div>
             </button>

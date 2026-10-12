@@ -10,7 +10,6 @@ PARAMETERS
     starEnabled: Whether to show star/unstar controls (default false).
   starred: Whether the file is currently starred.
   asTable: Whether to put the images in td tags.
-  onPlay: Overrides the javascript used for the play action.
 -->
 
 <th:block th:fragment="buttons(id)" th:with="playEnabled=${playEnabled ?: true},
@@ -24,12 +23,11 @@ PARAMETERS
 
      <th:block th:if="${starEnabled}">
           <th:block th:if="${asTable}"><td class="fit"></th:block>
-          <img th:if="starred" th:id="|starImage${id}|"
-               th:src="${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'}" alt="" style="cursor:pointer;height:18px;"
-               th:onclick="|toggleStar(${id}, '#starImage${id}'); return false;|"> <img th:unless="starred"
-               th:id="|starImage${id}|" th:src="${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}" alt=""
-               style="cursor:pointer;height:18px;" th:onclick="|toggleStar(${id}, '#starImage${id}'); return false;|">
-
+          <img th:id="|starImage${id}|" th:src="${starred ? (themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg') : (themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg')}"
+               th:data-starred="${starred}" th:data-id="${id}"
+               th:data-star-on="${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'}"
+               th:data-star-off="${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}"
+               data-on-click="toggleStar" alt="" style="cursor:pointer;height:18px;">
           <th:block th:if="${asTable}"></td></th:block>
      </th:block>
 
@@ -43,11 +41,10 @@ PARAMETERS
 
         <img th:if="${!#strings.isEmpty(podcastId)}" th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}"
              th:alt="#{common.play}" style="cursor:pointer; height:18px;"
-             th:data-podcast-id="${podcastId}"
-             onclick="top.playQueue.onPlayPodcastEpisode(this.getAttribute('data-podcast-id')); return false;" th:title="#{common.play}">
+             th:data-podcast-id="${podcastId}" data-on-click="playPodcastEpisode" th:title="#{common.play}">
 
         <img th:if="${!video && #strings.isEmpty(podcastId)}" th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}" th:alt="#{common.play}" style="cursor:pointer; height:18px;"
-             th:data-id="${id}" onclick="top.playQueue.onPlay(this.getAttribute('data-id')); return false;" th:title="#{common.play}">
+             th:data-id="${id}" data-on-click="playMedia" th:title="#{common.play}">
     </th:block>
 
      <th:block th:if="${asTable}">
@@ -55,7 +52,7 @@ PARAMETERS
      </th:block>
      <img th:if="${addEnabled && !video}" th:id="|add${id}|" th:src="${themes?.get('addImage') ?: 'icons/default_light/add.svg'}"
           th:alt="#{main.addlast}" th:data-id="${id}" th:data-toast-msg="#{main.addlast.toast}"
-          onclick="top.playQueue.onAdd(this.getAttribute('data-id')); $().toastmessage('showSuccessToast', this.getAttribute('data-toast-msg')); return false;"
+          data-on-click="addMedia"
           style="cursor:pointer; height:18px;" th:title="#{main.addlast}">
      <th:block th:if="${asTable}">
           </td>
@@ -63,9 +60,9 @@ PARAMETERS
      <th:block th:if="${asTable}">
           <td class="fit">
      </th:block>
-     <img th:if="${addEnabled && !video}" th:id="|add${id}|" th:src="${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'}"
+     <img th:if="${addEnabled && !video}" th:id="|addNext${id}|" th:src="${themes?.get('addNextImage') ?: 'icons/default_light/add_next.svg'}"
           th:alt="#{main.addnext}" th:data-id="${id}" th:data-toast-msg="#{main.addnext.toast}"
-          th:onclick="top.playQueue.onAddNext(this.getAttribute('data-id')); $().toastmessage('showSuccessToast', this.getAttribute('data-toast-msg')); return false;"
+          data-on-click="addMediaNext"
           style="cursor:pointer; height:18px;" th:title="#{main.addnext}">
      <th:block th:if="${asTable}">
           </td>

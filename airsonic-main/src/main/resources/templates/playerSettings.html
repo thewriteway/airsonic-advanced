@@ -5,36 +5,19 @@
     <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 </head>
-<body class="mainframe bgcolor1">
-<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
-<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+<body class="mainframe bgcolor1 settings-page" data-page="playerSettings">
 
-<script lang="javascript" th:inline="javascript">
-
-function hideAllTechnologyDepends() {
-  $('.technologyDepends').hide();
-}
-
-function showTechnologyDepends(technologyName) {
-  var selector = '.technologyDepends.' + technologyName;
-  $(selector).show();
-}
-
-$(document).ready(function() {
-
-  $('.technologyRadio').click(function() {
-    hideAllTechnologyDepends();
-    var technologyName = $(this).val();
-    showTechnologyDepends(technologyName);
-  });
-
-  hideAllTechnologyDepends();
-  $('.technologyRadio:checked').each(function() {
-    var technologyName = $(this).val();
-    showTechnologyDepends(technologyName);
-  });
-});
-
+<script type="text/javascript">
+    Page.define("playerSettings", function (page) {
+        function showTechnologyDepends() {
+            $('.technologyDepends').hide();
+            $('.technologyRadio:checked').each(function() {
+                $('.technologyDepends.' + $(this).val()).show();
+            });
+        }
+        page.actions({showTechnologyDepends: showTechnologyDepends});
+        showTechnologyDepends();
+    });
 </script>
 
 <th:block th:replace="~{settingsHeader::header(cat='player',toast=${settings_toast}, restricted=${!command.admin})}" />
@@ -47,9 +30,9 @@ $(document).ready(function() {
             <tr>
                 <td><b th:text="#{playersettings.title}"></b></td>
                 <td>
-                    <select name="player" onchange="top.main.location.href='playerSettings.view?id=' + options[selectedIndex].value;">
+                    <select name="player" data-on-change="navigateToValue" th:aria-label="#{playersettings.title}">
                         <option th:each="player:${command.players}" th:selected="${player.id eq command.playerId}"
-                                th:value="${player.id}" th:text="${player.description}"></option>
+                                th:value="|playerSettings.view?id=${player.id}|" th:text="${player.description}"></option>
                     </select>
                 </td>
             </tr>
@@ -72,7 +55,7 @@ $(document).ready(function() {
                 <th:block th:each="technologyHolder, loopStatus:*{technologyHolders}" >
                     <tr>
                         <td class="ruleTableHeader">
-                            <input type="radio" class="technologyRadio" th:field="*{technologyName}" th:value="${technologyHolder.name}"/>
+                            <input type="radio" class="technologyRadio" th:field="*{technologyName}" th:value="${technologyHolder.name}" data-on-change="showTechnologyDepends"/>
                             <b><label th:for="${#ids.prev('technologyName')}" th:text="#{playersettings.technology.__${#strings.toLowerCase(technologyHolder.name)}__.title}"></label></b>
                         </td>
                         <td class="ruleTableCell" style="width:40em" th:text="#{playersettings.technology.__${#strings.toLowerCase(technologyHolder.name)}__.text}"></td>
