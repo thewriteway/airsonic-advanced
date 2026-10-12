@@ -102,6 +102,13 @@ public class UPnPService {
         });
     }
 
+    /**
+     * Returns whether the UPnP service (used by DLNA and Sonos) is running.
+     */
+    public boolean isRunning() {
+        return running.get();
+    }
+
     public void ensureServiceStopped() {
         running.getAndUpdate(bo -> {
             if (upnpService != null && bo) {

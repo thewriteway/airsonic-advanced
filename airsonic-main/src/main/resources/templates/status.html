@@ -1,489 +1,389 @@
 <!DOCTYPE html>
 <html><head>
     <th:block th:replace="~{head :: common_head}" />
-    <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/chart-3.9.1.min.js}"></script>
+    <script type="text/javascript" th:src="@{/script/status.js}"></script>
     <meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
     <style>
-      #sessionsTable td, .cacheusage, .cachehits, .cachemiss, .cacheputs, .cacheremovals {
-        text-align: center;
+      .status-page { max-width: 1400px; }
+      .status-page h2 { margin-top: 2em; }
+      .status-toolbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 0.5em 1.5em;
+        align-items: center; justify-content: space-between; padding: 0.5em 0;
+        border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent); }
+      .status-sections, .status-refresh { display: flex; flex-wrap: wrap; gap: 0.4em; align-items: center; }
+      .status-sections button { background: none; border: none; padding: 0.2em 0.4em; cursor: pointer;
+        color: var(--shell-link-color, inherit); font: inherit; }
+      .status-sections button:hover { text-decoration: underline; }
+      .status-error { color: #c0392b; }
+      .status-message { margin: 0.75em 0; padding: 0.5em 0.75em; border-radius: 4px;
+        border: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+      .status-banner { margin: 0.5em 0 1em; padding: 0.6em 0.9em; border-radius: 4px; color: #fff;
+        background: #c0392b; }
+      .status-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.75em;
+        margin-top: 1em; }
+      .status-card { padding: 0.75em 1em; border-radius: 6px;
+        border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+        background: color-mix(in srgb, currentColor 4%, transparent); }
+      .status-card-title { font-size: 0.85em; opacity: 0.75; }
+      .status-card-value { font-size: 1.6em; margin: 0.15em 0; font-variant-numeric: tabular-nums; }
+      .status-card-detail { font-size: 0.85em; opacity: 0.75; }
+      .status-card-busy .status-card-value { animation: status-pulse 1.6s ease-in-out infinite; }
+      @keyframes status-pulse { 50% { opacity: 0.45; } }
+      @media (prefers-reduced-motion: reduce) { .status-card-busy .status-card-value { animation: none; } }
+      .status-table { width: 100%; }
+      .status-table td { vertical-align: middle; }
+      .status-number { font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .status-small { font-size: 0.85em; }
+      .status-muted { opacity: 0.65; }
+      .status-scroll { overflow-x: auto; }
+      .status-path { max-width: 32em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .status-agent { max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .status-inactive { opacity: 0.6; }
+      .status-empty { font-style: italic; opacity: 0.7; }
+      .status-type { display: inline-block; padding: 0.05em 0.5em; border-radius: 1em; font-size: 0.85em;
+        color: #000; }
+      .status-type-stream { background: rgb(230, 170, 30); }
+      .status-type-download { background: rgb(235, 80, 110); color: #fff; }
+      .status-type-upload { background: rgb(54, 140, 220); color: #fff; }
+      .status-pill { display: inline-block; padding: 0.05em 0.6em; border-radius: 1em; font-size: 0.85em;
+        color: #fff; background: #7f8c8d; margin-left: 0.3em; }
+      .status-card-value .status-pill { font-size: 0.6em; margin-left: 0; }
+      .status-pill-up { background: #27ae60; }
+      .status-pill-down { background: #c0392b; }
+      .status-pill-out_of_service, .status-pill-warn { background: #d68910; }
+      .status-bar { display: inline-block; width: 6em; height: 0.6em; margin-right: 0.5em; vertical-align: middle;
+        border-radius: 0.3em; overflow: hidden; background: color-mix(in srgb, currentColor 15%, transparent); }
+      .status-bar-fill { height: 100%; background: #27ae60; }
+      .status-bar-fill.status-bar-warn { background: #d68910; }
+      .status-bar-fill.status-bar-danger { background: #c0392b; }
+      .status-card-alert .status-card-value { color: #c0392b; }
+      .status-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1em 2em;
+        align-items: start; }
+      .status-kv .status-bar { display: block; width: 100%; margin-top: 0.3em; }
+      .status-space { white-space: nowrap; }
+      .status-logger { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .status-log-message { word-break: break-word; }
+      .status-history-controls { display: flex; flex-wrap: wrap; gap: 0.5em 1.5em; align-items: center;
+        margin-bottom: 0.5em; }
+      .status-bitrate { white-space: nowrap; }
+      .status-sparkline { vertical-align: middle; margin-left: 0.5em; }
+      .status-overdue { color: #c0392b; }
+      .status-chart { position: relative; width: 100%; max-width: 900px; }
+      .status-link { background: none; border: none; padding: 0; margin-top: 0.5em; cursor: pointer;
+        color: var(--shell-link-color, inherit); font: inherit; text-decoration: underline; }
+      .status-details { display: grid; grid-template-columns: max-content 1fr; gap: 0.15em 1em; margin: 0.4em 0 0; }
+      .status-details dt { opacity: 0.75; }
+      .status-details dd { margin: 0; word-break: break-all; }
+      .status-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75em; }
+      .status-kv div { font-size: 0.85em; opacity: 0.75; }
+      .status-kv strong { display: block; font-size: 1.3em; font-weight: normal; font-variant-numeric: tabular-nums; }
+      @media (max-width: 700px) {
+        .status-table th:nth-child(n+6), .status-table td:nth-child(n+6) { display: none; }
+        .status-path { max-width: 12em; }
       }
     </style>
-<script th:inline="javascript">
-  var labels = {
-    null: '[(#{common.unknown})]',
-    'download': '[(#{status.download})]',
-    'upload': '[(#{status.upload})]',
-    'stream': '[(#{status.stream})]',
-    'never': '[(#{status.never})]',
-    'incalculable': '[(#{status.incalculable})]',
-    'RUN_ONCE': '[(#{status.scheduledrunonce})]',
-    'FIXED_DELAY': '[(#{status.scheduledfixeddelay})]',
-    'FIXED_RATE': '[(#{status.scheduledfixedrate})]',
-  };
-
-  var transferTypeColors = {
-    // yellow
-    stream: {
-      bg: 'rgba(255, 205, 86, 0.5)',
-      bo: 'rgb(255, 205, 86)'
-    },
-    // red
-    download: {
-      bg: 'rgba(255, 99, 132, 0.5)',
-      bo: 'rgb(255, 99, 132)'
-    },
-    // blue
-    upload: {
-      bg: 'rgba(54, 162, 235, 0.5)',
-      bo: 'rgb(54, 162, 235)'
-    }
-  };
-
-  var transfersConfigTemplate = {
-    type: 'scatter',
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          display: false
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            callback: function(value, index, values) {
-              return new Date(value).toLocaleString();
-            }
-          }
-        }
-      }
-    }
-  };
-
-  var transfersCharts = [];
-
-  var transfersUrl = "[(@{/statistics/transfers})]";
-
-  function updateTransferData() {
-   $.get(transfersUrl, data => {
-    $('#transfersTable > tbody').empty();
-
-    transfersCharts.forEach(tc => tc.destroy());
-    transfersCharts = [];
-    var appendedRows = '';
-    data.forEach((row, i) => {
-        appendedRows += '<tr>';
-        appendedRows +=   '<td>' + labels[row.transferType] + '</td>';
-        appendedRows +=   '<td>' + row.playerDescription + '<br>' + row.playerType + '</td>';
-        appendedRows +=   '<td>' + row.username + '</td>';
-        appendedRows +=   '<td>' + row.path + '</td>';
-        appendedRows +=   '<td>' + row.bytesTransferred + '</td>';
-        appendedRows +=   '<td><canvas id="transfersChart' + i + '"></canvas></td>';
-        appendedRows += '</tr>';
-    });
-
-    $('#transfersTable > tbody').append(appendedRows);
-
-    data.forEach((row, i) => {
-        var series = [];
-        if (row.history.length > 0) {
-
-            var previous = row.history[0];
-
-            for (var j = 1; j < row.history.length; j++) {
-                var sample = row.history[j];
-
-                var elapsedTimeMillis = sample.timestamp - previous.timestamp;
-                var bytesStreamed = Math.max(0, sample.bytesTransferred - previous.bytesTransferred);
-
-                var kbps = (8.0 * bytesStreamed / 1024.0) / (elapsedTimeMillis / 1000.0);
-                series.push({x: sample.timestamp, y: kbps});
-
-                previous = sample;
-            }
-        }
-
-        var config = $.extend({
-          data: {
-            datasets: [{
-              data: series,
-              showLine: true,
-              backgroundColor: transferTypeColors[row.transferType]['bg'],
-              borderColor: transferTypeColors[row.transferType]['bo'],
-              borderWidth: 2
-            }]
-          }
-        }, transfersConfigTemplate);
-
-        transfersCharts[i] = new Chart($('#transfersChart' + i), config);
-    });
-   });
-  }
-
-  var userChartConfig = {
-    type: 'bar',
-    data: {
-      datasets: [{
-            label: '[(#{home.chart.stream})]',
-            data: [],
-            backgroundColor: transferTypeColors['stream']['bg'],
-            borderColor: transferTypeColors['stream']['bo'],
-            borderWidth: 1,
-            parsing: {
-                xAxisKey: 'streamed',
-                yAxisKey: 'user'
-            }
-        },{
-            label: '[(#{home.chart.download})]',
-            data: [],
-            backgroundColor: transferTypeColors['download']['bg'],
-            borderColor: transferTypeColors['download']['bo'],
-            borderWidth: 1,
-            parsing: {
-                xAxisKey: 'downloaded',
-                yAxisKey: 'user'
-            }
-        },{
-            label: '[(#{home.chart.upload})]',
-            data: [],
-            backgroundColor: transferTypeColors['upload']['bg'],
-            borderColor: transferTypeColors['upload']['bo'],
-            borderWidth: 1,
-            parsing: {
-                xAxisKey: 'uploaded',
-                yAxisKey: 'user'
-            }
-        }]
-    },
-    options: {
-      responsive: true,
-      indexAxis: 'y',
-      scales: {
-        x: {
-          stacked: true
+    <script type="text/javascript" th:inline="javascript">
+      var StatusPageConfig = {
+        admin: /*[[${admin}]]*/ false,
+        locale: /*[[${#locale.toLanguageTag()}]]*/ 'en',
+        csrf: {header: /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN', token: /*[[${_csrf.token}]]*/ ''},
+        urls: {
+          summary: /*[[@{/statistics/summary}]]*/ '',
+          health: /*[[@{/actuator/health}]]*/ '',
+          caches: /*[[@{/actuator/caches}]]*/ '',
+          history: /*[[@{/statistics/history}]]*/ ''
         },
-        y: {
-          stacked: true
+        messages: {
+          'unknown': /*[[#{common.unknown}]]*/ '',
+          'stream': /*[[#{status.stream}]]*/ '',
+          'download': /*[[#{status.download}]]*/ '',
+          'upload': /*[[#{status.upload}]]*/ '',
+          'never': /*[[#{status.never}]]*/ '',
+          'incalculable': /*[[#{status.incalculable}]]*/ '',
+          'tasktype.RUN_ONCE': /*[[#{status.scheduledrunonce}]]*/ '',
+          'tasktype.FIXED_DELAY': /*[[#{status.scheduledfixeddelay}]]*/ '',
+          'tasktype.FIXED_RATE': /*[[#{status.scheduledfixedrate}]]*/ '',
+          'scheduledcreated': /*[[#{status.scheduledcreated}]]*/ '',
+          'scheduledfirstrun': /*[[#{status.scheduledfirstrun}]]*/ '',
+          'details': /*[[#{status.details}]]*/ '',
+          'cachehitratio': /*[[#{status.cachehitratio}]]*/ '',
+          'cacheclear': /*[[#{status.cacheclear}]]*/ '',
+          'cacheclearconfirm': /*[[#{status.cacheclearconfirm}]]*/ '',
+          'cacheclearallconfirm': /*[[#{status.cacheclearallconfirm}]]*/ '',
+          'cachecleared': /*[[#{status.cachecleared}]]*/ '',
+          'cachesallcleared': /*[[#{status.cachesallcleared}]]*/ '',
+          'cacheclearfailed': /*[[#{status.cacheclearfailed}]]*/ '',
+          'lastupdated': /*[[#{status.lastupdated}]]*/ '',
+          'updatefailed': /*[[#{status.updatefailed}]]*/ '',
+          'pause': /*[[#{status.pause}]]*/ '',
+          'resume': /*[[#{status.resume}]]*/ '',
+          'paused': /*[[#{status.paused}]]*/ '',
+          'idle': /*[[#{status.idle}]]*/ '',
+          'finished': /*[[#{status.finished}]]*/ '',
+          'progress': /*[[#{status.progress}]]*/ '',
+          'overdue': /*[[#{status.overdue}]]*/ '',
+          'taskrunning': /*[[#{status.taskrunning}]]*/ '',
+          'taskfailed': /*[[#{status.taskfailed}]]*/ '',
+          'streamed': /*[[#{status.streamed}]]*/ '',
+          'downloaded': /*[[#{status.downloaded}]]*/ '',
+          'uploaded': /*[[#{status.uploaded}]]*/ '',
+          'showall': /*[[#{status.showall}]]*/ '',
+          'showtop': /*[[#{status.showtop}]]*/ '',
+          'card.health': /*[[#{status.health}]]*/ '',
+          'card.streams': /*[[#{status.card.streams}]]*/ '',
+          'card.transfersdetail': /*[[#{status.card.transfersdetail}]]*/ '',
+          'card.sessions': /*[[#{status.sessions}]]*/ '',
+          'card.sessionsdetail': /*[[#{status.card.sessionsdetail}]]*/ '',
+          'card.uptime': /*[[#{status.card.uptime}]]*/ '',
+          'card.library': /*[[#{status.card.library}]]*/ '',
+          'card.lastscan': /*[[#{status.card.lastscan}]]*/ '',
+          'library.songs': /*[[#{status.library.songs}]]*/ '',
+          'library.detail': /*[[#{status.library.detail}]]*/ '',
+          'scanning': /*[[#{status.scanning}]]*/ '',
+          'scanningdetail': /*[[#{status.scanningdetail}]]*/ '',
+          'notscanned': /*[[#{status.notscanned}]]*/ '',
+          'healthup': /*[[#{status.healthup}]]*/ '',
+          'healthdown': /*[[#{status.healthdown}]]*/ '',
+          'healthunknown': /*[[#{status.healthunknown}]]*/ '',
+          'historysince': /*[[#{status.historysince}]]*/ '',
+          'historypending': /*[[#{status.historypending}]]*/ '',
+          'version': /*[[#{status.version}]]*/ '',
+          'build': /*[[#{status.build}]]*/ '',
+          'java': /*[[#{status.java}]]*/ '',
+          'os': /*[[#{status.os}]]*/ '',
+          'server': /*[[#{status.server}]]*/ '',
+          'database': /*[[#{status.database}]]*/ '',
+          'startedat': /*[[#{status.startedat}]]*/ '',
+          'memory': /*[[#{status.memory}]]*/ '',
+          'memoryused': /*[[#{status.memoryused}]]*/ '',
+          'cpuairsonic': /*[[#{status.cpuairsonic}]]*/ '',
+          'cpusystem': /*[[#{status.cpusystem}]]*/ '',
+          'processors': /*[[#{status.processors}]]*/ '',
+          'threads': /*[[#{status.threads}]]*/ '',
+          'home': /*[[#{status.home}]]*/ '',
+          'free': /*[[#{status.free}]]*/ '',
+          'freeof': /*[[#{status.freeof}]]*/ '',
+          'ok': /*[[#{status.ok}]]*/ '',
+          'missing': /*[[#{status.missing}]]*/ '',
+          'disabled': /*[[#{status.disabled}]]*/ '',
+          'enabled': /*[[#{status.enabled}]]*/ '',
+          'running': /*[[#{status.running}]]*/ '',
+          'stopped': /*[[#{status.stopped}]]*/ '',
+          'upnp': /*[[#{status.upnp}]]*/ '',
+          'dlna': /*[[#{status.dlna}]]*/ '',
+          'sonos': /*[[#{status.sonos}]]*/ '',
+          'upnpport': /*[[#{status.upnpport}]]*/ '',
+          'transcoder': /*[[#{status.transcoder}]]*/ '',
+          'notfound': /*[[#{status.notfound}]]*/ '',
+          'activeplayers': /*[[#{status.activeplayers}]]*/ '',
+          'logsummary': /*[[#{status.logsummary}]]*/ '',
+          'logunreadable': /*[[#{status.logunreadable}]]*/ '',
+          'card.log': /*[[#{status.card.log}]]*/ '',
+          'card.logdetail': /*[[#{status.card.logdetail}]]*/ ''
         }
-      }
-    }
-  };
-
-  var userChartUrl = "[(@{/statistics/users})]";
-  var userChart = null;
-
-  function updateUserChartData() {
-   $.get(userChartUrl, data => {
-    data.forEach(x => {
-      x.streamed = x.streamed / (1024 * 1024);
-      x.downloaded = x.downloaded / (1024 * 1024);
-      x.uploaded = x.uploaded/ (1024 * 1024);
-    });
-    userChart.data.datasets[0].data = data;
-    userChart.data.datasets[1].data = data;
-    userChart.data.datasets[2].data = data;
-    userChart.update();
-   });
-  }
-
-  var airsonicCaches = [];
-  var cacheNamesUrl = "[(@{/actuator/metrics/cache.gets})]";
-
-  var cacheMissUrl = "[(@{/actuator/metrics/cache.gets?tag=result:miss&})]";
-  var cacheHitsUrl = "[(@{/actuator/metrics/cache.gets?tag=result:hit&})]";
-  var cachePutsUrl = "[(@{/actuator/metrics/cache.puts?})]";
-  var cacheRemovalsUrl = "[(@{/actuator/metrics/cache.removals?})]";
-  var cacheEvictionssUrl = "[(@{/actuator/caches/})]";
-
-  var updateCacheUsage = c => {
-    var hit = +($('#cachesTable > tbody .' + c + ' .cachehits').text());
-    var miss = +($('#cachesTable > tbody .' + c + ' .cachemiss').text());
-    var usage = "N/A";
-    if (!isNaN(hit) && !isNaN(miss) && (hit+miss != 0)) {
-      usage = hit / (hit + miss) * 100.0;
-    }
-    $('#cachesTable > tbody .' + c + ' .cacheusage').text(usage);
-  };
-  var updateCacheMissData = c => $.get(cacheMissUrl+"tag=cache:"+c, data => {
-    $('#cachesTable > tbody .' + c + ' .cachemiss').text(data.measurements[0].value);
-    updateCacheUsage(c);
-  });
-  var updateCacheHitsData = c => $.get(cacheHitsUrl+"tag=cache:"+c, data => {
-    $('#cachesTable > tbody .' + c + ' .cachehits').text(data.measurements[0].value);
-    updateCacheUsage(c);
-  });
-  var updateCachePutsData = c => $.get(cachePutsUrl+"tag=cache:"+c, data => {
-    $('#cachesTable > tbody .' + c + ' .cacheputs').text(data.measurements[0].value);
-  });
-  var updateCacheRemovalsData = c => $.get(cacheRemovalsUrl+"tag=cache:"+c, data => {
-    $('#cachesTable > tbody .' + c + ' .cacheremovals').text(data.measurements[0].value);
-  });
-  var evictCache = c => $.ajax(cacheEvictionssUrl+c, {type: 'DELETE'}).always((data, status) => {
-    console.log("eviction request for " + c + " completed with status: " + status);
-    updateCacheData(c);
-  });
-  var updateCacheData = c => {
-    updateCacheMissData(c);
-    updateCacheHitsData(c);
-    updateCachePutsData(c);
-    updateCacheRemovalsData(c);
-  };
-  function updateCachesData() {
-    airsonicCaches.forEach(c => updateCacheData(c));
-  };
-
-  var parseScheduledDate = date => {
-    if (date == null) {
-      return labels['never'];
-    }
-    if (date == "-1000000000-01-01T00:00Z") {
-      return labels['incalculable'];
-    }
-    try {
-      return new Date(date);
-    } catch (e) {
-      return date;
-    }
-  };
-
-  var scheduledTasksUrl = "[(@{/actuator/customscheduledtasks})]";
-  function updateScheduledTasksData() {
-    $.get(scheduledTasksUrl, data => {
-      $('#scheduledTasksTable > tbody').empty();
-      var appendedRows = '';
-      Object.keys(data).forEach(k => {
-        var taskData = data[k];
-        appendedRows += '<tr>';
-        appendedRows +=   '<td>' + taskData['name'] + '</td>';
-        appendedRows +=   '<td>' + labels[taskData['runMetadata']['type']] + '</td>';
-        appendedRows +=   '<td>' + parseScheduledDate(taskData['created']) + '</td>';
-        appendedRows +=   '<td>' + parseScheduledDate(taskData['runMetadata']['firstRun']) + '</td>';
-        appendedRows +=   '<td>' + parseScheduledDate(taskData['runMetadata']['lastRun']) + '</td>';
-        appendedRows +=   '<td>' + parseScheduledDate(taskData['runMetadata']['nextRun']) + '</td>';
-        appendedRows +=   '<td>' + taskData['scheduledBy'] + '</td>';
-        appendedRows += '</tr>';
-      });
-
-      $('#scheduledTasksTable > tbody').append(appendedRows);
-    });
-  }
-
-  var pathWatcherUrl = "[(@{/actuator/pathwatcher})]";
-  function updatePathWatcherData() {
-    $.get(pathWatcherUrl, data => {
-      $('#pathWatcherTable > tbody').empty();
-      var appendedRows = '';
-      Object.keys(data).forEach(k => {
-        appendedRows += '<tr>';
-        appendedRows +=   '<td>' + k + '</td>';
-        appendedRows +=   '<td>' + data[k] + '</td>';
-        appendedRows += '</tr>';
-      });
-
-      $('#pathWatcherTable > tbody').append(appendedRows);
-    });
-  }
-
-  var sessionsCurrentUrl = "[(@{/actuator/metrics/tomcat.sessions.active.current})]";
-  var sessionsCreatedUrl = "[(@{/actuator/metrics/tomcat.sessions.created})]";
-  var sessionsExpiredUrl = "[(@{/actuator/metrics/tomcat.sessions.expired})]";
-  var sessionsRejectedUrl = "[(@{/actuator/metrics/tomcat.sessions.rejected})]";
-
-  var updateSessionsCurrentData = () => $.get(sessionsCurrentUrl, data => {
-    $('#sessionsTable > tbody .sessionscurrent').text(data.measurements[0].value);
-  });
-  var updateSessionsCreatedData = () => $.get(sessionsCreatedUrl, data => {
-    $('#sessionsTable > tbody .sessionscreated').text(data.measurements[0].value);
-  });
-  var updateSessionsExpiredData = () => $.get(sessionsExpiredUrl, data => {
-    $('#sessionsTable > tbody .sessionsexpired').text(data.measurements[0].value);
-  });
-  var updateSessionsRejectedData = () => $.get(sessionsRejectedUrl, data => {
-    $('#sessionsTable > tbody .sessionsrejected').text(data.measurements[0].value);
-  });
-  function updateSessionsData() {
-    updateSessionsCurrentData();
-    updateSessionsCreatedData();
-    updateSessionsExpiredData();
-    updateSessionsRejectedData();
-  };
-
-  var healthUrl = "[(@{/actuator/health})]";
-  function updateHealthData() {
-    $.get(healthUrl).always(data => {
-      $('#healthTable > tbody').empty();
-      var appendedRows = '';
-      var dc = (typeof data.responseJSON != 'undefined' && typeof data.responseJSON.components != 'undefined') ? data.responseJSON.components : data.components;
-      if (typeof dc != 'undefined') {
-        Object.keys(dc).forEach(k => {
-          appendedRows += '<tr>';
-          appendedRows +=   '<td>' + k + '</td>';
-          appendedRows +=   '<td>' + dc[k].status + '</td>';
-          appendedRows +=   '<td>' + JSON.stringify(dc[k].details) + '</td>';
-          appendedRows += '</tr>';
-        });
-      }
-
-      $('#healthTable > tbody').append(appendedRows);
-    });
-  }
-
-  function init() {
-    userChart = new Chart(
-      $('#userChart'),
-      userChartConfig
-    );
-
-    $.get(cacheNamesUrl, data => {
-      airsonicCaches = data.availableTags.filter(i => i.tag == 'cache')[0].values.sort();
-      var appendedRows = '';
-      airsonicCaches.forEach((row, i) => {
-        appendedRows += '<tr class="' + row + '">';
-        appendedRows +=   '<td class="cachename">' + row + '</td>';
-        appendedRows +=   '<td class="cacheusage"></td>';
-        appendedRows +=   '<td class="cachehits"></td>';
-        appendedRows +=   '<td class="cachemiss"></td>';
-        appendedRows +=   '<td class="cacheputs"></td>';
-        appendedRows +=   '<td class="cacheremovals"></td>';
-        appendedRows +=   '<td class="cacheevictions"><button onclick="evictCache(\''+row+'\')">[(#{status.cacheevict})]</button></td>';
-        appendedRows += '</tr>';
-      });
-
-      $('#cachesTable > tbody').append(appendedRows);
-      updateCachesData();
-    });
-
-    updateTransferData();
-    updateUserChartData();
-    updateScheduledTasksData();
-    updatePathWatcherData();
-    updateSessionsData();
-    updateHealthData();
-
-    setInterval(() => { updateTransferData(); updateUserChartData(); updateCachesData(); updateScheduledTasksData(); updatePathWatcherData(); updateSessionsData(); updateHealthData();}, 40000);
-  }
-</script>
-
+      };
+    </script>
 </head>
-<body class="mainframe bgcolor1" onload="init()">
+<body class="mainframe bgcolor1" onload="StatusPage.init(StatusPageConfig)">
+<div id="statusPage" class="status-page" aria-busy="true">
 
 <h1>
     <img th:src="${themes?.get('statusImage') ?: 'icons/default_light/status.svg'}" alt="">
     <span style="vertical-align: middle" th:text="#{status.title}"></span>
 </h1>
-<h2 th:text="#{status.currenttransfers}">
-</h2>
-<table id="transfersTable" width="100%" class="ruleTable indent">
-    <thead>
-      <tr>
-        <th class="ruleTableHeader" th:text="#{status.type}"></th>
-        <th class="ruleTableHeader" th:text="#{status.player}"></th>
-        <th class="ruleTableHeader" th:text="#{status.user}"></th>
-        <th class="ruleTableHeader" th:text="#{status.current}"></th>
-        <th class="ruleTableHeader" th:text="#{status.transmitted}"></th>
-        <th class="ruleTableHeader" th:text="#{status.bitrate}"></th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<div style="padding-top:3em"></div>
 
-<h2 th:text="#{status.usertransfers}">
-</h2>
-<canvas id="userChart"></canvas>
-<div style="padding-top:3em"></div>
+<div class="status-toolbar bgcolor1">
+    <nav class="status-sections" th:aria-label="#{status.sections}">
+        <button type="button" data-section="status-overview" th:text="#{status.overview}"></button>
+        <button type="button" data-section="status-transfers" th:text="#{status.currenttransfers}"></button>
+        <button type="button" data-section="status-users" th:text="#{status.usertransfers}"></button>
+        <button type="button" data-section="status-history" th:text="#{status.history}"></button>
+        <th:block th:if="${admin}">
+            <button type="button" data-section="status-health" th:text="#{status.health}"></button>
+            <button type="button" data-section="status-system" th:text="#{status.system}"></button>
+            <button type="button" data-section="status-storage" th:text="#{status.storage}"></button>
+            <button type="button" data-section="status-services" th:text="#{status.services}"></button>
+            <button type="button" data-section="status-log" th:text="#{status.log}"></button>
+            <button type="button" data-section="status-caches" th:text="#{status.caches}"></button>
+            <button type="button" data-section="status-tasks" th:text="#{status.scheduledtasks}"></button>
+            <button type="button" data-section="status-sessions" th:text="#{status.sessions}"></button>
+            <button type="button" data-section="status-pathwatchers" th:text="#{status.pathwatcher}"></button>
+        </th:block>
+    </nav>
+    <div class="status-refresh">
+        <span id="statusUpdated" class="status-small" aria-live="polite"></span>
+        <label class="status-small"><span th:text="#{status.refreshinterval}"></span>
+            <select id="statusInterval"></select></label>
+        <button type="button" id="statusPause" aria-pressed="false" th:text="#{status.pause}"></button>
+        <button type="button" id="statusRefresh" th:text="#{common.refresh}"></button>
+    </div>
+</div>
 
-<h2 th:text="#{status.caches}">
-</h2>
-<table id="cachesTable" width="100%" class="ruleTable indent">
-    <thead>
-      <tr>
-        <th class="ruleTableHeader" th:text="#{status.cachename}"></th>
-        <th class="ruleTableHeader" th:text="#{status.cacheusage}"></th>
-        <th class="ruleTableHeader" th:text="#{status.cachehits}"></th>
-        <th class="ruleTableHeader" th:text="#{status.cachemiss}"></th>
-        <th class="ruleTableHeader" th:text="#{status.cacheputs}"></th>
-        <th class="ruleTableHeader" th:text="#{status.cacheremovals}"></th>
-        <th class="ruleTableHeader" th:text="#{status.cacheevict}"></th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<div style="padding-top:3em"></div>
+<div id="statusMessage" class="status-message" role="status" aria-live="polite" hidden></div>
 
-<h2 th:text="#{status.scheduledtasks}">
-</h2>
-<table id="scheduledTasksTable" width="100%" class="ruleTable indent">
-    <thead>
-      <tr>
-        <th class="ruleTableHeader" th:text="#{status.name}"></th>
-        <th class="ruleTableHeader" th:text="#{status.scheduledtype}"></th>
-        <th class="ruleTableHeader" th:text="#{status.scheduledcreated}"></th>
-        <th class="ruleTableHeader" th:text="#{status.scheduledfirstrun}"></th>
-        <th class="ruleTableHeader" th:text="#{status.scheduledlastrun}"></th>
-        <th class="ruleTableHeader" th:text="#{status.schedulednextrun}"></th>
-        <th class="ruleTableHeader" th:text="#{status.scheduledby}"></th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<div style="padding-top:3em"></div>
+<section id="status-overview">
+    <div id="statusCards" class="status-cards"></div>
+</section>
 
-<h2 th:text="#{status.pathwatcher}">
-</h2>
-<table id="pathWatcherTable" width="100%" class="ruleTable indent">
-    <thead>
-      <tr>
-        <th class="ruleTableHeader" th:text="#{status.name}"></th>
-        <th class="ruleTableHeader" th:text="#{status.path}"></th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-<div style="padding-top:3em"></div>
+<section id="status-transfers">
+    <h2 th:text="#{status.currenttransfers}"></h2>
+    <div class="status-scroll"><table id="statusTransfers" class="ruleTable indent status-table" hidden>
+        <thead>
+        <tr>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.type}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.user}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.player}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.current}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.progress}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.transmitted}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.bitratenow}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.started}"></th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table></div>
+    <p id="statusTransfersEmpty" class="status-empty" th:text="#{status.notransfers}" hidden></p>
+</section>
 
-<h2 th:text="#{status.sessions}">
-</h2>
-<table id="sessionsTable" width="100%" class="ruleTable indent">
-    <thead>
-      <tr>
-        <th class="ruleTableHeader" th:text="#{status.sessionscurrent}"></th>
-        <th class="ruleTableHeader" th:text="#{status.sessionscreated}"></th>
-        <th class="ruleTableHeader" th:text="#{status.sessionsexpired}"></th>
-        <th class="ruleTableHeader" th:text="#{status.sessionsrejected}"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="sessionscurrent">N/A</td>
-        <td class="sessionscreated">N/A</td>
-        <td class="sessionsexpired">N/A</td>
-        <td class="sessionsrejected">N/A</td>
-      </tr>
-    </tbody>
-</table>
+<section id="status-users">
+    <h2 th:text="#{status.usertransfers}"></h2>
+    <div id="statusUsersChartBox" class="status-chart" hidden><canvas id="statusUsersChart"></canvas></div>
+    <button type="button" id="statusUsersToggle" class="status-link" hidden></button>
+    <p id="statusUsersEmpty" class="status-empty" th:text="#{status.nousertransfers}" hidden></p>
+</section>
 
-<div style="padding-top:3em"></div>
+<section id="status-history">
+    <h2 th:text="#{status.history}"></h2>
+    <div class="status-history-controls">
+        <label class="status-small"><span th:text="#{status.historyperiod}"></span>
+            <select id="statusHistoryDays"></select></label>
+        <span id="statusHistoryNote" class="status-small status-muted"></span>
+    </div>
+    <div class="status-chart" style="height: 280px"><canvas id="statusHistoryChart"></canvas></div>
+</section>
 
-<h2 th:text="#{status.health}">
-</h2>
-<table id="healthTable" width="100%" class="ruleTable indent">
-    <thead>
-      <tr>
-        <th class="ruleTableHeader" th:text="#{status.component}"></th>
-        <th class="ruleTableHeader" th:text="#{status.status}"></th>
-        <th class="ruleTableHeader" th:text="#{status.details}"></th>
-      </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
+<th:block th:if="${admin}">
+<section id="status-health">
+    <h2 th:text="#{status.health}"></h2>
+    <div id="statusHealthBanner" class="status-banner" role="alert" hidden></div>
+    <div class="status-scroll"><table id="statusHealth" class="ruleTable indent status-table">
+        <thead>
+        <tr>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.component}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.status}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.details}"></th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table></div>
+</section>
 
-<div class="forward"><a href="status.view?"><span th:text="#{common.refresh}"></span> (<span th:text="#{status.autorefresh(${40000/1000})}"></span>)</a></div>
+<section id="status-system">
+    <h2 th:text="#{status.system}"></h2>
+    <div class="status-columns">
+        <dl id="statusSystemInfo" class="status-details"></dl>
+        <div id="statusSystemMeters" class="status-kv"></div>
+    </div>
+</section>
 
+<section id="status-storage">
+    <h2 th:text="#{status.storage}"></h2>
+    <div class="status-scroll"><table id="statusStorage" class="ruleTable indent status-table">
+        <thead>
+        <tr>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.name}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.path}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.status}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.free}"></th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table></div>
+</section>
+
+<section id="status-services">
+    <h2 th:text="#{status.services}"></h2>
+    <dl id="statusServices" class="status-details"></dl>
+</section>
+
+<section id="status-log">
+    <h2 th:text="#{status.log}"></h2>
+    <p id="statusLogSummary" class="status-small status-muted"></p>
+    <div class="status-scroll"><table id="statusLog" class="ruleTable indent status-table" hidden>
+        <thead>
+        <tr>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.time}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.level}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.logger}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.message}"></th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table></div>
+    <p id="statusLogEmpty" class="status-empty" th:text="#{status.lognone}" hidden></p>
+</section>
+
+<section id="status-caches">
+    <h2 th:text="#{status.caches}"></h2>
+    <button type="button" id="statusCachesClearAll" th:text="#{status.cacheclearall}"></button>
+    <div class="status-scroll"><table id="statusCaches" class="ruleTable indent status-table" hidden>
+        <thead>
+        <tr>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.cachename}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.cachehitratio}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.cachehits}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.cachemiss}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.cacheputs}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.cacheremovals}"></th>
+            <th scope="col" class="ruleTableHeader"><span class="status-muted" th:text="#{status.cacheclear}"></span></th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table></div>
+    <p id="statusCachesEmpty" class="status-empty" th:text="#{status.nodata}" hidden></p>
+</section>
+
+<section id="status-tasks">
+    <h2 th:text="#{status.scheduledtasks}"></h2>
+    <div class="status-scroll"><table id="statusTasks" class="ruleTable indent status-table" hidden>
+        <thead>
+        <tr>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.name}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.scheduledtype}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.scheduledlastrun}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.schedulednextrun}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.scheduledby}"></th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table></div>
+    <p id="statusTasksEmpty" class="status-empty" th:text="#{status.nodata}" hidden></p>
+</section>
+
+<section id="status-sessions">
+    <h2 th:text="#{status.sessions}"></h2>
+    <div class="status-kv">
+        <div><span th:text="#{status.sessionscurrent}"></span><strong id="statusSessions-current">–</strong></div>
+        <div><span th:text="#{status.sessionscreated}"></span><strong id="statusSessions-created">–</strong></div>
+        <div><span th:text="#{status.sessionsexpired}"></span><strong id="statusSessions-expired">–</strong></div>
+        <div><span th:text="#{status.sessionsrejected}"></span><strong id="statusSessions-rejected">–</strong></div>
+    </div>
+</section>
+
+<section id="status-pathwatchers">
+    <h2 th:text="#{status.pathwatcher}"></h2>
+    <div class="status-scroll"><table id="statusPathWatchers" class="ruleTable indent status-table" hidden>
+        <thead>
+        <tr>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.name}"></th>
+            <th scope="col" class="ruleTableHeader" th:text="#{status.path}"></th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table></div>
+    <p id="statusPathWatchersEmpty" class="status-empty" th:text="#{status.nodata}" hidden></p>
+</section>
+</th:block>
+
+</div>
 </body></html>

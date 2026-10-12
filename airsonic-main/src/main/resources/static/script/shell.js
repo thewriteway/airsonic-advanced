@@ -329,6 +329,12 @@
             return;
         }
         var target = link.getAttribute("target");
+        if (target === "hidden") {
+            // the hidden frame of the frameset
+            event.preventDefault();
+            openInHiddenFrame(link.href);
+            return;
+        }
         var region = targetRegion(link, target, link.href);
         if (!region) {
             return;

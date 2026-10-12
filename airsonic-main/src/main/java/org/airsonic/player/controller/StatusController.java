@@ -35,8 +35,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @Controller
 @RequestMapping({"/status", "/status.view"})
 public class StatusController {
+
     @GetMapping
     protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) {
-        return new ModelAndView("status");
+        // server internals (caches, tasks, health, ...) are only shown to administrators
+        return new ModelAndView("status", "admin", request.isUserInRole("ADMIN"));
     }
 }

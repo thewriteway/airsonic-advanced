@@ -176,7 +176,7 @@ public class GlobalSecurityConfig {
                     "/rest/getOpenSubsonicExtensions*").permitAll().requestMatchers("/personalSettings*",
                     "/playerSettings*", "/shareSettings*", "/credentialsSettings*").hasRole("SETTINGS")
                     .requestMatchers("/generalSettings*", "/advancedSettings*", "/userSettings*", "/musicFolderSettings*",
-                            "/databaseSettings*", "/transcodeSettings*", "/rest/startScan*").hasRole("ADMIN")
+                            "/databaseSettings*", "/transcodeSettings*", "/rest/startScan*", "/actuator/**").hasRole("ADMIN")
                     .requestMatchers("/deletePlaylist*", "/savePlaylist*").hasRole("PLAYLIST").requestMatchers("/download*").hasRole("DOWNLOAD")
                     .requestMatchers("/upload*").hasRole("UPLOAD").requestMatchers("/createShare*").hasRole("SHARE")
                     .requestMatchers("/changeCoverArt*", "/editTags*", "/editMediaDir*").hasRole("COVERART").requestMatchers("/setMusicFileInfo*").hasRole("COMMENT")

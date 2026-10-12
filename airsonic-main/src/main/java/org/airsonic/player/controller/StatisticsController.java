@@ -1,145 +1,61 @@
 package org.airsonic.player.controller;
 
-import org.airsonic.player.domain.MediaFile;
-import org.airsonic.player.domain.Player;
-import org.airsonic.player.domain.TransferStatus;
-import org.airsonic.player.domain.TransferStatus.SampleHistory;
-import org.airsonic.player.service.StatusService;
-import org.airsonic.player.service.UserService;
-import org.airsonic.player.util.FileUtil;
-import org.airsonic.player.util.StringUtil;
+import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.service.StatusReportService;
+import org.airsonic.player.service.StatusReportService.StatusReport;
+import org.airsonic.player.service.TransferHistoryService;
+import org.airsonic.player.service.TransferHistoryService.DailyTransfers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.RequestContextUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
+/**
+ * Provides the data of the status page.
+ */
 @RestController
 @RequestMapping({"/statistics", "/statistics.view"})
 public class StatisticsController {
 
     @Autowired
-    private StatusService statusService;
+    private StatusReportService statusReportService;
 
     @Autowired
-    private UserService userService;
+    private TransferHistoryService transferHistoryService;
 
-    @GetMapping("/users")
-    public List<UserDataTransferStatistics> getUserStatistics() {
-        return userService.getAllUsers().stream().map(x -> new UserDataTransferStatistics(x.getUsername(), x.getBytesStreamed(), x.getBytesDownloaded(), x.getBytesUploaded())).collect(Collectors.toList());
+    @Autowired
+    private SecurityService securityService;
+
+    /**
+     * Everything the status page shows, in one response. Administrators see every transfer and the server
+     * internals, other users only their own transfers and the library summary.
+     */
+    @GetMapping("/summary")
+    public StatusReport getSummary(HttpServletRequest request) {
+        return statusReportService.getReport(securityService.getCurrentUsername(request), request.isUserInRole("ADMIN"));
     }
 
-    @GetMapping("/transfers")
-    public List<TransferStatusHolder> getTransferStatistics(HttpServletRequest request) {
-        List<TransferStatus> streamStatuses = statusService.getAllStreamStatuses();
-        List<TransferStatus> downloadStatuses = statusService.getAllDownloadStatuses();
-        List<TransferStatus> uploadStatuses = statusService.getAllUploadStatuses();
-
-        Locale locale = RequestContextUtils.getLocale(request);
-        List<TransferStatusHolder> transferStatuses = new ArrayList<>();
-        streamStatuses.stream()
-                .filter(x -> ((x.getMillisSinceLastUpdate() / 1000L / 60L) < 60L))
-                .map(x -> new TransferStatusHolder(x, TransferType.stream, locale))
-                .forEach(transferStatuses::add);
-
-        downloadStatuses.stream()
-                .map(x -> new TransferStatusHolder(x, TransferType.download, locale))
-                .forEach(transferStatuses::add);
-
-        uploadStatuses.stream()
-                .map(x -> new TransferStatusHolder(x, TransferType.upload, locale))
-                .forEach(transferStatuses::add);
-
-        return transferStatuses;
+    /**
+     * The bytes transferred per day. Administrators get the totals of all users, other users their own.
+     *
+     * @param days the number of days, today included
+     */
+    @GetMapping("/history")
+    public TransferHistory getHistory(HttpServletRequest request, @RequestParam(name = "days", defaultValue = "30") int days) {
+        String username = request.isUserInRole("ADMIN") ? null : securityService.getCurrentUsername(request);
+        return new TransferHistory(transferHistoryService.getHistoryStart(username),
+                transferHistoryService.getDailyTransfers(days, username));
     }
 
-    public static class UserDataTransferStatistics {
-        private final String user;
-        private final long streamed;
-        private final long downloaded;
-        private final long uploaded;
-        public UserDataTransferStatistics(String user, long streamed, long downloaded, long uploaded) {
-            this.user = user;
-            this.streamed = streamed;
-            this.downloaded = downloaded;
-            this.uploaded = uploaded;
-        }
-
-        public String getUser() {
-            return user;
-        }
-        public long getStreamed() {
-            return streamed;
-        }
-        public long getDownloaded() {
-            return downloaded;
-        }
-        public long getUploaded() {
-            return uploaded;
-        }
-    }
-
-    public static class TransferStatusHolder {
-        private final TransferType transferType;
-        private final String playerDescription;
-        private final String playerType;
-        private final String username;
-        private final String path;
-        private final String bytesTransferred;
-        private final SampleHistory history;
-
-        TransferStatusHolder(TransferStatus transferStatus, TransferType transferType, Locale locale) {
-            this.transferType = transferType;
-            this.playerDescription = Optional.ofNullable(transferStatus.getPlayer()).map(Player::toString).orElse(null);
-            this.playerType = Optional.ofNullable(transferStatus.getPlayer()).map(Player::getType).orElse(null);
-            this.username = Optional.ofNullable(transferStatus.getPlayer()).map(Player::getUsername).orElse(null);
-            this.path = Optional.ofNullable(transferStatus.getMediaFile())
-                    .map(MediaFile::getRelativePath)
-                    .or(() -> Optional.ofNullable(transferStatus.getExternalFile()))
-                    .map(FileUtil::getShortPath)
-                    .orElse(null);
-            this.bytesTransferred = StringUtil.formatBytes(transferStatus.getBytesTransferred(), locale);
-            this.history = transferStatus.getHistory();
-        }
-
-        public TransferType getTransferType() {
-            return transferType;
-        }
-
-        public String getPlayerDescription() {
-            return playerDescription;
-        }
-
-        public String getPlayerType() {
-            return playerType;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public String getBytesTransferred() {
-            return bytesTransferred;
-        }
-
-        public SampleHistory getHistory() {
-            return history;
-        }
-    }
-
-    public enum TransferType {
-        stream, download, upload
+    /**
+     * @param start the first day with known transfers, null if nothing has been recorded yet
+     */
+    public record TransferHistory(LocalDate start, List<DailyTransfers> days) {
     }
 }

@@ -45,6 +45,7 @@ public class TransferStatus {
     private final SampleHistory history = new SampleHistory();
     private volatile boolean terminated;
     private volatile boolean active = true;
+    private volatile long started = System.currentTimeMillis();
 
     public TransferStatus(Player player) {
         this.player = player;
@@ -94,6 +95,15 @@ public class TransferStatus {
                 history.add(new Sample(bytesTransferred.get(), now));
             }
         }
+    }
+
+    /**
+     * Returns when the current transfer started.
+     *
+     * @return Milliseconds since the epoch.
+     */
+    public long getStarted() {
+        return started;
     }
 
     /**
@@ -235,6 +245,7 @@ public class TransferStatus {
         this.active = active;
 
         if (active) {
+            started = System.currentTimeMillis();
             setBytesSkipped(0L);
             setBytesTotal(0L);
             setBytesTransferred(0L);
