@@ -7,7 +7,9 @@
  * soon as the page is no longer in the document.
  *
  * All values are inserted as text, never as HTML: paths, tags and user names are user controlled.
+ * Values from the server are never used as property names either: lookups by name go through Maps.
  */
+/* global Chart */
 (function () {
     "use strict";
 
@@ -20,11 +22,25 @@
     var HISTORY_STORAGE_KEY = "airsonic.status.historyDays";
     // the history changes slowly: fetch it with every fifth refresh or so, and when asked to
     var HISTORY_REFRESH_MILLIS = 300000;
-    var TYPE_COLORS = {
-        stream: "rgb(230, 170, 30)",
-        download: "rgb(235, 80, 110)",
-        upload: "rgb(54, 140, 220)"
-    };
+    // the transfer types of the report: message key and CSS class name, and chart color
+    var TRANSFER_TYPES = new Map([
+        ["STREAM", {key: "stream", color: "rgb(230, 170, 30)"}],
+        ["DOWNLOAD", {key: "download", color: "rgb(235, 80, 110)"}],
+        ["UPLOAD", {key: "upload", color: "rgb(54, 140, 220)"}]
+    ]);
+    var UNKNOWN_TRANSFER_TYPE = {key: "unknown", color: "rgb(128, 128, 128)"};
+    // the series of the transfer charts
+    var TRANSFER_SERIES = [
+        {label: "streamed", type: "STREAM", bytes: function (row) {
+            return row.streamed;
+        }},
+        {label: "downloaded", type: "DOWNLOAD", bytes: function (row) {
+            return row.downloaded;
+        }},
+        {label: "uploaded", type: "UPLOAD", bytes: function (row) {
+            return row.uploaded;
+        }}
+    ];
 
     var state = null;
 
@@ -32,8 +48,7 @@
 
     function el(tag, attributes, children) {
         var element = document.createElement(tag);
-        Object.keys(attributes || {}).forEach(function (name) {
-            var value = attributes[name];
+        Object.entries(attributes || {}).forEach(function ([name, value]) {
             if (value === null || value === undefined || value === false) {
                 return;
             }
@@ -57,8 +72,8 @@
 
     function svg(tag, attributes) {
         var element = document.createElementNS("http://www.w3.org/2000/svg", tag);
-        Object.keys(attributes).forEach(function (name) {
-            element.setAttribute(name, attributes[name]);
+        Object.entries(attributes).forEach(function ([name, value]) {
+            element.setAttribute(name, value);
         });
         return element;
     }
@@ -68,14 +83,16 @@
     }
 
     function message(key) {
-        var text = state.config.messages[key];
-        if (text === undefined) {
-            text = key;
-        }
+        var text = state.messages.has(key) ? state.messages.get(key) : key;
         var args = Array.prototype.slice.call(arguments, 1);
         return text.replace(/\{(\d+)\}/g, function (match, index) {
-            return args[index] !== undefined ? args[index] : match;
+            var value = args.at(Number(index));
+            return value !== undefined ? value : match;
         });
+    }
+
+    function transferType(type) {
+        return TRANSFER_TYPES.get(type) || UNKNOWN_TRANSFER_TYPE;
     }
 
     function storageGet(key) {
@@ -132,7 +149,7 @@
         while (index < BYTE_UNITS.length - 1 && Math.abs(bytes) >= Math.pow(1024, index + 1)) {
             index++;
         }
-        return {unit: BYTE_UNITS[index], divisor: Math.pow(1024, index)};
+        return {unit: BYTE_UNITS.at(index), divisor: Math.pow(1024, index)};
     }
 
     function formatBytes(bytes) {
@@ -183,7 +200,7 @@
             ["hour", 3600], ["minute", 60], ["second", 1]];
         var unit = units.find(function (u) {
             return abs >= u[1];
-        }) || units[units.length - 1];
+        }) || units.at(-1);
         return new Intl.RelativeTimeFormat(state.config.locale, {numeric: "auto"})
             .format(Math.round(diff / unit[1]), unit[0]);
     }
@@ -252,8 +269,8 @@
                 return null;
             })
             : Promise.resolve(null);
-        var historyDue = forceHistory === true || !current.historyFetched
-            || Date.now() - current.historyFetched > HISTORY_REFRESH_MILLIS;
+        var historyAge = Date.now() - current.historyFetched;
+        var historyDue = forceHistory === true || !current.historyFetched || historyAge > HISTORY_REFRESH_MILLIS;
         // undefined: keep the history shown, it is fetched again next time
         var history = historyDue
             ? fetchJson(current.config.urls.history + "?days=" + current.historyDays).catch(function () {
@@ -455,8 +472,8 @@
                 return t.type === type;
             }).length;
         };
-        cards.push(card(message("card.streams"), formatNumber(count("stream")),
-            message("card.transfersdetail", formatNumber(count("download")), formatNumber(count("upload")))));
+        cards.push(card(message("card.streams"), formatNumber(count("STREAM")),
+            message("card.transfersdetail", formatNumber(count("DOWNLOAD")), formatNumber(count("UPLOAD")))));
 
         if (state.config.admin) {
             var sessions = report.sessions || {};
@@ -545,26 +562,25 @@
         var unitLabel = formatUnit(0, unit.unit).replace(/[\d\s.,]/g, "");
         var data = {
             labels: labels,
-            datasets: [
-                ["streamed", "stream"], ["downloaded", "download"], ["uploaded", "upload"]
-            ].map(function (pair) {
+            datasets: TRANSFER_SERIES.map(function (series) {
+                var color = transferType(series.type).color;
+                var bytes = rows.map(series.bytes);
                 return {
-                    label: message(pair[0]),
-                    data: rows.map(function (row) {
-                        return row[pair[0]] / unit.divisor;
+                    label: message(series.label),
+                    data: bytes.map(function (value) {
+                        return value / unit.divisor;
                     }),
-                    bytes: rows.map(function (row) {
-                        return row[pair[0]];
-                    }),
-                    backgroundColor: TYPE_COLORS[pair[1]].replace("rgb", "rgba").replace(")", ", 0.6)"),
-                    borderColor: TYPE_COLORS[pair[1]],
+                    bytes: bytes,
+                    backgroundColor: color.replace("rgb", "rgba").replace(")", ", 0.6)"),
+                    borderColor: color,
                     borderWidth: 1
                 };
             })
         };
         if (chart) {
             chart.data = data;
-            chart.options.scales[horizontal ? "x" : "y"].title.text = unitLabel;
+            var scales = chart.options.scales;
+            (horizontal ? scales.x : scales.y).title.text = unitLabel;
             chart.update();
             return chart;
         }
@@ -585,7 +601,7 @@
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                return context.dataset.label + ": " + formatBytes(context.dataset.bytes[context.dataIndex]);
+                                return context.dataset.label + ": " + formatBytes(context.dataset.bytes.at(context.dataIndex));
                             }
                         }
                     }
@@ -597,13 +613,14 @@
 
     function renderTransfers() {
         var rows = state.report.transfers.map(function (t) {
+            var type = transferType(t.type);
             var stateText = t.active ? (t.idleMillis > 15000 ? message("idle") : null) : message("finished");
             var progress = t.progress === null
                 ? el("td", {className: "status-muted", text: "–"})
                 : el("td", {}, [progressBar(t.progress, message("progress")), el("span", {className: "status-small", text: formatPercent(t.progress)})]);
             return el("tr", {className: t.active ? null : "status-inactive"}, [
                 el("td", {}, [
-                    el("span", {className: "status-type status-type-" + t.type, text: message(t.type)}),
+                    el("span", {className: "status-type status-type-" + type.key, text: message(type.key)}),
                     stateText ? el("div", {className: "status-small status-muted", text: stateText}) : null
                 ]),
                 el("td", {text: t.username || message("unknown")}),
@@ -614,7 +631,7 @@
                 el("td", {className: "status-number", text: formatBytes(t.bytesTransferred)}),
                 el("td", {className: "status-bitrate"}, [
                     el("span", {className: "status-number", text: formatKbps(t.currentKbps)}),
-                    sparkline(t.bitrate, TYPE_COLORS[t.type])
+                    sparkline(t.bitrate, type.color)
                 ]),
                 timeCell(t.started)
             ]);
@@ -671,8 +688,9 @@
 
     function flattenHealth(components, prefix) {
         var result = [];
-        Object.keys(components || {}).sort().forEach(function (name) {
-            var component = components[name];
+        Object.entries(components || {}).sort(function (a, b) {
+            return a[0].localeCompare(b[0]);
+        }).forEach(function ([name, component]) {
             if (component.components) {
                 result = result.concat(flattenHealth(component.components, prefix + name + "/"));
             } else {
@@ -683,13 +701,12 @@
     }
 
     function detailsList(details) {
-        var keys = Object.keys(details || {});
-        if (keys.length === 0) {
+        var entries = Object.entries(details || {});
+        if (entries.length === 0) {
             return el("span", {className: "status-muted", text: "–"});
         }
         var list = el("dl", {className: "status-details"});
-        keys.forEach(function (key) {
-            var value = details[key];
+        entries.forEach(function ([key, value]) {
             if (/bytes|total|free|threshold/i.test(key) && typeof value === "number") {
                 value = formatBytes(value);
             } else if (typeof value === "object" && value !== null) {
@@ -727,8 +744,7 @@
         if (!window.confirm(question)) {
             return;
         }
-        var headers = {};
-        headers[state.config.csrf.header] = state.config.csrf.token;
+        var headers = [[state.config.csrf.header, state.config.csrf.token]];
         fetch(url, {method: "DELETE", credentials: "same-origin", headers: headers}).then(function (response) {
             if (!response.ok) {
                 throw new Error(response.status + " " + response.statusText);
@@ -849,7 +865,7 @@
                 ]);
             }
             return el("tr", {}, [
-                el("td", {text: storage.kind === "home" ? message("home") : (storage.name || message("unknown"))}),
+                el("td", {text: storage.kind === "HOME" ? message("home") : (storage.name || message("unknown"))}),
                 el("td", {className: "status-path", text: storage.path, title: storage.path}),
                 el("td", {}, [el("span", {className: "status-pill status-pill-" + status[0], text: status[1]})]),
                 space
@@ -901,8 +917,9 @@
 
     function renderSessions() {
         var sessions = state.report.sessions || {};
-        ["current", "created", "expired", "rejected"].forEach(function (key) {
-            byId("statusSessions-" + key).textContent = formatNumber(sessions[key]);
+        [["current", sessions.current], ["created", sessions.created], ["expired", sessions.expired],
+            ["rejected", sessions.rejected]].forEach(function ([key, value]) {
+            byId("statusSessions-" + key).textContent = formatNumber(value);
         });
     }
 
@@ -939,6 +956,7 @@
         var storedDays = Number(storageGet(HISTORY_STORAGE_KEY));
         state = {
             config: config,
+            messages: new Map(Object.entries(config.messages)),
             root: byId("statusPage"),
             interval: INTERVALS.indexOf(stored) >= 0 ? stored : DEFAULT_INTERVAL,
             paused: false,

@@ -1,11 +1,10 @@
 package org.airsonic.player.controller;
 
 import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.service.StatusReport;
 import org.airsonic.player.service.StatusReportService;
-import org.airsonic.player.service.StatusReportService.StatusReport;
 import org.airsonic.player.service.TransferHistoryService;
 import org.airsonic.player.service.TransferHistoryService.DailyTransfers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,14 +22,16 @@ import java.util.List;
 @RequestMapping({"/statistics", "/statistics.view"})
 public class StatisticsController {
 
-    @Autowired
-    private StatusReportService statusReportService;
+    private final StatusReportService statusReportService;
+    private final TransferHistoryService transferHistoryService;
+    private final SecurityService securityService;
 
-    @Autowired
-    private TransferHistoryService transferHistoryService;
-
-    @Autowired
-    private SecurityService securityService;
+    public StatisticsController(StatusReportService statusReportService, TransferHistoryService transferHistoryService,
+            SecurityService securityService) {
+        this.statusReportService = statusReportService;
+        this.transferHistoryService = transferHistoryService;
+        this.securityService = securityService;
+    }
 
     /**
      * Everything the status page shows, in one response. Administrators see every transfer and the server

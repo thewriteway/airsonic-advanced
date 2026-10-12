@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "management.endpoint.health.show-details=when-authorized",
     "management.endpoint.health.roles=ADMIN"})
 @AutoConfigureMockMvc
-public class StatusSecurityTest {
+class StatusSecurityTest {
 
     @Autowired
     private MockMvc mvc;
@@ -39,13 +39,13 @@ public class StatusSecurityTest {
     private static Path tempDir;
 
     @BeforeAll
-    public static void setup() {
+    static void setup() {
         System.setProperty("airsonic.home", tempDir.toString());
     }
 
     @Test
     @WithMockUser(username = "someuser")
-    public void actuatorIsForbiddenForRegularUsers() throws Exception {
+    void actuatorIsForbiddenForRegularUsers() throws Exception {
         mvc.perform(get("/actuator/caches")).andExpect(status().isForbidden());
         mvc.perform(get("/actuator/customscheduledtasks")).andExpect(status().isForbidden());
         mvc.perform(get("/actuator/pathwatcher")).andExpect(status().isForbidden());
@@ -55,21 +55,21 @@ public class StatusSecurityTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
-    public void actuatorIsAvailableToAdministrators() throws Exception {
+    void actuatorIsAvailableToAdministrators() throws Exception {
         mvc.perform(get("/actuator/customscheduledtasks")).andExpect(status().isOk());
         mvc.perform(get("/actuator/pathwatcher")).andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
-    public void clearingCachesRequiresCsrfToken() throws Exception {
+    void clearingCachesRequiresCsrfToken() throws Exception {
         mvc.perform(delete("/actuator/caches")).andExpect(status().isForbidden());
         mvc.perform(delete("/actuator/caches").with(csrf())).andExpect(status().is2xxSuccessful());
     }
 
     @Test
     @WithMockUser(username = "someuser")
-    public void regularUsersOnlySeeTheirOwnStatistics() throws Exception {
+    void regularUsersOnlySeeTheirOwnStatistics() throws Exception {
         mvc.perform(get("/statistics/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.admin").value(false))
@@ -84,7 +84,7 @@ public class StatusSecurityTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
-    public void administratorsSeeAllStatistics() throws Exception {
+    void administratorsSeeAllStatistics() throws Exception {
         mvc.perform(get("/statistics/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.admin").value(true))
@@ -97,12 +97,12 @@ public class StatusSecurityTest {
 
     @Test
     @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
-    public void administratorsSeeTheServerSections() throws Exception {
+    void administratorsSeeTheServerSections() throws Exception {
         mvc.perform(get("/statistics/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.system.version").exists())
                 .andExpect(jsonPath("$.system.heapUsed").isNumber())
-                .andExpect(jsonPath("$.storage[0].kind").value("home"))
+                .andExpect(jsonPath("$.storage[0].kind").value("HOME"))
                 .andExpect(jsonPath("$.network.upnpPort").isNumber())
                 .andExpect(jsonPath("$.playback.activePlayers").isNumber())
                 .andExpect(jsonPath("$.log").exists());
@@ -110,7 +110,7 @@ public class StatusSecurityTest {
 
     @Test
     @WithMockUser(username = "someuser")
-    public void regularUsersDoNotSeeTheServerSections() throws Exception {
+    void regularUsersDoNotSeeTheServerSections() throws Exception {
         mvc.perform(get("/statistics/summary"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.system").value(nullValue()))
@@ -122,7 +122,7 @@ public class StatusSecurityTest {
 
     @Test
     @WithMockUser(username = "someuser")
-    public void historyHasOneEntryPerDay() throws Exception {
+    void historyHasOneEntryPerDay() throws Exception {
         mvc.perform(get("/statistics/history").param("days", "7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.days.length()").value(7))
@@ -132,13 +132,13 @@ public class StatusSecurityTest {
 
     @Test
     @WithMockUser(username = "someuser")
-    public void statusPageHidesServerInternalsFromRegularUsers() throws Exception {
+    void statusPageHidesServerInternalsFromRegularUsers() throws Exception {
         mvc.perform(get("/status")).andExpect(status().isOk()).andExpect(model().attribute("admin", false));
     }
 
     @Test
     @WithMockUser(username = "admin", roles = {"USER", "ADMIN"})
-    public void statusPageShowsServerInternalsToAdministrators() throws Exception {
+    void statusPageShowsServerInternalsToAdministrators() throws Exception {
         mvc.perform(get("/status")).andExpect(status().isOk()).andExpect(model().attribute("admin", true));
     }
 }

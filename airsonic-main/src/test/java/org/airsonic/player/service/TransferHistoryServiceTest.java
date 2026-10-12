@@ -25,7 +25,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TransferHistoryServiceTest {
+class TransferHistoryServiceTest {
 
     private static final LocalDate DAY_1 = LocalDate.of(2026, 10, 10);
 
@@ -36,7 +36,7 @@ public class TransferHistoryServiceTest {
     private UserService userService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         repository = mock(UserTransferSnapshotRepository.class);
         when(repository.save(any())).thenAnswer(invocation -> {
             UserTransferSnapshot snapshot = invocation.getArgument(0);
@@ -85,7 +85,7 @@ public class TransferHistoryServiceTest {
     }
 
     @Test
-    public void historyStartsTheDayItIsFirstRecorded() {
+    void historyStartsTheDayItIsFirstRecorded() {
         alice.setBytesStreamed(5000);
         TransferHistoryService service = serviceOn(DAY_1);
         assertNull(service.getHistoryStart(null));
@@ -102,7 +102,7 @@ public class TransferHistoryServiceTest {
     }
 
     @Test
-    public void dailyTransfersAreTheGrowthOfTheTotals() {
+    void dailyTransfersAreTheGrowthOfTheTotals() {
         alice.setBytesStreamed(1000);
         serviceOn(DAY_1).snapshot();
 
@@ -129,7 +129,7 @@ public class TransferHistoryServiceTest {
     }
 
     @Test
-    public void oldSnapshotsAreDropped() {
+    void oldSnapshotsAreDropped() {
         rows.add(new UserTransferSnapshot("alice", DAY_1.minusDays(TransferHistoryService.MAX_DAYS + 5L), 0, 0, 0));
 
         serviceOn(DAY_1).snapshot();

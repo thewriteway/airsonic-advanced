@@ -15,8 +15,9 @@
         color: var(--shell-link-color, inherit); font: inherit; }
       .status-sections button:hover { text-decoration: underline; }
       .status-error { color: #c0392b; }
-      .status-message { margin: 0.75em 0; padding: 0.5em 0.75em; border-radius: 4px;
+      .status-message { display: block; margin: 0.75em 0; padding: 0.5em 0.75em; border-radius: 4px;
         border: 1px solid color-mix(in srgb, currentColor 25%, transparent); }
+      .status-message[hidden] { display: none; }
       .status-banner { margin: 0.5em 0 1em; padding: 0.6em 0.9em; border-radius: 4px; color: #fff;
         background: #c0392b; }
       .status-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.75em;
@@ -43,14 +44,15 @@
       .status-type { display: inline-block; padding: 0.05em 0.5em; border-radius: 1em; font-size: 0.85em;
         color: #000; }
       .status-type-stream { background: rgb(230, 170, 30); }
-      .status-type-download { background: rgb(235, 80, 110); color: #fff; }
-      .status-type-upload { background: rgb(54, 140, 220); color: #fff; }
+      /* badge colors keep a contrast of at least 4.5:1 with their text */
+      .status-type-download { background: #b8294e; color: #fff; }
+      .status-type-upload { background: #1d64a6; color: #fff; }
       .status-pill { display: inline-block; padding: 0.05em 0.6em; border-radius: 1em; font-size: 0.85em;
-        color: #fff; background: #7f8c8d; margin-left: 0.3em; }
+        color: #fff; background: #5f6b6c; margin-left: 0.3em; }
       .status-card-value .status-pill { font-size: 0.6em; margin-left: 0; }
-      .status-pill-up { background: #27ae60; }
+      .status-pill-up { background: #1e7b43; }
       .status-pill-down { background: #c0392b; }
-      .status-pill-out_of_service, .status-pill-warn { background: #d68910; }
+      .status-pill-out_of_service, .status-pill-warn { background: #9a5a00; }
       .status-bar { display: inline-block; width: 6em; height: 0.6em; margin-right: 0.5em; vertical-align: middle;
         border-radius: 0.3em; overflow: hidden; background: color-mix(in srgb, currentColor 15%, transparent); }
       .status-bar-fill { height: 100%; background: #27ae60; }
@@ -62,7 +64,7 @@
       .status-kv .status-bar { display: block; width: 100%; margin-top: 0.3em; }
       .status-space { white-space: nowrap; }
       .status-logger { max-width: 14em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .status-log-message { word-break: break-word; }
+      .status-log-message { overflow-wrap: anywhere; }
       .status-history-controls { display: flex; flex-wrap: wrap; gap: 0.5em 1.5em; align-items: center;
         margin-bottom: 0.5em; }
       .status-bitrate { white-space: nowrap; }
@@ -219,7 +221,7 @@
     </div>
 </div>
 
-<div id="statusMessage" class="status-message" role="status" aria-live="polite" hidden></div>
+<output id="statusMessage" class="status-message" aria-live="polite" hidden></output>
 
 <section id="status-overview">
     <div id="statusCards" class="status-cards"></div>

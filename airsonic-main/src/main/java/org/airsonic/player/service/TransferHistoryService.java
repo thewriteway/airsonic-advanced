@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -90,9 +89,9 @@ public class TransferHistoryService {
     }
 
     /**
-     * Saves today's totals of every user and drops the snapshots that are too old to be shown.
+     * Saves today's totals of every user and drops the snapshots that are too old to be shown. Each snapshot is
+     * saved on its own: a failure leaves the others, and the next run overwrites today's totals anyway.
      */
-    @Transactional
     public void snapshot() {
         LocalDate today = LocalDate.now(clock);
         for (User user : userService.getAllUsers()) {
@@ -115,15 +114,27 @@ public class TransferHistoryService {
      * @param username the user, or null for all users together
      */
     public List<DailyTransfers> getDailyTransfers(int days, String username) {
-        int count = Math.max(1, Math.min(MAX_DAYS, days));
+        int count = Math.clamp(days, 1, MAX_DAYS);
         LocalDate today = LocalDate.now(clock);
         LocalDate first = today.minusDays(count - 1L);
-        // one more day for the baseline of the first day
+        Map<LocalDate, long[]> perDay = sumDailyGrowth(getTotals(first, today, username), first);
+
+        List<DailyTransfers> result = new ArrayList<>(count);
+        for (LocalDate date = first; !date.isAfter(today); date = date.plusDays(1)) {
+            long[] day = perDay.getOrDefault(date, new long[3]);
+            result.add(new DailyTransfers(date, day[0], day[1], day[2]));
+        }
+        return result;
+    }
+
+    /**
+     * The totals (streamed, downloaded, uploaded) per user and day, from the day before {@code first}, which is the
+     * baseline of the first day, to today. Today's totals are the live counters, which are newer than its snapshot.
+     */
+    private Map<String, TreeMap<LocalDate, long[]>> getTotals(LocalDate first, LocalDate today, String username) {
         List<UserTransferSnapshot> snapshots = username == null
                 ? repository.findBySnapshotDateGreaterThanEqualOrderBySnapshotDate(first.minusDays(1))
                 : repository.findByUsernameAndSnapshotDateGreaterThanEqualOrderBySnapshotDate(username, first.minusDays(1));
-
-        // totals per user and day; today comes from the live counters, which are newer than its snapshot
         Map<String, TreeMap<LocalDate, long[]>> totals = new HashMap<>();
         for (UserTransferSnapshot snapshot : snapshots) {
             totals.computeIfAbsent(snapshot.getUsername(), u -> new TreeMap<>()).put(snapshot.getSnapshotDate(),
@@ -135,29 +146,29 @@ public class TransferHistoryService {
                 userTotals.put(today, new long[] {user.getBytesStreamed(), user.getBytesDownloaded(), user.getBytesUploaded()});
             }
         }
+        return totals;
+    }
 
+    /** The growth of the totals per day from {@code first} on, summed over the users. */
+    private static Map<LocalDate, long[]> sumDailyGrowth(Map<String, TreeMap<LocalDate, long[]>> totals, LocalDate first) {
         Map<LocalDate, long[]> perDay = new TreeMap<>();
         for (TreeMap<LocalDate, long[]> userTotals : totals.values()) {
             long[] previous = null;
             for (Map.Entry<LocalDate, long[]> entry : userTotals.entrySet()) {
-                long[] current = entry.getValue();
                 if (previous != null && !entry.getKey().isBefore(first)) {
-                    long[] day = perDay.computeIfAbsent(entry.getKey(), d -> new long[3]);
-                    for (int i = 0; i < 3; i++) {
-                        // counters only grow, unless a user was deleted and created again
-                        day[i] += Math.max(0, current[i] - previous[i]);
-                    }
+                    addGrowth(perDay.computeIfAbsent(entry.getKey(), d -> new long[3]), previous, entry.getValue());
                 }
-                previous = current;
+                previous = entry.getValue();
             }
         }
+        return perDay;
+    }
 
-        List<DailyTransfers> result = new ArrayList<>(count);
-        for (LocalDate date = first; !date.isAfter(today); date = date.plusDays(1)) {
-            long[] day = perDay.getOrDefault(date, new long[3]);
-            result.add(new DailyTransfers(date, day[0], day[1], day[2]));
+    private static void addGrowth(long[] day, long[] previous, long[] current) {
+        for (int i = 0; i < day.length; i++) {
+            // counters only grow, unless a user was deleted and created again
+            day[i] += Math.max(0, current[i] - previous[i]);
         }
-        return result;
     }
 
     /**
