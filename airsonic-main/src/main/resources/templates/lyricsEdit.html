@@ -22,12 +22,11 @@
     <form th:action="@{/lyrics}" method="post" th:object="${form}">
         <input type="hidden" th:field="*{id}" />
         <div id="lyricsText">
-            <textarea name="lyrics" rows="20" style="width:100%; box-sizing:border-box;" th:field="*{lyrics}" tabindex="2"></textarea>
+            <textarea name="lyrics" rows="20" style="width:100%; box-sizing:border-box;" th:field="*{lyrics}"></textarea>
         </div>
         <div style="text-align:left; margin-top:1em;">
-            <button type="submit" tabindex="3" th:text="#{common.save}"></button>
-            <button type="button" data-on-click="navigate" th:data-href="@{/lyrics(id=${view.id})}"
-                    tabindex="4" th:text="#{common.cancel}"></button>
+            <button type="submit" th:text="#{common.save}"></button>
+            <button type="button" data-on-click="navigate" th:data-href="@{/lyrics(id=${view.id})}" th:text="#{common.cancel}"></button>
         </div>
     </form>
 </div>

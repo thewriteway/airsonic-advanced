@@ -63,17 +63,15 @@
     <table>
         <tr>
             <td th:text="#{lyrics.artist}"></td>
-            <td style="padding-left:0.50em"><input id="artist" type="text" size="40" th:value="${view.artist}" tabindex="1"/></td>
-            <td style="padding-left:0.75em"><input type="submit" th:value="#{lyrics.search}" style="width:6em"
-                                                   tabindex="3"/></td>
+            <td style="padding-left:0.50em"><input id="artist" type="text" size="40" th:value="${view.artist}"/></td>
+            <td style="padding-left:0.75em"><input type="submit" th:value="#{lyrics.search}" style="width:6em"/></td>
         </tr>
         <tr>
             <td th:text="#{lyrics.song}"></td>
-            <td style="padding-left:0.50em"><input id="song" type="text" size="40" th:value="${view.song}" tabindex="2"/></td>
+            <td style="padding-left:0.50em"><input id="song" type="text" size="40" th:value="${view.song}"/></td>
             <td style="padding-left:0.75em">
                 <button type="button" data-on-click="navigate" th:data-href="@{/lyrics/edit(id=${view.id})}"
-                        style="width:6em; display:inline-block; text-align:center;"
-                        tabindex="4" th:text="#{common.edit}">
+                        style="width:6em; display:inline-block; text-align:center;" th:text="#{common.edit}">
                 </button>
             </td>
         </tr>

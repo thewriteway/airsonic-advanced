@@ -6,10 +6,10 @@
 
     <script type="text/javascript" th:inline="javascript">
         Page.define("home", function (page) {
-            if (!/*[[${model.musicFoldersExist}]]*/ true) {
+            if (page.root.dataset.musicFoldersExist !== "true") {
                 $().toastmessage("showNoticeToast", /*[[#{top.missing}]]*/ "");
             }
-            if (/*[[${model.isIndexBeingCreated}]]*/ false) {
+            if (page.root.dataset.indexBeingCreated === "true") {
                 $().toastmessage("showNoticeToast", /*[[#{home.scan}]]*/ "");
             }
 
@@ -25,7 +25,8 @@
         });
     </script>
 </head>
-<body class="mainframe bgcolor1" data-page="home">
+<body class="mainframe bgcolor1" data-page="home"
+      th:data-music-folders-exist="${model.musicFoldersExist}" th:data-index-being-created="${model.isIndexBeingCreated}">
 <h1 th:if="${!#strings.isEmpty(model.welcomeTitle)}">
     <img th:src="${themes?.get('homeImage') ?: 'icons/default_light/home.svg'}" alt="">
     <span style="vertical-align: middle" th:text="${model.welcomeTitle}">Welcome</span>

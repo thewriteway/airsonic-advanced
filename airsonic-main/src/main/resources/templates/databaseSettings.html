@@ -5,9 +5,7 @@
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:inline="javascript">
-        Page.define("databaseSettings", function (page) {
-            var progressLabel = /*[[#{more.upload.progress}]]*/ "% complete";
-
+        (function () {
             function updateShownOptions() {
                 $(".hideawayDatabaseOptions").hide();
                 var value = $('select#configType').val();
@@ -19,31 +17,6 @@
                     $("#nonBUILTINDatabaseOptions").show();
                 }
             }
-
-            function uploadStatus(uploadInfo) {
-                var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
-
-                if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
-                    if (progressBarHolder.length != 0) {
-                        // remove it
-                        progressBarHolder.remove();
-                    }
-                } else {
-                    if (progressBarHolder.length == 0) {
-                        // create it
-                        progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
-                        $("#progressBars").append(progressBarHolder);
-                    }
-
-                    var progressBarContent = progressBarHolder.find(".progress-bar-content");
-                    var progressText = progressBarHolder.find(".progress-text");
-
-                    var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
-                    progressBarContent.width(parseInt(percent * 3.5));
-                    progressText.text(percent + progressLabel);
-                }
-            }
-
             function status(button, label) {
                 return function (msg) {
                     if (msg.body == "ended") {
@@ -53,29 +26,57 @@
                 };
             }
 
-            page.actions({
-                updateShownOptions: updateShownOptions,
-                backupDB() {
-                    $("#backupdb").prop("disabled", true);
-                    $.get("databaseSettings/backup");
-                },
-                exportDB() {
-                    $("#exportdb").prop("disabled", true);
-                    Page.navigate("databaseSettings/export");
-                },
-                importDB() {
-                    $("#importdb").prop("disabled", true);
-                }
-            });
+            Page.define("databaseSettings", function (page) {
+                var progressLabel = /*[[#{more.upload.progress}]]*/ "% complete";
 
-            updateShownOptions();
-            page.subscribe({
-                '/user/queue/uploads/status': msg => uploadStatus(JSON.parse(msg.body)),
-                '/topic/backupStatus': status("#backupdb", "Backup DB"),
-                '/topic/importStatus': status("#importdb", "Import DB"),
-                '/topic/exportStatus': status("#exportdb", "Export DB")
+                function uploadStatus(uploadInfo) {
+                    var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
+
+                    if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
+                        if (progressBarHolder.length != 0) {
+                            // remove it
+                            progressBarHolder.remove();
+                        }
+                    } else {
+                        if (progressBarHolder.length == 0) {
+                            // create it
+                            progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
+                            $("#progressBars").append(progressBarHolder);
+                        }
+
+                        var progressBarContent = progressBarHolder.find(".progress-bar-content");
+                        var progressText = progressBarHolder.find(".progress-text");
+
+                        var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
+                        progressBarContent.width(Math.round(percent * 3.5));
+                        progressText.text(percent + progressLabel);
+                    }
+                }
+
+                page.actions({
+                    updateShownOptions: updateShownOptions,
+                    backupDB() {
+                        $("#backupdb").prop("disabled", true);
+                        $.get("databaseSettings/backup");
+                    },
+                    exportDB() {
+                        $("#exportdb").prop("disabled", true);
+                        Page.navigate("databaseSettings/export");
+                    },
+                    importDB() {
+                        $("#importdb").prop("disabled", true);
+                    }
+                });
+
+                updateShownOptions();
+                page.subscribe({
+                    '/user/queue/uploads/status': msg => uploadStatus(JSON.parse(msg.body)),
+                    '/topic/backupStatus': status("#backupdb", "Backup DB"),
+                    '/topic/importStatus': status("#importdb", "Import DB"),
+                    '/topic/exportStatus': status("#exportdb", "Export DB")
+                });
             });
-        });
+        })();
     </script>
 </head>
 <body class="mainframe bgcolor1 settings-page" data-page="databaseSettings">
@@ -87,9 +88,9 @@
 
     <table style="white-space:nowrap" class="indent">
         <tr>
-            <td th:text="#{databasesettings.configtype}"></td>
+            <td><label for="configType" th:text="#{databasesettings.configtype}">Type</label></td>
             <td>
-                <select th:field="*{configType}" style="width:12em" data-on-change="updateShownOptions">
+                <select id="configType" th:field="*{configType}" style="width:12em" data-on-change="updateShownOptions">
                     <option value="BUILTIN" th:text="Built-in"></option>
                     <option value="EXTERNAL" th:text="External"></option>
                     <option value="JNDI" th:text="JNDI"></option>

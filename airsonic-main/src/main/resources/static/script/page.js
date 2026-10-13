@@ -26,54 +26,55 @@
 
     var definitions = new Map();
     var instances = new WeakMap();
-    var globalActions = Object.create(null);
+    // actions by name; Maps, so that names taken from the markup never reach object properties
+    var globalActions = new Map();
 
     /* Actions every page can use */
-    globalActions.historyBack = function () {
+    globalActions.set("historyBack", function () {
         window.history.back();
         return false;
-    };
-    globalActions.closeWindow = function () {
+    });
+    globalActions.set("closeWindow", function () {
         window.close();
         return false;
-    };
-    globalActions.reloadApplication = function () {
+    });
+    globalActions.set("reloadApplication", function () {
         window.top.location.reload();
         return false;
-    };
+    });
     /**
      * Asks for confirmation (data-confirm) before a submit button submits its form. Put it on the
      * button: the form is submitted again with the same submitter once confirmed.
      */
-    globalActions.confirmSubmit = function (button) {
+    globalActions.set("confirmSubmit", function (button) {
         confirmDialog(button.getAttribute("data-confirm")).then(function (ok) {
             if (ok) {
                 button.form.requestSubmit(button);
             }
         });
         return false;
-    };
+    });
     /** Closes the <dialog> around the element. */
-    globalActions.closeDialog = function (element) {
+    globalActions.set("closeDialog", function (element) {
         element.closest("dialog").close();
         return false;
-    };
+    });
     /** Navigates the main page (or this window outside the shell) to the value of a select. */
-    globalActions.navigateToValue = function (select) {
+    globalActions.set("navigateToValue", function (select) {
         navigate(select.value);
-    };
+    });
     /** Navigates the main page (or this window outside the shell) to data-href or the link's href. */
-    globalActions.navigate = function (element) {
+    globalActions.set("navigate", function (element) {
         navigate(element.getAttribute("data-href") || element.getAttribute("href"));
         return false;
-    };
+    });
     var sequence = 0;
 
     function PageInstance(name, root) {
         this.name = name;
         this.root = root;
         this.id = "page:" + name + ":" + (++sequence);
-        this.handlers = Object.create(null);
+        this.handlers = new Map();
         this.cleanups = [];
         this.timers = new Set();
         this.destroyed = false;
@@ -81,8 +82,16 @@
 
     /** Registers actions for data-on-* handlers inside this page. */
     PageInstance.prototype.actions = function (actions) {
-        Object.assign(this.handlers, actions);
+        Object.entries(actions).forEach(function (entry) {
+            this.handlers.set(entry[0], entry[1]);
+        }, this);
         return this;
+    };
+
+    /** Runs one of the page's actions by name, as a data-on-* attribute would. */
+    PageInstance.prototype.run = function (name, element, event) {
+        var handler = this.handlers.get(name);
+        return typeof handler === "function" ? handler.call(this, element, event) : undefined;
     };
 
     /** Runs a callback when the page is unmounted. */
@@ -194,14 +203,13 @@
     function findAction(element, name) {
         for (var node = element; node; node = node.parentElement) {
             var page = instances.get(node);
-            if (page && typeof page.handlers[name] === "function") {
-                return {handler: page.handlers[name], page: page};
+            var handler = page && page.handlers.get(name);
+            if (typeof handler === "function") {
+                return {handler: handler, page: page};
             }
         }
-        if (typeof globalActions[name] === "function") {
-            return {handler: globalActions[name], page: null};
-        }
-        return null;
+        var global = globalActions.get(name);
+        return typeof global === "function" ? {handler: global, page: null} : null;
     }
 
     function dispatch(event) {
@@ -341,7 +349,9 @@
         },
         /** Registers actions available everywhere (used by the persistent parts of the shell). */
         actions: function (actions) {
-            Object.assign(globalActions, actions);
+            Object.entries(actions).forEach(function (entry) {
+                globalActions.set(entry[0], entry[1]);
+            });
         },
         mount: mount,
         unmount: unmount,

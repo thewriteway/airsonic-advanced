@@ -2,6 +2,7 @@
  * Keyboard shortcuts of the application shell (see more.html for the list). They act on the play
  * queue and the shell, so they are only bound in the shell document.
  */
+/* global Mousetrap, Page, playQueue */
 (function () {
     "use strict";
 

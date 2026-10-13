@@ -9,7 +9,7 @@
  * All values are inserted as text, never as HTML: paths, tags and user names are user controlled.
  * Values from the server are never used as property names either: lookups by name go through Maps.
  */
-/* global Chart */
+/* global Chart, Page */
 (function () {
     "use strict";
 

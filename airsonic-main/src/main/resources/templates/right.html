@@ -2,79 +2,80 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <script type="text/javascript" th:inline="javascript">
-        Page.define("right", function (page) {
-            var nowPlayingStatusUrl = /*[[@{/nowPlaying/status}]]*/ "/nowPlaying/status";
-            var showNowPlaying = /*[[${model.showNowPlaying}]]*/ false;
-            // status updates are applied one at a time, in the order they arrive
-            var pending = Promise.resolve();
-
+        (function () {
             function scanningStatus(scanInfo) {
                 $("#scanCount").text(scanInfo.count);
                 $("#scanningStatus").toggle(scanInfo.scanning);
             }
-
-            function enqueue(task) {
-                pending = pending.then(function () {
-                    return page.destroyed ? null : task();
-                }).catch(e => console.log("Could not update now playing", e));
-                return pending;
-            }
-
-            function populate(statuses, table) {
-                enqueue(() => {
-                    $('#right' + table + 'Table').empty();
-                    updateTableVisibility(table);
-                });
-                statuses.forEach(status => enqueue(() => addStatus(status, table)));
-            }
-
-            async function addStatus(status, table) {
-                const tableRoot = document.getElementById('right' + table + 'Table');
-                if (!tableRoot) {
-                    return;
-                }
-                const res = await fetch(nowPlayingStatusUrl + "?id=" + status.transferId, { credentials: 'same-origin' });
-                if (!res.ok) {
-                    return;
-                }
-                const tpl = document.createElement('template');
-                tpl.innerHTML = (await res.text()).trim();
-
-                tableRoot.querySelectorAll('.playstatus-' + status.transferId).forEach(el => el.remove());
-                tableRoot.append(tpl.content);
-                updateTableVisibility(table);
-            }
-
-            function removeStatus(status, table) {
-                const tableRoot = document.getElementById('right' + table + 'Table');
-                if (!tableRoot) {
-                    return;
-                }
-                tableRoot.querySelectorAll('.playstatus-' + status.transferId + '.mediafile-' + status.mediaFileId).forEach(el => el.remove());
-                updateTableVisibility(table);
-            }
-
             function updateTableVisibility(table) {
                 $('#right' + table).toggle($('#right' + table + 'Table').find('tr').length > 0);
             }
 
-            var sub = {
-                // no need to populate initial because the updates will occur frequently enough and are self-sufficient
-                '/topic/scanStatus': msg => scanningStatus(JSON.parse(msg.body))
-            };
-            if (showNowPlaying) {
-                Object.assign(sub, {
-                    '/topic/nowPlaying/current/add': msg => enqueue(() => addStatus(JSON.parse(msg.body), 'NowPlaying')),
-                    '/topic/nowPlaying/current/remove': msg => enqueue(() => removeStatus(JSON.parse(msg.body), 'NowPlaying')),
-                    '/topic/nowPlaying/recent/add': msg => enqueue(() => addStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
-                    '/topic/nowPlaying/recent/remove': msg => enqueue(() => removeStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
-                    // Add existing (initial population, one time)
-                    '/app/nowPlaying/current': msg => populate(JSON.parse(msg.body), 'NowPlaying'),
-                    '/app/nowPlaying/recent': msg => populate(JSON.parse(msg.body), 'RecentlyPlayed')
-                });
-            }
-            page.subscribe(sub);
-        });
+            Page.define("right", function (page) {
+                var nowPlayingStatusUrl = /*[[@{/nowPlaying/status}]]*/ "/nowPlaying/status";
+                var showNowPlaying = /*[[${model.showNowPlaying}]]*/ false;
+                // status updates are applied one at a time, in the order they arrive
+                var pending = Promise.resolve();
+
+                function enqueue(task) {
+                    pending = pending.then(function () {
+                        return page.destroyed ? null : task();
+                    }).catch(e => console.log("Could not update now playing", e));
+                    return pending;
+                }
+
+                function populate(statuses, table) {
+                    enqueue(() => {
+                        $('#right' + table + 'Table').empty();
+                        updateTableVisibility(table);
+                    });
+                    statuses.forEach(status => enqueue(() => addStatus(status, table)));
+                }
+
+                async function addStatus(status, table) {
+                    const tableRoot = document.getElementById('right' + table + 'Table');
+                    if (!tableRoot) {
+                        return;
+                    }
+                    const res = await fetch(nowPlayingStatusUrl + "?id=" + status.transferId, { credentials: 'same-origin' });
+                    if (!res.ok) {
+                        return;
+                    }
+                    const tpl = document.createElement('template');
+                    tpl.innerHTML = (await res.text()).trim();
+
+                    tableRoot.querySelectorAll('.playstatus-' + status.transferId).forEach(el => el.remove());
+                    tableRoot.append(tpl.content);
+                    updateTableVisibility(table);
+                }
+
+                function removeStatus(status, table) {
+                    const tableRoot = document.getElementById('right' + table + 'Table');
+                    if (!tableRoot) {
+                        return;
+                    }
+                    tableRoot.querySelectorAll('.playstatus-' + status.transferId + '.mediafile-' + status.mediaFileId).forEach(el => el.remove());
+                    updateTableVisibility(table);
+                }
+
+                var sub = {
+                    // no need to populate initial because the updates will occur frequently enough and are self-sufficient
+                    '/topic/scanStatus': msg => scanningStatus(JSON.parse(msg.body))
+                };
+                if (showNowPlaying) {
+                    Object.assign(sub, {
+                        '/topic/nowPlaying/current/add': msg => enqueue(() => addStatus(JSON.parse(msg.body), 'NowPlaying')),
+                        '/topic/nowPlaying/current/remove': msg => enqueue(() => removeStatus(JSON.parse(msg.body), 'NowPlaying')),
+                        '/topic/nowPlaying/recent/add': msg => enqueue(() => addStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
+                        '/topic/nowPlaying/recent/remove': msg => enqueue(() => removeStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
+                        // Add existing (initial population, one time)
+                        '/app/nowPlaying/current': msg => populate(JSON.parse(msg.body), 'NowPlaying'),
+                        '/app/nowPlaying/recent': msg => populate(JSON.parse(msg.body), 'RecentlyPlayed')
+                    });
+                }
+                page.subscribe(sub);
+            });
+        })();
     </script>
 </head>
 <body class="bgcolor1 rightframe" style="padding-top:2em" data-page="right">

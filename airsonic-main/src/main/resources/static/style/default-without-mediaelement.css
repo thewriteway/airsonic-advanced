@@ -92,10 +92,6 @@ h1, .detail, .albumComment {
     color: var(--fg-detail);
 }
 
-h2 {
-    color: var(--fg-heading);
-}
-
 /* regular foreground color */
 .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
     color: var(--table-text);
@@ -310,6 +306,7 @@ h1 {
 }
 
 h2 {
+    color: var(--fg-heading);
     white-space: nowrap;
     font-size: 108%;
     margin: 0.8em 0 0.2em 0;
@@ -680,6 +677,16 @@ img {
     width: 28px;
     height: 28px;
 }   
+
+/* Labels for screen readers only. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
 
 /* Buttons that only show an icon */
 .icon-button {

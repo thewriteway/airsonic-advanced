@@ -4,13 +4,16 @@
     <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript">
-        Page.define("advancedSettings", function (page) {
+        (function () {
             function enableLdapFields() {
                 $("#ldapTable").toggle($("input[type=checkbox][name=ldapEnabled]").is(":checked"));
             }
-            page.actions({enableLdapFields: enableLdapFields});
-            enableLdapFields();
-        });
+
+            Page.define("advancedSettings", function (page) {
+                page.actions({enableLdapFields: enableLdapFields});
+                enableLdapFields();
+            });
+        })();
     </script>
 </head>
 

@@ -55,7 +55,7 @@
     "use strict";
 
     var SVG_NS = "http://www.w3.org/2000/svg";
-    var ICONS = {
+    var ICONS = new Map(Object.entries({
         "cloud-download": '<path d="M12 13v8l-4-4"/> <path d="m12 21 4-4"/> <path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/>',
         "disc": '<circle cx="12" cy="12" r="10"/> <circle cx="12" cy="12" r="2"/>',
         "download": '<path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/>',
@@ -74,11 +74,12 @@
         "tag": '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
         "trash-2": '<path d="M10 11v6"/> <path d="M14 11v6"/> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/> <path d="M3 6h18"/> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
         "users": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/> <path d="M16 3.128a4 4 0 0 1 0 7.744"/> <path d="M22 21v-2a4 4 0 0 0-3-3.87"/> <circle cx="9" cy="7" r="4"/>'
-    };
+    }));
 
     /** @return an SVG element for the icon, or null if there is no icon of that name */
     function svg(name, options) {
-        if (!Object.prototype.hasOwnProperty.call(ICONS, name)) {
+        var markup = ICONS.get(name);
+        if (markup === undefined) {
             console.warn("No icon named " + name);
             return null;
         }
@@ -88,7 +89,7 @@
         element.setAttribute("aria-hidden", "true");
         element.setAttribute("focusable", "false");
         // the markup is the constant above, never data
-        element.innerHTML = ICONS[name];
+        element.innerHTML = markup;
         element.setAttribute("class", ("icon icon-" + name + " " + (options["class"] || "")).trim());
         if (options.title) {
             var title = document.createElementNS(SVG_NS, "title");
@@ -101,7 +102,7 @@
     /** Replaces the [data-icon] placeholders inside root. */
     function replace(root) {
         (root || document).querySelectorAll("i[data-icon]").forEach(function (placeholder) {
-            var icon = svg(placeholder.getAttribute("data-icon"), {
+            var icon = svg(placeholder.dataset.icon, {
                 "class": placeholder.getAttribute("class"),
                 title: placeholder.getAttribute("title")
             });

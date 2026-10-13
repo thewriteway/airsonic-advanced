@@ -23,7 +23,7 @@
             page.actions({enableFields: enableFields});
             enableFields();
 
-            if (/*[[${settings_reload == true}]]*/ false) {
+            if (page.root.dataset.reloadApplication === "true") {
                 // the theme or language changed: reload the whole application
                 window.top.location.href = "index.view?main=personalSettings.view";
             }
@@ -31,7 +31,7 @@
     </script>
 </head>
 
-<body class="mainframe bgcolor1 settings-page" data-page="personalSettings">
+<body class="mainframe bgcolor1 settings-page" data-page="personalSettings" th:data-reload-application="${settings_reload == true}">
 
 <th:block th:replace="~{settingsHeader::header(cat='personal',toast=${settings_toast},restricted=${!command.user.adminRole})}" />
 

@@ -9,9 +9,7 @@
         #randomPlayQueue td { padding: 0 5px; }
     </style>
     <script type="text/javascript" th:inline="javascript">
-        Page.define("more", function (page) {
-            var progressLabel = /*[[#{more.upload.progress}]]*/ "% complete";
-
+        (function () {
             // From Modernizr
             // See: https://modernizr.com/
             function isLocalStorageEnabled() {
@@ -25,90 +23,94 @@
                 }
             }
 
-            // Load previously used shuffle parameters
-            function loadShuffleForm() {
-                if (!isLocalStorageEnabled()) return;
-                var form = document.getElementById("randomPlayQueue");
-                var data;
-                try {
-                    data = JSON.parse(localStorage.getItem("randomPlayQueue"));
-                } catch(e) { return; }
-                if (data == null ) { return; }
-                var elements = form.getElementsByTagName("input");
-                for (var i = 0; i < elements.length; i++) {
-                    if (elements[i].type == "hidden") continue;
-                    if (elements[i].type == "submit") continue;
-                    if (data[elements[i].name]) elements[i].value = data[elements[i].name];
-                }
-                elements = form.getElementsByTagName("select");
-                for (var i = 0; i < elements.length; i++) {
-                    var element = elements[i];
-                    var value = data[element.name];
-                    if (value) {
-                        for (var j = 0; j < element.options.length; j++) {
-                            if (element.options[j].value == value) {
-                                element.value = value;
-                                break;
+            Page.define("more", function (page) {
+                var progressLabel = /*[[#{more.upload.progress}]]*/ "% complete";
+
+                // Load previously used shuffle parameters
+                function loadShuffleForm() {
+                    if (!isLocalStorageEnabled()) return;
+                    var form = document.getElementById("randomPlayQueue");
+                    var data;
+                    try {
+                        data = JSON.parse(localStorage.getItem("randomPlayQueue"));
+                    } catch(e) { return; }
+                    if (data == null ) { return; }
+                    var elements = form.getElementsByTagName("input");
+                    for (var i = 0; i < elements.length; i++) {
+                        if (elements[i].type == "hidden") continue;
+                        if (elements[i].type == "submit") continue;
+                        if (data[elements[i].name]) elements[i].value = data[elements[i].name];
+                    }
+                    elements = form.getElementsByTagName("select");
+                    for (var i = 0; i < elements.length; i++) {
+                        var element = elements[i];
+                        var value = data[element.name];
+                        if (value) {
+                            for (var j = 0; j < element.options.length; j++) {
+                                if (element.options[j].value == value) {
+                                    element.value = value;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            // Save shuffle parameters
-            function saveShuffleForm() {
-                if (!isLocalStorageEnabled()) return;
-                var form = document.getElementById("randomPlayQueue");
-                var data = {};
-                var elements = form.getElementsByTagName("input");
-                for (var i = 0; i < elements.length; i++) {
-                    if (elements[i].type == "hidden") continue;
-                    if (elements[i].type == "submit") continue;
-                    data[elements[i].name] = elements[i].value;
-                }
-                elements = form.getElementsByTagName("select");
-                for (var i = 0; i < elements.length; i++) {
-                    data[elements[i].name] = elements[i].value;
-                }
-                localStorage.setItem("randomPlayQueue", JSON.stringify(data));
-            }
-
-            function uploadStatus(msg) {
-                var uploadInfo = JSON.parse(msg.body);
-
-                var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
-
-                if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
-                    if (progressBarHolder.length != 0) {
-                        // remove it
-                        progressBarHolder.remove();
+                // Save shuffle parameters
+                function saveShuffleForm() {
+                    if (!isLocalStorageEnabled()) return;
+                    var form = document.getElementById("randomPlayQueue");
+                    var data = {};
+                    var elements = form.getElementsByTagName("input");
+                    for (var i = 0; i < elements.length; i++) {
+                        if (elements[i].type == "hidden") continue;
+                        if (elements[i].type == "submit") continue;
+                        data[elements[i].name] = elements[i].value;
                     }
-                } else {
-                    if (progressBarHolder.length == 0) {
-                        // create it
-                        progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
-                        $("#progressBars").append(progressBarHolder);
+                    elements = form.getElementsByTagName("select");
+                    for (var i = 0; i < elements.length; i++) {
+                        data[elements[i].name] = elements[i].value;
                     }
-
-                    var progressBarContent = progressBarHolder.find(".progress-bar-content");
-                    var progressText = progressBarHolder.find(".progress-text");
-
-                    var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
-                    progressBarContent.width(parseInt(percent * 3.5));
-                    progressText.text(percent + progressLabel);
+                    localStorage.setItem("randomPlayQueue", JSON.stringify(data));
                 }
-            }
 
-            // the form is still submitted (to the play queue), the parameters are kept for the next time
-            page.actions({saveShuffleForm: saveShuffleForm});
+                function uploadStatus(msg) {
+                    var uploadInfo = JSON.parse(msg.body);
 
-            if (/*[[${model.user.uploadRole}]]*/ false) {
-                page.subscribe({
-                    '/user/queue/uploads/status': uploadStatus
-                });
-            }
-            loadShuffleForm();
-        });
+                    var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
+
+                    if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
+                        if (progressBarHolder.length != 0) {
+                            // remove it
+                            progressBarHolder.remove();
+                        }
+                    } else {
+                        if (progressBarHolder.length == 0) {
+                            // create it
+                            progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
+                            $("#progressBars").append(progressBarHolder);
+                        }
+
+                        var progressBarContent = progressBarHolder.find(".progress-bar-content");
+                        var progressText = progressBarHolder.find(".progress-text");
+
+                        var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
+                        progressBarContent.width(Math.round(percent * 3.5));
+                        progressText.text(percent + progressLabel);
+                    }
+                }
+
+                // the form is still submitted (to the play queue), the parameters are kept for the next time
+                page.actions({saveShuffleForm: saveShuffleForm});
+
+                if (page.root.dataset.uploadRole === "true") {
+                    page.subscribe({
+                        '/user/queue/uploads/status': uploadStatus
+                    });
+                }
+                loadShuffleForm();
+            });
+        })();
     </script>
 
     <style>
@@ -118,7 +120,7 @@
     </style>
 
 </head>
-<body class="mainframe bgcolor1" data-page="more">
+<body class="mainframe bgcolor1" data-page="more" th:data-upload-role="${model.user.uploadRole}">
 
 <h1>
     <img th:src="${themes?.get('moreImage') ?: 'icons/default_light/more.svg'}" alt=""/>

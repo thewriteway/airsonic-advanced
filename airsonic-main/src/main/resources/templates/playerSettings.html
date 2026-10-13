@@ -8,16 +8,19 @@
 <body class="mainframe bgcolor1 settings-page" data-page="playerSettings">
 
 <script type="text/javascript">
-    Page.define("playerSettings", function (page) {
+    (function () {
         function showTechnologyDepends() {
             $('.technologyDepends').hide();
             $('.technologyRadio:checked').each(function() {
                 $('.technologyDepends.' + $(this).val()).show();
             });
         }
-        page.actions({showTechnologyDepends: showTechnologyDepends});
-        showTechnologyDepends();
-    });
+
+        Page.define("playerSettings", function (page) {
+            page.actions({showTechnologyDepends: showTechnologyDepends});
+            showTechnologyDepends();
+        });
+    })();
 </script>
 
 <th:block th:replace="~{settingsHeader::header(cat='player',toast=${settings_toast}, restricted=${!command.admin})}" />
@@ -28,9 +31,9 @@
 
         <table class="indent">
             <tr>
-                <td><b th:text="#{playersettings.title}"></b></td>
+                <td><b><label for="playerSelect" th:text="#{playersettings.title}">Player</label></b></td>
                 <td>
-                    <select name="player" data-on-change="navigateToValue" th:aria-label="#{playersettings.title}">
+                    <select id="playerSelect" name="player" data-on-change="navigateToValue">
                         <option th:each="player:${command.players}" th:selected="${player.id eq command.playerId}"
                                 th:value="|playerSettings.view?id=${player.id}|" th:text="${player.description}"></option>
                     </select>
@@ -55,8 +58,8 @@
                 <th:block th:each="technologyHolder, loopStatus:*{technologyHolders}" >
                     <tr>
                         <td class="ruleTableHeader">
-                            <input type="radio" class="technologyRadio" th:field="*{technologyName}" th:value="${technologyHolder.name}" data-on-change="showTechnologyDepends"/>
-                            <b><label th:for="${#ids.prev('technologyName')}" th:text="#{playersettings.technology.__${#strings.toLowerCase(technologyHolder.name)}__.title}"></label></b>
+                            <input type="radio" class="technologyRadio" id="technology" th:id="|technology${technologyHolder.name}|" th:field="*{technologyName}" th:value="${technologyHolder.name}" data-on-change="showTechnologyDepends"/>
+                            <b><label for="technology" th:for="|technology${technologyHolder.name}|" th:text="#{playersettings.technology.__${#strings.toLowerCase(technologyHolder.name)}__.title}"></label></b>
                         </td>
                         <td class="ruleTableCell" style="width:40em" th:text="#{playersettings.technology.__${#strings.toLowerCase(technologyHolder.name)}__.text}"></td>
                     </tr>

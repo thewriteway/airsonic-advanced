@@ -1,3 +1,4 @@
+/* global Page */
 var entityMap = {
     "&": "&amp;",
     "<": "&lt;",
@@ -36,7 +37,7 @@ if (window.Page) {
         /** Opens a link in a popup window: data-popup-name, data-popup-width and data-popup-height. */
         popup: function (link) {
             return popupSize(link, link.dataset.popupName,
-                parseInt(link.dataset.popupWidth || "400", 10), parseInt(link.dataset.popupHeight || "200", 10));
+                Number.parseInt(link.dataset.popupWidth || "400", 10), Number.parseInt(link.dataset.popupHeight || "200", 10));
         },
 
         /* Media buttons (playButtons.html, coverArt.html): the media file id is in data-id. */
@@ -89,7 +90,7 @@ if (window.Page) {
             var starred = image.dataset.starred !== "true";
             image.dataset.starred = String(starred);
             image.src = starred ? image.dataset.starOn : image.dataset.starOff;
-            top.StompClient.send("/app/rate/mediafile/" + (starred ? "star" : "unstar"), JSON.stringify([parseInt(image.dataset.id, 10)]));
+            top.StompClient.send("/app/rate/mediafile/" + (starred ? "star" : "unstar"), JSON.stringify([Number.parseInt(image.dataset.id, 10)]));
             return false;
         }
     });

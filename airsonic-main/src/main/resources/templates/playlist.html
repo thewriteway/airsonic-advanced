@@ -547,7 +547,8 @@
 <th:block th:if="${model.editAllowed}">
 <div  id="moreactions" style="white-space:nowrap;">
     <span class="header">
-        <select id="moreActions" data-on-change="moreActions" th:aria-label="#{playlist.more}">
+        <label for="moreActions" class="visually-hidden" th:text="#{playlist.more}">More actions</label>
+        <select id="moreActions" data-on-change="moreActions">
             <option id="top" selected="selected" th:text="#{playlist.more}"></option>
             <optgroup th:label="#{playlist.more.selection}">
                 <option id="removeSelected" th:text="#{playlist.remove}"></option>

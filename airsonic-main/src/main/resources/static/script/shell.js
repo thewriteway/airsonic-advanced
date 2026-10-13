@@ -4,8 +4,9 @@
  * A region fetches a page with the X-Airsonic-Shell request header, which makes the server leave
  * out everything the shell already has (common head, libraries), so the response only carries the
  * page's own scripts and styles and its body. The region unmounts the page it showed (see page.js),
- * moves the new body into the region, runs the page's scripts in document order (libraries the
- * shell already has are not loaded twice) and mounts the new page.
+ * moves the new body (with the class, style and data attributes of the page's <body>) into the
+ * region, runs the page's scripts in document order (libraries the shell already has are not
+ * loaded twice) and mounts the new page.
  *
  * Links and forms that used to navigate a frame now load the corresponding region, and the main
  * region keeps the browser history and address bar in sync. The frame references used by the
@@ -15,6 +16,7 @@
  * Expects window.ShellConfig = {base: context path with trailing slash, pages: [page names]}, and
  * elements with data-shell-region (region name) and data-shell-src (initial URL, if any).
  */
+/* global Page */
 (function () {
     "use strict";
 
@@ -220,7 +222,17 @@
         }
         this.content.className = "shell-content " + doc.body.className;
         this.content.setAttribute("style", doc.body.getAttribute("style") || "");
-        this.content.removeAttribute("data-page");
+        // the data attributes of the page's body (data-page is set once its scripts have run)
+        Array.prototype.slice.call(this.content.attributes).forEach((attribute) => {
+            if (attribute.name.indexOf("data-") === 0) {
+                this.content.removeAttribute(attribute.name);
+            }
+        });
+        Array.prototype.forEach.call(doc.body.attributes, (attribute) => {
+            if (attribute.name.indexOf("data-") === 0 && attribute.name !== "data-page") {
+                this.content.setAttribute(attribute.name, attribute.value);
+            }
+        });
         // copy first: adopting a node removes it from the live childNodes list
         this.content.replaceChildren.apply(this.content, Array.from(doc.body.childNodes).map(function (node) {
             return document.adoptNode(node);

@@ -6,7 +6,7 @@
     <th:block th:replace="~{jquery}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
-        Page.define("userSettings", function (page) {
+        (function () {
             function enablePasswordChangeFields() {
                 var changePasswordCheckbox = $("#passwordChange");
                 var ldapCheckbox = $("#ldapAuthenticated");
@@ -18,30 +18,33 @@
                 }
             }
 
-            page.actions({
-                enablePasswordChangeFields: enablePasswordChangeFields,
-                selectUser(select) {
-                    Page.navigate("userSettings.view?userIndex=" + (select.selectedIndex - 1));
+            Page.define("userSettings", function (page) {
+
+                page.actions({
+                    enablePasswordChangeFields: enablePasswordChangeFields,
+                    selectUser(select) {
+                        Page.navigate("userSettings.view?userIndex=" + (select.selectedIndex - 1));
+                    }
+                });
+
+                enablePasswordChangeFields();
+                if (page.root.dataset.reloadLeft === "true") {
+                    Page.loadRegion("left", "left");
                 }
             });
-
-            enablePasswordChangeFields();
-            if (/*[[${settings_reload == true}]]*/ false) {
-                Page.loadRegion("left", "left");
-            }
-        });
+        })();
     </script>
 </head>
 
-<body class="mainframe bgcolor1 settings-page" data-page="userSettings">
+<body class="mainframe bgcolor1 settings-page" data-page="userSettings" th:data-reload-left="${settings_reload == true}">
 
 <th:block th:replace="~{settingsHeader::header(cat='user',toast=${settings_toast})}" />
 
 <table class="indent">
     <tr>
-        <td><b th:text="#{usersettings.title}"></b></td>
+        <td><b><label for="userSelector" th:text="#{usersettings.title}">User</label></b></td>
         <td>
-            <select name="username" data-on-change="selectUser" th:aria-label="#{usersettings.title}">
+            <select id="userSelector" name="username" data-on-change="selectUser">
                 <option value="" th:text="|-- #{usersettings.newuser} --|">-- New User --</option>
                 <option th:each="user:${command.users}"
                         th:text="${user.username}" th:selected="${user.username eq command.username}"

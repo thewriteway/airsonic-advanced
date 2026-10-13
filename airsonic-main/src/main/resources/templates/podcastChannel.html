@@ -25,39 +25,41 @@
     <th:block th:replace="~{table}" />
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
-        Page.define("podcastChannel", function (page) {
-            var deleteUrl = /*[[@{/podcastReceiverAdmin.view(channelId=${command.channel.id}, deleteChannel=${command.channel.id})}]]*/ "";
-            var refreshUrl = /*[[@{/podcastReceiverAdmin.view(refresh,channelId=${command.channel.id})}]]*/ "";
-            var confirmDelete = /*[[#{podcastreceiver.confirmdelete}]]*/ "";
-
+        (function () {
             function countSelected() {
                 var count = $('.music tr input[type="checkbox"]:checked').length;
                 $('#episode-control .selected-action').toggle(count > 0);
             }
 
-            page.actions({
-                playChannel(link) {
-                    top.playQueue.onPlayPodcastChannel(link.dataset.id);
-                },
-                deleteChannel() {
-                    Page.confirm(confirmDelete).then(ok => {
-                        if (ok) {
-                            Page.navigate(deleteUrl);
-                        }
-                    });
-                },
-                refreshChannels() {
-                    Page.navigate(refreshUrl);
-                },
-                selectAllEpisodes(checkbox) {
-                    $('.music tr input[type="checkbox"]').prop('checked', checkbox.checked);
-                    countSelected();
-                },
-                countSelected: countSelected
-            });
+            Page.define("podcastChannel", function (page) {
+                var deleteUrl = /*[[@{/podcastReceiverAdmin.view(channelId=${command.channel.id}, deleteChannel=${command.channel.id})}]]*/ "";
+                var refreshUrl = /*[[@{/podcastReceiverAdmin.view(refresh,channelId=${command.channel.id})}]]*/ "";
+                var confirmDelete = /*[[#{podcastreceiver.confirmdelete}]]*/ "";
 
-            countSelected();
-        });
+                page.actions({
+                    playChannel(link) {
+                        top.playQueue.onPlayPodcastChannel(link.dataset.id);
+                    },
+                    deleteChannel() {
+                        Page.confirm(confirmDelete).then(ok => {
+                            if (ok) {
+                                Page.navigate(deleteUrl);
+                            }
+                        });
+                    },
+                    refreshChannels() {
+                        Page.navigate(refreshUrl);
+                    },
+                    selectAllEpisodes(checkbox) {
+                        $('.music tr input[type="checkbox"]').prop('checked', checkbox.checked);
+                        countSelected();
+                    },
+                    countSelected: countSelected
+                });
+
+                countSelected();
+            });
+        })();
     </script>
     <style type="text/css">
       .music .center {
@@ -129,13 +131,13 @@
 <input type="hidden" id="page" name="page" th:value="${pages.number}"/>
 <input type="hidden" id="size" name="size" th:value="${pages.size}"/>
 <table id="episode-control"><tr>
-    <td style="padding-left:1em"><span><a th:href="@{podcastChannel.view(id=${command.channel.id}, page=${pages.number}, size=${pages.size})}"><i data-icon="refresh-cw" role="img" th:aria-label="#{podcastreceiver.refresh}"
+    <td style="padding-left:1em"><span><a th:href="@{podcastChannel.view(id=${command.channel.id}, page=${pages.number}, size=${pages.size})}"><i data-icon="refresh-cw" th:aria-label="#{podcastreceiver.refresh}"
                         th:title="#{podcastreceiver.refresh}"></i></a></span></td>
     <th:block th:if="${command.user.podcastRole}">
-        <td class="selected-action"><button type="submit" class="icon-button" name="download" form="form-selected" th:title="#{podcastreceiver.downloadselected}"><i data-icon="cloud-download" role="img" th:aria-label="#{podcastreceiver.downloadselected}"></i></button></td>
-        <td class="selected-action"><button type="submit" class="icon-button" name="delete" form="form-selected" th:title="#{podcastreceiver.deleteselected}"><i data-icon="trash-2" role="img" th:aria-label="#{podcastreceiver.deleteselected}"></i></button></td>
-        <td class="selected-action"><button type="submit" class="icon-button" name="lock" form="form-selected" th:title="#{podcastreceiver.lockselected}"><i data-icon="lock" role="img" th:aria-label="#{podcastreceiver.lockselected}"></i></button></td>
-        <td class="selected-action"><button type="submit" class="icon-button" name="unlock" form="form-selected" th:title="#{podcastreceiver.unlockselected}"><i data-icon="lock-open" role="img" th:aria-label="#{podcastreceiver.unlockselected}"></i></button></td>
+        <td class="selected-action"><button type="submit" class="icon-button" name="download" form="form-selected" th:title="#{podcastreceiver.downloadselected}"><i data-icon="cloud-download" th:aria-label="#{podcastreceiver.downloadselected}"></i></button></td>
+        <td class="selected-action"><button type="submit" class="icon-button" name="delete" form="form-selected" th:title="#{podcastreceiver.deleteselected}"><i data-icon="trash-2" th:aria-label="#{podcastreceiver.deleteselected}"></i></button></td>
+        <td class="selected-action"><button type="submit" class="icon-button" name="lock" form="form-selected" th:title="#{podcastreceiver.lockselected}"><i data-icon="lock" th:aria-label="#{podcastreceiver.lockselected}"></i></button></td>
+        <td class="selected-action"><button type="submit" class="icon-button" name="unlock" form="form-selected" th:title="#{podcastreceiver.unlockselected}"><i data-icon="lock-open" th:aria-label="#{podcastreceiver.unlockselected}"></i></button></td>
     </th:block>
 </tr></table>
 
@@ -144,8 +146,8 @@
 
 <div class="dataTables_wrapper">
     <div name="table_length" th:if="${pages.totalPages gt 1}" class="dataTables_length">
-        <label>Show </label>
-        <select name="table_length" aria-controls="table" class="custom-select custom-select-sm form-control form-control-sm" data-on-change="navigateToValue">
+        <label for="tableLength">Show </label>
+        <select id="tableLength" name="table_length" aria-controls="table" class="custom-select custom-select-sm form-control form-control-sm" data-on-change="navigateToValue">
             <option th:each="size: ${ {5, 10, 25, 50, 100} }" th:value="@{/podcastChannel.view(page=0, id=${command.channel.id}, size=${size})}" th:selected="${pages.size eq size}" th:text="${size}"></option>
         </select>
         <label> entities</label>
@@ -211,7 +213,10 @@
             <input type="hidden" th:field="${command.episodes[__${episodeStat.index}__].id}" form="form-selected"/>
             <input type="hidden" th:field="${command.episodes[__${episodeStat.index}__].status}" form="form-selected"/>
 
-            <td class="fit center"><input type="checkbox" th:field="${command.episodes[__${episodeStat.index}__].selected}" form="form-selected" data-on-change="countSelected"/></td>
+            <td class="fit center">
+                <label for="episodeSelected" th:for="|episodeSelected${episodeStat.index}|" class="visually-hidden" th:text="${episode.title}">Episode</label>
+                <input type="checkbox" id="episodeSelected" th:id="|episodeSelected${episodeStat.index}|" th:field="${command.episodes[__${episodeStat.index}__].selected}" form="form-selected" data-on-change="countSelected"/>
+            </td>
 
             <th:block th:if="${#strings.isEmpty(episode.mediaFile?.id) or episode.status.name ne 'COMPLETED'}">
                 <td colspan="4"></td>
@@ -234,20 +239,20 @@
                 <input type="hidden" name="size" th:value="${pages.size}" th:form="${formId}"/>
                 <td class="fit center">
                     <button th:if="${episode.locked}" type="submit" class="icon-button" name="unlock" th:form="${formId}" th:title="#{podcastreceiver.locked}">
-                        <i data-icon="lock" role="img" th:aria-label="#{podcastreceiver.locked}" class="icon-sm"></i>
+                        <i data-icon="lock" th:aria-label="#{podcastreceiver.locked}" class="icon-sm"></i>
                     </button>
                     <button th:if="${!episode.locked && #lists.contains({'COMPLETED', 'SKIPPED', 'NEW'}, episode.status.name)}" type="submit" class="icon-button" name="lock" th:form="${formId}" th:title="#{podcastreceiver.unlocked}">
-                        <i data-icon="lock-open" role="img" th:aria-label="#{podcastreceiver.unlocked}" class="icon-sm icon-weak"></i>
+                        <i data-icon="lock-open" th:aria-label="#{podcastreceiver.unlocked}" class="icon-sm icon-weak"></i>
                     </button>
                 </td>
                 <td class="fit center" th:if="${#lists.contains({'COMPLETED', 'DELETED'}, episode.status.name)}">
                     <button type="submit" class="icon-button" name="init" th:form="${formId}" th:title="#{podcastreceiver.reset}">
-                        <i data-icon="rotate-ccw" role="img" th:aria-label="#{podcastreceiver.reset}" class="icon-sm"></i>
+                        <i data-icon="rotate-ccw" th:aria-label="#{podcastreceiver.reset}" class="icon-sm"></i>
                     </button>
                 </td>
                 <td class="fit center" th:if="${#lists.contains({'SKIPPED', 'NEW', 'ERROR'}, episode.status.name)}">
                     <button type="submit" class="icon-button" name="download" th:form="${formId}" th:title="#{common.download}">
-                        <i data-icon="cloud-download" role="img" th:aria-label="#{common.download}" class="icon-sm"></i>
+                        <i data-icon="cloud-download" th:aria-label="#{common.download}" class="icon-sm"></i>
                     </button>
                 </td>
                 <td th:if="${'DOWNLOADING' eq episode.status.name}"></td>

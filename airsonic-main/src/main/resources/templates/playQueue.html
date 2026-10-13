@@ -579,7 +579,7 @@
                     $("#jukeboxVolume").val(Math.floor(gain * 100)); // update UI
                 },
                 onJukeboxVolumeChanged() {
-                    var value = parseInt($("#jukeboxVolume").val());
+                    var value = Number.parseInt($("#jukeboxVolume").val(), 10);
                     top.StompClient.send("/app/playqueues/" + this.player.id + "/jukebox/gain", value / 100);
                 },
             
@@ -590,15 +590,11 @@
                  */
                 onGainAdd(gain) {
                     if (this.player.tech == 'WEB') {
-                        var volume = parseFloat(this.audioPlayer.volume)*100 + gain;
-                        if (volume > 100) volume = 100;
-                        if (volume < 0) volume = 0;
-                        this.audioPlayer.volume = volume / 100;
+                        var webVolume = Math.min(100, Math.max(0, Number.parseFloat(this.audioPlayer.volume) * 100 + gain));
+                        this.audioPlayer.volume = webVolume / 100;
                     } else {
-                        var volume = parseInt($("#jukeboxVolume").val()) + gain;
-                        if (volume > 100) volume = 100;
-                        if (volume < 0) volume = 0;
-                        top.StompClient.send("/app/playqueues/" + this.player.id + "/jukebox/gain", volume / 100);
+                        var jukeboxVolume = Math.min(100, Math.max(0, Number.parseInt($("#jukeboxVolume").val(), 10) + gain));
+                        top.StompClient.send("/app/playqueues/" + this.player.id + "/jukebox/gain", jukeboxVolume / 100);
                         // UI updated at callback
                     }
                 },
@@ -1044,19 +1040,19 @@
                     }
                 
                     // Disable some UI items if internet radio is playing
-                    $("select#moreActions #loadPlayQueue").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #savePlayQueue").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #savePlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #downloadPlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #sharePlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #sortByTrack").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #sortByAlbum").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #sortByArtist").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #removeSelected").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #download").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #appendPlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #star").prop("disabled", this.internetRadioEnabled);
-                    $("select#moreActions #unstar").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #loadPlayQueue").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #savePlayQueue").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #savePlaylist").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #downloadPlaylist").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #sharePlaylist").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #sortByTrack").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #sortByAlbum").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #sortByArtist").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #removeSelected").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #download").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #appendPlaylist").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #star").prop("disabled", this.internetRadioEnabled);
+                    $("select#playQueueActions #unstar").prop("disabled", this.internetRadioEnabled);
                     $("#shuffleQueue, #repeatQueue, #undoQueue").prop("disabled", this.internetRadioEnabled);
                 
                     if (this.songs.length == 0) {
@@ -1178,7 +1174,7 @@
                     } else if (id == "appendPlaylist" && selectedIndexes.length > 0) {
                         this.onAppendPlaylist();
                     }
-                    $("#moreActions").prop("selectedIndex", 0);
+                    $("#playQueueActions").prop("selectedIndex", 0);
                 },
                 getSelectedIndexes() {
                     return this.musicTable.rows({ selected: true }).indexes().toArray();
@@ -1238,7 +1234,8 @@
 
             <div class="bgcolor2 playqueue-controlbar">
                 <div th:if="${model['user']?.settingsRole == true and model.players.size() > 1}" style="padding-right: 5px">
-                    <select id="playerSelector" name="playerSelector" data-on-change="changePlayer" th:aria-label="#{playersettings.title}">
+                    <label for="playerSelector" class="visually-hidden" th:text="#{playersettings.title}">Player</label>
+                    <select id="playerSelector" name="playerSelector" data-on-change="changePlayer">
                         <option th:each="player: ${model.players}" th:value="${player.id}" th:text="${player.shortDescription}"></option>
                     </select>
                 </div>
@@ -1310,7 +1307,8 @@
 
                 <div style="white-space:nowrap;">
                     <span class="header">
-                        <select id="moreActions" data-on-change="moreActions" th:aria-label="#{playlist.more}">
+                        <label for="playQueueActions" class="visually-hidden" th:text="#{playlist.more}">More actions</label>
+                        <select id="playQueueActions" data-on-change="moreActions">
                             <option id="top" selected="selected" th:text="#{playlist.more}">more</option>
                             <optgroup th:label="#{playlist.more.playlist}">
                                 <option id="savePlayQueue" th:text="#{playlist.saveplayqueue}"></option>

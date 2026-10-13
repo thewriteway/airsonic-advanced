@@ -70,7 +70,7 @@
             /** Enter in an "all" field applies it (data-set names the action). */
             setOnEnter(input, event) {
                 if (event.key == "Enter") {
-                    page.handlers[input.dataset.set]();
+                    page.run(input.dataset.set);
                     return false;
                 }
             },
@@ -107,19 +107,23 @@
         <th class="ruleTableHeader" width="60pt" th:text="#{edittags.status}"></th>
     </tr>
     <tr>
-        <th class="ruleTableHeader"></th>
-        <th class="ruleTableHeader"><a href="#" data-on-click="suggestTrack" th:text="#{edittags.suggest.short}"></a> |
+        <th class="ruleTableHeader" scope="col"></th>
+        <th class="ruleTableHeader" scope="col"><a href="#" data-on-click="suggestTrack" th:text="#{edittags.suggest.short}"></a> |
             <a href="#" data-on-click="resetTrack" th:text="#{edittags.reset.short}"></a></th>
-        <th class="ruleTableHeader"><a href="#" data-on-click="suggestTitle" th:text="#{edittags.suggest}"></a> |
+        <th class="ruleTableHeader" scope="col"><a href="#" data-on-click="suggestTitle" th:text="#{edittags.suggest}"></a> |
             <a href="#" data-on-click="resetTitle" th:text="#{edittags.reset}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <input type="text" name="artistAll" data-on-keydown="setOnEnter" data-set="setArtist" size="15" th:value="${command.defaultArtist}"/>&nbsp;<a href="#" data-on-click="setArtist" th:text="#{edittags.set}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <input type="text" name="albumAll" data-on-keydown="setOnEnter" data-set="setAlbum" size="15" th:value="${command.defaultAlbum}"/>&nbsp;<a href="#" data-on-click="setAlbum" th:text="#{edittags.set}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <input type="text" name="yearAll" data-on-keydown="setOnEnter" data-set="setYear" size="5" th:value="${command.defaultYear}"/>&nbsp;<a href="#" data-on-click="setYear" th:text="#{edittags.set}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <select name="genreAll" style="width:7em">
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="artistAll" class="visually-hidden" th:text="#{edittags.artist}"></label>
+            <input type="text" id="artistAll" name="artistAll" data-on-keydown="setOnEnter" data-set="setArtist" size="15" th:value="${command.defaultArtist}"/>&nbsp;<a href="#" data-on-click="setArtist" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="albumAll" class="visually-hidden" th:text="#{edittags.album}"></label>
+            <input type="text" id="albumAll" name="albumAll" data-on-keydown="setOnEnter" data-set="setAlbum" size="15" th:value="${command.defaultAlbum}"/>&nbsp;<a href="#" data-on-click="setAlbum" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="yearAll" class="visually-hidden" th:text="#{edittags.year}"></label>
+            <input type="text" id="yearAll" name="yearAll" data-on-keydown="setOnEnter" data-set="setYear" size="5" th:value="${command.defaultYear}"/>&nbsp;<a href="#" data-on-click="setYear" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="genreAll" class="visually-hidden" th:text="#{edittags.genre}"></label>
+            <select id="genreAll" name="genreAll" style="width:7em">
                 <option value=""/>
                 <option th:each="genre:${command.allGenres}" th:selected="${genre eq command.defaultGenre}" th:value="${genre}" th:text="${genre}"></option>
             </select>
