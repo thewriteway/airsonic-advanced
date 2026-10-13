@@ -1,15 +1,61 @@
-/* The primary background color (light gray). */
-.bgcolor1, table.music tr:nth-of-type(even) {
-    background-color: #F9F9F9;
+/*
+ * Base stylesheet of all themes.
+ *
+ * A theme is mostly a palette: it imports this file (through default.css, or this file and
+ * mediaelement-dark.css for dark themes) and sets the custom properties below on :root. Rules
+ * after that are only needed for what a palette cannot express (fonts, background images, ...).
+ */
+:root {
+    color-scheme: light;
+
+    /* Backgrounds: primary (pages, even table rows) and secondary (bars, odd table rows). */
+    --bg1: #F9F9F9;
+    --bg2: #F1F1F1;
+    /* Dialogs and popovers. */
+    --surface: var(--bg1);
+
+    /* Text: regular, secondary (h1, details, comments), h2 headings, and bold text / table rows. */
+    --fg: black;
+    --fg-detail: #696969;
+    --fg-heading: var(--fg-detail);
+    --fg-strong: #333333;
+    /* Text around tables (entries, filter, info, paging). */
+    --table-text: var(--fg-detail);
+
+    --link: #006699;
+    --link-hover: #DD6900;
+    --paginate: var(--link);
+    --paginate-hover: var(--link-hover);
+    --paginate-current: var(--table-text);
+
+    --border: black;
+    --warning: red;
+    /* Underline of the selected entry in header bars. */
+    --accent: darkorange;
+
+    /* Table rows: hovered, currently playing and currently playing while hovered. */
+    --row-hover: #D9D9D9;
+    --row-playing: #98aacd;
+    --row-playing-hover: #879bc5;
+
+    /* Push buttons. */
+    --button-bg: white;
+    --button-fg: black;
+    --button-active-bg: #e9e9e9;
 }
 
-/* The secondary background color (darker gray). */
+/* The primary background color. */
+.bgcolor1, table.music tr:nth-of-type(even) {
+    background-color: var(--bg1);
+}
+
+/* The secondary background color. */
 .bgcolor2, .ruleTableHeader, .log, table.music tr:nth-of-type(odd) {
-    background-color: #F1F1F1
+    background-color: var(--bg2);
 }
 
 .headerSelected {
-    border-bottom: 3px solid darkorange;
+    border-bottom: 3px solid var(--accent);
 }
 
 /* Put stuff here if you need to customize any of the frames. */
@@ -38,17 +84,17 @@ input, select {
 
 /* The primary foreground color (black). */
 body {
-    color: black;
+    color: var(--fg);
 }
 
-/* The secondary foreground color used for h1, h2, details etc (gray). */
-h1, h2, .detail, .albumComment {
-    color: #696969;
+/* The secondary foreground color used for h1, details etc. */
+h1, .detail, .albumComment {
+    color: var(--fg-detail);
 }
 
 /* regular foreground color */
 .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
-    color: #696969;
+    color: var(--table-text);
 }
 
 /* .disabled color */
@@ -58,21 +104,21 @@ h1, h2, .detail, .albumComment {
 
 /* a:link color */
 .dataTables_wrapper .dataTables_paginate .paginate_button {
-    color: #006699 !important;
+    color: var(--paginate) !important;
 }
 
 /* a:hover color + .border1 border-color */
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    color: #DD6900 !important;
+    color: var(--paginate-hover) !important;
     background: none;
-    border-color: black;
+    border-color: var(--border);
 }
 
 /* regular color + .border1 border-color */
 .dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-    color: #696969 !important;
+    color: var(--paginate-current) !important;
     background: none;
-    border-color: black;
+    border-color: var(--border);
 }
 
 div.dt-buttons {
@@ -82,7 +128,7 @@ div.dt-buttons {
 
 /* a:link color */
 button.dt-button, div.dt-button, a.dt-button {
-    color: #006699;
+    color: var(--paginate);
     background: none;
     margin: unset;
     font-size: unset;
@@ -93,9 +139,9 @@ button.dt-button, div.dt-button, a.dt-button {
 
 /* a:hover color + .border1 border-color */
 button.dt-button:hover:not(.disabled), div.dt-button:hover:not(.disabled), a.dt-button:hover:not(.disabled) {
-    color: #DD6900;
+    color: var(--paginate-hover);
     background: none;
-    border: 1px solid black;
+    border: 1px solid var(--border);
 }
 
 button.dt-button:focus:not(.disabled),
@@ -121,31 +167,31 @@ table.dataTable thead th {
 }
 
 table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover {
-    background-color: #D9D9D9;
+    background-color: var(--row-hover);
 }
 
 table.music.dataTable tbody tr.currently-playing {
-    background-color: #98aacd;
+    background-color: var(--row-playing);
 }
 
 table.music.dataTable tbody tr.currently-playing:hover {
-    background-color: #879bc5;
+    background-color: var(--row-playing-hover);
 }
 
 /* Foreground color used for bold and tr. */
 b, tr {
-    color: #333333;
+    color: var(--fg-strong);
 }
 
 /* Link color */
 a:link, a:active, a:visited, a:link *, a:active *, a:visited * {
-    color: #006699
+    color: var(--link);
 }
 
 /* Link hover color */
 a:hover, a:hover * {
     text-decoration: underline;
-    color: #DD6900
+    color: var(--link-hover);
 }
 
 /* Disabled links color and behavior */
@@ -162,23 +208,12 @@ a.player-control:hover {
 
 /* Color for warning messages. */
 .warning {
-    color: red;
+    color: var(--warning);
 }
 
 /* Simple dark border. */
 .border1, .ruleTableHeader, .ruleTableCell, .log {
-    border: 1px solid black;
-}
-
-/* Scrollbar colors (supported on IE and Opera) */
-body {
-    scrollbar-face-color: #DEE3E7;
-    scrollbar-highlight-color: #FFFFFF;
-    scrollbar-shadow-color: #DEE3E7;
-    scrollbar-3dlight-color: #D1D7DC;
-    scrollbar-arrow-color: #006699;
-    scrollbar-track-color: #EFEFEF;
-    scrollbar-darkshadow-color: #98AAB1;
+    border: 1px solid var(--border);
 }
 
 /* Login page */
@@ -271,6 +306,7 @@ h1 {
 }
 
 h2 {
+    color: var(--fg-heading);
     white-space: nowrap;
     font-size: 108%;
     margin: 0.8em 0 0.2em 0;
@@ -293,10 +329,10 @@ input, textarea, select, button {
 }
 
 input[type=submit], input[type=button], button {
-    background: white;
+    background: var(--button-bg);
     padding-left: 1em;
     padding-right: 1em;
-    color: black;
+    color: var(--button-fg);
     font-family: Verdana, Tahoma, Geneva, arial, sans-serif;
 }
 
@@ -305,7 +341,7 @@ input[type=submit]:hover, input[type=button]:hover, button:hover {
 }
 
 input[type=submit]:active, input[type=button]:active, button:active {
-    background: #e9e9e9;
+    background: var(--button-active-bg);
 }
 
 input[type=checkbox] {
@@ -395,6 +431,49 @@ img {
     background-color: white;
     color: #323232;
     border-radius:2px;
+}
+
+.coverart-frame {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Cover art fades in, staggered by an animation-delay set on each image. */
+.coverart-image {
+    opacity: 0;
+    animation: coverart-appear 0.5s ease-in forwards;
+    transition: opacity 0.15s;
+}
+
+@keyframes coverart-appear {
+    to { opacity: 1; }
+}
+
+.coverart-frame:hover .coverart-image {
+    opacity: 0.7;
+}
+
+.coverart-overlay {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    display: none;
+}
+
+.coverart-overlay.coverart-add {
+    left: 48px;
+}
+
+.coverart-frame:hover .coverart-overlay, .coverart-overlay:focus {
+    display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coverart-image {
+        animation: none;
+        opacity: 1;
+    }
 }
 
 .coverart .caption1 {
@@ -558,42 +637,218 @@ img {
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.7);
 }
 
-/* Javascript-zoom related styles */
-#zoom { position: absolute; display: none; z-index: 499; -webkit-box-shadow: 0px 5px 25px #000; -moz-box-shadow: 0px 5px 25px #000; box-shadow: 0px 5px 25px #000; }
-#zoom_img { display: block; cursor: pointer; width: 100%; border: 0; margin: 0; padding: 0; }
-#zoom_close { position: absolute; display: none; cursor: pointer; left: -15px; top: -15px; width: 30px; height: 30px; background: url(../script/closebox.png) no-repeat; }
-#zoom_spin { position: absolute; display: none; z-index: 525; width: 50px; height: 50px; background: url(../script/spin.png) no-repeat; }
+/* Sensitive data is blurred until hovered or focused. */
+.sensitive.blur:hover, .sensitive.blur:focus {
+  color: inherit;
+  text-shadow: none;
+}
 
-/* Feather icons */
-.feather {
+/* Icons (icons.js) */
+.icon {
     vertical-align: middle;
     width: 24px;
     height: 24px;
+    stroke: currentColor;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
     fill: none;
 }
 
-.feather-filled {
+.icon-filled {
     fill: currentColor;
 }
 
-.feather-weak {
+.icon-weak {
     stroke-width: 1;
 }
 
-.feather-xs {
+.icon-xs {
     width: 12px;
     height: 12px;
 }
 
-.feather-sm {
+.icon-sm {
     width: 16px;
     height: 16px;
 }
 
-.feather-lg {
+.icon-lg {
     width: 28px;
     height: 28px;
 }   
+
+/* Labels for screen readers only. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Buttons that only show an icon */
+.icon-button {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.icon-button:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+/* Native dialogs (page.js: Page.openDialog, Page.confirm, Page.alert) */
+.page-dialog {
+    min-width: min(22em, 90vw);
+    max-width: min(40em, 95vw);
+    max-height: 85vh;
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 6px;
+    padding: 1em 1.25em;
+    color: var(--fg);
+    background-color: var(--surface);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.page-dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.page-dialog h2 {
+    margin-top: 0;
+}
+
+.page-dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5em;
+    margin-top: 1em;
+}
+
+.image-dialog {
+    padding: 0;
+    max-width: 95vw;
+    cursor: zoom-out;
+}
+
+.image-dialog img {
+    display: block;
+    max-width: 95vw;
+    max-height: 90vh;
+}
+
+/* Help texts (helpToolTip.html) */
+.help-button img {
+    height: 16px;
+    vertical-align: middle;
+}
+
+.help-popover {
+    max-width: min(30em, 90vw);
+    padding: 0.75em 1em;
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    border-radius: 6px;
+    color: var(--fg);
+    background-color: var(--surface);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    white-space: normal;
+    text-align: left;
+}
+
+/* Form fields never get wider than the page (size="70" and the like). */
+input, select, textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/*
+ * Narrow screens: headings may wrap, and the settings forms (label and field tables) stack their
+ * cells instead of overflowing the page. Data tables scroll horizontally.
+ */
+@media (max-width: 760px) {
+    .mainframe {
+        padding-left: 0;
+        overflow-wrap: anywhere;
+    }
+
+    /* wide tables scroll inside their own box rather than widening the page */
+    .mainframe table:not(.dataTable) {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .albumComment {
+        width: auto !important;
+    }
+
+    .mainframe .detail {
+        white-space: normal;
+    }
+
+    .mainframe [style*="display:table"] {
+        display: block !important;
+    }
+
+    h1, h2 {
+        white-space: normal;
+    }
+
+    .settings-page table:not(.music):not(.ruleTable),
+    .settings-page table:not(.music):not(.ruleTable) > tbody,
+    .settings-page table:not(.music):not(.ruleTable) > tbody > tr,
+    .settings-page table:not(.music):not(.ruleTable) > tbody > tr > td,
+    .settings-page table:not(.music):not(.ruleTable) > tbody > tr > th {
+        display: block;
+        width: auto !important;
+        white-space: normal !important;
+        padding-left: 0;
+    }
+
+    .settings-page table:not(.music):not(.ruleTable) > tbody > tr {
+        margin-bottom: 0.5em;
+    }
+
+    .settings-page table:not(.music):not(.ruleTable) td {
+        padding-right: 0;
+    }
+
+    .settings-page .ruleTable {
+        display: block;
+        overflow-x: auto;
+        max-width: 100%;
+    }
+
+    .settings-page h2 {
+        line-height: 1.8em;
+    }
+
+    .albumThumb {
+        margin-right: 0.75em;
+    }
+}
+
+/* Touch screens: larger targets for the small icon controls. */
+@media (pointer: coarse) {
+    .icon-button {
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    img[data-on-click], .coverart-overlay {
+        padding: 4px;
+    }
+
+    .coverart-overlay {
+        display: block;
+        opacity: 0.85;
+    }
+}

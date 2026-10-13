@@ -16,14 +16,13 @@
     <script type="text/javascript" th:src="@{/script/shell.js}"></script>
 </head>
 
-<body class="bgcolor2 shell">
-    <header class="shell-upper bgcolor2 topframe" data-shell-region="upper">
+<body class="bgcolor2 shell" th:classappend="${!model.showSideBar} ? 'shell-sidebar-hidden'">
+    <header class="shell-upper bgcolor2 topframe" data-shell-region="upper" data-page="top">
         <div class="shell-content" th:insert="~{top :: region}"></div>
     </header>
 
     <div class="shell-lower">
-        <nav id="shell-left" class="shell-left bgcolor2" data-shell-region="left" th:data-shell-src="@{/left}"
-             th:style="${!model.showSideBar ? 'display: none;' : ''}">
+        <nav id="shell-left" class="shell-left bgcolor2" data-shell-region="left" th:data-shell-src="@{/left}">
             <div class="shell-content"></div>
         </nav>
         <div class="shell-center">
@@ -38,6 +37,8 @@
             <div class="bgcolor2 playqueue-container" th:replace="~{playQueue::container}"></div>
         </div>
     </div>
+
+    <div class="shell-backdrop" data-on-click="closeDrawer"></div>
 
     <!-- not named "hidden": a named iframe shadows the document property of that name (document.hidden) -->
     <iframe id="shell-hidden" name="shell-hidden" title="" hidden></iframe>

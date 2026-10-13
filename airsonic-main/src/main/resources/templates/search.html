@@ -3,32 +3,19 @@
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
 
-    <script type="text/javascript" th:inline="javascript">
-
-        function showMoreArtists() {
-            $('.artistRow').show(); $('#moreArtists').hide();
-        }
-
-        function showMoreArtistsFromTag() {
-            $('.artistFromTagRow').show(); $('#moreArtistsFromTag').hide();
-        }
-        function showMoreAlbums() {
-            $('.albumRow').show(); $('#moreAlbums').hide();
-        }
-
-        function showMoreAlbumsFromTag() {
-            $('.albumFromTagRow').show(); $('#moreAlbumsFromTag').hide();
-        }
-        function showMoreSongs() {
-            $('.songRow').show();$('#moreSongs').hide();
-        }
-
-        function init() {
-            feather.replace();
-        }
+    <script type="text/javascript">
+        Page.define("search", function (page) {
+            page.actions({
+                /** Shows the hidden rows matching data-rows and hides the link. */
+                showMore(link) {
+                    $(link.dataset.rows).show();
+                    $(link).closest(".forward").hide();
+                }
+            });
+        });
     </script>
 </head>
-<body class="mainframe bgcolor1" onload="init();">
+<body class="mainframe bgcolor1" data-page="search">
 
 <h1>
     <img th:src="${themes?.get('searchImage') ?: 'icons/default_light/search.svg'}" alt=""/>
@@ -39,7 +26,7 @@
 
 <p th:if="${!command.indexBeingCreated and #lists.isEmpty(command.artists) and #lists.isEmpty(command.albums) and #lists.isEmpty(command.songs)}" class="warning" th:text="#{search.hits.none}"></p>
 <h2 th:if="${!#lists.isEmpty(command.artists) or !#lists.isEmpty(command.albums) or !#lists.isEmpty(command.songs)}">
-    <i data-feather="folder" class="feather-sm"></i>
+    <i data-icon="folder" class="icon-sm"></i>
     <span style="vertical-align: middle" th:text="#{search.folder}"></span>
 </h2>
 <th:block th:if="${!#lists.isEmpty(command.artists)}">
@@ -62,7 +49,7 @@
         </th:block>
     </table>
     <div th:if="${#lists.size(command.artists) gt 5}" id="moreArtists" class="forward">
-        <a href="javascript:showMoreArtists()" th:text="#{search.hits.more}"></a>
+        <a href="#" data-on-click="showMore" data-rows=".artistRow" th:text="#{search.hits.more}"></a>
     </div>
 </th:block>
 
@@ -89,7 +76,7 @@
             </th:block>
     </table>
     <th:block th:if="${#lists.size(command.albums) gt 5}">
-        <div id="moreAlbums" class="forward"><a href="javascript:showMoreAlbums()" th:text="#{search.hits.more}"></a></div>
+        <div id="moreAlbums" class="forward"><a href="#" data-on-click="showMore" data-rows=".albumRow" th:text="#{search.hits.more}"></a></div>
     </th:block>
 </th:block>
 
@@ -118,11 +105,11 @@
         </th:block>
     </table>
     <div th:if="${#lists.size(command.songs) gt 10}" id="moreSongs" class="forward">
-        <a href="javascript:showMoreSongs()" th:text="#{search.hits.more}"></a></div>
+        <a href="#" data-on-click="showMore" data-rows=".songRow" th:text="#{search.hits.more}"></a></div>
 </th:block>
 
 <h2 th:if="${!#lists.isEmpty(command.artistsFromTag) or !#lists.isEmpty(command.albumsFromTag)}">
-    <i data-feather="tag" class="feather-sm"></i>
+    <i data-icon="tag" class="icon-sm"></i>
     <span style="vertical-align: middle" th:text="#{search.tag}"></span>
 </h2>
 <th:block th:if="${!#lists.isEmpty(command.artistsFromTag)}">
@@ -144,7 +131,7 @@
         </th:block>
     </table>
     <div th:if="${#lists.size(command.artistsFromTag) gt 5}" id="moreArtistsFromTag" class="forward">
-        <a href="javascript:showMoreArtistsFromTag()" th:text="#{search.hits.more}"></a>
+        <a href="#" data-on-click="showMore" data-rows=".artistFromTagRow" th:text="#{search.hits.more}"></a>
     </div>
 </th:block>
 
@@ -172,7 +159,7 @@
             </th:block>
     </table>
     <th:block th:if="${#lists.size(command.albumsFromTag) gt 5}">
-        <div id="moreAlbumsFromTag" class="forward"><a href="javascript:showMoreAlbumsFromTag()" th:text="#{search.hits.more}"></a></div>
+        <div id="moreAlbumsFromTag" class="forward"><a href="#" data-on-click="showMore" data-rows=".albumFromTagRow" th:text="#{search.hits.more}"></a></div>
     </th:block>
 </th:block>
 </body></html>

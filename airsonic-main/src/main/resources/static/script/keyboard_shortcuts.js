@@ -1,22 +1,39 @@
-if (top.keyboardShortcutsEnabled) {
-  Mousetrap.bind('space', function() { top.playQueue.onToggleStartStop(); return false; });
-  Mousetrap.bind('left',  function() { top.playQueue.onPrevious(); });
-  Mousetrap.bind('right', function() { top.playQueue.onNext('OFF'); });
-  Mousetrap.bind('*',     function() { top.playQueue.onStarCurrent(); });
-  Mousetrap.bind('plus',  function() { top.playQueue.onGainAdd(+5); });
-  Mousetrap.bind('-',     function() { top.playQueue.onGainAdd(-5); });
-  Mousetrap.bind('q',     function() { top.playQueue.onTogglePlayQueue(!top.playQueue.isVisible); });
+/*
+ * Keyboard shortcuts of the application shell (see more.html for the list). They act on the play
+ * queue and the shell, so they are only bound in the shell document.
+ */
+/* global Mousetrap, Page, playQueue */
+(function () {
+    "use strict";
 
-  Mousetrap.bind('/',     function() { parent.frames.upper.$("#query").focus(); });
-  Mousetrap.bind('m',     function() { top.TopNav.toggleSideBar(); });
+    if (!window.keyboardShortcutsEnabled || !window.playQueue || !window.Shell) {
+        return;
+    }
 
-  Mousetrap.bind('g h', function() { parent.frames.main.location.href = "home.view?"; });
-  Mousetrap.bind('g p', function() { parent.frames.main.location.href = "playlists.view?"; });
-  Mousetrap.bind('g o', function() { parent.frames.main.location.href = "podcastChannels.view?"; });
-  Mousetrap.bind('g s', function() { parent.frames.main.location.href = "settings.view?"; });
-  Mousetrap.bind('g b', function() { parent.frames.main.location.href = "bookmarks.view?"; });
-  Mousetrap.bind('g t', function() { parent.frames.main.location.href = "starred.view?"; });
-  Mousetrap.bind('g r', function() { parent.frames.main.location.href = "more.view?"; });
-  Mousetrap.bind('g a', function() { parent.frames.main.location.href = "help.view?"; });
-  Mousetrap.bind('?',   function() { parent.frames.main.location.href = "more.view#shortcuts"; });
-}
+    function go(url) {
+        return function () {
+            Page.navigate(url);
+        };
+    }
+
+    Mousetrap.bind('space', function () { playQueue.onToggleStartStop(); return false; });
+    Mousetrap.bind('left',  function () { playQueue.onPrevious(); });
+    Mousetrap.bind('right', function () { playQueue.onNext('OFF'); });
+    Mousetrap.bind('*',     function () { playQueue.onStarCurrent(); });
+    Mousetrap.bind('plus',  function () { playQueue.onGainAdd(+5); });
+    Mousetrap.bind('-',     function () { playQueue.onGainAdd(-5); });
+    Mousetrap.bind('q',     function () { playQueue.onTogglePlayQueue(!playQueue.isVisible); });
+
+    Mousetrap.bind('/',     function () { document.getElementById("query").focus(); return false; });
+    Mousetrap.bind('m',     function () { window.TopNav.toggleSideBar(); });
+
+    Mousetrap.bind('g h', go("home.view?"));
+    Mousetrap.bind('g p', go("playlists.view?"));
+    Mousetrap.bind('g o', go("podcastChannels.view?"));
+    Mousetrap.bind('g s', go("settings.view?"));
+    Mousetrap.bind('g b', go("bookmarks.view?"));
+    Mousetrap.bind('g t', go("starred.view?"));
+    Mousetrap.bind('g r', go("more.view?"));
+    Mousetrap.bind('g a', go("help.view?"));
+    Mousetrap.bind('?',   go("more.view#shortcuts"));
+})();

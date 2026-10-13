@@ -32,6 +32,12 @@ body.shell {
     overflow-y: auto;
 }
 
+@media (min-width: 761px) {
+    .shell-sidebar-hidden .shell-left {
+        display: none;
+    }
+}
+
 .shell-center {
     flex: 1;
     display: flex;
@@ -61,6 +67,34 @@ body.shell {
     flex: none;
     padding-left: 1em;
     padding-right: 1em;
+}
+
+.playqueue-audio {
+    flex: 1 1 300px;
+    white-space: nowrap;
+}
+
+.playqueue-toggle {
+    white-space: nowrap;
+    text-align: right;
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+}
+
+.playqueue-controlbar .icon-button img {
+    height: 18px;
+}
+
+/* With auto-hide, the queue opens on hover; the toggle is only needed on narrow screens. */
+@media (min-width: 761px) {
+    .playqueue-toggle-autohide {
+        display: none;
+    }
+}
+
+/* Covers the page while the navigation drawer is open (narrow screens only). */
+.shell-backdrop {
+    display: none;
 }
 
 /* Stands in for the body margin each page had in its frame. */
@@ -175,5 +209,125 @@ body.shell {
 @media (max-width: 900px) {
     .shell-right {
         display: none;
+    }
+}
+
+/*
+ * Narrow screens (phones, small windows): the left region becomes a drawer that the sidebar
+ * button slides in over the page, the top bar keeps only its icons, and the play queue shrinks
+ * to a player bar whose queue opens above it.
+ */
+@media (max-width: 760px) {
+    .shell-upper > .shell-content {
+        margin: 0.25em 0.5em 0 0.5em;
+    }
+
+    .shell-topbar {
+        gap: 0.25em 0.6em;
+    }
+
+    .shell-nav-item {
+        min-width: 2.25em;
+    }
+
+    .shell-topbar-end {
+        gap: 0.6em;
+        padding-left: 0.5em;
+    }
+
+    .shell-topbar-end .detail {
+        display: none;
+    }
+
+    .shell-search {
+        margin-left: 0.25em;
+    }
+
+    .shell-search input {
+        width: 7em;
+    }
+
+    .shell-left {
+        position: fixed;
+        z-index: 20;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(85vw, 320px);
+        padding-top: 0.5em;
+        box-shadow: 0 0 24px rgba(0, 0, 0, 0.4);
+        transform: translateX(-105%);
+        transition: transform 0.2s ease-out;
+        visibility: hidden;
+    }
+
+    .shell-drawer-open .shell-left {
+        transform: none;
+        visibility: visible;
+    }
+
+    .shell-drawer-open .shell-backdrop {
+        display: block;
+        position: fixed;
+        z-index: 19;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .shell-content {
+        margin: 0.5em;
+    }
+
+    .shell-center > .playqueue-container {
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .playqueue-controlbar {
+        flex-wrap: wrap;
+        gap: 0.25em 0.6em;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+    }
+
+    /* the player takes the first row, the buttons wrap below it */
+    .playqueue-audio {
+        flex: 1 1 100%;
+        order: -1;
+    }
+
+    .playqueue-toggle {
+        padding: 0;
+        margin-left: auto;
+    }
+
+    /* the " |" separators between the controls take room a phone does not have */
+    .playqueue-controlbar > div {
+        font-size: 0;
+    }
+
+    .playqueue-controlbar > div > *,
+    .playqueue-controlbar .mejs__container {
+        font-size: 10.5pt;
+    }
+
+    .shell-main .dataTables_wrapper {
+        overflow-x: auto;
+    }
+
+    .playqueue-container .dataTables_scrollBody {
+        max-height: 45vh !important;
+    }
+
+    .playqueue-container .dataTables_length,
+    .playqueue-container .dataTables_info {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shell-left {
+        transition: none;
     }
 }

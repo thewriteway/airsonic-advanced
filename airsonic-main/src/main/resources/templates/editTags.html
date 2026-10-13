@@ -3,123 +3,95 @@
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
 <script type="text/javascript" th:inline="javascript">
-    var index = 0;
-    var fileCount = /*[[${#lists.size(command.songs)}]]*/ 0;
-    function setArtist() {
-        var artist = $("input[name='artistAll']").val();
-        for (var i = 0; i < fileCount; i++) {
-            $("input[name='artist" + i + "']").val(artist);
-        }
-    }
-    function setAlbum() {
-        var album = $("input[name='albumAll']").val();
-        for (var i = 0; i < fileCount; i++) {
-            $("input[name='album" + i + "']").val(album);
-        }
-    }
-    function setYear() {
-        var year = $("input[name='yearAll']").val();
-        for (var i = 0; i < fileCount; i++) {
-            $("input[name='year" + i + "']").val(year);
-        }
-    }
-    function setGenre() {
-        var genre = $("select[name='genreAll']").val();
-        for (var i = 0; i < fileCount; i++) {
-            $("input[name='genre" + i + "']").val(genre);
-        }
-    }
-    function suggestTitle() {
-        for (var i = 0; i < fileCount; i++) {
-            var title = $("input[name='suggestedTitle" + i + "']").val();
-            $("input[name='title" + i + "']").val(title);
-        }
-    }
-    function resetTitle() {
-        for (var i = 0; i < fileCount; i++) {
-            var title = $("input[name='originalTitle" + i + "']").val();
-            $("input[name='title" + i + "']").val(title);
-        }
-    }
-    function suggestTrack() {
-        for (var i = 0; i < fileCount; i++) {
-            var track = $("input[name='suggestedTrack" + i + "']").val();
-            $("input[name='track" + i + "']").val(track);
-        }
-    }
-    function resetTrack() {
-        for (var i = 0; i < fileCount; i++) {
-            var track = $("input[name='originalTrack" + i + "']").val();
-            $("input[name='track" + i + "']").val(track);
-        }
-    }
-    function updateTags() {
-        document.getElementById("save").disabled = true;
-        index = 0;
-        $("#errors").empty();
-        for (var i = 0; i < fileCount; i++) {
-            $("#status" + i).empty();
-        }
-        updateNextTag();
-    }
-    function updateNextTag() {
-        var id = $("input[name='id" + index + "']").val();
-        var artist = $("input[name='artist" + index + "']").val();
-        var track = $("input[name='track" + index + "']").val();
-        var album = $("input[name='album" + index + "']").val();
-        var title = $("input[name='title" + index + "']").val();
-        var year = $("input[name='year" + index + "']").val();
-        var genre = $("input[name='genre" + index + "']").val();
-        $("#status" + index).append("[(#{edittags.working})]");
-        top.StompClient.send("/app/tags/edit", JSON.stringify({mediaFileId: id, artist: artist, track: track, album: album, title: title, year: year, genre: genre}));
-    }
-    function setTagsCallback(result) {
-        var message;
-        if (result == "SKIPPED") {
-            message = "[(#{edittags.skipped})]";
-        } else if (result == "UPDATED") {
-            message = "<b>[(#{edittags.updated})]</b>";
-        } else {
-            message = "<div class='warning'>[(#{edittags.error})]</div>";
-            $("#errors").append("<br>" + result + "<br>");
-        }
-        $("#status" + index).empty().append(message);
-        index++;
-        if (index < fileCount) {
-            updateNextTag();
-        } else {
-            document.getElementById("save").disabled = false;
-        }
-    }
+    Page.define("editTags", function (page) {
+        var index = 0;
+        var fileCount = /*[[${#lists.size(command.songs)}]]*/ 0;
+        var messages = {
+            working: /*[[#{edittags.working}]]*/ "",
+            skipped: /*[[#{edittags.skipped}]]*/ "",
+            updated: /*[[#{edittags.updated}]]*/ "",
+            error: /*[[#{edittags.error}]]*/ ""
+        };
 
-    function init() {
-        top.StompClient.subscribe("editTags.html", {
-            "/user/queue/tags/edit": function(msg) {
-                setTagsCallback(msg.body);
+        /** Copies the value of the "all" field to the field of every song. */
+        function setAll(field, sourceSelector) {
+            var value = $(sourceSelector).val();
+            for (var i = 0; i < fileCount; i++) {
+                $("input[name='" + field + i + "']").val(value);
+            }
+        }
+
+        /** Copies hidden per-song values (suggested or original) to a field of every song. */
+        function copyField(source, field) {
+            for (var i = 0; i < fileCount; i++) {
+                $("input[name='" + field + i + "']").val($("input[name='" + source + i + "']").val());
+            }
+        }
+
+        function updateNextTag() {
+            var id = $("input[name='id" + index + "']").val();
+            var artist = $("input[name='artist" + index + "']").val();
+            var track = $("input[name='track" + index + "']").val();
+            var album = $("input[name='album" + index + "']").val();
+            var title = $("input[name='title" + index + "']").val();
+            var year = $("input[name='year" + index + "']").val();
+            var genre = $("input[name='genre" + index + "']").val();
+            $("#status" + index).text(messages.working);
+            StompClient.send("/app/tags/edit", JSON.stringify({mediaFileId: id, artist: artist, track: track, album: album, title: title, year: year, genre: genre}));
+        }
+
+        function setTagsCallback(result) {
+            var status = $("#status" + index).empty();
+            if (result == "SKIPPED") {
+                status.text(messages.skipped);
+            } else if (result == "UPDATED") {
+                status.append($("<b>").text(messages.updated));
+            } else {
+                status.append($("<div class='warning'>").text(messages.error));
+                $("#errors").append($("<br>"), document.createTextNode(result), $("<br>"));
+            }
+            index++;
+            if (index < fileCount) {
+                updateNextTag();
+            } else {
+                document.getElementById("save").disabled = false;
+            }
+        }
+
+        page.actions({
+            setArtist: () => setAll("artist", "input[name='artistAll']"),
+            setAlbum: () => setAll("album", "input[name='albumAll']"),
+            setYear: () => setAll("year", "input[name='yearAll']"),
+            setGenre: () => setAll("genre", "select[name='genreAll']"),
+            suggestTitle: () => copyField("suggestedTitle", "title"),
+            resetTitle: () => copyField("originalTitle", "title"),
+            suggestTrack: () => copyField("suggestedTrack", "track"),
+            resetTrack: () => copyField("originalTrack", "track"),
+            /** Enter in an "all" field applies it (data-set names the action). */
+            setOnEnter(input, event) {
+                if (event.key == "Enter") {
+                    page.run(input.dataset.set);
+                    return false;
+                }
+            },
+            updateTags() {
+                document.getElementById("save").disabled = true;
+                index = 0;
+                $("#errors").empty();
+                for (var i = 0; i < fileCount; i++) {
+                    $("#status" + i).empty();
+                }
+                updateNextTag();
             }
         });
-        $("input[name='artistAll']").keypress(function(event) {
-            if (e.which == 13) {
-                setArtist();
-                event.preventDefault();
-            }
+
+        page.subscribe({
+            "/user/queue/tags/edit": msg => setTagsCallback(msg.body)
         });
-        $("input[name='albumAll']").keypress(function(event) {
-            if (e.which == 13) {
-                setAlbum();
-                event.preventDefault();
-            }
-        });
-        $("input[name='yearAll']").keypress(function(event) {
-            if (e.which == 13) {
-                setYear();
-                event.preventDefault();
-            }
-        });
-    }
+    });
 </script>
 </head>
-<body class="mainframe bgcolor1" onload="init()">
+<body class="mainframe bgcolor1" data-page="editTags">
 <h1 th:text="#{edittags.title}"></h1>
 <div class="back"><a th:href="@{/main.view(id=${command.id})}" th:text="#{common.back}"></a></div>
 
@@ -135,24 +107,28 @@
         <th class="ruleTableHeader" width="60pt" th:text="#{edittags.status}"></th>
     </tr>
     <tr>
-        <th class="ruleTableHeader"></th>
-        <th class="ruleTableHeader"><a href="javascript:suggestTrack()" th:text="#{edittags.suggest.short}"></a> |
-            <a href="javascript:resetTrack()" th:text="#{edittags.reset.short}"></a></th>
-        <th class="ruleTableHeader"><a href="javascript:suggestTitle()" th:text="#{edittags.suggest}"></a> |
-            <a href="javascript:resetTitle()" th:text="#{edittags.reset}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <input type="text" name="artistAll" size="15" th:value="${command.defaultArtist}"/>&nbsp;<a href="javascript:setArtist()" th:text="#{edittags.set}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <input type="text" name="albumAll" size="15" th:value="${command.defaultAlbum}"/>&nbsp;<a href="javascript:setAlbum()" th:text="#{edittags.set}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <input type="text" name="yearAll" size="5" th:value="${command.defaultYear}"/>&nbsp;<a href="javascript:setYear()" th:text="#{edittags.set}"></a></th>
-        <th class="ruleTableHeader" style="white-space: nowrap">
-            <select name="genreAll" style="width:7em">
+        <th class="ruleTableHeader" scope="col"></th>
+        <th class="ruleTableHeader" scope="col"><a href="#" data-on-click="suggestTrack" th:text="#{edittags.suggest.short}"></a> |
+            <a href="#" data-on-click="resetTrack" th:text="#{edittags.reset.short}"></a></th>
+        <th class="ruleTableHeader" scope="col"><a href="#" data-on-click="suggestTitle" th:text="#{edittags.suggest}"></a> |
+            <a href="#" data-on-click="resetTitle" th:text="#{edittags.reset}"></a></th>
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="artistAll" class="visually-hidden" th:text="#{edittags.artist}"></label>
+            <input type="text" id="artistAll" name="artistAll" data-on-keydown="setOnEnter" data-set="setArtist" size="15" th:value="${command.defaultArtist}"/>&nbsp;<a href="#" data-on-click="setArtist" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="albumAll" class="visually-hidden" th:text="#{edittags.album}"></label>
+            <input type="text" id="albumAll" name="albumAll" data-on-keydown="setOnEnter" data-set="setAlbum" size="15" th:value="${command.defaultAlbum}"/>&nbsp;<a href="#" data-on-click="setAlbum" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="yearAll" class="visually-hidden" th:text="#{edittags.year}"></label>
+            <input type="text" id="yearAll" name="yearAll" data-on-keydown="setOnEnter" data-set="setYear" size="5" th:value="${command.defaultYear}"/>&nbsp;<a href="#" data-on-click="setYear" th:text="#{edittags.set}"></a></th>
+        <th class="ruleTableHeader" scope="col" style="white-space: nowrap">
+            <label for="genreAll" class="visually-hidden" th:text="#{edittags.genre}"></label>
+            <select id="genreAll" name="genreAll" style="width:7em">
                 <option value=""/>
                 <option th:each="genre:${command.allGenres}" th:selected="${genre eq command.defaultGenre}" th:value="${genre}" th:text="${genre}"></option>
             </select>
 
-            <a href="javascript:setGenre()" th:text="#{edittags.set}"></a>
+            <a href="#" data-on-click="setGenre" th:text="#{edittags.set}"></a>
         </th>
         <th class="ruleTableHeader"></th>
     </tr>
@@ -175,6 +151,6 @@
 
 </table>
 
-<p><input type="submit" id="save" th:value="#{common.save}" onclick="updateTags()"/></p>
-<div class="warning" id="errors"/>
+<p><input type="submit" id="save" th:value="#{common.save}" data-on-click="updateTags"/></p>
+<div class="warning" id="errors"></div>
 </body></html>

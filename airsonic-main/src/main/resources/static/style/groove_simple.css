@@ -17,10 +17,10 @@
 
 /* Main frame image */
 .mainframe {
-    background-image:url( "../icons/groove/background_main_blank.png" );
+    background-image: url( "../icons/groove/background_main_blank.png" );
 }
 
 /* Back image */
 .back {
-    background-image:url( "../icons/groove/back.png" );
+    background-image: url( "../icons/groove/back.png" );
 }

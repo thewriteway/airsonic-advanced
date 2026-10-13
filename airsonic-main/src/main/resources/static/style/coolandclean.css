@@ -10,45 +10,26 @@
 
 @import "default.css";
 
+:root {
+    --bg1: #F7F7F7;
+    --bg2: #D1D9E1;
+    --fg-detail: #333333;
+    --fg-heading: #333333;
+    --fg-strong: #333333;
+    --table-text: #333333;
+    --paginate: #656569;
+    --paginate-hover: #333333;
+    --paginate-current: #333333;
+    --row-hover: #B2BFCD;
+    --link: #656569;
+    --link-hover: #333333;
+    --warning: #AA1F15;
+}
+
 /* The primary background colour, light gray. Images used to force background on left frame headings and playlist. */
 .bgcolor1, table.music tr:nth-of-type(even) {
-    background-image:url( "../icons/coolandclean/list_heading.png" );
-    background-repeat:repeat;
-    background-color: #F7F7F7;
-}
-
-/* The secondary background colour, light blue, primary theme colour. */
-.bgcolor2, .ruleTableHeader, .log, table.music tr:nth-of-type(odd) {
-    background-color: #D1D9E1;
-}
-
-/* Foreground colour used for h1, h2, b, tr, details and albumcomments. */
-h1, h2, b, tr, .detail, .albumComment {
-    color: #333333;
-}
-
-/* regular foreground color */
-.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
-    color: #333333;
-}
-
-/* a:link color */
-.dataTables_wrapper .dataTables_paginate .paginate_button, button.dt-button, div.dt-button, a.dt-button {
-    color: #656569 !important;
-}
-
-/* a:hover color + .border1 border-color */
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover, button.dt-button:hover:not(.disabled), div.dt-button:hover:not(.disabled), a.dt-button:hover:not(.disabled) {
-    color: #333333 !important;
-}
-
-/* regular color + .border1 border-color */
-.dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-    color: #333333 !important;
-}
-
-table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover {
-    background-color: #B2BFCD;
+    background-image: url( "../icons/coolandclean/list_heading.png" );
+    background-repeat: repeat;
 }
 
 /* Table sizing */
@@ -62,45 +43,32 @@ table {
 
 /* Main frame image & colour */
 .mainframe {
-    background-image:url( "../icons/coolandclean/background_main.png" );
-    background-repeat:no-repeat;
-    background-attachment:fixed;
+    background-image: url( "../icons/coolandclean/background_main.png" );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     background-color: #D1D9E1;
-    background-position:right;
+    background-position: right;
 }
 
 /* Right frame background. */
 .rightframe {
     background-color: #D1D9E1;
-    background-image:none;
+    background-image: none;
 }
 
 /* Back image */
 .back {
-    background-image:url( "../icons/coolandclean/back.png" );
-}
-
-/* Link colour */
-a:link, a:active, a:visited, a:link *, a:active *, a:visited * {
-    color: #656569;
+    background-image: url( "../icons/coolandclean/back.png" );
 }
 
 /* Link hover colour */
 a:hover, a:hover * {
     text-decoration: none;
-    color: #333333;
-}
-
-/* Colour for warning messages. */
-.warning {
-    color: #AA1F15;
 }
 
 /* The primary foreground colour. */
 body {
     background-color: #D1D9E1;
-    scrollbar-arrow-color: #636363;
-    scrollbar-track-color: #D1D9E1;
 }
 
 /* The album comments. */

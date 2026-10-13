@@ -1,10 +1,12 @@
 /*
  * Application shell: hosts the Airsonic pages in regions of a single document.
  *
- * The pages were written for a frameset (upper, left, main and right iframes) and are still
- * complete HTML documents. A region loads such a document with fetch, moves its body into the
- * region, runs its scripts in document order (libraries the shell already has are not loaded
- * twice) and finally runs its body onload handler, which is what the pages expect from a frame.
+ * A region fetches a page with the X-Airsonic-Shell request header, which makes the server leave
+ * out everything the shell already has (common head, libraries), so the response only carries the
+ * page's own scripts and styles and its body. The region unmounts the page it showed (see page.js),
+ * moves the new body (with the class, style and data attributes of the page's <body>) into the
+ * region, runs the page's scripts in document order (libraries the shell already has are not
+ * loaded twice) and mounts the new page.
  *
  * Links and forms that used to navigate a frame now load the corresponding region, and the main
  * region keeps the browser history and address bar in sync. The frame references used by the
@@ -14,10 +16,13 @@
  * Expects window.ShellConfig = {base: context path with trailing slash, pages: [page names]}, and
  * elements with data-shell-region (region name) and data-shell-src (initial URL, if any).
  */
+/* global Page */
 (function () {
     "use strict";
 
     var config = window.ShellConfig;
+    // scripts the shell runs on behalf of a page need the nonce of the Content-Security-Policy
+    var nonce = (document.currentScript && document.currentScript.nonce) || "";
     var pages = new Set(config.pages);
     // a Map, so that frame names taken from the pages (target="...") never hit Object.prototype
     var regions = new Map();
@@ -66,6 +71,7 @@
             return Promise.resolve();
         }
         var script = document.createElement("script");
+        script.nonce = nonce;
         if (type) {
             script.type = type;
         }
@@ -94,14 +100,6 @@
             };
             document.head.appendChild(script);
         });
-    }
-
-    /** Runs inline handler code (e.g. a body onload attribute) in the global scope. */
-    function runInline(code) {
-        var script = document.createElement("script");
-        script.textContent = code;
-        document.head.appendChild(script);
-        script.remove();
     }
 
     function Region(name, element, options) {
@@ -182,6 +180,7 @@
 
     Region.prototype.render = function (html, url, options) {
         var doc = new DOMParser().parseFromString(html, "text/html");
+        var sequence = this.sequence;
         this.url = url;
 
         if (this.history) {
@@ -216,12 +215,24 @@
             return style;
         });
 
-        // Release jQuery data and handlers of the previous page, then show the new body.
+        // Release the previous page (timers, subscriptions, jQuery data), then show the new body.
+        Page.unmount(this.content);
         if (window.jQuery) {
             window.jQuery(this.content).empty();
         }
         this.content.className = "shell-content " + doc.body.className;
         this.content.setAttribute("style", doc.body.getAttribute("style") || "");
+        // the data attributes of the page's body (data-page is set once its scripts have run)
+        Array.prototype.slice.call(this.content.attributes).forEach((attribute) => {
+            if (attribute.name.indexOf("data-") === 0) {
+                this.content.removeAttribute(attribute.name);
+            }
+        });
+        Array.prototype.forEach.call(doc.body.attributes, (attribute) => {
+            if (attribute.name.indexOf("data-") === 0 && attribute.name !== "data-page") {
+                this.content.setAttribute(attribute.name, attribute.value);
+            }
+        });
         // copy first: adopting a node removes it from the live childNodes list
         this.content.replaceChildren.apply(this.content, Array.from(doc.body.childNodes).map(function (node) {
             return document.adoptNode(node);
@@ -237,19 +248,21 @@
 
         var scripts = Array.prototype.slice.call(doc.head.querySelectorAll("script"))
             .concat(Array.prototype.slice.call(this.content.querySelectorAll("script")));
-        var onload = doc.body.getAttribute("onload");
+        var pageName = doc.body.getAttribute("data-page");
         return scripts.reduce(function (previous, script) {
             return previous.then(function () {
                 return runScript(script, url);
             });
         }, Promise.resolve()).then(() => {
-            // jQuery ready handlers run asynchronously; the load event used to come after them.
-            setTimeout(() => {
-                if (onload) {
-                    runInline(onload);
-                }
-                this.element.dispatchEvent(new CustomEvent("shell:load", {detail: {url: url}}));
-            });
+            if (sequence !== this.sequence) {
+                // another page was requested meanwhile, it will be mounted instead
+                return;
+            }
+            if (pageName) {
+                this.content.setAttribute("data-page", pageName);
+                Page.mount(this.content);
+            }
+            this.element.dispatchEvent(new CustomEvent("shell:load", {detail: {url: url}}));
         });
     };
 
@@ -355,6 +368,10 @@
         var target = (submitter && submitter.getAttribute("formtarget")) || form.getAttribute("target");
         var action = (submitter && submitter.hasAttribute("formaction")) ? submitter.formAction : form.action;
         var method = ((submitter && submitter.getAttribute("formmethod")) || form.getAttribute("method") || "get").toLowerCase();
+        if (method === "dialog") {
+            // closes a <dialog>, handled by the browser
+            return null;
+        }
         var url = resolve(action);
         var sameOrigin = url.origin === location.origin;
         var authentication = isLoginPage(url) || /\/logout$/.test(url.pathname);

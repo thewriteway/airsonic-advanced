@@ -6,73 +6,72 @@
     <title th:text="#{lyrics.title}"></title>
 
     <script type="text/javascript" th:inline="javascript">
-        // independent page, so StompClient does not belong to window.top
-        const hasLyrics = /*[[${view.lyrics != null}]]*/ false;
-        function init() {
-            StompClient.subscribe("lyrics.html", {
-                "/user/queue/lyrics/get": function(msg) {
-                    getLyricsCallback(JSON.parse(msg.body));
+        // independent page (a popup window), with a websocket connection of its own
+        Page.define("lyrics", function (page) {
+            var hasLyrics = /*[[${view.lyrics != null}]]*/ false;
+            var mediaFileId = /*[[${view.id}]]*/ 0;
+
+            function getLyrics(artist, song) {
+                $("#wait").css("display", "inline");
+                $("#lyrics").css("display", "none");
+                $("#noLyricsFound").css("display", "none");
+                $("#tryLater").css("display", "none");
+                StompClient.send("/app/lyrics/get", JSON.stringify({artist: artist, song: song, id: mediaFileId}));
+            }
+
+            function getLyricsCallback(lyricsInfo) {
+                $("#wait").css("display", "none");
+                if (lyricsInfo.persisted === true) {
+                    location.reload();
+                    return;
                 }
-            }, function() {
+                if (lyricsInfo.tryLater) {
+                    $("#tryLater").css("display", "inline");
+                } else {
+                    $("#noLyricsFound").css("display", "inline");
+                }
+                if (hasLyrics) {
+                    $("#lyrics").css("display", "inline");
+                }
+            }
+
+            page.actions({
+                search() {
+                    getLyrics($('#artist').val(), $('#song').val());
+                    return false;
+                }
+            });
+
+            page.subscribe({
+                "/user/queue/lyrics/get": msg => getLyricsCallback(JSON.parse(msg.body))
+            }, function () {
                 if (hasLyrics) {
                     $("#wait").css("display", "none");
                     $("#lyrics").css("display", "inline");
                     $("#noLyricsFound").css("display", "none");
                 } else {
-                    $("#wait").css("display", "inline");
-                    getLyrics('[(${view.artist})]', '[(${view.song})]', '[(${view.id})]');
+                    getLyrics(/*[[${view.artist}]]*/ "", /*[[${view.song}]]*/ "");
                 }
             });
-        }
-
-        function getLyrics(artist, song, id) {
-            $("#wait").css("display", "inline");
-            $("#lyrics").css("display", "none");
-            $("#noLyricsFound").css("display", "none");
-            $("#tryLater").css("display", "none");
-            StompClient.send("/app/lyrics/get", JSON.stringify({artist: artist, song: song, id: id}));
-        }
-
-        function getLyricsCallback(lyricsInfo) {
-            $("#wait").css("display", "none");
-            if (lyricsInfo.persisted === true) {
-                location.reload();
-                return;
-            }
-            if (lyricsInfo.tryLater) {
-                $("#tryLater").css("display", "inline");
-            } else {
-                $("#noLyricsFound").css("display", "inline");
-            }
-            if (hasLyrics) {
-                $("#lyrics").css("display", "inline");
-            }
-        }
-
-        function search() {
-            getLyrics($('#artist').val(), $('#song').val(), '[(${view.id})]');
-        }
+        });
     </script>
 
 </head>
-<body class="mainframe bgcolor1" onload="init();">
+<body class="mainframe bgcolor1" data-page="lyrics">
 
-<form action="#" onsubmit="search();return false;">
+<form action="#" data-on-submit="search">
     <table>
         <tr>
             <td th:text="#{lyrics.artist}"></td>
-            <td style="padding-left:0.50em"><input id="artist" type="text" size="40" th:value="${view.artist}" tabindex="1"/></td>
-            <td style="padding-left:0.75em"><input type="submit" th:value="#{lyrics.search}" style="width:6em"
-                                                   tabindex="3"/></td>
+            <td style="padding-left:0.50em"><input id="artist" type="text" size="40" th:value="${view.artist}"/></td>
+            <td style="padding-left:0.75em"><input type="submit" th:value="#{lyrics.search}" style="width:6em"/></td>
         </tr>
         <tr>
             <td th:text="#{lyrics.song}"></td>
-            <td style="padding-left:0.50em"><input id="song" type="text" size="40" th:value="${view.song}" tabindex="2"/></td>
+            <td style="padding-left:0.50em"><input id="song" type="text" size="40" th:value="${view.song}"/></td>
             <td style="padding-left:0.75em">
-                <button type="button"
-                        th:onclick="|location.href='@{/lyrics/edit(id=${view.id})}'|"
-                        style="width:6em; display:inline-block; text-align:center;"
-                        tabindex="4" th:text="#{common.edit}">
+                <button type="button" data-on-click="navigate" th:data-href="@{/lyrics/edit(id=${view.id})}"
+                        style="width:6em; display:inline-block; text-align:center;" th:text="#{common.edit}">
                 </button>
             </td>
         </tr>
@@ -101,7 +100,7 @@
 
 <hr/>
 <p style="text-align:center">
-    <a href="javascript:self.close()">[<span th:text="#{common.close}"></span>]</a>
+    <a href="#" data-on-click="closeWindow">[<span th:text="#{common.close}"></span>]</a>
 </p>
 
 </body>

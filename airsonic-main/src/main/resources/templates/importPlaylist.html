@@ -10,7 +10,7 @@
     <p th:if="${!#lists.isEmpty(model?.playlist)}">
         <span th:text="#{importPlaylist.success(${model.playlist.name})}"></span>
         <script type="text/javascript" th:inline="javascript">
-            top.main.location.href = /*[[@{/playlist.view(id=${model.playlist.id})}]]*/ '' ;
+            Page.navigate(/*[[@{/playlist.view(id=${model.playlist.id})}]]*/ '');
         </script>
     </p>
 

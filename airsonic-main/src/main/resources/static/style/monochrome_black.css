@@ -8,18 +8,14 @@
 @import "mediaelement-dark.css";
 @import "dark-theme.css";
 
-/* The primary background colour. */
-.bgcolor1, table.music tr:nth-of-type(even) {
-    background-color: #222;
-}
-
-/* The secondary background colour, light blue, primary theme colour. */
-.bgcolor2, .ruleTableHeader, .log, table.music tr:nth-of-type(odd) {
-    background-color: #000000;
-}
-
-table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover {
-    background-color: #333333;
+:root {
+    --bg1: #222;
+    --bg2: #000000;
+    --row-hover: #333333;
+    --row-playing: #4D4D4D;
+    --row-playing-hover: #404040;
+    --fg: #CCC;
+    --warning: #990099;
 }
 
 table.dataTable tbody>tr.selected, table.dataTable tbody>tr>.selected {
@@ -30,20 +26,8 @@ table.dataTable.hover tbody>tr.selected:hover, table.dataTable.hover tbody>tr>.s
     background-color: #595959;
 }
 
-table.music.dataTable tbody tr.currently-playing {
-    background-color: #4D4D4D;
-}
-
-table.music.dataTable tbody tr.currently-playing:hover {
-    background-color: #404040;
-}
-
-body {
-    color: #CCC;
-}
-
 .back {
-    background-image:url("../icons/default_dark/back.png");
+    background-image: url("../icons/default_dark/back.png");
 }
 
 table {
@@ -53,11 +37,6 @@ table {
 /* Main frame image & colour */
 .mainframe, .rightframe {
     background-color: #222;
-}
-
-/* Colour for warning messages. */
-.warning {
-    color: #990099;
 }
 
 /* Background colour for form controls. */
@@ -106,5 +85,5 @@ body {
 }
 
 label, p {
-	color: #CCC;
+    color: #CCC;
 }

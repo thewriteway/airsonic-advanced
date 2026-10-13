@@ -3,7 +3,7 @@
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
 </head>
-<body class="mainframe bgcolor1">
+<body class="mainframe bgcolor1 settings-page">
 
 <th:block th:replace="~{settingsHeader::header(cat='share',toast=${settings_toast}, restricted=${!model.user.adminRole})}" />
 

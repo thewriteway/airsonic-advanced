@@ -4,7 +4,7 @@
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
 </head>
-<body class="mainframe bgcolor1">
+<body class="mainframe bgcolor1 settings-page">
 
 <th:block th:replace="~{settingsHeader::header(cat='internetRadio',toast=${settings_toast})}" />
 
@@ -51,5 +51,5 @@
 
     <p th:if="${!#strings.isEmpty(error)}" class="warning" th:text="#{__${error}__}"></p>
 
-    <script th:if="${settings_reload}" type="text/javascript">parent.frames.left.location.href="left.view?"</script>
+    <script th:if="${settings_reload}" type="text/javascript">Page.loadRegion("left", "left");</script>
 </body></html>

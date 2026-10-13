@@ -30,7 +30,7 @@ class ShellNavigationInterceptorTest {
         assertFalse(interceptor.preHandle(request, response, new Object()));
         assertEquals("/index", response.getForwardedUrl());
         assertEquals("/main.view?id=3", request.getAttribute(ShellPages.MAIN_ATTRIBUTE));
-        assertEquals("Sec-Fetch-Dest", response.getHeader("Vary"));
+        assertEquals("Sec-Fetch-Dest, X-Airsonic-Shell", response.getHeader("Vary"));
     }
 
     @Test
@@ -42,7 +42,33 @@ class ShellNavigationInterceptorTest {
 
         assertTrue(interceptor.preHandle(request, response, new Object()));
         assertNull(response.getForwardedUrl());
-        assertEquals("Sec-Fetch-Dest", response.getHeader("Vary"));
+        assertEquals("Sec-Fetch-Dest, X-Airsonic-Shell", response.getHeader("Vary"));
+    }
+
+    @Test
+    void marksShellRequestsAsFragments() throws Exception {
+        MockHttpServletRequest[] requests = {
+            new MockHttpServletRequest("GET", "/main.view"),
+            new MockHttpServletRequest("GET", "/left"),
+            new MockHttpServletRequest("POST", "/generalSettings")
+        };
+        for (MockHttpServletRequest request : requests) {
+            request.addHeader(ShellNavigationInterceptor.SHELL_HEADER, "main");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+
+            assertTrue(interceptor.preHandle(request, response, new Object()), request.getRequestURI());
+            assertEquals(Boolean.TRUE, request.getAttribute(ShellNavigationInterceptor.FRAGMENT_ATTRIBUTE), request.getRequestURI());
+            assertTrue(response.getHeaders("Vary").contains(ShellNavigationInterceptor.SHELL_HEADER), request.getRequestURI());
+        }
+    }
+
+    @Test
+    void rendersNavigationsAsDocuments() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/left");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        assertTrue(interceptor.preHandle(request, response, new Object()));
+        assertNull(request.getAttribute(ShellNavigationInterceptor.FRAGMENT_ATTRIBUTE));
     }
 
     @Test

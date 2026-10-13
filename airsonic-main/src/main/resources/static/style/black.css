@@ -6,28 +6,14 @@
 
 @import "midnight.css";
 
-/* The primary background color. */
-.bgcolor1, table.music tr:nth-of-type(even) {
-    background-color: #333333
-}
-
-/* The secondary background color. */
-.bgcolor2, .ruleTableHeader, .log, table.music tr:nth-of-type(odd)  {
-    background-color: black
-}
-
-table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover {
-    background-color: #404040;
+:root {
+    --bg1: #333333;
+    --bg2: black;
+    --row-hover: #404040;
+    --row-playing: #666666;
+    --row-playing-hover: #555555;
 }
 
 table.dataTable tbody>tr.selected, table.dataTable tbody>tr>.selected {
     background-color: #3E3E3E;
-}
-
-table.music.dataTable tbody tr.currently-playing {
-    background-color: #666666;
-}
-
-table.music.dataTable tbody tr.currently-playing:hover {
-    background-color: #555555;
 }

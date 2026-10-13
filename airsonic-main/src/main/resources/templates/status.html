@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
     <th:block th:replace="~{head :: common_head}" />
-    <script type="text/javascript" th:src="@{/script/chart-3.9.1.min.js}"></script>
+    <script type="text/javascript" th:src="@{/script/chart-4.5.1.min.js}"></script>
     <script type="text/javascript" th:src="@{/script/status.js}"></script>
     <meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
     <style>
@@ -85,7 +85,7 @@
       }
     </style>
     <script type="text/javascript" th:inline="javascript">
-      var StatusPageConfig = {
+      Page.define("status", page => StatusPage.mount(page, {
         admin: /*[[${admin}]]*/ false,
         locale: /*[[${#locale.toLanguageTag()}]]*/ 'en',
         csrf: {header: /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN', token: /*[[${_csrf.token}]]*/ ''},
@@ -183,10 +183,10 @@
           'card.log': /*[[#{status.card.log}]]*/ '',
           'card.logdetail': /*[[#{status.card.logdetail}]]*/ ''
         }
-      };
+      }));
     </script>
 </head>
-<body class="mainframe bgcolor1" onload="StatusPage.init(StatusPageConfig)">
+<body class="mainframe bgcolor1" data-page="status">
 <div id="statusPage" class="status-page" aria-busy="true">
 
 <h1>

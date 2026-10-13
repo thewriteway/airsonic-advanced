@@ -1,9 +1,7 @@
 <th:block th:fragment="header">
     <th:block th:if="${toast}">
         <script type="text/javascript" th:inline="javascript">
-            $(document).ready(function () {
-                $().toastmessage("showSuccessToast", "[(#{common.settingssaved})]");
-            });
+            $().toastmessage("showSuccessToast", /*[[#{common.settingssaved}]]*/ "Settings saved");
         </script>
     </th:block>
 
