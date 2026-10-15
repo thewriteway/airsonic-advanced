@@ -50,6 +50,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -65,6 +66,7 @@ import java.util.stream.IntStream;
 public class TranscodingService {
 
     private static final Logger LOG = LoggerFactory.getLogger(TranscodingService.class);
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]");
     public static final String FORMAT_RAW = "raw";
 
     @Autowired
@@ -389,7 +391,7 @@ public class TranscodingService {
         if (Util.isWindows() && !mediaFile.isVideo() && !StringUtils.isAsciiPrintable(path.toString()) && Strings.CS.contains(command, "%s")) {
             // the extension stems from a scanned file name; restrict it to alphanumerics so no
             // path-relevant characters can flow into the temp file name (javasecurity:S2083)
-            String extension = MoreFiles.getFileExtension(path).replaceAll("[^A-Za-z0-9]", "");
+            String extension = NON_ALPHANUMERIC.matcher(MoreFiles.getFileExtension(path)).replaceAll("");
             tmpFile = Files.createTempFile("airsonic", "." + extension);
             tmpFile.toFile().deleteOnExit();
             Files.copy(path, tmpFile, StandardCopyOption.REPLACE_EXISTING);

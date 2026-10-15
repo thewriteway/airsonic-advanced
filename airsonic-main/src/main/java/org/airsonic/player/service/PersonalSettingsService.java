@@ -60,12 +60,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 public class PersonalSettingsService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PersonalSettingsService.class);
     private static final int MAX_AVATAR_SIZE = 64;
+    private static final Pattern UNSAFE_FILE_NAME_CHARS = Pattern.compile("[^A-Za-z0-9._-]");
+    private static final Pattern UNSAFE_USERNAME_CHARS = Pattern.compile("[^A-Za-z0-9@._-]");
 
     @Autowired
     private SystemAvatarRepository systemAvatarRepository;
@@ -87,7 +90,7 @@ public class PersonalSettingsService {
             return "avatar";
         }
         String n = FilenameUtils.getName(name);
-        n = n.replaceAll("[^A-Za-z0-9._-]", "_");
+        n = UNSAFE_FILE_NAME_CHARS.matcher(n).replaceAll("_");
         if (n.isEmpty()) {
             n = "avatar";
         }
@@ -102,7 +105,7 @@ public class PersonalSettingsService {
             return "unknown";
         }
         String u = FilenameUtils.getName(username);
-        u = u.replaceAll("[^A-Za-z0-9@._-]", "_");
+        u = UNSAFE_USERNAME_CHARS.matcher(u).replaceAll("_");
         if (u.isEmpty()) {
             u = "unknown";
         }

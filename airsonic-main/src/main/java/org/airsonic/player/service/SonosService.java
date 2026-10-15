@@ -34,7 +34,7 @@ import org.airsonic.player.service.sonos.SonosHelper;
 import org.airsonic.player.service.sonos.SonosServiceRegistration;
 import org.airsonic.player.service.sonos.SonosSoapFault;
 import org.airsonic.player.service.sonos.SonosUtilComponent;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.Pair;
@@ -178,8 +178,8 @@ public class SonosService implements SonosSoap {
     public LastUpdate getLastUpdate() {
         LastUpdate result = new LastUpdate();
         // Effectively disabling caching
-        result.setCatalog(RandomStringUtils.randomAlphanumeric(8));
-        result.setFavorites(RandomStringUtils.randomAlphanumeric(8));
+        result.setCatalog(RandomStringUtils.insecure().nextAlphanumeric(8));
+        result.setFavorites(RandomStringUtils.insecure().nextAlphanumeric(8));
         return result;
     }
 
@@ -421,7 +421,7 @@ public class SonosService implements SonosSoap {
         List<MediaFile> newSongs = new ArrayList<MediaFile>();
 
         for (AbstractMedia media : metadata.getGetMetadataResult().getMediaCollectionOrMediaMetadata()) {
-            if (StringUtils.isNumeric(media.getId())) {
+            if ("".equals(media.getId()) || StringUtils.isNumeric(media.getId())) {
                 MediaFile mediaFile = mediaFileService.getMediaFile(Integer.parseInt(media.getId()));
                 if (mediaFile != null && mediaFile.isFile()) {
                     newSongs.add(mediaFile);

@@ -109,7 +109,7 @@ For jukebox (audio output on the server) inside Docker, see [Jukebox](docs/ADVAN
 
 ### Building from source
 
-You may compile the code yourself using Maven, with a JDK of **21** or later. Two dependencies are not published to Maven Central (`chameleon` and `natpmp`); they are vendored in the `repo/` folder at the root of the checkout and resolved from there automatically. A sample invocation (in the root):
+You may compile the code yourself using Maven, with a JDK of **21** or later. One dependency is not published to Maven Central (`chameleon`); it is vendored in the `repo/` folder at the root of the checkout and resolved from there automatically. A sample invocation (in the root):
 
 ```
 mvn clean compile package verify

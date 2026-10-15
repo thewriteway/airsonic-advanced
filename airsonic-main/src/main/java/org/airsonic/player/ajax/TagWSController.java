@@ -6,8 +6,8 @@ import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.service.metadata.MetaDataParser;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +17,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.constraints.NotNull;
+
+import java.util.Objects;
 
 @Controller
 @MessageMapping("/tags")
@@ -46,12 +48,12 @@ public class TagWSController {
                 return "Tag editing of " + FilenameUtils.getExtension(file.getPath()) + " files is not supported.";
             }
 
-            if (StringUtils.equals(data.getArtist(), file.getArtist())
-                    && StringUtils.equals(data.getAlbum(), file.getAlbumName())
-                    && StringUtils.equals(data.getTitle(), file.getTitle())
-                    && ObjectUtils.equals(data.getYear(), file.getYear())
-                    && StringUtils.equals(data.getGenre(), file.getGenre())
-                    && ObjectUtils.equals(data.getTrack(), file.getTrackNumber())) {
+            if (Strings.CS.equals(data.getArtist(), file.getArtist())
+                    && Strings.CS.equals(data.getAlbum(), file.getAlbumName())
+                    && Strings.CS.equals(data.getTitle(), file.getTitle())
+                    && Objects.equals(data.getYear(), file.getYear())
+                    && Strings.CS.equals(data.getGenre(), file.getGenre())
+                    && Objects.equals(data.getTrack(), file.getTrackNumber())) {
                 return "SKIPPED";
             }
 

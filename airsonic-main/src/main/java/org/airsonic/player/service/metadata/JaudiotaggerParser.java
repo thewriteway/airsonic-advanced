@@ -24,7 +24,8 @@ import com.google.common.collect.ImmutableSet;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.AudioHeader;
@@ -124,7 +125,7 @@ public class JaudiotaggerParser extends MetaDataParser {
 
     private static String getTagField(Tag tag, FieldKey fieldKey) {
         try {
-            return StringUtils.replace(StringUtils.trimToNull(tag.getFirst(fieldKey)), "\0", " ");
+            return Strings.CS.replace(StringUtils.trimToNull(tag.getFirst(fieldKey)), "\0", " ");
         } catch (Exception x) {
             // Ignored.
             return null;

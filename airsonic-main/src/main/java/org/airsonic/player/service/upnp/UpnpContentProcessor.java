@@ -28,13 +28,20 @@ import org.jupnp.support.model.SortCriterion;
 import org.jupnp.support.model.container.Container;
 import org.jupnp.support.model.container.StorageFolder;
 
+import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * @author Allen Petersen
  * @version $Id$
  */
 public abstract class UpnpContentProcessor<T extends Object, U extends Object> {
+
+    private static final Pattern NON_WORD_PATTERN = Pattern.compile("\\W");
 
     protected String rootTitle;
     protected ProcessorType rootId;
@@ -134,5 +141,17 @@ public abstract class UpnpContentProcessor<T extends Object, U extends Object> {
     }
     public void setRootId(ProcessorType rootId) {
         this.rootId = rootId;
+    }
+
+    /**
+     * Sorts the items case-insensitively by their name with all non-word characters removed.
+     * Each sort key is computed once up front instead of on every comparison.
+     */
+    protected static <V> void sortByWordCharacters(List<V> items, Function<V, String> name) {
+        Map<V, String> keys = new IdentityHashMap<>(items.size());
+        for (V item : items) {
+            keys.put(item, NON_WORD_PATTERN.matcher(name.apply(item)).replaceAll(""));
+        }
+        items.sort(Comparator.comparing(keys::get, String.CASE_INSENSITIVE_ORDER));
     }
 }

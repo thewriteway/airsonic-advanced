@@ -24,7 +24,8 @@ import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.PlayQueueService;
 import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.SecurityService;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -93,25 +94,25 @@ public class RandomPlayQueueController {
         }
 
         // Handle the genre filter
-        if (StringUtils.equalsIgnoreCase("any", genre)) {
+        if (Strings.CI.equals("any", genre)) {
             genre = null;
         }
 
         // Handle the release year filter
-        if (!StringUtils.equalsIgnoreCase("any", year)) {
+        if (!Strings.CI.equals("any", year)) {
             String[] tmp = StringUtils.split(year);
             fromYear = Integer.parseInt(tmp[0]);
             toYear = Integer.parseInt(tmp[1]);
         }
 
         // Handle the song rating filter
-        if (StringUtils.equalsIgnoreCase("any", songRating)) {
+        if (Strings.CI.equals("any", songRating)) {
             doesShowStarredSongs = true;
             doesShowUnstarredSongs = true;
-        } else if (StringUtils.equalsIgnoreCase("starred", songRating)) {
+        } else if (Strings.CI.equals("starred", songRating)) {
             doesShowStarredSongs = true;
             doesShowUnstarredSongs = false;
-        } else if (StringUtils.equalsIgnoreCase("unstarred", songRating)) {
+        } else if (Strings.CI.equals("unstarred", songRating)) {
             doesShowStarredSongs = false;
             doesShowUnstarredSongs = true;
         }
@@ -208,7 +209,7 @@ public class RandomPlayQueueController {
         }
 
         // Handle the format filter
-        if (StringUtils.equalsIgnoreCase(format, "any")) format = null;
+        if (Strings.CI.equals(format, "any")) format = null;
 
         // Handle the music folder filter
         String username = securityService.getCurrentUsername(request);

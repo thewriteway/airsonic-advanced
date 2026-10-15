@@ -1,7 +1,5 @@
 package org.airsonic.player;
 
-import org.apache.catalina.Container;
-import org.apache.catalina.Wrapper;
 import org.apache.catalina.webresources.StandardRoot;
 import org.apache.tomcat.util.scan.StandardJarScanFilter;
 import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory;
@@ -12,8 +10,8 @@ public class TomcatApplication {
 
         tomcatFactory.addContextCustomizers(context -> {
 
+            // No JSPs are used, so skip scanning jars for tag library descriptors
             StandardJarScanFilter standardJarScanFilter = new StandardJarScanFilter();
-            standardJarScanFilter.setTldScan("jstl-*.jar,spring-security-taglibs-*.jar,spring-web-*.jar,spring-webmvc-*.jar,string-*.jar,taglibs-standard-impl-*.jar,tomcat-annotations-api-*.jar,tomcat-embed-jasper-*.jar");
             standardJarScanFilter.setTldSkip("*");
             context.getJarScanner().setJarScanFilter(standardJarScanFilter);
 
@@ -32,14 +30,6 @@ public class TomcatApplication {
                 resources.setCacheTtl(24 * 3600 * 1000);  // 1 day, in milliseconds
             }
             context.setResources(resources);
-
-            // Put Jasper in production mode so that JSP aren't recompiled
-            // on each request.
-            // See http://stackoverflow.com/questions/29653326/spring-boot-application-slow-because-of-jsp-compilation
-            Container jsp = context.findChild("jsp");
-            if (jsp instanceof Wrapper) {
-                ((Wrapper) jsp).addInitParameter("development", Boolean.toString(development));
-            }
         });
     }
 }
