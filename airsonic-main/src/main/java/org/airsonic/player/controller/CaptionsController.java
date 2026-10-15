@@ -25,7 +25,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -83,10 +82,7 @@ public class CaptionsController {
 
         User user = securityService.getUserByName(authentication.getName());
         MediaFile video = this.mediaFileService.getMediaFile(id);
-        if (!(authentication instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(video, user.getUsername())) {
-            throw new AccessDeniedException("Access to file " + id + " is forbidden for user " + user.getUsername());
-        }
+        securityService.checkFolderAccess(video, user.getUsername(), authentication);
 
         List<CaptionInfo> captions = listCaptions(video, NetworkUtil.getBaseUrl(request));
         CaptionInfo res;
@@ -182,10 +178,7 @@ public class CaptionsController {
     @GetMapping("/list")
     public @ResponseBody List<CaptionInfo> listCaptions(Authentication authentication, @RequestParam("id") int id, HttpServletRequest request) {
         MediaFile video = mediaFileService.getMediaFile(id);
-        if (!(authentication instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(video, authentication.getName())) {
-            throw new AccessDeniedException("Access to file " + id + " is forbidden for user " + authentication.getName());
-        }
+        securityService.checkFolderAccess(video, authentication.getName(), authentication);
 
         String user = null;
         Instant expiration = null;
