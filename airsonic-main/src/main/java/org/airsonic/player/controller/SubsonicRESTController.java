@@ -36,7 +36,7 @@ import org.airsonic.player.service.search.IndexType;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
 import org.airsonic.player.util.Util;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -852,9 +852,8 @@ public class SubsonicRESTController {
     public void jukeboxControl(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request, true);
 
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isJukeboxRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to use jukebox.");
+        org.airsonic.player.domain.User user = requireRole(request, response, org.airsonic.player.domain.User::isJukeboxRole, "use jukebox");
+        if (user == null) {
             return;
         }
 
@@ -1223,7 +1222,7 @@ public class SubsonicRESTController {
             ServletWebRequest swr) throws Exception {
         HttpServletRequest request = wrapRequest(swr.getRequest());
         final Integer playerId = Optional.ofNullable(request.getParameter("player")).map(Integer::valueOf).orElse(null);
-        Optional<Integer> idInt = Optional.ofNullable(id).map(this::mapId).filter(StringUtils::isNumeric).map(Integer::valueOf);
+        Optional<Integer> idInt = Optional.ofNullable(id).map(this::mapId).filter(SubsonicRESTController::isNumericOrEmpty).map(Integer::valueOf);
 
         User user = securityService.getUserByName(p.getName());
         if (!user.isDownloadRole()) {
@@ -1288,9 +1287,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/hls", "/hls.view"})
     public void hls(Authentication authentication, @RequestParam Integer id, HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isStreamRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to play files.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isStreamRole, "play files") == null) {
             return;
         }
 
@@ -1493,9 +1490,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/refreshPodcasts", "/refreshPodcasts.view"})
     public void refreshPodcasts(HttpServletRequest request, HttpServletResponse response) {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
         podcastManagementService.refreshAllChannels(true);
@@ -1505,9 +1500,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/createPodcastChannel", "/createPodcastChannel.view"})
     public void createPodcastChannel(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1519,9 +1512,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/deletePodcastChannel", "/deletePodcastChannel.view"})
     public void deletePodcastChannel(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1533,9 +1524,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/deletePodcastEpisode", "/deletePodcastEpisode.view"})
     public void deletePodcastEpisode(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1547,9 +1536,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/downloadPodcastEpisode", "/downloadPodcastEpisode.view"})
     public void downloadPodcastEpisode(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1568,10 +1555,7 @@ public class SubsonicRESTController {
     public ResponseEntity<PodcastExportOPML> exportPodcastOPML(HttpServletRequest request, HttpServletResponse response)
             throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED,
-                    user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return null;
         }
 
@@ -1726,9 +1710,7 @@ public class SubsonicRESTController {
         String username = securityService.getCurrentUsername(request);
         Player player = playerService.getPlayer(request, response, username);
 
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isShareRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to share media.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isShareRole, "share media") == null) {
             return;
         }
 
@@ -1887,9 +1869,7 @@ public class SubsonicRESTController {
     public void getUsers(HttpServletRequest request, HttpServletResponse response) {
         request = wrapRequest(request);
 
-        org.airsonic.player.domain.User currentUser = securityService.getCurrentUser(request);
-        if (!currentUser.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, currentUser.getUsername() + " is not authorized to get details for other users.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "get details for other users") == null) {
             return;
         }
 
@@ -1941,9 +1921,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/createUser", "/createUser.view"})
     public void createUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to create new users.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "create new users") == null) {
             return;
         }
 
@@ -1977,9 +1955,8 @@ public class SubsonicRESTController {
     @RequestMapping({"/updateUser", "/updateUser.view"})
     public void updateUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to update users.");
+        org.airsonic.player.domain.User user = requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "update users");
+        if (user == null) {
             return;
         }
 
@@ -2035,9 +2012,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/deleteUser", "/deleteUser.view"})
     public void deleteUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to delete users.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "delete users") == null) {
             return;
         }
 
@@ -2260,9 +2235,16 @@ public class SubsonicRESTController {
         };
     }
 
+    /**
+     * Keeps the commons-lang 2 meaning of {@code isNumeric}, which accepted the empty string.
+     */
+    private static boolean isNumericOrEmpty(String s) {
+        return s != null && (s.isEmpty() || StringUtils.isNumeric(s));
+    }
+
     private String mapId(String id) {
         if (id == null || id.startsWith(CoverArtController.ALBUM_COVERART_PREFIX) ||
-                id.startsWith(CoverArtController.ARTIST_COVERART_PREFIX) || StringUtils.isNumeric(id)) {
+                id.startsWith(CoverArtController.ARTIST_COVERART_PREFIX) || isNumericOrEmpty(id)) {
             return id;
         }
 
@@ -2281,6 +2263,20 @@ public class SubsonicRESTController {
 
     private void writeEmptyResponse(HttpServletRequest request, HttpServletResponse response) {
         jaxbWriter.writeResponse(request, response, createResponse());
+    }
+
+    /**
+     * Returns the current user if they have the given role. Otherwise writes a
+     * NOT_AUTHORIZED error to the response and returns {@code null}.
+     */
+    private org.airsonic.player.domain.User requireRole(HttpServletRequest request, HttpServletResponse response,
+            java.util.function.Predicate<org.airsonic.player.domain.User> role, String action) {
+        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
+        if (!role.test(user)) {
+            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to " + action + ".");
+            return null;
+        }
+        return user;
     }
 
     public void error(HttpServletRequest request, HttpServletResponse response, ErrorCode code, String message) {

@@ -19,15 +19,12 @@
  */
 package org.airsonic.player.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.primitives.Ints;
 import org.apache.commons.lang3.SystemUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -49,7 +46,6 @@ import static java.util.stream.Collectors.toList;
  */
 public final class Util {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Util.class);
     private static final String URL_SENSITIVE_REPLACEMENT_STRING = "<hidden>";
 
     /**
@@ -86,15 +82,6 @@ public final class Util {
 
     public static ObjectMapper getObjectMapper() {
         return objectMapper;
-    }
-
-    public static String debugObject(Object object) {
-        try {
-            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
-        } catch (JsonProcessingException e) {
-            LOG.warn("Cant output debug object", e);
-            return "";
-        }
     }
 
     /**
@@ -155,22 +142,6 @@ public final class Util {
     public static String toJson(Object object, SerializationFeature feature) {
         try {
             return objectMapper.writer(feature).writeValueAsString(object);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static <T> T fromJson(String json, TypeReference<T> type) {
-        try {
-            return objectMapper.readValue(json, type);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static <T> T fromJson(String json, Class<T> type) {
-        try {
-            return objectMapper.readValue(json, type);
         } catch (Exception e) {
             return null;
         }

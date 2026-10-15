@@ -90,7 +90,7 @@ public class ArtistUpnpProcessor extends UpnpContentProcessor <Artist, Album> {
         }
         List<Artist> allArtists = artistRepository.findByFolderInAndPresentTrue(allFolders, Sort.by(Sort.Direction.ASC, "name"));
         // alpha artists doesn't quite work :P
-        allArtists.sort((Artist o1, Artist o2) -> o1.getName().replaceAll("\\W", "").compareToIgnoreCase(o2.getName().replaceAll("\\W", "")));
+        sortByWordCharacters(allArtists, Artist::getName);
 
         return allArtists;
     }

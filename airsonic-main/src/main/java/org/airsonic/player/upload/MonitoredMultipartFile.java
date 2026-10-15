@@ -1,6 +1,6 @@
 package org.airsonic.player.upload;
 
-import com.google.re2j.Pattern;
+import org.airsonic.player.util.StringUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,8 +13,6 @@ import java.util.Objects;
 
 
 public class MonitoredMultipartFile implements MultipartFile {
-
-    private final static Pattern DOT_SLASH_PATTERN = Pattern.compile("\\.+/");
 
     private MultipartFile file;
     private UploadListener listener;
@@ -38,7 +36,7 @@ public class MonitoredMultipartFile implements MultipartFile {
         if (Objects.isNull(file.getOriginalFilename())) {
             return null;
         }
-        return DOT_SLASH_PATTERN.matcher(file.getOriginalFilename()).replaceAll("");
+        return StringUtil.removeDotSlash(file.getOriginalFilename());
     }
 
     @Override

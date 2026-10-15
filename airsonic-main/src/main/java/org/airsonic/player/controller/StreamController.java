@@ -84,6 +84,7 @@ public class StreamController {
     private static final Logger LOG = LoggerFactory.getLogger(StreamController.class);
 
     private static final Set<String> ICY_IGNORED_CLIENT = Set.of("Tempo");
+    private static final Pattern VIDEO_SIZE_PATTERN = Pattern.compile("^(\\d+)x(\\d+)$");
 
     @Autowired
     private StatusService statusService;
@@ -145,10 +146,7 @@ public class StreamController {
         // Is this a request for a single file (typically from the embedded Flash player)?
         // In that case, create a separate playlist (in order to support multiple parallel streams).
         // Also, enable partial download (HTTP byte range).
-        MediaFile file = path.map(p -> {
-            Pattern pattern = Pattern.compile("\\.+/");
-            return mediaFileService.getMediaFile(pattern.matcher(p).replaceAll(""));
-        }).orElseGet(() -> id.map(mediaFileService::getMediaFile).orElse(null));
+        MediaFile file = path.map(p -> mediaFileService.getMediaFile(StringUtil.removeDotSlash(p))).orElseGet(() -> id.map(mediaFileService::getMediaFile).orElse(null));
         boolean isSingleFile = Objects.nonNull(file);
 
         // Caller specified `id` but the lookup returned null — return 404 instead of falling
@@ -458,8 +456,7 @@ public class StreamController {
             return null;
         }
 
-        Pattern pattern = Pattern.compile("^(\\d+)x(\\d+)$");
-        Matcher matcher = pattern.matcher(sizeSpec);
+        Matcher matcher = VIDEO_SIZE_PATTERN.matcher(sizeSpec);
         if (matcher.find()) {
             int w = Integer.parseInt(matcher.group(1));
             int h = Integer.parseInt(matcher.group(2));

@@ -39,7 +39,8 @@ import org.airsonic.player.service.hls.HlsSession;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,7 +169,7 @@ public class HLSController {
                             mediaFile.getWidth(), mediaFile.getHeight(), VideoPlayerController.DEFAULT_BIT_RATE)));
 
         String requestWithoutContextPath = request.getRequestURI().substring(request.getContextPath().length() + 1);
-        UriComponentsBuilder prefix = UriComponentsBuilder.fromUriString(StringUtils.removeEndIgnoreCase(requestWithoutContextPath, "/hls.m3u8")); // ext/hls or hls
+        UriComponentsBuilder prefix = UriComponentsBuilder.fromUriString(Strings.CI.removeEnd(requestWithoutContextPath, "/hls.m3u8")); // ext/hls or hls
         String basePath = NetworkUtil.getBaseUrl(request);
         PrintWriter writer = response.getWriter();
         if (bitRates.size() > 1) {
@@ -346,7 +347,7 @@ public class HLSController {
         return this.sessions.computeIfAbsent(sessionKey, k -> {
             for (HlsSession.Key k1 : sessions.keySet()) {
                 if (k1.getMediaFileId() == k.getMediaFileId()
-                        && StringUtils.equals(k1.getPlayerId(), k.getPlayerId())) {
+                        && Strings.CS.equals(k1.getPlayerId(), k.getPlayerId())) {
                     sessions.remove(k1).destroySession();
                 }
             }

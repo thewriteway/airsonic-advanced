@@ -34,7 +34,8 @@ import org.airsonic.player.service.TranscodingService;
 import org.airsonic.player.service.UserService;
 import org.airsonic.player.util.Util;
 import org.airsonic.player.validator.UserSettingsValidator;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -178,7 +179,7 @@ public class UserSettingsController {
     private Integer getUserIndex(UserSettingsCommand command) {
         List<User> allUsers = userService.getAllUsers();
         for (int i = 0; i < allUsers.size(); i++) {
-            if (StringUtils.equalsIgnoreCase(allUsers.get(i).getUsername(), command.getUsername())) {
+            if (Strings.CI.equals(allUsers.get(i).getUsername(), command.getUsername())) {
                 return i;
             }
         }

@@ -25,7 +25,8 @@ import de.umass.lastfm.Artist;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.repository.ArtistRepository;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -450,9 +451,9 @@ public class LastFmService {
          User-contributed text is available under the Creative Commons By-SA License and may also be available under the GNU FDL.
          */
 
-        text = StringUtils.replace(text, "User-contributed text.*", "");
-        text = StringUtils.replace(text, "<a ", "<a target='_blank' ");
-        text = StringUtils.replace(text, "\n", " ");
+        text = Strings.CS.replace(text, "User-contributed text.*", "");
+        text = Strings.CS.replace(text, "<a ", "<a target='_blank' ");
+        text = Strings.CS.replace(text, "\n", " ");
         text = StringUtils.trimToNull(text);
 
         if (text != null && text.startsWith("This is an incorrect tag")) {

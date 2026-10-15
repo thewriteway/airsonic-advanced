@@ -25,7 +25,7 @@ import org.airsonic.player.controller.SubsonicRESTController.APIException;
 import org.airsonic.player.controller.SubsonicRESTController.ErrorCode;
 import org.airsonic.player.domain.Version;
 import org.airsonic.player.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationServiceException;
