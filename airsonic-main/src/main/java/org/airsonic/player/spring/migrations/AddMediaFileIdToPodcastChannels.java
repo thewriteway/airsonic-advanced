@@ -46,10 +46,7 @@ public class AddMediaFileIdToPodcastChannels implements CustomSqlChange {
     public SqlStatement[] generateStatements(Database database) throws CustomChangeException {
         Map<Integer, Integer> idToMediaFile = new HashMap<>();
         Path folderPath = null;
-        JdbcConnection conn = null;
-        if (database.getConnection() instanceof JdbcConnection) {
-            conn = (JdbcConnection) database.getConnection();
-        }
+        JdbcConnection conn = database.getConnection() instanceof JdbcConnection jdbc ? jdbc : null;
 
         if (conn != null) {
             try (PreparedStatement st1 = conn.prepareStatement("SELECT path FROM music_folder WHERE type='PODCAST';");

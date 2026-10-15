@@ -21,6 +21,7 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.domain.Player;
+import org.airsonic.player.domain.PlayerTechnology;
 import org.springframework.stereotype.Service;
 
 /**
@@ -35,85 +36,54 @@ public class JukeboxService {
         this.jukeboxLegacySubsonicService = jukeboxLegacySubsonicService;
     }
 
+    private static boolean isJukebox(Player airsonicPlayer) {
+        return airsonicPlayer.getTechnology() == PlayerTechnology.JUKEBOX;
+    }
+
     public void setGain(Player airsonicPlayer, float gain) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                jukeboxLegacySubsonicService.setGain(gain);
-                break;
-            default:
-                break;
+        if (isJukebox(airsonicPlayer)) {
+            jukeboxLegacySubsonicService.setGain(gain);
         }
     }
 
     public void setPosition(Player airsonicPlayer, int positionInSeconds) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                throw new UnsupportedOperationException();
-            default:
-                break;
+        if (isJukebox(airsonicPlayer)) {
+            throw new UnsupportedOperationException();
         }
     }
 
     public float getGain(Player airsonicPlayer) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                return jukeboxLegacySubsonicService.getGain();
-            default:
-                break;
-        }
-        return 0;
+        return isJukebox(airsonicPlayer) ? jukeboxLegacySubsonicService.getGain() : 0;
     }
 
     public int getPosition(Player airsonicPlayer) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                return jukeboxLegacySubsonicService.getPosition();
-            default:
-                break;
-        }
-        return 0;
+        return isJukebox(airsonicPlayer) ? jukeboxLegacySubsonicService.getPosition() : 0;
     }
 
     /**
      * Plays the playQueue of a jukebox player starting at the first item of the queue.
      */
     public void play(Player airsonicPlayer) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer,0);
-                break;
-            default:
-                break;
+        if (isJukebox(airsonicPlayer)) {
+            jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer, 0);
         }
     }
 
     public void start(Player airsonicPlayer) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer,0);
-                break;
-            default:
-                break;
+        if (isJukebox(airsonicPlayer)) {
+            jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer, 0);
         }
     }
 
     public void stop(Player airsonicPlayer) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer,0);
-                break;
-            default:
-                break;
+        if (isJukebox(airsonicPlayer)) {
+            jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer, 0);
         }
     }
 
-    public void skip(Player airsonicPlayer,int index,int offset) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer,offset);
-                break;
-            default:
-                break;
+    public void skip(Player airsonicPlayer, int index, int offset) {
+        if (isJukebox(airsonicPlayer)) {
+            jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer, offset);
         }
     }
 
@@ -123,16 +93,10 @@ public class JukeboxService {
      */
     @Deprecated
     public boolean canControl(Player airsonicPlayer) {
-        switch (airsonicPlayer.getTechnology()) {
-            case JUKEBOX:
-                if (jukeboxLegacySubsonicService.getPlayer() == null) {
-                    return false;
-                } else {
-                    return jukeboxLegacySubsonicService.getPlayer().getId().equals(airsonicPlayer.getId());
-                }
-            default:
-                break;
+        if (!isJukebox(airsonicPlayer)) {
+            return false;
         }
-        return false;
+        Player jukeboxPlayer = jukeboxLegacySubsonicService.getPlayer();
+        return jukeboxPlayer != null && jukeboxPlayer.getId().equals(airsonicPlayer.getId());
     }
 }

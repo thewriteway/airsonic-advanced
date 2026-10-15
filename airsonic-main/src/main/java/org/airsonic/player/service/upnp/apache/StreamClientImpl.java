@@ -133,33 +133,26 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
     @Override
     protected HttpUriRequest createRequest(StreamRequestMessage requestMessage) {
         UpnpRequest requestOperation = requestMessage.getOperation();
-        HttpRequestBase request;
-        switch (requestOperation.getMethod()) {
-            case GET:
-                request = new HttpGet(requestOperation.getURI());
-                break;
-            case SUBSCRIBE:
-                request = new HttpGet(requestOperation.getURI()) {
-                    @Override
-                    public String getMethod() {
-                        return UpnpRequest.Method.SUBSCRIBE.getHttpName();
-                    }
-                };
-                break;
-            case UNSUBSCRIBE:
-                request = new HttpGet(requestOperation.getURI()) {
-                    @Override
-                    public String getMethod() {
-                        return UpnpRequest.Method.UNSUBSCRIBE.getHttpName();
-                    }
-                };
-                break;
-            case POST:
+        HttpRequestBase request = switch (requestOperation.getMethod()) {
+            case GET -> new HttpGet(requestOperation.getURI());
+            case SUBSCRIBE -> new HttpGet(requestOperation.getURI()) {
+                @Override
+                public String getMethod() {
+                    return UpnpRequest.Method.SUBSCRIBE.getHttpName();
+                }
+            };
+            case UNSUBSCRIBE -> new HttpGet(requestOperation.getURI()) {
+                @Override
+                public String getMethod() {
+                    return UpnpRequest.Method.UNSUBSCRIBE.getHttpName();
+                }
+            };
+            case POST -> {
                 HttpPost post = new HttpPost(requestOperation.getURI());
                 post.setEntity(createHttpRequestEntity(requestMessage));
-                request = post;
-                break;
-            case NOTIFY:
+                yield post;
+            }
+            case NOTIFY -> {
                 HttpPost notify = new HttpPost(requestOperation.getURI()) {
                     @Override
                     public String getMethod() {
@@ -167,11 +160,10 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
                     }
                 };
                 notify.setEntity(createHttpRequestEntity(requestMessage));
-                request = notify;
-                break;
-            default:
-                throw new RuntimeException("Unknown HTTP method: " + requestOperation.getHttpMethodName());
-        }
+                yield notify;
+            }
+            default -> throw new RuntimeException("Unknown HTTP method: " + requestOperation.getHttpMethodName());
+        };
 
         request.setProtocolVersion(
             requestOperation.getHttpMinorVersion() == 0 ? HttpVersion.HTTP_1_0 : HttpVersion.HTTP_1_1

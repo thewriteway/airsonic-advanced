@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.controller;
 
-import com.google.common.net.MediaType;
 import org.airsonic.player.controller.SubsonicRESTController.APIException;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
@@ -61,6 +60,10 @@ import static org.springframework.web.bind.ServletRequestUtils.getStringParamete
 public class JAXBWriter {
 
     private static final Logger LOG = LoggerFactory.getLogger(JAXBWriter.class);
+
+    private static final String CONTENT_TYPE_JSON = "application/json; charset=utf-8";
+    private static final String CONTENT_TYPE_JAVASCRIPT = "text/javascript; charset=utf-8";
+    private static final String CONTENT_TYPE_XML = "text/xml; charset=utf-8";
 
     private final jakarta.xml.bind.JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
@@ -181,17 +184,17 @@ public class JAXBWriter {
         boolean json = "json".equals(format);
         boolean jsonp = "jsonp".equals(format) && jsonpCallback != null;
         Marshaller marshaller;
-        MediaType type;
+        String type;
 
         if (json) {
             marshaller = createJsonMarshaller();
-            type = MediaType.JSON_UTF_8;
+            type = CONTENT_TYPE_JSON;
         } else if (jsonp) {
             marshaller = createJsonMarshaller();
-            type = MediaType.JAVASCRIPT_UTF_8;
+            type = CONTENT_TYPE_JAVASCRIPT;
         } else {
             marshaller = createXmlMarshaller();
-            type = MediaType.XML_UTF_8;
+            type = CONTENT_TYPE_XML;
         }
 
         StringWriter writer = new StringWriter();
@@ -208,7 +211,7 @@ public class JAXBWriter {
             throw new RuntimeException(x);
         }
 
-        return Pair.of(type.toString(), writer.toString());
+        return Pair.of(type, writer.toString());
     }
 
     public XMLGregorianCalendar convertDate(Instant date) {

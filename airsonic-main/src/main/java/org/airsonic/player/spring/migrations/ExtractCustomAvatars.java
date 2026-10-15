@@ -46,10 +46,7 @@ public class ExtractCustomAvatars implements CustomSqlChange {
 
     @Override
     public SqlStatement[] generateStatements(Database database) throws CustomChangeException {
-        JdbcConnection conn = null;
-        if (database.getConnection() instanceof JdbcConnection) {
-            conn = (JdbcConnection) database.getConnection();
-        }
+        JdbcConnection conn = database.getConnection() instanceof JdbcConnection jdbc ? jdbc : null;
         AirsonicHomeConfig homeConfig = new AirsonicHomeConfig(
             System.getProperty("airsonic.home"),
             System.getProperty("libresonic.home")

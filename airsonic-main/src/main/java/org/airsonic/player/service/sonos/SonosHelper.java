@@ -362,41 +362,23 @@ public class SonosHelper {
 
     private AlbumList createAlbumList(AlbumListType albumListType, int offset, int count, String username) {
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
-        List<MediaFile> albums = Collections.emptyList();
-        int total = 0;
-        switch (albumListType) {
-            case RANDOM:
-                albums = searchService.getRandomAlbums(count, musicFolders);
-                total = mediaFileService.getAlbumCount(musicFolders);
-                break;
-            case NEWEST:
-                albums = mediaFileService.getNewestAlbums(offset, count, musicFolders);
-                total = mediaFileService.getAlbumCount(musicFolders);
-                break;
-            case STARRED:
-                albums = mediaFileService.getStarredAlbums(offset, count, username, musicFolders);
-                total = mediaFileService.getStarredAlbumCount(username, musicFolders);
-                break;
-            case HIGHEST:
-                albums = ratingService.getHighestRatedAlbums(offset, count, musicFolders);
-                total = ratingService.getRatedAlbumCount(username, musicFolders);
-                break;
-            case FREQUENT:
-                albums = mediaFileService.getMostFrequentlyPlayedAlbums(offset, count, musicFolders);
-                total = mediaFileService.getPlayedAlbumCount(musicFolders);
-                break;
-            case RECENT:
-                albums = mediaFileService.getMostRecentlyPlayedAlbums(offset, count, musicFolders);
-                total = mediaFileService.getPlayedAlbumCount(musicFolders);
-                break;
-            case ALPHABETICAL:
-                albums = mediaFileService.getAlphabeticalAlbums(offset, count, true, musicFolders);
-                total = mediaFileService.getAlbumCount(musicFolders);
-                break;
-            default:
-                break;
-        }
-        return new AlbumList(albums, total);
+        return switch (albumListType) {
+            case RANDOM -> new AlbumList(searchService.getRandomAlbums(count, musicFolders),
+                    mediaFileService.getAlbumCount(musicFolders));
+            case NEWEST -> new AlbumList(mediaFileService.getNewestAlbums(offset, count, musicFolders),
+                    mediaFileService.getAlbumCount(musicFolders));
+            case STARRED -> new AlbumList(mediaFileService.getStarredAlbums(offset, count, username, musicFolders),
+                    mediaFileService.getStarredAlbumCount(username, musicFolders));
+            case HIGHEST -> new AlbumList(ratingService.getHighestRatedAlbums(offset, count, musicFolders),
+                    ratingService.getRatedAlbumCount(username, musicFolders));
+            case FREQUENT -> new AlbumList(mediaFileService.getMostFrequentlyPlayedAlbums(offset, count, musicFolders),
+                    mediaFileService.getPlayedAlbumCount(musicFolders));
+            case RECENT -> new AlbumList(mediaFileService.getMostRecentlyPlayedAlbums(offset, count, musicFolders),
+                    mediaFileService.getPlayedAlbumCount(musicFolders));
+            case ALPHABETICAL -> new AlbumList(mediaFileService.getAlphabeticalAlbums(offset, count, true, musicFolders),
+                    mediaFileService.getAlbumCount(musicFolders));
+            default -> new AlbumList(Collections.emptyList(), 0);
+        };
     }
 
     private MediaList forDecades(int offset, int count) {

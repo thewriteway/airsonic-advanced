@@ -19,8 +19,8 @@
 
 package org.airsonic.player.service;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.sonos.services._1.*;
 import com.sonos.services._1_1.CustomFault;
 import com.sonos.services._1_1.SonosSoap;
@@ -561,7 +561,7 @@ public class SonosService implements SonosSoap {
         return null;
     }
 
-    private Cache<String, Triple<String, String, Instant>> sonosLinkCache = CacheBuilder.newBuilder().expireAfterWrite(Duration.ofMinutes(7)).<String, Triple<String, String, Instant>>build();
+    private Cache<String, Triple<String, String, Instant>> sonosLinkCache = Caffeine.newBuilder().expireAfterWrite(Duration.ofMinutes(7)).<String, Triple<String, String, Instant>>build();
 
     // The link code must be exactly 32 characters long
     private String createLinkCode() {

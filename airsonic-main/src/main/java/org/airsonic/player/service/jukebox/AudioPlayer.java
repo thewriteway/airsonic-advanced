@@ -181,13 +181,11 @@ public class AudioPlayer implements AutoCloseable {
                     State currentState = state.get();
 
                     switch (currentState) {
-                        case CLOSED:
-                        case EOM:
+                        case CLOSED, EOM -> {
                             return;
-                        case PAUSED:
-                            Thread.sleep(250);
-                            break;
-                        case PLAYING:
+                        }
+                        case PAUSED -> Thread.sleep(250);
+                        case PLAYING -> {
                             // Fill buffer in order to ensure that write() receives an integral number of frames.
                             int n = fill(buffer);
                             if (n == -1) {
@@ -195,7 +193,7 @@ public class AudioPlayer implements AutoCloseable {
                                 return;
                             }
                             line.write(buffer, 0, n);
-                            break;
+                        }
                     }
                 }
             } catch (Throwable x) {

@@ -47,10 +47,7 @@ public class AddUnknownMediaFolders implements CustomSqlChange {
     public SqlStatement[] generateStatements(Database database) throws CustomChangeException {
         Set<String> unknownMusicFolders = new HashSet<>();
         Integer maxFolderId = null;
-        JdbcConnection conn = null;
-        if (database.getConnection() instanceof JdbcConnection) {
-            conn = (JdbcConnection) database.getConnection();
-        }
+        JdbcConnection conn = database.getConnection() instanceof JdbcConnection jdbc ? jdbc : null;
 
         if (conn != null) {
             try (PreparedStatement st1 = conn.prepareStatement("SELECT MAX(id) AS maxid FROM music_folder;");

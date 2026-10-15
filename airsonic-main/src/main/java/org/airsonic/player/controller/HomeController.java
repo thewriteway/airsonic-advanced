@@ -91,48 +91,33 @@ public class HomeController {
         MusicFolder selectedMusicFolder = musicFolders.parallelStream().filter(f -> f.getId().equals(userSettings.getSelectedMusicFolderId())).findAny().orElse(null);
 
         HomeCommand command = new HomeCommand();
-        List<Album> albums = Collections.emptyList();
-        switch (listType) {
-            case HIGHEST:
-                albums = getHighestRated(listOffset, LIST_SIZE, musicFolders);
-                break;
-            case FREQUENT:
-                albums = getMostFrequent(listOffset, LIST_SIZE, musicFolders);
-                break;
-            case RECENT:
-                albums = getMostRecent(listOffset, LIST_SIZE, musicFolders);
-                break;
-            case NEWEST:
-                albums = getNewest(listOffset, LIST_SIZE, musicFolders);
-                break;
-            case STARRED:
-                albums = getStarred(listOffset, LIST_SIZE, user.getUsername(), musicFolders);
-                break;
-            case RANDOM:
-                albums = getRandom(LIST_SIZE, musicFolders);
-                break;
-            case ALPHABETICAL:
-                albums = getAlphabetical(listOffset, LIST_SIZE, true, musicFolders);
-                break;
-            case DECADE:
+        List<Album> albums = switch (listType) {
+            case HIGHEST -> getHighestRated(listOffset, LIST_SIZE, musicFolders);
+            case FREQUENT -> getMostFrequent(listOffset, LIST_SIZE, musicFolders);
+            case RECENT -> getMostRecent(listOffset, LIST_SIZE, musicFolders);
+            case NEWEST -> getNewest(listOffset, LIST_SIZE, musicFolders);
+            case STARRED -> getStarred(listOffset, LIST_SIZE, user.getUsername(), musicFolders);
+            case RANDOM -> getRandom(LIST_SIZE, musicFolders);
+            case ALPHABETICAL -> getAlphabetical(listOffset, LIST_SIZE, true, musicFolders);
+            case DECADE -> {
                 List<Integer> decades = createDecades();
                 command.setDecades(decades);
                 int decade = getIntParameter(request, "decade", decades.get(0));
                 command.setDecade(decade);
-                albums = getByYear(listOffset, LIST_SIZE, decade, decade + 9, musicFolders);
-                break;
-            case GENRE:
+                yield getByYear(listOffset, LIST_SIZE, decade, decade + 9, musicFolders);
+            }
+            case GENRE -> {
                 List<Genre> genres = mediaFileService.getGenres(true);
                 command.setGenres(genres);
-                if (!genres.isEmpty()) {
-                    String genre = getStringParameter(request, "genre", genres.get(0).getName());
-                    command.setGenre(genre);
-                    albums = getByGenre(listOffset, LIST_SIZE, genre, musicFolders);
+                if (genres.isEmpty()) {
+                    yield Collections.emptyList();
                 }
-                break;
-            default:
-                break;
-        }
+                String genre = getStringParameter(request, "genre", genres.get(0).getName());
+                command.setGenre(genre);
+                yield getByGenre(listOffset, LIST_SIZE, genre, musicFolders);
+            }
+            default -> Collections.emptyList();
+        };
 
         command.setAlbums(albums);
         command.setWelcomeTitle(settingsService.getWelcomeTitle());

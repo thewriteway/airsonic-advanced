@@ -1338,50 +1338,12 @@ public class MediaFileService {
      */
     private CueSheet getCueSheet(@Nonnull Path cueFile) {
         try {
-            CueSheet cueSheet = null;
             String ext = FilenameUtils.getExtension(cueFile.toString()).toLowerCase();
-            switch (ext) {
-                case "cue":
-                    Charset cs = StandardCharsets.UTF_8; // default to UTF-8
-                    // attempt to detect encoding for cueFile, fallback to UTF-8
-                    int THRESHOLD = 35; // 0-100, the higher the more certain the guess
-                    CharsetDetector cd = new CharsetDetector();
-                    try (FileInputStream fis = new FileInputStream(cueFile.toFile());
-                        BufferedInputStream bis = new BufferedInputStream(fis);) {
-                        cd.setText(bis);
-                        CharsetMatch cm = cd.detect();
-                        if (cm != null && cm.getConfidence() > THRESHOLD) {
-                            cs = Charset.forName(cm.getName());
-                        }
-                        LOG.debug("Detected charset for cuesheet file {}: Charset detected as {}", cueFile, cs);
-                        bis.mark(3);
-
-                        // check for BOM
-                        byte[] bom = new byte[3];
-                        int bytesRead = bis.read(bom, 0, 3);
-                        if (!hasBOM(bom, bytesRead)) {
-                            bis.reset();
-                        }
-                        cueSheet = CueParser.parse(bis, cs);
-                    } catch (IOException e) {
-                        LOG.warn("Defaulting to UTF-8 for cuesheet {}", cueFile);
-                    }
-                    if (cueSheet != null) {
-                        if (cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning"))
-                                .map(m -> {
-                                    LOG.warn("Parsing {} at line {} : {}", cueFile, m.getLineNumber(), m.getMessage());
-                                    return m;
-                                }).findFirst().isPresent()) {
-                            cueSheet = null;
-                        }
-                    }
-                    break;
-                case "flac":
-                    cueSheet = FLACReader.getCueSheet(cueFile);
-                    break;
-                default:
-                    return null;
-            }
+            CueSheet cueSheet = switch (ext) {
+                case "cue" -> parseCueFile(cueFile);
+                case "flac" -> FLACReader.getCueSheet(cueFile);
+                default -> null;
+            };
             // validation
             if (cueSheet == null || cueSheet.getFileData() == null || cueSheet.getFileData().size() == 0) {
                 if ("cue".equals(ext)) {
@@ -1405,32 +1367,64 @@ public class MediaFileService {
     }
 
     /**
+     * Parses a standalone .cue file, detecting its charset and skipping any BOM.
+     *
+     * @return the cue sheet, or null if it could not be read or produced parser warnings
+     */
+    private CueSheet parseCueFile(Path cueFile) {
+        CueSheet cueSheet = null;
+        Charset cs = StandardCharsets.UTF_8; // default to UTF-8
+        // attempt to detect encoding for cueFile, fallback to UTF-8
+        int THRESHOLD = 35; // 0-100, the higher the more certain the guess
+        CharsetDetector cd = new CharsetDetector();
+        try (FileInputStream fis = new FileInputStream(cueFile.toFile());
+            BufferedInputStream bis = new BufferedInputStream(fis);) {
+            cd.setText(bis);
+            CharsetMatch cm = cd.detect();
+            if (cm != null && cm.getConfidence() > THRESHOLD) {
+                cs = Charset.forName(cm.getName());
+            }
+            LOG.debug("Detected charset for cuesheet file {}: Charset detected as {}", cueFile, cs);
+            bis.mark(3);
+
+            // check for BOM
+            byte[] bom = new byte[3];
+            int bytesRead = bis.read(bom, 0, 3);
+            if (!hasBOM(bom, bytesRead)) {
+                bis.reset();
+            }
+            cueSheet = CueParser.parse(bis, cs);
+        } catch (IOException e) {
+            LOG.warn("Defaulting to UTF-8 for cuesheet {}", cueFile);
+        }
+        if (cueSheet != null) {
+            if (cueSheet.getMessages().stream().filter(m -> m.toString().toLowerCase().contains("warning"))
+                    .map(m -> {
+                        LOG.warn("Parsing {} at line {} : {}", cueFile, m.getLineNumber(), m.getMessage());
+                        return m;
+                    }).findFirst().isPresent()) {
+                cueSheet = null;
+            }
+        }
+        return cueSheet;
+    }
+
+    /**
      * Finds a cover art image for the given directory, by looking for it on the disk.
      */
     private Path findCoverArt(Collection<Path> candidates) {
-        Path candidate = null;
-        var coverArtSource = settingsService.getCoverArtSource();
-        switch (coverArtSource) {
-            case TAGFILE:
-                candidate = findTagCover(candidates);
-                if (candidate != null) {
-                    return candidate;
-                } else {
-                    return findFileCover(candidates);
-                }
-            case FILE:
-                return findFileCover(candidates);
-            case TAG:
-                return findTagCover(candidates);
-            case FILETAG:
-            default:
-                candidate = findFileCover(candidates);
-                if (candidate != null) {
-                    return candidate;
-                } else {
-                    return findTagCover(candidates);
-                }
-        }
+        return switch (settingsService.getCoverArtSource()) {
+            case TAGFILE -> {
+                Path tagCover = findTagCover(candidates);
+                yield tagCover != null ? tagCover : findFileCover(candidates);
+            }
+            case FILE -> findFileCover(candidates);
+            case TAG -> findTagCover(candidates);
+            default -> { // FILETAG
+                Path fileCover = findFileCover(candidates);
+                yield fileCover != null ? fileCover : findTagCover(candidates);
+            }
+        };
     }
 
     private Path findFileCover(Collection<Path> candidates) {

@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.primitives.Ints;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -62,7 +61,15 @@ public final class Util {
         if (list.size() == Integer.MAX_VALUE) {
             return list.stream().skip(offset).limit(max).collect(toList());
         }
-        return list.subList(Math.min(list.size(), Ints.saturatedCast(offset)), Math.min(list.size(), Ints.saturatedCast(offset + max)));
+        return list.subList(Math.min(list.size(), saturatedCast(offset)), Math.min(list.size(), saturatedCast(offset + max)));
+    }
+
+    /**
+     * Narrows a long to an int, clamping values outside the int range to {@link Integer#MIN_VALUE} or
+     * {@link Integer#MAX_VALUE}.
+     */
+    public static int saturatedCast(long value) {
+        return Math.clamp(value, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     public static int[] toIntArray(List<Integer> values) {

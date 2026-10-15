@@ -130,66 +130,69 @@ public class RandomPlayQueueController {
 
         if (lastPlayed != null) {
             switch (lastPlayedComp) {
-                case "lt":
+                case "lt" -> {
                     minLastPlayedDate = null;
                     maxLastPlayedDate = lastPlayed;
-                    break;
-                case "gt":
+                }
+                case "gt" -> {
                     minLastPlayedDate = lastPlayed;
                     maxLastPlayedDate = null;
-                    break;
+                }
+                default -> { }
             }
         }
 
         // Handle the album rating filter
         if (albumRatingValue != null) {
             switch (albumRatingComp) {
-                case "lt":
+                case "lt" -> {
                     minAlbumRating = null;
                     maxAlbumRating = albumRatingValue - 1;
-                    break;
-                case "gt":
+                }
+                case "gt" -> {
                     minAlbumRating = albumRatingValue + 1;
                     maxAlbumRating = null;
-                    break;
-                case "le":
+                }
+                case "le" -> {
                     minAlbumRating = null;
                     maxAlbumRating = albumRatingValue;
-                    break;
-                case "ge":
+                }
+                case "ge" -> {
                     minAlbumRating = albumRatingValue;
                     maxAlbumRating = null;
-                    break;
-                case "eq":
+                }
+                case "eq" -> {
                     minAlbumRating = albumRatingValue;
                     maxAlbumRating = albumRatingValue;
-                    break;
+                }
+                default -> { }
             }
         }
 
         // Handle the play count filter
         if (playCountValue != null) {
             switch (playCountComp) {
-                case "lt":
+                case "lt" -> {
                     minPlayCount = null;
                     maxPlayCount = playCountValue - 1;
-                    break;
-                case "gt":
+                }
+                case "gt" -> {
                     minPlayCount = playCountValue + 1;
                     maxPlayCount = null;
-                    break;
-                case "le":
+                }
+                case "le" -> {
                     minPlayCount = null;
                     maxPlayCount = playCountValue;
-                    break;
-                case "ge":
+                }
+                case "ge" -> {
                     minPlayCount = playCountValue;
                     maxPlayCount = null;
-                    break;
-                case "eq":
+                }
+                case "eq" -> {
                     minPlayCount = playCountValue;
                     maxPlayCount = playCountValue;
-                    break;
+                }
+                default -> { }
             }
         }
 

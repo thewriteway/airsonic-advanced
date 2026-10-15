@@ -184,10 +184,8 @@ public abstract class HttpServerConnectionUpnpStream extends UpnpStream {
             requestMessage.setHeaders(new UpnpHeaders(HeaderUtil.get(httpRequest)));
 
             // Body
-            if (httpRequest instanceof HttpEntityEnclosingRequest) {
+            if (httpRequest instanceof HttpEntityEnclosingRequest entityEnclosingHttpRequest) {
                 LOG.debug("Request contains entity body, setting on UPnP message");
-
-                HttpEntityEnclosingRequest entityEnclosingHttpRequest = (HttpEntityEnclosingRequest) httpRequest;
 
                 HttpEntity entity = entityEnclosingHttpRequest.getEntity();
 

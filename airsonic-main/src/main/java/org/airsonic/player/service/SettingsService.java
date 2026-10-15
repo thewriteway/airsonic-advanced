@@ -20,9 +20,8 @@
  */
 package org.airsonic.player.service;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.RateLimiter;
 import org.airsonic.player.config.AirsonicCueConfig;
 import org.airsonic.player.config.AirsonicFolderConfig;
@@ -461,18 +460,12 @@ public class SettingsService {
      */
     @PostConstruct
     public void init() {
-        transcodeExecutableCache = CacheBuilder.newBuilder()
+        transcodeExecutableCache = Caffeine.newBuilder()
             .expireAfterAccess(Duration.ofHours(8))
-            .build(new CacheLoader<String, String>() {
-                @Override
-                public String load(String executable) throws Exception {
-                        return Arrays.asList(homeConfig.getTranscodeDirectory().resolve(executable).toString(), executable)
-                            .stream()
-                            .filter(command -> isExecutableInstalled(command))
-                            .findFirst()
-                            .orElseThrow();
-                }
-            });
+            .build(executable -> Stream.of(homeConfig.getTranscodeDirectory().resolve(executable).toString(), executable)
+                .filter(this::isExecutableInstalled)
+                .findFirst()
+                .orElseThrow());
         logServerInfo();
     }
 

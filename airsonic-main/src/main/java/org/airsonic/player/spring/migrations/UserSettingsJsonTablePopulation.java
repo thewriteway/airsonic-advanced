@@ -47,10 +47,7 @@ public class UserSettingsJsonTablePopulation implements CustomSqlChange {
     @Override
     public SqlStatement[] generateStatements(Database database) throws CustomChangeException {
         List<UserSettings> userSettingRows = new ArrayList<>();
-        JdbcConnection conn = null;
-        if (database.getConnection() instanceof JdbcConnection) {
-            conn = (JdbcConnection) database.getConnection();
-        }
+        JdbcConnection conn = database.getConnection() instanceof JdbcConnection jdbc ? jdbc : null;
 
         if (conn != null) {
             try (Statement st = conn.createStatement();

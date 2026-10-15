@@ -65,10 +65,7 @@ public class UniqueMediaFolders implements CustomSqlChange {
     @Override
     public SqlStatement[] generateStatements(Database database) throws CustomChangeException {
         Set<Integer> deletionSet = new HashSet<>();
-        JdbcConnection conn = null;
-        if (database.getConnection() instanceof JdbcConnection) {
-            conn = (JdbcConnection) database.getConnection();
-        }
+        JdbcConnection conn = database.getConnection() instanceof JdbcConnection jdbc ? jdbc : null;
 
         if (conn != null) {
             try (PreparedStatement st = conn.prepareStatement("select * from music_folder order by id");

@@ -861,47 +861,36 @@ public class SubsonicRESTController {
         String action = getRequiredStringParameter(request, "action");
 
         switch (action) {
-            case "start":
-                playQueueService.start(player);
-                break;
-            case "stop":
-                playQueueService.stop(player);
-                break;
-            case "skip":
+            case "start" -> playQueueService.start(player);
+            case "stop" -> playQueueService.stop(player);
+            case "skip" -> {
                 int index = getRequiredIntParameter(request, "index");
                 long offset = getLongParameter(request, "offset", 0) * 1000;
                 playQueueService.skip(player, index, offset);
-                break;
-            case "add":
+            }
+            case "add" -> {
                 int[] ids = getIntParameters(request, "id");
                 playQueueService.add(player, Arrays.stream(ids).boxed().toList(), null, true, true);
-                break;
-            case "set":
-                ids = getIntParameters(request, "id");
+            }
+            case "set" -> {
+                int[] ids = getIntParameters(request, "id");
                 playQueueService.reset(player, Arrays.stream(ids).boxed().toList(), true);
-                break;
-            case "clear":
-                playQueueService.clear(player);
-                break;
-            case "remove":
-                index = getRequiredIntParameter(request, "index");
+            }
+            case "clear" -> playQueueService.clear(player);
+            case "remove" -> {
+                int index = getRequiredIntParameter(request, "index");
                 playQueueService.remove(player, Arrays.asList(index));
-                break;
-            case "shuffle":
-                playQueueService.shuffle(player);
-                break;
-            case "setGain":
+            }
+            case "shuffle" -> playQueueService.shuffle(player);
+            case "setGain" -> {
                 float gain = getRequiredFloatParameter(request, "gain");
                 playQueueService.setJukeboxGain(player, gain);
-                break;
-            case "get":
-                returnPlaylist = true;
-                break;
-            case "status":
+            }
+            case "get" -> returnPlaylist = true;
+            case "status" -> {
                 // No action necessary.
-                break;
-            default:
-                throw new Exception("Unknown jukebox action: '" + action + "'.");
+            }
+            default -> throw new Exception("Unknown jukebox action: '" + action + "'.");
         }
 
         String username = securityService.getCurrentUsername(request);

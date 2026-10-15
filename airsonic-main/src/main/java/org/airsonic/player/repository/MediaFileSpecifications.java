@@ -112,18 +112,8 @@ public class MediaFileSpecifications {
                     predicates.add(cb.lessThanOrEqualTo(root.get("playCount"), criteria.getMaxPlayCount()));
                 }
             }
-            String randomFunctionName;
-            switch (databaseType.toLowerCase()) {
-                case "postgresql":
-                    randomFunctionName = "RANDOM";
-                    break;
-                case "mysql":
-                case "mariadb":
-                case "hsqldb":
-                default:
-                    randomFunctionName = "RAND";
-                    break;
-            }
+            // MySQL, MariaDB and HSQLDB all use RAND()
+            String randomFunctionName = "postgresql".equals(databaseType.toLowerCase()) ? "RANDOM" : "RAND";
             Expression<Double> randomFunction = cb.function(randomFunctionName, Double.class);
             query.orderBy(cb.asc(randomFunction));
             return cb.and(predicates.toArray(new Predicate[0]));
