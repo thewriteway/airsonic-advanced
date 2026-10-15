@@ -23,8 +23,6 @@ package org.airsonic.player.controller;
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.RateLimiter;
 import org.airsonic.player.ajax.UploadInfo;
 import org.airsonic.player.config.AirsonicHomeConfig;
@@ -100,7 +98,7 @@ public class UploadController {
     @Autowired
     private AirsonicHomeConfig homeConfig;
 
-    private static final Set<String> SUPPORTED_ZIP_FORMATS = ImmutableSet.of("zip", "7z", "rar", "cpio", "jar", "tar");
+    private static final Set<String> SUPPORTED_ZIP_FORMATS = Set.of("zip", "7z", "rar", "cpio", "jar", "tar");
     public static final Map<UUID, Consumer<Path>> registeredCallbacks = new ConcurrentHashMap<>();
 
     private void checkUploadAllowed(User user, Path p, boolean checkExistence) throws Exception {
@@ -172,7 +170,7 @@ public class UploadController {
                         uploadedFiles.add(targetFile);
                         LOG.info("Uploaded {} ", targetFile);
 
-                        if (unzip && SUPPORTED_ZIP_FORMATS.contains(MoreFiles.getFileExtension(targetFile).toLowerCase())) {
+                        if (unzip && SUPPORTED_ZIP_FORMATS.contains(FilenameUtils.getExtension(targetFile.toString()).toLowerCase())) {
                             unzip(targetFile, unzippedFiles, exceptions);
                         }
                     }

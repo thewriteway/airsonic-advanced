@@ -66,6 +66,6 @@ public class Genres {
     }
 
     public List<Genre> getGenres() {
-        return new ArrayList<Genre>(genres.values());
+        return new ArrayList<>(genres.values());
     }
 }

@@ -1,5 +1,6 @@
 package org.airsonic.player.service.podcast;
 
+import org.airsonic.player.config.HttpClientConfig;
 import org.airsonic.player.domain.CoverArt;
 import org.airsonic.player.domain.CoverArt.EntityType;
 import org.airsonic.player.domain.MediaFile;
@@ -16,16 +17,15 @@ import org.airsonic.player.service.websocket.AsyncWebSocketClient;
 import org.airsonic.player.util.PodcastUtil;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.entity.ContentType;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.util.Timeout;
 import org.jdom2.Document;
 import org.jdom2.Element;
+import org.jdom2.JDOMException;
 import org.jdom2.Namespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +35,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,6 +77,9 @@ public class PodcastRefresher {
     @Autowired
     private AsyncWebSocketClient asyncWebSocketClient;
 
+    @Autowired
+    private CloseableHttpClient httpClient;
+
     /**
      * refresh channel
      *
@@ -93,18 +97,17 @@ public class PodcastRefresher {
             return CompletableFuture.completedFuture(false);
         }
         asyncWebSocketClient.send("/topic/podcasts/updated", channel.getId());
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(2 * 60 * 1000) // 2 minutes
-                .setSocketTimeout(10 * 60 * 1000) // 10 minutes
-                .build();
         HttpGet method = new HttpGet(channel.getUrl());
-        method.setConfig(requestConfig);
+        method.setConfig(HttpClientConfig.responseTimeout(Timeout.ofMinutes(10)));
         method.addHeader("User-Agent", "Airsonic/" + versionService.getLocalVersion());
-        try (CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse response = client.execute(method);
-                InputStream in = response.getEntity().getContent()) {
-
-            Document document = createSAXBuilder().build(in);
+        try {
+            Document document = httpClient.execute(method, response -> {
+                try (InputStream in = response.getEntity().getContent()) {
+                    return createSAXBuilder().build(in);
+                } catch (JDOMException e) {
+                    throw new IOException("Failed to parse RSS feed " + channel.getUrl(), e);
+                }
+            });
             Element channelElement = document.getRootElement().getChild("channel");
 
             podcastPersistenceService.updateChannelByElement(channel, channelElement);
@@ -165,11 +168,17 @@ public class PodcastRefresher {
 
         HttpGet method = new HttpGet(imageUrl);
         method.addHeader("User-Agent", "Airsonic/" + versionService.getLocalVersion());
-        try (CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse response = client.execute(method);
-                InputStream in = response.getEntity().getContent()) {
-            Path filePath = channelDir.resolve("cover." + getCoverArtSuffix(response));
-            Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Path filePath = httpClient.execute(method, response -> {
+                if (response.getCode() != HttpStatus.SC_OK) {
+                    throw new IOException("Status code: " + response.getCode());
+                }
+                Path coverPath = channelDir.resolve("cover." + getCoverArtSuffix(response));
+                try (InputStream in = response.getEntity().getContent()) {
+                    Files.copy(in, coverPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+                return coverPath;
+            });
             CoverArt coverArt = new CoverArt(channelMediaFile.getId(), EntityType.MEDIA_FILE,
                     folder.getPath().relativize(filePath).toString(), channelMediaFile.getFolder(), false);
             coverArtRepository.save(coverArt);
@@ -178,11 +187,11 @@ public class PodcastRefresher {
         }
     }
 
-    private String getCoverArtSuffix(HttpResponse response) {
+    private String getCoverArtSuffix(ClassicHttpResponse response) {
         String result = null;
-        Header contentTypeHeader = response.getEntity().getContentType();
-        if (contentTypeHeader != null && contentTypeHeader.getValue() != null) {
-            ContentType contentType = ContentType.parse(contentTypeHeader.getValue());
+        String contentTypeHeader = response.getEntity().getContentType();
+        if (contentTypeHeader != null) {
+            ContentType contentType = ContentType.parse(contentTypeHeader);
             String mimeType = contentType.getMimeType();
             result = StringUtil.getSuffix(mimeType);
         }

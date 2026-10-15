@@ -19,13 +19,12 @@
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.config.HttpClientConfig;
 import org.airsonic.player.util.NetworkUtil;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +47,12 @@ import static org.springframework.http.HttpStatus.OK;
 @RequestMapping({"/proxy", "/proxy.view"})
 public class ProxyController {
 
+    private final CloseableHttpClient httpClient;
+
+    public ProxyController(CloseableHttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
+
     @GetMapping
     public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String url = ServletRequestUtils.getRequiredStringParameter(request, "url");
@@ -58,16 +63,11 @@ public class ProxyController {
             return null;
         }
 
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(15000)
-                .setSocketTimeout(15000)
-                .build();
         HttpGet method = new HttpGet(url);
-        method.setConfig(requestConfig);
+        method.setConfig(HttpClientConfig.responseTimeout(Timeout.ofSeconds(15)));
 
-        try (CloseableHttpClient client = HttpClients.createDefault();
-             CloseableHttpResponse resp = client.execute(method)) {
-            int statusCode = resp.getStatusLine().getStatusCode();
+        httpClient.execute(method, resp -> {
+            int statusCode = resp.getCode();
             if (statusCode != OK.value()) {
                 response.sendError(statusCode);
             } else {
@@ -75,7 +75,8 @@ public class ProxyController {
                     IOUtils.copy(in, response.getOutputStream());
                 }
             }
-        }
+            return null;
+        });
         return null;
     }
 }

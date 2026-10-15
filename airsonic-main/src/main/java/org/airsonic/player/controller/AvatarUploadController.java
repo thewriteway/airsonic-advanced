@@ -58,7 +58,7 @@ public class AvatarUploadController {
     protected ModelAndView handleRequestInternal(@RequestParam("file") MultipartFile file, HttpServletRequest request) throws Exception {
 
         String username = securityService.getCurrentUsername(request);
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
 
         if (!file.isEmpty()) {
             String filename = file.getOriginalFilename();

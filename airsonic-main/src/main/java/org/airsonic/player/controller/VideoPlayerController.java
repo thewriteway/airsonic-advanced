@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.controller;
 
-import com.google.common.collect.ImmutableSet;
 import org.airsonic.player.domain.Bookmark;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.User;
@@ -64,9 +63,9 @@ import java.util.stream.Stream;
 public class VideoPlayerController {
 
     public static final int DEFAULT_BIT_RATE = 1500;
-    public static final Set<Integer> BIT_RATES = ImmutableSet.of(200, 300, 400, 500, 700, 1000, 1200, DEFAULT_BIT_RATE, 2000, 3000, 5000);
-    private static Set<String> STREAMABLE_FORMATS = ImmutableSet.of("mp4", "m4v");
-    private static Set<String> CASTABLE_FORMATS = ImmutableSet.of("mp4", "m4v", "mkv");
+    public static final List<Integer> BIT_RATES = List.of(200, 300, 400, 500, 700, 1000, 1200, DEFAULT_BIT_RATE, 2000, 3000, 5000);
+    private static final Set<String> STREAMABLE_FORMATS = Set.of("mp4", "m4v");
+    private static final Set<String> CASTABLE_FORMATS = Set.of("mp4", "m4v", "mkv");
 
     @Autowired
     private MediaFileService mediaFileService;
@@ -87,7 +86,7 @@ public class VideoPlayerController {
     protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
         User user = securityService.getCurrentUser(request);
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         int id = ServletRequestUtils.getRequiredIntParameter(request, "id");
         MediaFile file = mediaFileService.getMediaFile(id);
         mediaFileService.populateStarredDate(file, user.getUsername());
@@ -119,7 +118,6 @@ public class VideoPlayerController {
         map.put("remoteStreamUrl", streamUrls.getRight().get("remoteStreamUrl"));
         map.put("remoteCoverArtUrl", url + jwtSecurityService.addJWTToken(user.getUsername(), "ext/coverArt.view?id=" + file.getId()));
         map.put("remoteCaptionsUrl", url + jwtSecurityService.addJWTToken(user.getUsername(), "ext/captions/list?id=" + file.getId()));
-        // map.put("bitRates", BIT_RATES);
         map.put("defaultBitRate", streamUrls.getLeft());
         map.put("user", user);
         map.put("playerId", playerId);

@@ -1,6 +1,5 @@
 package org.airsonic.player.service.metadata;
 
-import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Locale;
@@ -15,7 +14,7 @@ public class Track {
 
     private final String codec;
 
-    private final static Set<String> STREAMABLE_CODECS = ImmutableSet.of("h264", "aac");
+    private final static Set<String> STREAMABLE_CODECS = Set.of("h264", "aac");
 
     public Track(int id, String type, String language, String codec) {
         this.id = id;

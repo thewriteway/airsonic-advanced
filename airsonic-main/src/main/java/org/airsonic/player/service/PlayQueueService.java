@@ -1,6 +1,5 @@
 package org.airsonic.player.service;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.ajax.MediaFileEntry;
 import org.airsonic.player.ajax.PlayQueueInfo;
 import org.airsonic.player.domain.InternetRadio;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -112,7 +112,7 @@ public class PlayQueueService {
         }
 
         CompletableFuture<Void> resultSkip = webSocketClient.sendToUser(player.getUsername(), "/queue/playqueues/" + player.getId() + "/skip",
-                ImmutableMap.of("index", index, "offset", offset));
+                Map.of("index", index, "offset", offset));
 
         resultSkip.thenRun(() -> webSocketClient.sendToUser(player.getUsername(), "/queue/playqueues/" + player.getId() + "/playstatus",
                 player.getPlayQueue().getStatus()));
@@ -537,7 +537,7 @@ public class PlayQueueService {
                 SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE);
                 headerAccessor.setSessionId(sessionId);
                 webSocketClient.sendToUser(player.getUsername(), "/queue/playqueues/" + player.getId() + "/skip",
-                        ImmutableMap.of("index", info.getStartPlayerAt(), "offset", info.getStartPlayerAtPosition()),
+                        Map.of("index", info.getStartPlayerAt(), "offset", info.getStartPlayerAtPosition()),
                         headerAccessor.getMessageHeaders());
             } else if (!player.isExternalWithPlaylist()) {
                 skip(player, info.getStartPlayerAt(), info.getStartPlayerAtPosition());

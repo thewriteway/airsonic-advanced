@@ -51,7 +51,7 @@ public class LoginController {
             ));
         }
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("logout", request.getParameter("logout") != null);
         map.put("error", request.getParameter("error") != null);
         map.put("brand", settingsService.getBrand());

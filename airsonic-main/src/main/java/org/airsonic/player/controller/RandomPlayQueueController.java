@@ -118,30 +118,15 @@ public class RandomPlayQueueController {
         }
 
         // Handle the last played date filter
-        Instant lastPlayed = null;
-        switch (lastPlayedValue) {
-            case "1day":
-                lastPlayed = Instant.now().minus(ChronoUnit.DAYS.getDuration());
-                break;
-            case "1week":
-                lastPlayed = Instant.now().minus(ChronoUnit.WEEKS.getDuration());
-                break;
-            case "1month":
-                lastPlayed = Instant.now().minus(ChronoUnit.MONTHS.getDuration());
-                break;
-            case "3months":
-                lastPlayed = Instant.now().minus(ChronoUnit.MONTHS.getDuration().multipliedBy(3));
-                break;
-            case "6months":
-                lastPlayed = Instant.now().minus(ChronoUnit.MONTHS.getDuration().multipliedBy(6));
-                break;
-            case "1year":
-                lastPlayed = Instant.now().minus(ChronoUnit.YEARS.getDuration());
-                break;
-            case "any":
-            default:
-                break;
-        }
+        Instant lastPlayed = switch (lastPlayedValue) {
+            case "1day" -> Instant.now().minus(ChronoUnit.DAYS.getDuration());
+            case "1week" -> Instant.now().minus(ChronoUnit.WEEKS.getDuration());
+            case "1month" -> Instant.now().minus(ChronoUnit.MONTHS.getDuration());
+            case "3months" -> Instant.now().minus(ChronoUnit.MONTHS.getDuration().multipliedBy(3));
+            case "6months" -> Instant.now().minus(ChronoUnit.MONTHS.getDuration().multipliedBy(6));
+            case "1year" -> Instant.now().minus(ChronoUnit.YEARS.getDuration());
+            default -> null;
+        };
 
         if (lastPlayed != null) {
             switch (lastPlayedComp) {

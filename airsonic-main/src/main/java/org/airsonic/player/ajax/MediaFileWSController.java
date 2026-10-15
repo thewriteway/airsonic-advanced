@@ -1,6 +1,5 @@
 package org.airsonic.player.ajax;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MediaFileComparator;
 import org.airsonic.player.service.MediaFileService;
@@ -44,7 +43,7 @@ public class MediaFileWSController {
         List<MediaFile> mediaFiles = getMediaFiles(req.getIds(), req.getPaths());
 
         if (mediaFiles.isEmpty()) {
-            return ImmutableMap.of("contentType", "notFound");
+            return Map.of("contentType", "notFound");
         }
 
         MediaFile dir = mediaFiles.get(0);
@@ -54,11 +53,11 @@ public class MediaFileWSController {
 
         // Redirect if root directory.
         if (mediaFileService.isRoot(dir)) {
-            return ImmutableMap.of("contentType", "home");
+            return Map.of("contentType", "home");
         }
 
         if (!securityService.isFolderAccessAllowed(dir, user.getName())) {
-            return ImmutableMap.of("contentType", "accessDenied");
+            return Map.of("contentType", "accessDenied");
         }
 
         List<MediaFile> children = getChildren(mediaFiles);
@@ -195,7 +194,7 @@ public class MediaFileWSController {
         if (Objects.nonNull(parent) && !mediaFileService.isRoot(parent)) {
             List<MediaFile> siblings = mediaFileService.getChildrenOf(parent, false, true, true);
             result.addAll(siblings.stream().filter(sibling -> sibling.isAlbum() && !sibling.equals(dir))
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         return result;
     }

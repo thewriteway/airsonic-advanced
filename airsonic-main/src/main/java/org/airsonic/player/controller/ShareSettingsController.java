@@ -65,7 +65,7 @@ public class ShareSettingsController {
     @GetMapping
     public String doGet(HttpServletRequest request, Model model) {
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("shareInfos", getShareInfos(request));
         map.put("user", securityService.getCurrentUser(request));
 
@@ -115,7 +115,7 @@ public class ShareSettingsController {
     }
 
     private List<ShareInfo> getShareInfos(HttpServletRequest request) {
-        List<ShareInfo> result = new ArrayList<ShareInfo>();
+        List<ShareInfo> result = new ArrayList<>();
         User user = securityService.getCurrentUser(request);
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(user.getUsername());
 

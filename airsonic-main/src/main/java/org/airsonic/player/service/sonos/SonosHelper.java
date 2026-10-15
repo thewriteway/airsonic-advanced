@@ -121,7 +121,7 @@ public class SonosHelper {
 
     private List<AbstractMedia> forShuffleMusicFolder(List<MusicFolder> musicFolders, int count, String username, HttpServletRequest request) {
         List<MediaFile> albums = searchService.getRandomAlbums(40, musicFolders);
-        List<MediaFile> songs = new ArrayList<MediaFile>();
+        List<MediaFile> songs = new ArrayList<>();
         for (MediaFile album : albums) {
             songs.addAll(filterMusic(mediaFileService.getVisibleChildrenOf(album, false, false)));
         }
@@ -141,7 +141,7 @@ public class SonosHelper {
     public List<AbstractMedia> forShuffleAlbumList(AlbumListType albumListType, int count, String username, HttpServletRequest request) {
         AlbumList albumList = createAlbumList(albumListType, 0, 40, username);
 
-        List<MediaFile> songs = new ArrayList<MediaFile>();
+        List<MediaFile> songs = new ArrayList<>();
         for (MediaFile album : albumList.getAlbums()) {
             songs.addAll(filterMusic(mediaFileService.getVisibleChildrenOf(album, false, false)));
         }
@@ -160,7 +160,7 @@ public class SonosHelper {
     }
 
     public List<AbstractMedia> forLibrary(String username, HttpServletRequest request) {
-        List<AbstractMedia> result = new ArrayList<AbstractMedia>();
+        List<AbstractMedia> result = new ArrayList<>();
 
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
         if (musicFolders.size() == 1) {
@@ -183,7 +183,7 @@ public class SonosHelper {
 
     public List<AbstractMedia> forMusicFolder(MusicFolder musicFolder, String username, HttpServletRequest request) {
         try {
-            List<AbstractMedia> result = new ArrayList<AbstractMedia>();
+            List<AbstractMedia> result = new ArrayList<>();
 
             MediaMetadata shuffle = new MediaMetadata();
             shuffle.setItemType(ItemType.PROGRAM);
@@ -216,7 +216,7 @@ public class SonosHelper {
     }
 
     public List<AbstractMedia> forDirectoryContent(int mediaFileId, String username, HttpServletRequest request) {
-        List<AbstractMedia> result = new ArrayList<AbstractMedia>();
+        List<AbstractMedia> result = new ArrayList<>();
         MediaFile dir = mediaFileService.getMediaFile(mediaFileId);
         List<MediaFile> children = dir.isFile() ? Arrays.asList(dir) : mediaFileService.getVisibleChildrenOf(dir, true, true);
         boolean isArtist = true;
@@ -270,7 +270,7 @@ public class SonosHelper {
     }
 
     public List<MediaCollection> forPlaylists(String username, HttpServletRequest request) {
-        List<MediaCollection> result = new ArrayList<MediaCollection>();
+        List<MediaCollection> result = new ArrayList<>();
         for (Playlist playlist : playlistService.getReadablePlaylistsForUser(username)) {
             MediaCollection mediaCollection = new MediaCollection();
             AlbumArtUrl albumArtURI = new AlbumArtUrl();
@@ -292,7 +292,7 @@ public class SonosHelper {
     }
 
     public List<MediaCollection> forAlbumLists() {
-        List<MediaCollection> result = new ArrayList<MediaCollection>();
+        List<MediaCollection> result = new ArrayList<>();
 
         for (AlbumListType albumListType : AlbumListType.values()) {
             MediaCollection mediaCollection = new MediaCollection();
@@ -305,7 +305,7 @@ public class SonosHelper {
     }
 
     public List<MediaCollection> forPodcastChannels() {
-        List<MediaCollection> result = new ArrayList<MediaCollection>();
+        List<MediaCollection> result = new ArrayList<>();
         for (PodcastChannel channel : podcastService.getAllChannels()) {
             MediaCollection mediaCollection = new MediaCollection();
             mediaCollection.setId(SonosService.ID_PODCAST_CHANNEL_PREFIX + channel.getId());
@@ -317,7 +317,7 @@ public class SonosHelper {
     }
 
     public List<AbstractMedia> forPodcastChannel(int channelId, String username, HttpServletRequest request) {
-        List<AbstractMedia> result = new ArrayList<AbstractMedia>();
+        List<AbstractMedia> result = new ArrayList<>();
         for (PodcastEpisode episode : podcastService.getEpisodes(channelId)) {
             if (episode.getStatus() == PodcastStatus.COMPLETED) {
                 MediaFile mediaFile = episode.getMediaFile();
@@ -400,7 +400,7 @@ public class SonosHelper {
     }
 
     private MediaList forDecades(int offset, int count) {
-        List<MediaCollection> mediaCollections = new ArrayList<MediaCollection>();
+        List<MediaCollection> mediaCollections = new ArrayList<>();
         int currentDecade = LocalDate.now().getYear() / 10;
         for (int i = 0; i < 10; i++) {
             int decade = (currentDecade - i) * 10;
@@ -415,7 +415,7 @@ public class SonosHelper {
     }
 
     private MediaList forGenres(int offset, int count) {
-        List<MediaCollection> mediaCollections = new ArrayList<MediaCollection>();
+        List<MediaCollection> mediaCollections = new ArrayList<>();
         List<Genre> genres = mediaFileService.getGenres(true);
         for (int i = 0; i < genres.size(); i++) {
             Genre genre = genres.get(i);
@@ -441,7 +441,7 @@ public class SonosHelper {
     public List<MediaCollection> forGenre(int genreIndex, String username, HttpServletRequest request) {
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
         Genre genre = mediaFileService.getGenres(true).get(genreIndex);
-        List<MediaCollection> result = new ArrayList<MediaCollection>();
+        List<MediaCollection> result = new ArrayList<>();
         for (MediaFile album : mediaFileService.getAlbumsByGenre(0, Integer.MAX_VALUE, genre.getName(), musicFolders)) {
             result.add(forDirectory(album, request, username));
         }
@@ -449,7 +449,7 @@ public class SonosHelper {
     }
 
     public List<MediaMetadata> forPlaylist(int playlistId, String username, HttpServletRequest request) {
-        List<MediaMetadata> result = new ArrayList<MediaMetadata>();
+        List<MediaMetadata> result = new ArrayList<>();
         for (MediaFile song : playlistService.getFilesInPlaylist(playlistId)) {
             if (song.isAudio()) {
                 result.add(forSong(song, username, request));
@@ -479,7 +479,7 @@ public class SonosHelper {
     }
 
     public List<MediaCollection> forStarredArtists(String username, HttpServletRequest request) {
-        List<MediaCollection> result = new ArrayList<MediaCollection>();
+        List<MediaCollection> result = new ArrayList<>();
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
         for (MediaFile artist : mediaFileService.getStarredArtists(0, Integer.MAX_VALUE, username, musicFolders)) {
             MediaCollection mediaCollection = forDirectory(artist, request, username);
@@ -491,7 +491,7 @@ public class SonosHelper {
 
     public List<MediaCollection> forStarredAlbums(String username, HttpServletRequest request) {
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
-        List<MediaCollection> result = new ArrayList<MediaCollection>();
+        List<MediaCollection> result = new ArrayList<>();
         for (MediaFile album : mediaFileService.getStarredAlbums(0, Integer.MAX_VALUE, username, musicFolders)) {
             MediaCollection mediaCollection = forDirectory(album, request, username);
             mediaCollection.setItemType(ItemType.ALBUM);
@@ -502,7 +502,7 @@ public class SonosHelper {
 
     public List<MediaMetadata> forStarredSongs(String username, HttpServletRequest request) {
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
-        List<MediaMetadata> result = new ArrayList<MediaMetadata>();
+        List<MediaMetadata> result = new ArrayList<>();
         for (MediaFile song : mediaFileService.getStarredSongs(0, Integer.MAX_VALUE, username, musicFolders)) {
             if (song.isAudio()) {
                 result.add(forSong(song, username, request));
@@ -559,7 +559,7 @@ public class SonosHelper {
     }
 
     private List<AbstractMedia> forMediaFiles(List<MediaFile> mediaFiles, String username, HttpServletRequest request) {
-        List<AbstractMedia> result = new ArrayList<AbstractMedia>();
+        List<AbstractMedia> result = new ArrayList<>();
         for (MediaFile mediaFile : mediaFiles) {
             result.add(forMediaFile(mediaFile, username, request));
         }

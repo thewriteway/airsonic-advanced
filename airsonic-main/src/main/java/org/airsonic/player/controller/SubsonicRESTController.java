@@ -20,7 +20,6 @@
  */
 package org.airsonic.player.controller;
 
-import com.google.common.primitives.Ints;
 import org.airsonic.player.command.UserSettingsCommand;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.Bookmark;
@@ -37,13 +36,13 @@ import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
 import org.airsonic.player.util.Util;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
@@ -70,7 +69,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.airsonic.player.security.RESTRequestParameterProcessingFilter.decrypt;
@@ -876,11 +874,11 @@ public class SubsonicRESTController {
                 break;
             case "add":
                 int[] ids = getIntParameters(request, "id");
-                playQueueService.add(player, Ints.asList(ids), null, true, true);
+                playQueueService.add(player, Arrays.stream(ids).boxed().toList(), null, true, true);
                 break;
             case "set":
                 ids = getIntParameters(request, "id");
-                playQueueService.reset(player, Ints.asList(ids), true);
+                playQueueService.reset(player, Arrays.stream(ids).boxed().toList(), true);
                 break;
             case "clear":
                 playQueueService.clear(player);
@@ -970,7 +968,7 @@ public class SubsonicRESTController {
             playlistService.broadcast(playlist);
         }
 
-        List<MediaFile> songs = new ArrayList<MediaFile>();
+        List<MediaFile> songs = new ArrayList<>();
         for (int id : getIntParameters(request, "songId")) {
             MediaFile song = mediaFileService.getMediaFile(id);
             if (song != null) {
@@ -1008,11 +1006,11 @@ public class SubsonicRESTController {
         List<MediaFile> songs = playlistService.getFilesInPlaylist(id);
         boolean songsChanged = false;
 
-        SortedSet<Integer> tmp = new TreeSet<Integer>();
+        SortedSet<Integer> tmp = new TreeSet<>();
         for (int songIndexToRemove : getIntParameters(request, "songIndexToRemove")) {
             tmp.add(songIndexToRemove);
         }
-        List<Integer> songIndexesToRemove = new ArrayList<Integer>(tmp);
+        List<Integer> songIndexesToRemove = new ArrayList<>(tmp);
         Collections.reverse(songIndexesToRemove);
         for (Integer songIndexToRemove : songIndexesToRemove) {
             songs.remove(songIndexToRemove.intValue());
@@ -1667,7 +1665,7 @@ public class SubsonicRESTController {
     public void savePlayQueue(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
         String username = securityService.getCurrentUsername(request);
-        List<Integer> mediaFileIds = Arrays.stream(getIntParameters(request, "id")).boxed().collect(Collectors.toList());
+        List<Integer> mediaFileIds = Arrays.stream(getIntParameters(request, "id")).boxed().toList();
         Integer current = getIntParameter(request, "current");
         Long position = getLongParameter(request, "position");
         String changedBy = getRequiredStringParameter(request, "c");
@@ -1714,7 +1712,7 @@ public class SubsonicRESTController {
             return;
         }
 
-        List<MediaFile> files = new ArrayList<MediaFile>();
+        List<MediaFile> files = new ArrayList<>();
         for (int id : getRequiredIntParameters(request, "id")) {
             files.add(mediaFileService.getMediaFile(id));
         }
@@ -2030,12 +2028,12 @@ public class SubsonicRESTController {
 
     @RequestMapping({"/getChatMessages", "/getChatMessages.view"})
     public ResponseEntity<String> getChatMessages(HttpServletRequest request, HttpServletResponse response) {
-        return ResponseEntity.status(HttpStatus.SC_GONE).body(NO_LONGER_SUPPORTED);
+        return ResponseEntity.status(HttpStatus.GONE).body(NO_LONGER_SUPPORTED);
     }
 
     @RequestMapping({"/addChatMessage", "/addChatMessage.view"})
     public ResponseEntity<String> addChatMessage(HttpServletRequest request, HttpServletResponse response) {
-        return ResponseEntity.status(HttpStatus.SC_GONE).body(NO_LONGER_SUPPORTED);
+        return ResponseEntity.status(HttpStatus.GONE).body(NO_LONGER_SUPPORTED);
     }
 
     @RequestMapping({"/getLyrics", "/getLyrics.view"})

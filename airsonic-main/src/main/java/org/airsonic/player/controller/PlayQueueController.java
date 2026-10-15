@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.controller;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserSettings;
@@ -79,6 +78,6 @@ public class PlayQueueController {
     public Map<String, Object> getPlayer(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String username = securityService.getCurrentUsername(request);
         Player player = playerService.getPlayer(request, response, username);
-        return ImmutableMap.of("id", player.getId(), "description", player.getShortDescription(), "tech", player.getTechnology());
+        return Map.of("id", player.getId(), "description", player.getShortDescription(), "tech", player.getTechnology());
     }
 }

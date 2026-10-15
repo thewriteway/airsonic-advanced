@@ -48,7 +48,7 @@ public class RolesConverter implements AttributeConverter<Set<Role>, String> {
 
     @Override
     public Set<Role> convertToEntityAttribute(String roles) {
-        TypeReference<Set<Role>> typeReference = new TypeReference<Set<Role>>() {};
+        TypeReference<Set<Role>> typeReference = new TypeReference<>() {};
         try {
             return roles == null ? new HashSet<>() : objectMapper.readValue(roles, typeReference);
         } catch (JsonProcessingException e) {

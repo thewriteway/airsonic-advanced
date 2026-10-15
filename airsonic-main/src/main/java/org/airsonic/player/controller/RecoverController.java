@@ -50,7 +50,7 @@ public class RecoverController {
     @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST})
     public ModelAndView recover(HttpServletRequest request, HttpServletResponse response) {
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         String usernameOrEmail = StringUtils.trimToNull(request.getParameter("usernameOrEmail"));
 
         if (usernameOrEmail != null) {

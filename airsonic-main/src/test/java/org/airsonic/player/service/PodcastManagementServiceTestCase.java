@@ -26,9 +26,6 @@ import org.airsonic.player.domain.PodcastChannel;
 import org.airsonic.player.domain.PodcastChannelRule;
 import org.airsonic.player.domain.PodcastEpisode;
 import org.airsonic.player.service.websocket.AsyncWebSocketClient;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -75,12 +72,6 @@ public class PodcastManagementServiceTestCase {
     private MusicFolder mockedMusicFolder;
     @Mock
     private PodcastChannel mockedChannel;
-    @Mock
-    private CloseableHttpClient mockedHttpClient;
-    @Mock
-    private CloseableHttpResponse mockedHttpResponse;
-    @Mock
-    private HttpEntity mockedHttpEntity;
 
     @TempDir
     private Path tempFolder;

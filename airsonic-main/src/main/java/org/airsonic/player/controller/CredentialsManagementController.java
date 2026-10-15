@@ -1,6 +1,5 @@
 package org.airsonic.player.controller;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.command.CredentialsManagementCommand;
 import org.airsonic.player.command.CredentialsManagementCommand.AdminControls;
 import org.airsonic.player.command.CredentialsManagementCommand.CredentialsCommand;
@@ -45,7 +44,7 @@ public class CredentialsManagementController {
     @Autowired
     private SettingsService settingsService;
 
-    private static final Map<String, String> ENCODER_ALIASES = ImmutableMap.of("noop", "plaintext", "legacynoop",
+    private static final Map<String, String> ENCODER_ALIASES = Map.of("noop", "plaintext", "legacynoop",
             "legacyplaintext (deprecated)", "legacyhex", "legacyhex (deprecated)");
 
     @GetMapping

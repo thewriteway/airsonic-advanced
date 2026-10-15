@@ -19,17 +19,17 @@
 
 package org.airsonic.player.service.sonos;
 
+import org.airsonic.player.config.HttpClientConfig;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.WWWFormCodec;
+import org.apache.hc.core5.util.Timeout;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +53,12 @@ import java.util.List;
 @Component
 public class SonosServiceRegistration {
     private static final Logger LOG = LoggerFactory.getLogger(SonosServiceRegistration.class);
+
+    private final CloseableHttpClient httpClient;
+
+    public SonosServiceRegistration(CloseableHttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
     /**
      * The type of Authentication fo Sonos, the old want USER_ID, is will be not supported. We must use the
@@ -145,24 +152,17 @@ public class SonosServiceRegistration {
         }
 
         HttpPost request = new HttpPost(url);
-        request.setConfig(getDefaultRequestConfig());
+        request.setConfig(HttpClientConfig.responseTimeout(Timeout.ofSeconds(20)));
 
-        // We're not using UTF8 encoding here since the Sonos controller doesn't like it.
-        request.setEntity(new UrlEncodedFormEntity(params));
+        // We're not using UTF8 encoding here since the Sonos controller doesn't like it,
+        // and the Content-Type carries no charset parameter.
+        request.setEntity(new StringEntity(WWWFormCodec.format(params, StandardCharsets.ISO_8859_1),
+                ContentType.create("application/x-www-form-urlencoded")));
 
-        String result = executeRequest(request);
+        String result = httpClient.execute(request, new BasicHttpClientResponseHandler());
         LOG.info("Sonos controller returned: {}", result);
 
         return result.contains("Success");
-    }
-
-    private String executeRequest(HttpUriRequest request) throws IOException {
-
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ResponseHandler<String> responseHandler = new BasicResponseHandler();
-            return client.execute(request, responseHandler);
-
-        }
     }
 
     private String retrieveCsrfToken(String controllerUrl) throws IOException {
@@ -174,13 +174,5 @@ public class SonosServiceRegistration {
         }
 
         return null;
-    }
-
-    private RequestConfig getDefaultRequestConfig() {
-        return RequestConfig.custom()
-                .setConnectTimeout(20 * 1000) // 20 seconds
-                .setSocketTimeout(20 * 1000) // 20 seconds
-                .build();
-
     }
 }

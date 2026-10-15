@@ -67,7 +67,7 @@ public class EditTagsController {
         }
         command.setAllGenres(JaudiotaggerParser.getID3V1Genres());
 
-        List<Song> songs = new ArrayList<Song>();
+        List<Song> songs = new ArrayList<>();
         for (int i = 0; i < files.size(); i++) {
             songs.add(createSong(files.get(i), i));
         }

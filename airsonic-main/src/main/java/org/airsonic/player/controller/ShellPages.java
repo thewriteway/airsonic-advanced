@@ -19,6 +19,7 @@
 package org.airsonic.player.controller;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.util.Set;
 
@@ -53,8 +54,8 @@ public final class ShellPages {
      * @return whether the path addresses one of the main pane pages
      */
     public static boolean isPage(String path) {
-        String name = StringUtils.removeStart(StringUtils.substringBefore(path, '?'), "/");
-        return PAGES.contains(StringUtils.removeEnd(name, ".view"));
+        String name = Strings.CS.removeStart(StringUtils.substringBefore(path, '?'), "/");
+        return PAGES.contains(Strings.CS.removeEnd(name, ".view"));
     }
 
     /**
@@ -67,6 +68,6 @@ public final class ShellPages {
         if (requested == null || !isPage(requested)) {
             return DEFAULT_MAIN;
         }
-        return StringUtils.removeStart(requested, "/");
+        return Strings.CS.removeStart(requested, "/");
     }
 }

@@ -9,11 +9,10 @@ import org.airsonic.player.service.VersionService;
 import org.airsonic.player.util.Util;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +34,8 @@ public class PodcastIndexService {
     private SecurityService securityService;
     @Autowired
     private VersionService versionService;
+    @Autowired
+    private CloseableHttpClient httpClient;
 
     private static final String DEFAULT_URL = "https://api.podcastindex.org/api/1.0/search/byterm";
 
@@ -58,7 +59,7 @@ public class PodcastIndexService {
                                 .queryParam("q", search).toUriString(),
                         cred.getAppUsername(), decoded);
                 PodcastIndexResponse resp = executeRequest(req);
-                if (req != null) {
+                if (resp != null) {
                     return resp.getFeeds();
                 }
             }
@@ -83,16 +84,13 @@ public class PodcastIndexService {
     }
 
     private PodcastIndexResponse executeRequest(HttpUriRequest request) throws Exception {
-        try (CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse resp = client.execute(request);) {
-            boolean ok = resp.getStatusLine().getStatusCode() == 200;
-            if (!ok) {
-                LOG.warn("Failed to execute PodcastIndex request: {}", resp.getEntity().toString());
+        return httpClient.execute(request, resp -> {
+            if (resp.getCode() != HttpStatus.SC_OK) {
+                LOG.warn("Failed to execute PodcastIndex request: {} {}", resp.getCode(), resp.getReasonPhrase());
                 return null;
-            } else {
-                return Util.getObjectMapper().readValue(resp.getEntity().getContent(), PodcastIndexResponse.class);
             }
-        }
+            return Util.getObjectMapper().readValue(resp.getEntity().getContent(), PodcastIndexResponse.class);
+        });
     }
 
     // from https://podcastindex-org.github.io/docs-api/#get-/search/byterm

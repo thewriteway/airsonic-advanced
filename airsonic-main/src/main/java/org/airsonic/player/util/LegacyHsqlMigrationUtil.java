@@ -1,6 +1,6 @@
 package org.airsonic.player.util;
 
-import com.vdurmont.semver4j.Semver;
+import org.airsonic.player.domain.Version;
 import org.airsonic.player.service.SettingsService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +21,7 @@ import java.util.Properties;
 
 public class LegacyHsqlMigrationUtil {
 
+    private static final Version HSQLDB_2_5_1 = new Version("2.5.1");
     private static final Logger LOG = LoggerFactory.getLogger(LegacyHsqlMigrationUtil.class);
 
     /**
@@ -91,10 +92,7 @@ public class LegacyHsqlMigrationUtil {
             return true;
         }
 
-        Semver currentSemver = new Semver(currentVersion);
-        Semver SEMVER_2_5_1 = new Semver("2.5.1");
-
-        if (currentSemver.isGreaterThanOrEqualTo(SEMVER_2_5_1)) {
+        if (new Version(currentVersion).compareTo(HSQLDB_2_5_1) >= 0) {
             // If the database version is greater than or equal 2.5.1, the upgrade should be relatively painless.
             LOG.debug("HSQLDB database backup not required for driver version {} connecting (and if needed, upgrading) DB version {}", currentVersion, driverVersion);
             return false;

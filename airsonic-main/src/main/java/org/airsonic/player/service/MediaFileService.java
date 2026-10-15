@@ -20,7 +20,6 @@
  */
 package org.airsonic.player.service;
 
-import com.google.common.math.DoubleMath;
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 import org.airsonic.player.ajax.MediaFileEntry;
@@ -844,7 +843,7 @@ public class MediaFileService {
                     LOG.warn("Could not find base file '{}' for cue sheet {}", filePath, indexPath);
                     return Stream.empty();
                 }
-            }).collect(Collectors.toList());
+            }).toList();
             result.addAll(indexedTracks);
         }
 
@@ -860,7 +859,7 @@ public class MediaFileService {
             tracks.forEach(t -> storedChildrenMap.remove(Pair.of(t.getPath(), t.getStartPosition())));
             tracks.add(base);
             return tracks.stream();
-        }).collect(Collectors.toList());
+        }).toList();
         result.addAll(audioBookTracks);
 
         // remove indexPath for deleted cuesheets, if any
@@ -872,7 +871,7 @@ public class MediaFileService {
                 }
                 return m;
             })
-            .collect(Collectors.toList());
+            .toList();
         result.addAll(nonIndexedTracks);
 
         // Delete children that no longer exist on disk.
@@ -1038,7 +1037,7 @@ public class MediaFileService {
             // Is this an album?
             if (!isRoot(mediaFile)) {
                 try (Stream<Path> stream = Files.list(file)) {
-                    List<Path> children = stream.parallel().collect(Collectors.toList());
+                    List<Path> children = stream.parallel().toList();
                     Path firstChild = children.parallelStream()
                             .filter(this::includeMediaFileByPath)
                             .filter(x -> Files.isRegularFile(x))
@@ -1120,7 +1119,7 @@ public class MediaFileService {
                 Double duration = chapter.getEndTimeSeconds() - chapter.getStartTimeSeconds();
                 MediaFile existingFile = storedChildrenMap.remove(Math.round(chapter.getStartTimeSeconds() * 10));
                 if (existingFile != null
-                        && !DoubleMath.fuzzyEquals(existingFile.getDuration(), duration, DURATION_EPSILON)) {
+                        && Math.abs(existingFile.getDuration() - duration) > DURATION_EPSILON) {
                     existingFile = null;
                 }
                 MediaFile track = existingFile;
@@ -1284,10 +1283,10 @@ public class MediaFileService {
             return children;
         } catch (IOException e) {
             LOG.warn("Not found: {}", base.getFullIndexPath());
-            return new ArrayList<MediaFile>();
+            return new ArrayList<>();
         } catch (IndexOutOfBoundsException e) {
             LOG.warn("Invalid CUE sheet: {}", base.getFullIndexPath());
-            return new ArrayList<MediaFile>();
+            return new ArrayList<>();
         } finally {
             storedChildrenMap.values().forEach(m -> delete(m));
         }
@@ -1470,7 +1469,7 @@ public class MediaFileService {
             return Arrays.asList(ancestor);
         }
 
-        List<MediaFile> result = new ArrayList<MediaFile>();
+        List<MediaFile> result = new ArrayList<>();
 
         for (MediaFile child : getVisibleChildrenOf(ancestor, true, sort)) {
             if (child.isDirectory()) {

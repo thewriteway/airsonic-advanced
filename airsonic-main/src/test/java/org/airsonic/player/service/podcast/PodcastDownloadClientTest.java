@@ -33,14 +33,12 @@ import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.PodcastPersistenceService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.VersionService;
-import org.apache.http.HttpEntity;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,13 +46,11 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.ContextConfiguration;
@@ -93,6 +89,8 @@ public class PodcastDownloadClientTest {
     private SecurityService securityService;
     @MockitoBean
     private VersionService versionService;
+    @MockitoBean
+    private CloseableHttpClient httpClient;
     @TempDir
     private Path tempFolder;
     @TempDir
@@ -108,10 +106,6 @@ public class PodcastDownloadClientTest {
     private MediaFile mockedEpisodeMediaFile;
     @Mock
     private MusicFolder mockedMusicFolder;
-    @Mock
-    private CloseableHttpClient mockedHttpClient;
-    @Mock
-    private CloseableHttpResponse mockedHttpResponse;
     @Mock
     private ThreadPoolTaskExecutor podcastDownloadThreadPool;
 
@@ -145,17 +139,8 @@ public class PodcastDownloadClientTest {
         when(mockedEpisodeMediaFile.getFullPath()).thenReturn(tempFolder.resolve("file_example_MP3_700KB.mp3"));
 
         // when
-        try (MockedStatic<HttpClients> mockedHttpClients = Mockito.mockStatic(HttpClients.class,
-                Mockito.CALLS_REAL_METHODS)) {
-            mockedHttpClients.when(() -> HttpClients.createDefault()).thenReturn(mockedHttpClient);
-            when(mockedHttpClient.execute(any())).thenReturn(mockedHttpResponse);
-            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "test");
-            when(mockedHttpResponse.getStatusLine()).thenReturn(statusLine);
-            Resource resource = resourceLoader.getResource("classpath:/MEDIAS/piano.mp3");
-            HttpEntity entity = new ByteArrayEntity(resource.getContentAsByteArray());
-            when(mockedHttpResponse.getEntity()).thenReturn(entity);
-            podcastDownloadClient.downloadEpisode(1).get();
-        }
+        respondWith(200, resourceLoader.getResource("classpath:/MEDIAS/piano.mp3").getContentAsByteArray());
+        podcastDownloadClient.downloadEpisode(1).get();
 
         // then
         verify(mockedEpisode).setStatus(PodcastStatus.COMPLETED);
@@ -191,17 +176,8 @@ public class PodcastDownloadClientTest {
         when(mockedEpisodeMediaFile.getDuration()).thenReturn(null);
 
         // when
-        try (MockedStatic<HttpClients> mockedHttpClients = Mockito.mockStatic(HttpClients.class,
-                Mockito.CALLS_REAL_METHODS)) {
-            mockedHttpClients.when(() -> HttpClients.createDefault()).thenReturn(mockedHttpClient);
-            when(mockedHttpClient.execute(any())).thenReturn(mockedHttpResponse);
-            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "test");
-            when(mockedHttpResponse.getStatusLine()).thenReturn(statusLine);
-            Resource resource = resourceLoader.getResource("classpath:/MEDIAS/piano.mp3");
-            HttpEntity entity = new ByteArrayEntity(resource.getContentAsByteArray());
-            when(mockedHttpResponse.getEntity()).thenReturn(entity);
-            podcastDownloadClient.downloadEpisode(1).get();
-        }
+        respondWith(200, resourceLoader.getResource("classpath:/MEDIAS/piano.mp3").getContentAsByteArray());
+        podcastDownloadClient.downloadEpisode(1).get();
 
         // then
         verify(mockedEpisode).setStatus(PodcastStatus.ERROR);
@@ -237,17 +213,8 @@ public class PodcastDownloadClientTest {
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
 
         // when
-        try (MockedStatic<HttpClients> mockedHttpClients = Mockito.mockStatic(HttpClients.class,
-                Mockito.CALLS_REAL_METHODS)) {
-            mockedHttpClients.when(() -> HttpClients.createDefault()).thenReturn(mockedHttpClient);
-            when(mockedHttpClient.execute(any())).thenReturn(mockedHttpResponse);
-            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "test");
-            when(mockedHttpResponse.getStatusLine()).thenReturn(statusLine);
-            Resource resource = resourceLoader.getResource("classpath:/MEDIAS/piano.mp3");
-            HttpEntity entity = new ByteArrayEntity(resource.getContentAsByteArray());
-            when(mockedHttpResponse.getEntity()).thenReturn(entity);
-            podcastDownloadClient.downloadEpisode(1).get();
-        }
+        respondWith(200, resourceLoader.getResource("classpath:/MEDIAS/piano.mp3").getContentAsByteArray());
+        podcastDownloadClient.downloadEpisode(1).get();
 
         // then
         verify(mockedEpisode, never()).setStatus(any());
@@ -291,12 +258,9 @@ public class PodcastDownloadClientTest {
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
 
         // when
-        try (MockedStatic<HttpClients> mockedHttpClients = Mockito.mockStatic(HttpClients.class,
-                Mockito.CALLS_REAL_METHODS)) {
-            mockedHttpClients.when(() -> HttpClients.createDefault()).thenReturn(mockedHttpClient);
-            when(mockedHttpClient.execute(any())).thenThrow(new IOException("test"));
-            podcastDownloadClient.downloadEpisode(1).get();
-        }
+        when(httpClient.execute(any(ClassicHttpRequest.class), any(HttpClientResponseHandler.class)))
+                .thenThrow(new IOException("test"));
+        podcastDownloadClient.downloadEpisode(1).get();
 
         // then
         verify(podcastPersistenceService).updateEpisode(mockedEpisode);
@@ -321,22 +285,23 @@ public class PodcastDownloadClientTest {
         when(versionService.getLocalVersion()).thenReturn(new Version("1.0.0"));
 
         // when
-        try (MockedStatic<HttpClients> mockedHttpClients = Mockito.mockStatic(HttpClients.class,
-                Mockito.CALLS_REAL_METHODS)) {
-            mockedHttpClients.when(() -> HttpClients.createDefault()).thenReturn(mockedHttpClient);
-            when(mockedHttpClient.execute(any())).thenReturn(mockedHttpResponse);
-            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), status, "test");
-            when(mockedHttpResponse.getStatusLine()).thenReturn(statusLine);
-            HttpEntity entity = new ByteArrayEntity("Error".getBytes());
-            when(mockedHttpResponse.getEntity()).thenReturn(entity);
-            podcastDownloadClient.downloadEpisode(1).get();
-        }
+        respondWith(status, "Error".getBytes());
+        podcastDownloadClient.downloadEpisode(1).get();
 
         // then
         verify(podcastPersistenceService).updateEpisode(mockedEpisode);
         verify(mockedEpisode).setStatus(PodcastStatus.ERROR);
         verify(mockedEpisode).setErrorMessage(
                 String.format("Failed to download Podcast from https://file-examples.com/storage/fe0badd45a6a5a3b79ae1a1/2017/11/file_example_MP3_700KB.mp3. Status code: %d", status));
+    }
+
+    private void respondWith(int status, byte[] body) throws IOException {
+        when(httpClient.execute(any(ClassicHttpRequest.class), any(HttpClientResponseHandler.class))).thenAnswer(invocation -> {
+            BasicClassicHttpResponse response = new BasicClassicHttpResponse(status, "test");
+            response.setEntity(new ByteArrayEntity(body, ContentType.APPLICATION_OCTET_STREAM));
+            HttpClientResponseHandler<?> handler = invocation.getArgument(1);
+            return handler.handleResponse(response);
+        });
     }
 
 }

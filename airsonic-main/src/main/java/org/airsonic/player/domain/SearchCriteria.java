@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.domain;
 
-import com.google.common.base.MoreObjects;
 import org.airsonic.player.service.SearchService;
 
 /**
@@ -60,10 +59,6 @@ public class SearchCriteria {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("query", query)
-                .add("offset", offset)
-                .add("count", count)
-                .toString();
+        return "SearchCriteria{query=" + query + ", offset=" + offset + ", count=" + count + "}";
     }
 }

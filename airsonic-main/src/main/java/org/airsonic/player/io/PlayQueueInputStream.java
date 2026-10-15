@@ -58,13 +58,6 @@ public class PlayQueueInputStream extends InputStream {
     }
 
     private void prepare() throws IOException {
-//        PlayQueue playQueue = player.getPlayQueue();
-//
-//        // If playlist is in auto-random mode, populate it with new random songs.
-//        if (playQueue.getIndex() == -1 && playQueue.getRandomSearchCriteria() != null) {
-//            populateRandomPlaylist(playQueue);
-//        }
-
         MediaFile file = queue.getCurrentFile();
         if (file == null) {
             closeStream();

@@ -20,7 +20,6 @@
  */
 package org.airsonic.player.service.metadata;
 
-import com.google.common.collect.ImmutableSet;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
 import org.apache.commons.io.FilenameUtils;
@@ -187,8 +186,8 @@ public class JaudiotaggerParser extends MetaDataParser {
         return true;
     }
 
-    private static Set<String> imageAvailableFormats = ImmutableSet.of("mp3", "m4a", "m4b", "m4p", "aac", "ogg", "flac", "wav", "aif", "dsf", "aiff", "wma");
-    private static Set<String> applicableFormats = ImmutableSet.of("mp3","flac");
+    private static final Set<String> imageAvailableFormats = Set.of("mp3", "m4a", "m4b", "m4p", "aac", "ogg", "flac", "wav", "aif", "dsf", "aiff", "wma");
+    private static final Set<String> applicableFormats = Set.of("mp3","flac");
 
 
     /**

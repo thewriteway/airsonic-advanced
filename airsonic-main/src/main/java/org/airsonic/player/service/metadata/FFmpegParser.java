@@ -22,7 +22,6 @@ package org.airsonic.player.service.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.SettingsService;
@@ -156,7 +155,7 @@ public class FFmpegParser extends MetaDataParser {
 
     private static String getData(JsonNode node, String keyName) {
         // Create a list of key variations to handle different cases
-        List<String> keyVariations = ImmutableList.of(
+        List<String> keyVariations = List.of(
             keyName.toLowerCase(),
             keyName.toUpperCase(),
             StringUtils.capitalize(keyName)  // Capitalizes only the first letter

@@ -1,7 +1,6 @@
 package org.airsonic.player.service.sonos;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.common.collect.Sets;
 import com.sonos.services._1.DeviceAuthTokenResult;
 import com.sonos.services._1.RefreshAuthTokenResponse;
 import org.airsonic.player.domain.SonosLink;
@@ -53,7 +52,7 @@ public class SonosLinkSecurityInterceptor extends AbstractSoapInterceptor {
     public static final String CLAIM_REFRESH_TOKEN = "refreshtoken";
 
     // these do not carry creds
-    private static Set<String> openMethod = Sets.newHashSet("getAppLink", "getDeviceAuthToken");
+    private static final Set<String> openMethod = Set.of("getAppLink", "getDeviceAuthToken");
 
     public SonosLinkSecurityInterceptor() {
         super(Phase.PRE_INVOKE);
@@ -128,8 +127,8 @@ public class SonosLinkSecurityInterceptor extends AbstractSoapInterceptor {
     private String getAction(SoapMessage message) {
         Object soapAction = message.get("SOAPAction");
 
-        if (soapAction instanceof String) {
-            String[] split = ((String) soapAction).split("#");
+        if (soapAction instanceof String action) {
+            String[] split = action.split("#");
             if (split.length > 1) {
                 return split[1];
             }
