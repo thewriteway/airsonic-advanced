@@ -19,20 +19,20 @@
  */
 package org.airsonic.player.service.scrobbler;
 
+import org.airsonic.player.config.HttpClientConfig;
 import org.airsonic.player.domain.MediaFile;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.entity.UrlEncodedFormEntity;
+import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -57,11 +57,13 @@ public class LastFMScrobbler {
     private static final int MAX_PENDING_REGISTRATION = 2000;
 
     private RegistrationThread thread;
-    private final LinkedBlockingQueue<RegistrationData> queue = new LinkedBlockingQueue<RegistrationData>();
-    private final RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(15000)
-            .setSocketTimeout(15000)
-            .build();
+    private final LinkedBlockingQueue<RegistrationData> queue = new LinkedBlockingQueue<>();
+    private final RequestConfig requestConfig = HttpClientConfig.responseTimeout(Timeout.ofSeconds(15));
+    private final CloseableHttpClient httpClient;
+
+    public LastFMScrobbler(CloseableHttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
 
     /**
@@ -201,7 +203,7 @@ public class LastFMScrobbler {
     }
 
     private String[] registerSubmission(RegistrationData registrationData, String sessionId, String url) throws ClientProtocolException, IOException {
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put("s", sessionId);
         params.put("a[0]", registrationData.artist);
         params.put("t[0]", registrationData.title);
@@ -216,7 +218,7 @@ public class LastFMScrobbler {
     }
 
     private String[] registerNowPlaying(RegistrationData registrationData, String sessionId, String url) throws ClientProtocolException, IOException {
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put("s", sessionId);
         params.put("a", registrationData.artist);
         params.put("t", registrationData.title);
@@ -241,7 +243,7 @@ public class LastFMScrobbler {
     }
 
     private String[] executePostRequest(String url, Map<String, String> parameters) throws ClientProtocolException, IOException {
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        List<NameValuePair> params = new ArrayList<>();
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
             params.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
         }
@@ -253,11 +255,8 @@ public class LastFMScrobbler {
     }
 
     private String[] executeRequest(HttpUriRequest request) throws ClientProtocolException, IOException {
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ResponseHandler<String> responseHandler = new BasicResponseHandler();
-            String response = client.execute(request, responseHandler);
-            return response.split("\\r?\\n");
-        }
+        String response = httpClient.execute(request, new BasicHttpClientResponseHandler());
+        return response.split("\\r?\\n");
     }
 
     private class RegistrationThread extends Thread {

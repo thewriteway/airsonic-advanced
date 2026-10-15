@@ -214,7 +214,7 @@ public class MusicFolderSettingsController {
                 }
             }
         }
-        List<MusicFolder> podcastFolders = mediaFolderService.getAllMusicFolders(true, true).stream().filter(m -> m.getType() == Type.PODCAST).collect(toList());
+        List<MusicFolder> podcastFolders = mediaFolderService.getAllMusicFolders(true, true).stream().filter(m -> m.getType() == Type.PODCAST).toList();
         long enabledPodcasts = podcastFolders.stream().filter(pf -> pf.isEnabled()).count();
         if (enabledPodcasts != 1) {
             podcastFolders.stream().findFirst().ifPresent(pf -> mediaFolderService.enablePodcastFolder(pf.getId()));

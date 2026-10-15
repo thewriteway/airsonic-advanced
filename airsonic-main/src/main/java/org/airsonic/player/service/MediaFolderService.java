@@ -1,6 +1,5 @@
 package org.airsonic.player.service;
 
-import com.google.common.collect.Streams;
 import org.airsonic.player.command.MusicFolderSettingsCommand.MusicFolderInfo;
 import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.domain.MusicFolder;
@@ -79,7 +78,7 @@ public class MediaFolderService {
     }
 
     public List<MusicFolder> getAllMusicFolders(boolean includeDisabled, boolean includeNonExisting, boolean includeDeleted) {
-        return Streams.concat(
+        return Stream.concat(
                 getAllMusicFolders(includeDisabled, includeNonExisting).stream(),
                 includeDeleted ? getDeletedMusicFolders().stream() : Stream.empty())
             .collect(toList());

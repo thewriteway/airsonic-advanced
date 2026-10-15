@@ -22,13 +22,13 @@ package org.airsonic.player.service.scrobbler;
 
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.util.Util;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -51,7 +51,12 @@ public class ListenBrainzScrobbler {
     private static final int MAX_PENDING_REGISTRATION = 2000;
 
     private RegistrationThread thread;
-    private final LinkedBlockingQueue<RegistrationData> queue = new LinkedBlockingQueue<RegistrationData>();
+    private final LinkedBlockingQueue<RegistrationData> queue = new LinkedBlockingQueue<>();
+    private final CloseableHttpClient httpClient;
+
+    public ListenBrainzScrobbler(CloseableHttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
     /**
      * Registers the given media file at listenbrainz.org. This method returns
@@ -125,12 +130,12 @@ public class ListenBrainzScrobbler {
      * Returns if submission succeeds.
      */
     private boolean submit(RegistrationData registrationData) throws ClientProtocolException, IOException {
-        Map<String, Object> additional_info = new HashMap<String, Object>();
+        Map<String, Object> additional_info = new HashMap<>();
         additional_info.computeIfAbsent("release_mbid", k -> registrationData.musicBrainzReleaseId);
         additional_info.computeIfAbsent("recording_mbid", k -> registrationData.musicBrainzRecordingId);
         additional_info.computeIfAbsent("tracknumber", k -> registrationData.trackNumber);
 
-        Map<String, Object> track_metadata = new HashMap<String, Object>();
+        Map<String, Object> track_metadata = new HashMap<>();
         if (additional_info.size() > 0) {
             track_metadata.put("additional_info", additional_info);
         }
@@ -138,12 +143,12 @@ public class ListenBrainzScrobbler {
         track_metadata.computeIfAbsent("track_name", k -> registrationData.title);
         track_metadata.computeIfAbsent("release_name", k -> registrationData.album);
 
-        Map<String, Object> payload = new HashMap<String, Object>();
+        Map<String, Object> payload = new HashMap<>();
         if (track_metadata.size() > 0) {
             payload.put("track_metadata", track_metadata);
         }
 
-        Map<String, Object> content = new HashMap<String, Object>();
+        Map<String, Object> content = new HashMap<>();
 
         if (registrationData.submission) {
             payload.put("listened_at", Long.valueOf(registrationData.time.getEpochSecond()));
@@ -152,7 +157,7 @@ public class ListenBrainzScrobbler {
             content.put("listen_type", "playing_now");
         }
 
-        List<Map<String, Object>> payloads = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> payloads = new ArrayList<>();
         payloads.add(payload);
         content.put("payload", payloads);
 
@@ -163,23 +168,20 @@ public class ListenBrainzScrobbler {
 
     private boolean executeJsonPostRequest(String url, String token, String json) throws ClientProtocolException, IOException {
         HttpPost request = new HttpPost(url);
-        request.setEntity(new StringEntity(json, StandardCharsets.UTF_8));
+        request.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON.withCharset(StandardCharsets.UTF_8)));
         request.setHeader("Authorization", "token " + token);
-        request.setHeader("Content-type", "application/json; charset=utf-8");
 
         return executeRequest(request);
     }
 
     private boolean executeRequest(HttpUriRequest request) throws ClientProtocolException, IOException {
-        try (CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse resp = client.execute(request);) {
-            boolean ok = resp.getStatusLine().getStatusCode() == 200;
+        return httpClient.execute(request, resp -> {
+            boolean ok = resp.getCode() == HttpStatus.SC_OK;
             if (!ok) {
-                LOG.warn("Failed to execute ListenBrainz request: {}", resp.getEntity().toString());
+                LOG.warn("Failed to execute ListenBrainz request: {} {}", resp.getCode(), resp.getReasonPhrase());
             }
-
             return ok;
-        }
+        });
     }
 
     private class RegistrationThread extends Thread {

@@ -63,11 +63,7 @@ public class SearchServiceUtilities {
     @Autowired
     private MediaFileService mediaFileService;
 
-    public final Function<Long, Integer> round = (i) -> {
-        // return
-        // NumericUtils.floatToSortableInt(i);
-        return i.intValue();
-    };
+    public final Function<Long, Integer> round = Long::intValue;
 
     public final Function<Document, Integer> getId = d -> {
         return Integer.valueOf(d.get(FieldNames.ID));

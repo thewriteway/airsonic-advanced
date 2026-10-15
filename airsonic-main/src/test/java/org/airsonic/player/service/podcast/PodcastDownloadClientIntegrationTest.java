@@ -12,23 +12,18 @@ import org.airsonic.player.repository.PodcastChannelRepository;
 import org.airsonic.player.repository.PodcastEpisodeRepository;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.VersionService;
-import org.apache.http.HttpEntity;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicStatusLine;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -57,6 +52,9 @@ public class PodcastDownloadClientIntegrationTest {
     @MockitoBean
     private VersionService versionService;
 
+    @MockitoBean
+    private CloseableHttpClient httpClient;
+
     @TempDir
     private Path tempFolder;
 
@@ -65,15 +63,6 @@ public class PodcastDownloadClientIntegrationTest {
 
     @Autowired
     private PodcastDownloadClient podcastDownloadClient;
-
-    @Mock
-    private CloseableHttpClient mockedHttpClient;
-
-    @Mock
-    private HttpEntity mockedHttpEntity;
-
-    @Mock
-    private CloseableHttpResponse mockedHttpResponse;
 
     @Autowired
     private PodcastEpisodeRepository podcastEpisodeRepository;
@@ -158,16 +147,13 @@ public class PodcastDownloadClientIntegrationTest {
 
     @Test
     public void testDownload() throws IOException {
-        try (MockedStatic<HttpClients> mockedHttpClients = Mockito.mockStatic(HttpClients.class,
-                Mockito.CALLS_REAL_METHODS)) {
-            mockedHttpClients.when(() -> HttpClients.createDefault()).thenReturn(mockedHttpClient);
-            when(mockedHttpClient.execute(any())).thenReturn(mockedHttpResponse);
-            HttpEntity httpEntity = new ByteArrayEntity("non mp3 data".getBytes());
-            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "test");
-            when(mockedHttpResponse.getEntity()).thenReturn(httpEntity);
-            when(mockedHttpResponse.getStatusLine()).thenReturn(statusLine);
-            podcastDownloadClient.downloadEpisode(podcastEpisode.getId()).join();
-        }
+        when(httpClient.execute(any(ClassicHttpRequest.class), any(HttpClientResponseHandler.class))).thenAnswer(invocation -> {
+            BasicClassicHttpResponse response = new BasicClassicHttpResponse(200, "test");
+            response.setEntity(new ByteArrayEntity("non mp3 data".getBytes(), ContentType.APPLICATION_OCTET_STREAM));
+            HttpClientResponseHandler<?> handler = invocation.getArgument(1);
+            return handler.handleResponse(response);
+        });
+        podcastDownloadClient.downloadEpisode(podcastEpisode.getId()).join();
         PodcastEpisode episode = podcastEpisodeRepository.findById(podcastEpisode.getId()).orElse(null);
         assertNotNull(episode);
         assertEquals(episode.getStatus(), PodcastStatus.ERROR);

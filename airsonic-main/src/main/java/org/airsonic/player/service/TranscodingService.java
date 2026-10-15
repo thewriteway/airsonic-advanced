@@ -20,7 +20,6 @@
  */
 package org.airsonic.player.service;
 
-import com.google.common.io.MoreFiles;
 import org.airsonic.player.controller.VideoPlayerController;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.io.TranscodeInputStream;
@@ -28,6 +27,7 @@ import org.airsonic.player.repository.PlayerRepository;
 import org.airsonic.player.repository.TranscodingRepository;
 import org.airsonic.player.util.StringUtil;
 import org.airsonic.player.util.Util;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
@@ -391,7 +391,7 @@ public class TranscodingService {
         if (Util.isWindows() && !mediaFile.isVideo() && !StringUtils.isAsciiPrintable(path.toString()) && Strings.CS.contains(command, "%s")) {
             // the extension stems from a scanned file name; restrict it to alphanumerics so no
             // path-relevant characters can flow into the temp file name (javasecurity:S2083)
-            String extension = NON_ALPHANUMERIC.matcher(MoreFiles.getFileExtension(path)).replaceAll("");
+            String extension = NON_ALPHANUMERIC.matcher(FilenameUtils.getExtension(path.toString())).replaceAll("");
             tmpFile = Files.createTempFile("airsonic", "." + extension);
             tmpFile.toFile().deleteOnExit();
             Files.copy(path, tmpFile, StandardCopyOption.REPLACE_EXISTING);
@@ -505,7 +505,7 @@ public class TranscodingService {
                 transcoding = null;
             } else {
 
-                List<Transcoding> applicableTranscodings = new LinkedList<Transcoding>();
+                List<Transcoding> applicableTranscodings = new LinkedList<>();
 
                 List<Transcoding> transcodingsForPlayer = getTranscodingsForPlayer(player);
                 for (Transcoding tr : transcodingsForPlayer) {
@@ -662,25 +662,17 @@ public class TranscodingService {
     }
 
     public static int getAverageVideoBitRate(Integer peakVideoBitRate) {
-        switch (peakVideoBitRate) {
-            case 200:
-                return 145;
-            case 400:
-                return 365;
-            case 800:
-                return 730;
-            case 1200:
-                return 1100;
-            case 2200:
-                return 2000;
-            case 3300:
-                return 3000;
-            case 5000:
-                return 4500;
-            case 6500:
-                return 6000;
-        }
-        return (int) (peakVideoBitRate * 0.9D);
+        return switch (peakVideoBitRate) {
+            case 200 -> 145;
+            case 400 -> 365;
+            case 800 -> 730;
+            case 1200 -> 1100;
+            case 2200 -> 2000;
+            case 3300 -> 3000;
+            case 5000 -> 4500;
+            case 6500 -> 6000;
+            default -> (int) (peakVideoBitRate * 0.9D);
+        };
     }
 
     public static class Parameters {

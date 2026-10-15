@@ -54,12 +54,12 @@ import org.jupnp.model.message.header.UpnpHeader;
 import org.jupnp.transport.spi.AbstractStreamClient;
 import org.jupnp.transport.spi.InitializationException;
 import org.jupnp.transport.spi.StreamClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Implementation based on <a href="http://hc.apache.org/">Apache HTTP Components 4.5</a>.
@@ -72,7 +72,7 @@ import java.util.logging.Logger;
  */
 public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigurationImpl, HttpUriRequest> {
 
-    final private static Logger log = Logger.getLogger(StreamClient.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(StreamClient.class); // jupnp category, see logging.level.org.jupnp
 
     final protected StreamClientConfigurationImpl configuration;
     final protected PoolingHttpClientConnectionManager clientConnectionManager;
@@ -200,8 +200,7 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
         return new Callable<StreamResponseMessage>() {
             public StreamResponseMessage call() throws Exception {
 
-                if (log.isLoggable(Level.FINE))
-                    log.fine("Sending HTTP request: " + requestMessage);
+                LOG.debug("Sending HTTP request: {}", requestMessage);
 
                 return httpClient.execute(request, createResponseHandler());
             }
@@ -217,9 +216,8 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
     protected boolean logExecutionException(Throwable t) {
         if (t instanceof IllegalStateException) {
             // HttpClient throws this when the connection manager has been shut down or the request was
-            // aborted (e.g. by a timeout) mid-flight; both are expected during stop/timeout, so only log at FINE
-            if (log.isLoggable(Level.FINE))
-                log.fine("Illegal state: " + t.getMessage());
+            // aborted (e.g. by a timeout) mid-flight; both are expected during stop/timeout, so only log at debug
+            LOG.debug("Illegal state: {}", t.getMessage());
             return true;
         }
         return false;
@@ -227,19 +225,16 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
 
     @Override
     public void stop() {
-        if (log.isLoggable(Level.FINE))
-            log.fine("Shutting down HTTP client connection manager/pool");
+        LOG.debug("Shutting down HTTP client connection manager/pool");
         clientConnectionManager.shutdown();
     }
 
     protected HttpEntity createHttpRequestEntity(UpnpMessage upnpMessage) {
         if (upnpMessage.getBodyType().equals(UpnpMessage.BodyType.BYTES)) {
-            if (log.isLoggable(Level.FINE))
-                log.fine("Preparing HTTP request entity as byte[]");
+            LOG.debug("Preparing HTTP request entity as byte[]");
             return new ByteArrayEntity(upnpMessage.getBodyBytes());
         } else {
-            if (log.isLoggable(Level.FINE))
-                log.fine("Preparing HTTP request entity as string");
+            LOG.debug("Preparing HTTP request entity as string");
             try {
                 Charset charset = upnpMessage.getContentTypeCharset();
                 return new StringEntity(upnpMessage.getBodyString(), charset != null ? charset.name() : "UTF-8");
@@ -255,8 +250,7 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
             public StreamResponseMessage handleResponse(final HttpResponse httpResponse) throws IOException {
 
                 StatusLine statusLine = httpResponse.getStatusLine();
-                if (log.isLoggable(Level.FINE))
-                    log.fine("Received HTTP response: " + statusLine);
+                LOG.debug("Received HTTP response: {}", statusLine);
 
                 // Status
                 UpnpResponse responseOperation =
@@ -271,21 +265,21 @@ public class StreamClientImpl extends AbstractStreamClient<StreamClientConfigura
                 // Body
                 HttpEntity entity = httpResponse.getEntity();
                 if (entity == null || entity.getContentLength() == 0) {
-                    log.fine("HTTP response message has no entity");
+                    LOG.debug("HTTP response message has no entity");
                     return responseMessage;
                 }
 
                 byte data[] = EntityUtils.toByteArray(entity);
                 if (data != null) {
                     if (responseMessage.isContentTypeMissingOrText()) {
-                        log.fine("HTTP response message contains text entity");
+                        LOG.debug("HTTP response message contains text entity");
                         responseMessage.setBodyCharacters(data);
                     } else {
-                        log.fine("HTTP response message contains binary entity");
+                        LOG.debug("HTTP response message contains binary entity");
                         responseMessage.setBody(UpnpMessage.BodyType.BYTES, data);
                     }
                 } else {
-                    log.fine("HTTP response message has no entity");
+                    LOG.debug("HTTP response message has no entity");
                 }
 
                 return responseMessage;

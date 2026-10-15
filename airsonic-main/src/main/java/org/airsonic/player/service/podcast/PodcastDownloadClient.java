@@ -20,6 +20,7 @@
  */
 package org.airsonic.player.service.podcast;
 
+import org.airsonic.player.config.HttpClientConfig;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.PodcastChannel;
@@ -38,12 +39,10 @@ import org.airsonic.player.util.StringUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +81,9 @@ public class PodcastDownloadClient {
     @Autowired
     private SecurityService securityService;
 
+    @Autowired
+    private CloseableHttpClient httpClient;
+
     @Async("PodcastDownloadThreadPool")
     public CompletableFuture<Void> downloadEpisode(Integer episodeId) {
 
@@ -96,58 +98,53 @@ public class PodcastDownloadClient {
             LOG.info("Starting to download Podcast from {}", episode.getUrl());
 
             PodcastChannel channel = episode.getChannel();
-            RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(2 * 60 * 1000) // 2 minutes
-                    .setSocketTimeout(10 * 60 * 1000) // 10 minutes
-                    // Workaround HttpClient circular redirects, which some feeds use (with query
-                    // parameters)
-                    .setCircularRedirectsAllowed(true)
-                    // Workaround HttpClient not understanding latest RFC-compliant cookie 'expires'
-                    // attributes
-                    .setCookieSpec(CookieSpecs.STANDARD)
-                    .build();
             HttpGet method = new HttpGet(episode.getUrl());
-            method.setConfig(requestConfig);
+            method.setConfig(RequestConfig.copy(HttpClientConfig.responseTimeout(Timeout.ofMinutes(10)))
+                    // Workaround circular redirects, which some feeds use (with query parameters)
+                    .setCircularRedirectsAllowed(true)
+                    .build());
             method.addHeader("User-Agent", "Airsonic/" + versionService.getLocalVersion());
             Pair<Path, MusicFolder> episodeFile = createEpisodeFile(channel, episode);
             Path relativeFile = episodeFile.getLeft();
             MusicFolder folder = episodeFile.getRight();
             Path filePath = folder.getPath().resolve(relativeFile);
 
-            try (CloseableHttpClient client = HttpClients.createDefault();
-                    CloseableHttpResponse response = client.execute(method);
-                    InputStream in = response.getEntity().getContent();
-                    OutputStream out = new BufferedOutputStream(Files.newOutputStream(filePath))) {
-
-                // Check if the server responded with a 200 OK status code.
-                if (response.getStatusLine().getStatusCode() != HttpStatus.OK.value()) {
-                    throw new IOException("Failed to download Podcast from " + episode.getUrl() + ". Status code: "
-                            + response.getStatusLine().getStatusCode());
-                }
-
-                episode.setBytesDownloaded(0L);
-                episode.setErrorMessage(null);
-                podcastPersistenceService.updateEpisode(episode);
-
-                long bytesDownloaded = 0L;
-                byte[] buffer = new byte[8192];
-                int n;
-                long nextLogCount = 30000L;
-
-                while ((n = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, n);
-                    bytesDownloaded += n;
-
-                    if (bytesDownloaded > nextLogCount) {
-                        // Abort download if episode was deleted by user.
-                        if (podcastPersistenceService.isEpisodeDeleted(episodeId)) {
-                            break;
-                        }
-                        episode.setBytesDownloaded(bytesDownloaded);
-                        podcastPersistenceService.updateEpisode(episode);
-                        nextLogCount += 30000L;
+            try {
+                long bytesDownloaded = httpClient.execute(method, response -> {
+                    // Check if the server responded with a 200 OK status code.
+                    if (response.getCode() != HttpStatus.OK.value()) {
+                        throw new IOException("Failed to download Podcast from " + episode.getUrl() + ". Status code: "
+                                + response.getCode());
                     }
-                }
+
+                    episode.setBytesDownloaded(0L);
+                    episode.setErrorMessage(null);
+                    podcastPersistenceService.updateEpisode(episode);
+
+                    long downloaded = 0L;
+                    try (InputStream in = response.getEntity().getContent();
+                            OutputStream out = new BufferedOutputStream(Files.newOutputStream(filePath))) {
+                        byte[] buffer = new byte[8192];
+                        int n;
+                        long nextLogCount = 30000L;
+
+                        while ((n = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, n);
+                            downloaded += n;
+
+                            if (downloaded > nextLogCount) {
+                                // Abort download if episode was deleted by user.
+                                if (podcastPersistenceService.isEpisodeDeleted(episodeId)) {
+                                    break;
+                                }
+                                episode.setBytesDownloaded(downloaded);
+                                podcastPersistenceService.updateEpisode(episode);
+                                nextLogCount += 30000L;
+                            }
+                        }
+                    }
+                    return downloaded;
+                });
                 episode.setBytesDownloaded(bytesDownloaded);
                 LOG.info("Downloaded {} bytes from Podcast {}", bytesDownloaded, episode.getUrl());
             } catch (Exception x) {

@@ -152,7 +152,7 @@ public abstract class MetaDataParser {
      * Returns all tags supported by id3v1.
      */
     public static SortedSet<String> getID3V1Genres() {
-        return new TreeSet<String>(GenreTypes.getInstanceOf().getAlphabeticalValueList());
+        return new TreeSet<>(GenreTypes.getInstanceOf().getAlphabeticalValueList());
     }
 
     /**

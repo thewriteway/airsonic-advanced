@@ -23,13 +23,10 @@ package org.airsonic.player.service;
 import org.airsonic.player.domain.Version;
 import org.airsonic.player.domain.dto.GitHubRelease;
 import org.apache.commons.lang3.Strings;
-import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -62,6 +59,9 @@ public class VersionService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("UTC"));
 
     private final Properties build;
+
+    @Autowired
+    private CloseableHttpClient httpClient;
 
     private Version localVersion;
     private Version latestFinalVersion;
@@ -259,13 +259,6 @@ public class VersionService {
     List<GitHubRelease> fetchReleases() {
         // Set up the RestClient to fetch the latest version from GitHub
         // Use HttpComponentsClientHttpRequestFactory for better control over timeouts
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
-                        .setDefaultConnectionConfig(ConnectionConfig.custom()
-                                .setConnectTimeout(Timeout.ofSeconds(10))
-                                .build())
-                        .build())
-                .build();
         HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
         factory.setReadTimeout(10000);
         // Jackson 3 handles Java 8 time types out of the box

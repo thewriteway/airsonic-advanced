@@ -49,10 +49,8 @@ public class RootUpnpProcessor extends UpnpContentProcessor <Container, Containe
         root.setId(ProcessorType.ROOT.getKeyType());
         root.setParentID("-1");
 
-        // MediaLibraryStatistics statistics = indexManager.getStatistics();
         // returning large storageUsed values doesn't play nicely with
         // some upnp clients
-        //root.setStorageUsed(statistics == null ? 0 : statistics.getTotalLengthInBytes());
         root.setStorageUsed(-1L);
         root.setTitle("Airsonic Media");
         root.setRestricted(true);
@@ -69,7 +67,7 @@ public class RootUpnpProcessor extends UpnpContentProcessor <Container, Containe
     }
 
     public List<Container> getAllItems() throws Exception {
-        ArrayList<Container> allItems = new ArrayList<Container>();
+        ArrayList<Container> allItems = new ArrayList<>();
         allItems.add(router.getAlbumProcessor().createRootContainer());
         allItems.add(router.getArtistProcessor().createRootContainer());
         allItems.add(router.getMediaFileProcessor().createRootContainer());

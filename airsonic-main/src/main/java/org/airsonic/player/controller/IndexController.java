@@ -36,7 +36,7 @@ public class IndexController {
         User user = securityService.getCurrentUser(request);
         UserSettings userSettings = personalSettingsService.getUserSettings(user.getUsername());
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("showRight", userSettings.getShowNowPlayingEnabled());
         map.put("autoHidePlayQueue", userSettings.getAutoHidePlayQueue());
         map.put("keyboardShortcutsEnabled", userSettings.getKeyboardShortcutsEnabled());

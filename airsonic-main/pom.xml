@@ -249,12 +249,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <exclusions>
@@ -298,12 +292,6 @@
             <version>2.7.4</version>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>com.vdurmont</groupId>
-            <artifactId>semver4j</artifactId>
-            <version>3.1.0</version>
-        </dependency>
-
         <dependency>
             <groupId>net.jthink</groupId>
             <artifactId>jaudiotagger</artifactId>

@@ -59,7 +59,7 @@ public class ImportPlaylistController {
                                 RedirectAttributes redirectAttributes,
                                 HttpServletRequest request
     ) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
 
         try {
             if (!StringUtils.isBlank(file.getOriginalFilename())) {

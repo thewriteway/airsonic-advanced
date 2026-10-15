@@ -33,11 +33,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Vector;
 
 
 /**
@@ -88,7 +89,7 @@ public class ParameterDecodingFilter implements Filter {
         @Override
         public Map<String, String[]> getParameterMap() {
             Map<String, String[]> map = super.getParameterMap();
-            Map<String, String[]> result = new HashMap<String, String[]>();
+            Map<String, String[]> result = new HashMap<>();
 
             for (Entry<String, String[]> entry : map.entrySet()) {
                 String name = entry.getKey();
@@ -106,17 +107,10 @@ public class ParameterDecodingFilter implements Filter {
         @Override
         public Enumeration<String> getParameterNames() {
 
-            Enumeration<String> e = super.getParameterNames();
-            Vector<String> v = new Vector<String>();
-            while (e.hasMoreElements()) {
-                String name = e.nextElement();
-                if (name.endsWith(PARAM_SUFFIX)) {
-                    name = name.replace(PARAM_SUFFIX, "");
-                }
-                v.add(name);
-            }
-
-            return v.elements();
+            List<String> names = Collections.list(super.getParameterNames()).stream()
+                    .map(name -> name.endsWith(PARAM_SUFFIX) ? name.replace(PARAM_SUFFIX, "") : name)
+                    .toList();
+            return Collections.enumeration(names);
         }
 
         @Override

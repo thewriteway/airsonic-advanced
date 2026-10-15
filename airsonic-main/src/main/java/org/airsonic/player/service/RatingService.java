@@ -155,7 +155,7 @@ public class RatingService {
         }
         List<MediaFile> albums = mediaFileRepository.findByFolderInAndMediaTypeAndPresentTrue(musicFolders, MediaFile.MediaType.ALBUM, PageRequest.of(0, Integer.MAX_VALUE));
 
-        return userRatingRepository.countByUsernameAndMediaFileIdIn(username, albums.stream().map(MediaFile::getId).collect(Collectors.toList()));
+        return userRatingRepository.countByUsernameAndMediaFileIdIn(username, albums.stream().map(MediaFile::getId).toList());
     }
 
 }

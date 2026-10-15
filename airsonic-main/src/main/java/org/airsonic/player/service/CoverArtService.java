@@ -1,5 +1,6 @@
 package org.airsonic.player.service;
 
+import org.airsonic.player.config.HttpClientConfig;
 import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.CoverArt;
@@ -11,11 +12,10 @@ import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.service.cache.CoverArtCache;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CoverArtService {
@@ -46,6 +45,8 @@ public class CoverArtService {
     private SecurityService securityService;
     @Autowired
     private CoverArtCache coverArtCache;
+    @Autowired
+    private CloseableHttpClient httpClient;
 
     private static final Logger LOG = LoggerFactory.getLogger(CoverArtService.class);
 
@@ -174,19 +175,13 @@ public class CoverArtService {
     public void expunge() {
         coverArtCache.clear();
         List<CoverArt> expungeCoverArts = coverArtRepository.findAll().stream()
-            .filter(art -> {
-                switch (art.getEntityType()) {
-                    case ALBUM:
-                        return art.getAlbum() == null || !art.getAlbum().isPresent();
-                    case ARTIST:
-                        return art.getArtist() == null || !art.getArtist().isPresent();
-                    case MEDIA_FILE:
-                        return art.getMediaFile() == null || !art.getMediaFile().isPresent();
-                    default:
-                        return false;
-                }
+            .filter(art -> switch (art.getEntityType()) {
+                case ALBUM -> art.getAlbum() == null || !art.getAlbum().isPresent();
+                case ARTIST -> art.getArtist() == null || !art.getArtist().isPresent();
+                case MEDIA_FILE -> art.getMediaFile() == null || !art.getMediaFile().isPresent();
+                default -> false;
             })
-            .collect(Collectors.toList());
+            .toList();
         coverArtRepository.deleteAll(expungeCoverArts);
     }
 
@@ -207,14 +202,10 @@ public class CoverArtService {
         saveCoverArt(dir, url);
     }
 
-    private void saveCoverArt(MediaFile dir, String url) throws Exception {
-        url = NetworkUtil.validateUrlForServerRequest(url);
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(20 * 1000) // 20 seconds
-                .setSocketTimeout(20 * 1000) // 20 seconds
-                .build();
+    private void saveCoverArt(MediaFile dir, String imageUrl) throws Exception {
+        String url = NetworkUtil.validateUrlForServerRequest(imageUrl);
         HttpGet method = new HttpGet(url);
-        method.setConfig(requestConfig);
+        method.setConfig(HttpClientConfig.responseTimeout(Timeout.ofSeconds(20)));
 
         // Attempt to resolve proper suffix.
         String suffix = "jpg";
@@ -232,16 +223,20 @@ public class CoverArtService {
             throw new SecurityException("Permission denied: " + StringUtil.escapeHtml(newCoverFile.toString()));
         }
 
-        try (CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse response = client.execute(method);
-                InputStream input = response.getEntity().getContent()) {
+        Path backupFile = fullPath.resolve("cover." + suffix + ".backup");
+        httpClient.execute(method, response -> {
+            if (response.getCode() != HttpStatus.SC_OK) {
+                throw new IOException("Failed to download cover art from " + url + ". Status code: " + response.getCode());
+            }
+            try (InputStream input = response.getEntity().getContent()) {
+                // If file exists, create a backup.
+                backupCoverArt(newCoverFile, backupFile);
 
-            // If file exists, create a backup.
-            backupCoverArt(newCoverFile, fullPath.resolve("cover." + suffix + ".backup"));
-
-            // Write file.
-            Files.copy(input, newCoverFile, StandardCopyOption.REPLACE_EXISTING);
-        }
+                // Write file.
+                Files.copy(input, newCoverFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return null;
+        });
 
         CoverArt coverArt = new CoverArt(dir.getId(), EntityType.MEDIA_FILE,
                 folder.getPath().relativize(newCoverFile).toString(), dir.getFolder(), true);

@@ -219,7 +219,6 @@ public class CoverArtController {
 
             // Is cache missing or obsolete?
             if (!Files.exists(cachedImage) || request.lastModified().isAfter(FileUtil.lastModified(cachedImage))) {
-//                LOG.info("Cache MISS - " + request + " (" + size + ")");
                 ImageWriter writer = null;
 
                 try (OutputStream os = Files.newOutputStream(cachedImage);
@@ -259,8 +258,6 @@ public class CoverArtController {
                     }
                     semaphore.release();
                 }
-            } else {
-//                LOG.info("Cache HIT - " + request + " (" + size + ")");
             }
             return cachedImage;
         }

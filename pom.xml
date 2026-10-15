@@ -402,7 +402,6 @@
                             <ignoredUnusedDeclaredDependencies>
                                 <!-- Needed at compile time so ajc (aspectj-maven-plugin) finds aspectjrt on the classpath -->
                                 <ignoredUnusedDeclaredDependency>org.aspectj:aspectjrt:*</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>com.google.code.findbugs:jsr305:*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>com.fasterxml.jackson.module:jackson-module-jaxb-annotations</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>taglibs:string:jar*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.tukaani:xz:*</ignoredUnusedDeclaredDependency>
@@ -422,7 +421,6 @@
                                 <ignoredUnusedDeclaredDependency>org.apache.cxf:cxf-tools-wsdlto-databinding-jaxb</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.apache.lucene:lucene-backward-codecs</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>com.twelvemonkeys.imageio:imageio-webp</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>org.apache.httpcomponents.client5:httpclient5</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>

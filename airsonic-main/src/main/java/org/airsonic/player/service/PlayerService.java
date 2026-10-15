@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.service;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.command.PlayerSettingsCommand;
 import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.Player;
@@ -233,7 +232,7 @@ public class PlayerService {
         playerRepository.save(player);
         if (player.getUsername() != null) {
             asyncWebSocketClient.sendToUser(player.getUsername(), "/queue/players/updated",
-                    ImmutableMap.of("id", player.getId(), "description", player.getShortDescription(), "tech", player.getTechnology()));
+                    Map.of("id", player.getId(), "description", player.getShortDescription(), "tech", player.getTechnology()));
         }
     }
 
@@ -444,7 +443,7 @@ public class PlayerService {
 
         if (saved != null && saved.getUsername() != null) {
             asyncWebSocketClient.sendToUser(saved.getUsername(), "/queue/players/created",
-                    ImmutableMap.of("id", saved.getId(), "description", saved.getShortDescription(), "tech", saved.getTechnology()));
+                    Map.of("id", saved.getId(), "description", saved.getShortDescription(), "tech", saved.getTechnology()));
         }
         return saved;
     }

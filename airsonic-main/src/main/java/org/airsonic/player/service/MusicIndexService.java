@@ -88,11 +88,11 @@ public class MusicIndexService {
         List<MusicIndex> indexes = createIndexesFromExpression(settingsService.getIndexString());
         Comparator<MusicIndex> indexComparator = new MusicIndexComparator(indexes);
 
-        SortedMap<MusicIndex, List<T>> result = new TreeMap<MusicIndex, List<T>>(indexComparator);
+        SortedMap<MusicIndex, List<T>> result = new TreeMap<>(indexComparator);
 
         for (T artist : artists) {
             MusicIndex index = getIndex(artist, indexes);
-            List<T> artistSet = result.computeIfAbsent(index, k -> new ArrayList<T>());
+            List<T> artistSet = result.computeIfAbsent(index, k -> new ArrayList<>());
             artistSet.add(artist);
         }
 
@@ -140,7 +140,7 @@ public class MusicIndexService {
      * @return A list of music indexes.
      */
     protected List<MusicIndex> createIndexesFromExpression(String expr) {
-        List<MusicIndex> result = new ArrayList<MusicIndex>();
+        List<MusicIndex> result = new ArrayList<>();
 
         StringTokenizer tokenizer = new StringTokenizer(expr, " ");
         while (tokenizer.hasMoreTokens()) {
@@ -154,8 +154,8 @@ public class MusicIndexService {
     private List<MusicIndex.SortableArtistWithMediaFiles> createSortableArtists(List<MusicFolder> folders, boolean refresh) {
         String[] ignoredArticles = settingsService.getIgnoredArticlesAsArray();
         String[] shortcuts = settingsService.getShortcutsAsArray();
-        SortedMap<String, MusicIndex.SortableArtistWithMediaFiles> artistMap = new TreeMap<String, MusicIndex.SortableArtistWithMediaFiles>();
-        Set<String> shortcutSet = new HashSet<String>(Arrays.asList(shortcuts));
+        SortedMap<String, MusicIndex.SortableArtistWithMediaFiles> artistMap = new TreeMap<>();
+        Set<String> shortcutSet = new HashSet<>(Arrays.asList(shortcuts));
         Collator collator = createCollator();
 
         for (MusicFolder folder : folders) {
@@ -176,11 +176,11 @@ public class MusicIndexService {
             }
         }
 
-        return new ArrayList<MusicIndex.SortableArtistWithMediaFiles>(artistMap.values());
+        return new ArrayList<>(artistMap.values());
     }
 
     private List<MusicIndex.SortableArtistWithArtist> createSortableArtists(List<Artist> artists) {
-        List<MusicIndex.SortableArtistWithArtist> result = new ArrayList<MusicIndex.SortableArtistWithArtist>();
+        List<MusicIndex.SortableArtistWithArtist> result = new ArrayList<>();
         String[] ignoredArticles = settingsService.getIgnoredArticlesAsArray();
         Collator collator = createCollator();
         for (Artist artist : artists) {

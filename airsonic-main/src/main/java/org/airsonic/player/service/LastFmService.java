@@ -82,7 +82,7 @@ public class LastFmService {
      * @return Similar artists, ordered by presence then similarity.
      */
     public List<MediaFile> getSimilarArtistsByMediaFile(MediaFile mediaFile, int count, boolean includeNotPresent, List<MusicFolder> musicFolders) {
-        List<MediaFile> result = new ArrayList<MediaFile>();
+        List<MediaFile> result = new ArrayList<>();
         if (mediaFile == null) {
             return result;
         }
@@ -183,7 +183,7 @@ public class LastFmService {
     public List<MediaFile> getSimilarSongs(org.airsonic.player.domain.Artist artist, int count,
                                            List<MusicFolder> musicFolders) {
 
-        List<MediaFile> similarSongs = new ArrayList<MediaFile>(mediaFileService.getSongsByArtist(0, 1000, artist.getName()));
+        List<MediaFile> similarSongs = new ArrayList<>(mediaFileService.getSongsByArtist(0, 1000, artist.getName()));
         for (org.airsonic.player.domain.Artist similarArtist : getSimilarArtists(artist, 100, false, musicFolders)) {
             similarSongs.addAll(mediaFileService.getSongsByArtist(0, 1000, similarArtist.getName()));
         }
@@ -200,7 +200,7 @@ public class LastFmService {
      * @return Songs from similar artists;
      */
     public List<MediaFile> getSimilarSongsByMediaFile(MediaFile mediaFile, int count, List<MusicFolder> musicFolders) {
-        List<MediaFile> similarSongs = new ArrayList<MediaFile>();
+        List<MediaFile> similarSongs = new ArrayList<>();
 
         String artistName = getArtistName(mediaFile);
         MediaFile artist = mediaFileService.getArtistByName(artistName, musicFolders);
@@ -290,7 +290,7 @@ public class LastFmService {
                 return Collections.emptyList();
             }
 
-            List<MediaFile> result = new ArrayList<MediaFile>();
+            List<MediaFile> result = new ArrayList<>();
             for (Track topTrack : Artist.getTopTracks(canonicalArtistName, LAST_FM_KEY)) {
                 MediaFile song = mediaFileService.getSongByArtistAndTitle(artistName, topTrack.getName(), musicFolders);
 

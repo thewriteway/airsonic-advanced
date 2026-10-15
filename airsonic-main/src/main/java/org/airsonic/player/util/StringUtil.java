@@ -241,7 +241,7 @@ public final class StringUtil {
      */
     public static String[] readLines(InputStream in) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-            List<String> result = new ArrayList<String>();
+            List<String> result = new ArrayList<>();
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 line = line.trim();
                 if (!line.startsWith("#") && !line.isEmpty()) {

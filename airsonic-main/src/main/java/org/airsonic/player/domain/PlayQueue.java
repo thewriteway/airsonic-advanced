@@ -474,12 +474,11 @@ public class PlayQueue {
         OFF, TRACK, QUEUE;
 
         public static RepeatStatus getNext(RepeatStatus status) {
-            switch (status) {
-                case OFF: return TRACK;
-                case TRACK: return QUEUE;
-                case QUEUE: return OFF;
-                default: return OFF;
-            }
+            return switch (status) {
+                case OFF -> TRACK;
+                case TRACK -> QUEUE;
+                case QUEUE -> OFF;
+            };
         }
     }
 }

@@ -83,7 +83,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Controller which produces the HLS (Http Live Streaming) playlist.
@@ -162,7 +161,7 @@ public class HLSController {
                 .map(b -> b.getRight() != null ? b
                         : Pair.of(b.getLeft(), TranscodingService.getSuitableVideoSize(mediaFile.getWidth(),
                                 mediaFile.getHeight(), b.getLeft())))
-                .collect(Collectors.toList());
+                .toList();
         if (bitRates.isEmpty())
             bitRates = Collections.singletonList(
                     Pair.of(VideoPlayerController.DEFAULT_BIT_RATE, TranscodingService.getSuitableVideoSize(
@@ -222,7 +221,6 @@ public class HLSController {
             int id, Player player, List<Pair<Integer, Dimension>> bitRates, PrintWriter writer) {
         writer.println("#EXTM3U");
         writer.println("#EXT-X-VERSION:1");
-//        writer.println("#EXT-X-TARGETDURATION:" + SEGMENT_DURATION);
 
         for (Pair<Integer, Dimension> bitRate : bitRates) {
             Integer kbps = bitRate.getLeft();
@@ -242,7 +240,6 @@ public class HLSController {
             writer.print(basePath + url.toUriString());
             writer.println();
         }
-//        writer.println("#EXT-X-ENDLIST");
     }
 
     private void generateNormalPlaylist(Authentication authentication, String basePath, UriComponentsBuilder prefix,

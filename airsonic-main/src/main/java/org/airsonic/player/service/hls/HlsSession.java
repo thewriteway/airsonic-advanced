@@ -1,6 +1,5 @@
 package org.airsonic.player.service.hls;
 
-import com.google.common.io.MoreFiles;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.VideoTranscodingSettings;
 import org.airsonic.player.io.InputStreamReaderThread;
@@ -8,6 +7,7 @@ import org.airsonic.player.io.TranscodeInputStream;
 import org.airsonic.player.service.TranscodingService;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.Util;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +111,7 @@ public class HlsSession {
     private SortedSet<Integer> getCompletedSegmentIndexes() {
         try (Stream<Path> children = Files.list(getDirectory())) {
             SortedSet<Integer> result = children.filter(Files::isRegularFile)
-                    .filter(c -> "ts".equals(MoreFiles.getFileExtension(c))).map(MoreFiles::getNameWithoutExtension)
+                    .filter(c -> "ts".equals(FilenameUtils.getExtension(c.toString()))).map(c -> FilenameUtils.getBaseName(c.toString()))
                     .map(Integer::valueOf).collect(Collectors.toCollection(() -> new TreeSet<>()));
             if (!result.isEmpty() && isProcessAlive()) {
                 result.remove(result.last());

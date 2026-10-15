@@ -278,8 +278,8 @@ public class SonosService implements SonosSoap {
         AbstractMedia abstractMedia = sonosHelper.forMediaFile(mediaFile, getUsername(), getRequest());
 
         ExtendedMetadata extendedMetadata = new ExtendedMetadata();
-        if (abstractMedia instanceof MediaCollection) {
-            extendedMetadata.setMediaCollection((MediaCollection) abstractMedia);
+        if (abstractMedia instanceof MediaCollection mediaCollection) {
+            extendedMetadata.setMediaCollection(mediaCollection);
         } else {
             extendedMetadata.setMediaMetadata((MediaMetadata) abstractMedia);
         }
@@ -418,7 +418,7 @@ public class SonosService implements SonosSoap {
         parameters.setIndex(0);
         parameters.setCount(Integer.MAX_VALUE);
         GetMetadataResponse metadata = getMetadata(parameters);
-        List<MediaFile> newSongs = new ArrayList<MediaFile>();
+        List<MediaFile> newSongs = new ArrayList<>();
 
         for (AbstractMedia media : metadata.getGetMetadataResult().getMediaCollectionOrMediaMetadata()) {
             if ("".equals(media.getId()) || StringUtils.isNumeric(media.getId())) {
@@ -444,18 +444,18 @@ public class SonosService implements SonosSoap {
             int playlistId = Integer.parseInt(id.replace(ID_PLAYLIST_PREFIX, ""));
             if (playlistService.isWriteAllowed(playlistId, getUsername())) {
 
-                SortedMap<Integer, MediaFile> indexToSong = new ConcurrentSkipListMap<Integer, MediaFile>();
+                SortedMap<Integer, MediaFile> indexToSong = new ConcurrentSkipListMap<>();
                 List<MediaFile> songs = playlistService.getFilesInPlaylist(playlistId);
                 for (int i = 0; i < songs.size(); i++) {
                     indexToSong.put(i, songs.get(i));
                 }
 
-                List<MediaFile> movedSongs = new ArrayList<MediaFile>();
+                List<MediaFile> movedSongs = new ArrayList<>();
                 for (Integer i : parsePlaylistIndices(from)) {
                     movedSongs.add(indexToSong.remove(i));
                 }
 
-                List<MediaFile> updatedSongs = new ArrayList<MediaFile>();
+                List<MediaFile> updatedSongs = new ArrayList<>();
                 updatedSongs.addAll(indexToSong.headMap(to).values());
                 updatedSongs.addAll(movedSongs);
                 updatedSongs.addAll(indexToSong.tailMap(to).values());
@@ -474,7 +474,7 @@ public class SonosService implements SonosSoap {
             if (playlistService.isWriteAllowed(playlistId, getUsername())) {
                 SortedSet<Integer> indicesToRemove = parsePlaylistIndices(indices);
                 List<MediaFile> songs = playlistService.getFilesInPlaylist(playlistId);
-                List<MediaFile> updatedSongs = new ArrayList<MediaFile>();
+                List<MediaFile> updatedSongs = new ArrayList<>();
                 for (int i = 0; i < songs.size(); i++) {
                     if (!indicesToRemove.contains(i)) {
                         updatedSongs.add(songs.get(i));
@@ -489,7 +489,7 @@ public class SonosService implements SonosSoap {
 
     protected SortedSet<Integer> parsePlaylistIndices(String indices) {
         // Comma-separated, may include ranges:  1,2,4-7
-        SortedSet<Integer> result = new TreeSet<Integer>();
+        SortedSet<Integer> result = new TreeSet<>();
 
         for (String part : StringUtils.split(indices, ',')) {
             if (StringUtils.isNumeric(part)) {
@@ -527,10 +527,10 @@ public class SonosService implements SonosSoap {
 
     private SoapMessage getMessage() {
         MessageContext messageContext = context == null ? null : context.getMessageContext();
-        if (messageContext == null || !(messageContext instanceof WrappedMessageContext)) {
+        if (!(messageContext instanceof WrappedMessageContext wrappedContext)) {
             return null;
         }
-        return (SoapMessage) ((WrappedMessageContext) messageContext).getWrappedMessage();
+        return (SoapMessage) wrappedContext.getWrappedMessage();
     }
 
     private String getUsername() {
