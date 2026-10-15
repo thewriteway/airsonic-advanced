@@ -162,10 +162,7 @@ public class StreamController {
 
         if (isSingleFile) {
 
-            if (!(authentication instanceof JWTAuthenticationToken)
-                    && !securityService.isFolderAccessAllowed(file, username)) {
-                throw new AccessDeniedException("Access to file " + file.getId() + " is forbidden for user " + username);
-            }
+            securityService.checkFolderAccess(file, username, authentication);
 
             // Update the index of the currently playing media file. At
             // this point we haven't yet modified the play queue to support

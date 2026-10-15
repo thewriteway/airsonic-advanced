@@ -66,14 +66,6 @@ public class JukeboxServiceUnitTest {
     }
 
     @Test
-    public void updateJukebox() {
-        // When
-        jukeboxService.updateJukebox(legacyJukeboxPlayer, 0);
-        // Then
-        verify(jukeboxLegacySubsonicService).updateJukebox(legacyJukeboxPlayer, 0);
-    }
-
-    @Test
     public void getPositionWithLegacyJukeboxPlayer() {
         // When
         jukeboxService.getPosition(legacyJukeboxPlayer);

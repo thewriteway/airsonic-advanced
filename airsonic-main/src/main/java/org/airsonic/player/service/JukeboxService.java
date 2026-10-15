@@ -21,7 +21,6 @@
 package org.airsonic.player.service;
 
 import org.airsonic.player.domain.Player;
-import org.airsonic.player.domain.PlayerTechnology;
 import org.springframework.stereotype.Service;
 
 /**
@@ -63,16 +62,6 @@ public class JukeboxService {
                 break;
         }
         return 0;
-    }
-
-    /**
-     * This method should be removed when the jukebox is controlled only through rest api.
-     */
-    @Deprecated
-    public void updateJukebox(Player airsonicPlayer, int offset) {
-        if (airsonicPlayer.getTechnology().equals(PlayerTechnology.JUKEBOX)) {
-            jukeboxLegacySubsonicService.updateJukebox(airsonicPlayer,offset);
-        }
     }
 
     public int getPosition(Player airsonicPlayer) {

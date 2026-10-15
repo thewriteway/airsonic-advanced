@@ -52,7 +52,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -142,10 +141,7 @@ public class HLSController {
             return;
         }
 
-        if (!(authentication instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(mediaFile, username)) {
-            throw new AccessDeniedException("Access to file " + mediaFile.getId() + " is forbidden for user " + username);
-        }
+        securityService.checkFolderAccess(mediaFile, username, authentication);
 
         Double duration = mediaFile.getDuration();
         if (duration == null || duration < 0.0001) {
@@ -305,10 +301,7 @@ public class HLSController {
         }
         User user = securityService.getUserByName(auth.getName());
         Player player = this.playerService.getPlayer(swr.getRequest(), swr.getResponse(), user.getUsername());
-        if (!(auth instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(mediaFile, user.getUsername())) {
-            throw new AccessDeniedException("Access to file " + id + " is forbidden for user " + user.getUsername());
-        }
+        securityService.checkFolderAccess(mediaFile, user.getUsername(), auth);
         TransferStatus status = this.statusService.createStreamStatus(player);
         status.setMediaFile(mediaFile);
         HlsSession.Key sessionKey = new HlsSession.Key(id, playerId, maxBitRate, size, duration, audioTrack);

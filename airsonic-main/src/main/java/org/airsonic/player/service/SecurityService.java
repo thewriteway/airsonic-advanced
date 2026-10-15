@@ -32,6 +32,8 @@ import org.airsonic.player.domain.UserCredential;
 import org.airsonic.player.domain.UserCredential.App;
 import org.airsonic.player.repository.UserCredentialRepository;
 import org.airsonic.player.repository.UserRepository;
+import org.airsonic.player.security.JWTAuthenticationProvider;
+import org.airsonic.player.security.JWTAuthenticationToken;
 import org.airsonic.player.security.PasswordDecoder;
 import org.airsonic.player.security.PasswordEncoderConfig;
 import org.airsonic.player.service.cache.UserCache;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -727,6 +730,28 @@ public class SecurityService implements UserDetailsService {
     public boolean isFolderAccessAllowed(MediaFile file, String username) {
         return mediaFolderService.getMusicFoldersForUser(username).parallelStream()
                 .anyMatch(musicFolder -> musicFolder.getId().equals(file.getFolder().getId()));
+    }
+
+    /**
+     * Throws if the given user may not access the music folder containing the file.
+     *
+     * @throws org.springframework.security.access.AccessDeniedException If access is not allowed.
+     */
+    public void checkFolderAccess(MediaFile file, String username) {
+        if (!isFolderAccessAllowed(file, username)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Access to file " + file.getId() + " is forbidden for user " + username);
+        }
+    }
+
+    /**
+     * Same as {@link #checkFolderAccess(MediaFile, String)}, but lets JWT-authenticated requests through,
+     * since {@link JWTAuthenticationProvider} has already checked that the token was issued for the requested path.
+     */
+    public void checkFolderAccess(MediaFile file, String username, Authentication authentication) {
+        if (!(authentication instanceof JWTAuthenticationToken)) {
+            checkFolderAccess(file, username);
+        }
     }
 
     public static class UserDetail extends org.springframework.security.core.userdetails.User {

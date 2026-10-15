@@ -40,7 +40,6 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -127,9 +126,7 @@ public class DownloadController {
         Collection<Pair<Path, MusicFolder>> additionalFiles = Collections.emptyList();
 
         if (mediaFile != null) {
-            if (!securityService.isFolderAccessAllowed(mediaFile, user.getUsername())) {
-                throw new AccessDeniedException("Access to file " + mediaFile.getId() + " is forbidden for user " + user.getUsername());
-            }
+            securityService.checkFolderAccess(mediaFile, user.getUsername());
             if (mediaFile.isFile()) {
                 response = prepareResponse(Collections.singletonList(mediaFile), null, statusSupplier, statusCloser, additionalFiles);
                 defaultDownloadName = FilenameUtils.getName(mediaFile.getPath());
