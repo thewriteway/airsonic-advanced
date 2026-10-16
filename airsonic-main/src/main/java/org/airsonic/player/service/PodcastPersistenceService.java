@@ -139,7 +139,7 @@ public class PodcastPersistenceService {
                 podcastChannelRepository.save(c);
                 LOG.info("Reset channel status '{}' since refresh was interrupted.", c.getTitle());
                 return c.getId();
-            }).collect(Collectors.toList());
+            }).toList();
     }
 
     /**
@@ -693,7 +693,7 @@ public class PodcastPersistenceService {
         return podcastEpisodeRepository.findByChannelAndLockedFalse(channel).stream()
             .filter(filterAllowed)
             .sorted(Comparator.comparing(PodcastEpisode::getPublishDate, Comparator.nullsLast(Comparator.reverseOrder())))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     /**

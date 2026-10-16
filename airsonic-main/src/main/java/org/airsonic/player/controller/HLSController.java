@@ -229,7 +229,7 @@ public class HLSController {
                     .queryParam("maxBitRate", kbps + Optional.ofNullable(bitRate.getRight()).map(d -> "@" + d.width + "x" + d.height).orElse(""));
             if (authentication instanceof JWTAuthenticationToken) {
                 DecodedJWT token = (DecodedJWT) authentication.getDetails();
-                Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAt()).map(x -> x.toInstant()).orElse(null);
+                Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAtAsInstant()).orElse(null);
                 url = jwtSecurityService.addJWTToken(authentication.getName(), url, expires);
             }
 
@@ -279,7 +279,7 @@ public class HLSController {
 
         if (authentication instanceof JWTAuthenticationToken) {
             DecodedJWT token = (DecodedJWT) authentication.getDetails();
-            Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAt()).map(x -> x.toInstant()).orElse(null);
+            Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAtAsInstant()).orElse(null);
             builder = jwtSecurityService.addJWTToken(authentication.getName(), builder, expires);
         }
         return basePath + builder.toUriString();

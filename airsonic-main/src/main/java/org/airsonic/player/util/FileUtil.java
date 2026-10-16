@@ -23,7 +23,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -98,21 +97,6 @@ public final class FileUtil {
             return file.getFileName().toString();
         }
         return parent.getFileName().toString() + File.separator + file.getFileName().toString();
-    }
-
-    /**
-     * Closes the "closable", ignoring any excepetions.
-     *
-     * @param closeable The Closable to close, may be {@code null}.
-     */
-    public static void closeQuietly(Closeable closeable) {
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (IOException e) {
-                // Ignored
-            }
-        }
     }
 
     /**

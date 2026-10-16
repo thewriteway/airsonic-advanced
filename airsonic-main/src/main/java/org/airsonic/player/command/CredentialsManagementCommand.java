@@ -14,7 +14,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -63,7 +64,7 @@ public class CredentialsManagementCommand {
         private String hash;
 
         @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
-        private Date expiration;
+        private LocalDateTime expiration;
 
         private Instant created;
         private Instant updated;
@@ -78,7 +79,7 @@ public class CredentialsManagementCommand {
             this.app = app;
             this.created = created;
             this.updated = updated;
-            this.expiration = Optional.ofNullable(expiration).map(e -> new Date(e.toEpochMilli())).orElse(null);
+            this.expiration = Optional.ofNullable(expiration).map(e -> LocalDateTime.ofInstant(e, ZoneId.systemDefault())).orElse(null);
             this.comment = comment;
             this.hash = hash;
         }
@@ -142,15 +143,15 @@ public class CredentialsManagementCommand {
             this.updated = updated;
         }
 
-        public Date getExpiration() {
+        public LocalDateTime getExpiration() {
             return expiration;
         }
 
         public Instant getExpirationInstant() {
-            return Optional.ofNullable(expiration).map(e -> Instant.ofEpochMilli(e.getTime())).orElse(null);
+            return Optional.ofNullable(expiration).map(e -> e.atZone(ZoneId.systemDefault()).toInstant()).orElse(null);
         }
 
-        public void setExpiration(Date expiration) {
+        public void setExpiration(LocalDateTime expiration) {
             this.expiration = expiration;
         }
 

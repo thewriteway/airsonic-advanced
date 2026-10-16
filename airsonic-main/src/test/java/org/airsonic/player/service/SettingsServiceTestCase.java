@@ -127,6 +127,23 @@ public class SettingsServiceTestCase {
     }
 
     @Test
+    public void derivedSettingsFollowChanges() {
+        settingsService.setMusicFileTypes("mp3 FLAC");
+        assertThat(settingsService.getMusicFileTypesSet()).containsExactly("mp3", "flac");
+        settingsService.setMusicFileTypes("ogg");
+        assertThat(settingsService.getMusicFileTypesSet()).containsExactly("ogg");
+
+        assertNull(settingsService.getExcludePattern());
+        settingsService.setExcludePatternString("^\\..*");
+        assertEquals("^\\..*", settingsService.getExcludePattern().pattern());
+
+        settingsService.setDownloadBitrateLimit(100);
+        assertEquals(100 * 1024.0, settingsService.getDownloadBitrateLimiter().getRate());
+        settingsService.setDownloadBitrateLimit(0);
+        assertEquals(Double.POSITIVE_INFINITY, settingsService.getDownloadBitrateLimiter().getRate());
+    }
+
+    @Test
     public void testChangeSettings() {
         settingsService.setIndexString("indexString");
         settingsService.setIgnoredArticles("a the foo bar");

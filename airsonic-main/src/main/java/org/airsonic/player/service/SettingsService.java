@@ -275,9 +275,6 @@ public class SettingsService {
     @Autowired
     private AirsonicCueConfig cueConfig;
 
-    private Set<String> cachedMusicFileTypes;
-    private Set<String> cachedVideoFileTypes;
-    private Set<String> cachedPlayableFileTypes;
 
     // Array of obsolete properties. Used to clean property file.
     private static final List<String> OBSOLETE_KEYS = Arrays.asList("PortForwardingPublicPort", "PortForwardingLocalPort",
@@ -491,7 +488,27 @@ public class SettingsService {
     // Can't be stored with settingsCache because ConcurrentHashMaps cannot recursively update values.
     // Example: Retrieving KEY_DERIVATIVE: If absent, retrieve KEY to derive object from. If KEY in turn is also absent: look up in env.
     // Then store KEY first, then KEY_DERIVATIVE. So one lookup ends up modifying another part of ConcurrentHashMap which is illegal by contract.
-    private Map<String, Object> derivativeSettingsCache = new ConcurrentHashMap<>();
+    private final Map<DerivedKey<?>, Object> derivativeSettingsCache = new ConcurrentHashMap<>();
+
+    /**
+     * Key of a value in {@link #derivativeSettingsCache}. The type parameter records the type of the cached value.
+     */
+    private record DerivedKey<T>(String settingKey) {
+    }
+
+    private static final DerivedKey<String[]> IGNORED_ARTICLES_ARRAY = new DerivedKey<>(KEY_IGNORED_ARTICLES);
+    private static final DerivedKey<Set<String>> MUSIC_FILE_TYPES_SET = new DerivedKey<>(KEY_MUSIC_FILE_TYPES);
+    private static final DerivedKey<Set<String>> VIDEO_FILE_TYPES_SET = new DerivedKey<>(KEY_VIDEO_FILE_TYPES);
+    private static final DerivedKey<Set<String>> COVER_ART_FILE_TYPES_SET = new DerivedKey<>(KEY_COVER_ART_FILE_TYPES);
+    private static final DerivedKey<RateLimiter> DOWNLOAD_BITRATE_LIMITER = new DerivedKey<>(KEY_DOWNLOAD_BITRATE_LIMIT);
+    private static final DerivedKey<RateLimiter> UPLOAD_BITRATE_LIMITER = new DerivedKey<>(KEY_UPLOAD_BITRATE_LIMIT);
+    private static final DerivedKey<Optional<Pattern>> EXCLUDE_PATTERN = new DerivedKey<>(KEY_EXCLUDE_PATTERN_STRING);
+
+    // safe because this is the only method that stores values, and it always stores a T under a DerivedKey<T>
+    @SuppressWarnings("unchecked")
+    private <T> T derived(DerivedKey<T> key, Supplier<T> compute) {
+        return (T) derivativeSettingsCache.computeIfAbsent(key, k -> compute.get());
+    }
 
     private void setProperty(String key, Object value) {
         if (value == null) {
@@ -551,12 +568,12 @@ public class SettingsService {
     }
 
     String[] getIgnoredArticlesAsArray() {
-        return (String[]) derivativeSettingsCache.computeIfAbsent(KEY_IGNORED_ARTICLES, k -> getIgnoredArticles().split("\\s+"));
+        return derived(IGNORED_ARTICLES_ARRAY, () -> getIgnoredArticles().split("\\s+"));
     }
 
     public void setIgnoredArticles(String ignoredArticles) {
         setProperty(KEY_IGNORED_ARTICLES, ignoredArticles);
-        derivativeSettingsCache.remove(KEY_IGNORED_ARTICLES);
+        derivativeSettingsCache.remove(IGNORED_ARTICLES_ARRAY);
     }
 
     public String getUploadsFolder() {
@@ -626,13 +643,11 @@ public class SettingsService {
 
     public void setMusicFileTypes(String fileTypes) {
         setProperty(KEY_MUSIC_FILE_TYPES, fileTypes);
-        derivativeSettingsCache.remove(KEY_MUSIC_FILE_TYPES);
+        derivativeSettingsCache.remove(MUSIC_FILE_TYPES_SET);
     }
 
-    @SuppressWarnings("unchecked")
     public Set<String> getMusicFileTypesSet() {
-        return (Set<String>) derivativeSettingsCache.computeIfAbsent(KEY_MUSIC_FILE_TYPES,
-            k -> splitLowerString(getMusicFileTypes(), " "));
+        return derived(MUSIC_FILE_TYPES_SET, () -> splitLowerString(getMusicFileTypes(), " "));
     }
 
     public String getVideoFileTypes() {
@@ -641,24 +656,11 @@ public class SettingsService {
 
     public void setVideoFileTypes(String fileTypes) {
         setProperty(KEY_VIDEO_FILE_TYPES, fileTypes);
-        derivativeSettingsCache.remove(KEY_VIDEO_FILE_TYPES);
+        derivativeSettingsCache.remove(VIDEO_FILE_TYPES_SET);
     }
 
-    @SuppressWarnings("unchecked")
     public Set<String> getVideoFileTypesSet() {
-        return (Set<String>) derivativeSettingsCache.computeIfAbsent(KEY_VIDEO_FILE_TYPES,
-            k -> splitLowerString(getVideoFileTypes(), " "));
-    }
-
-    public Set<String> getPlayableFileTypesSet() {
-        // make sure to regenerate cached result if either KEY_VIDEO_FILE_TYPES or KEY_MUSIC_FILE_TYPES
-        // has been changed
-        if (cachedPlayableFileTypes == null
-            || cachedMusicFileTypes == null
-            || cachedVideoFileTypes == null) {
-            cachedPlayableFileTypes = splitLowerString(String.join(" ", getMusicFileTypes(), getVideoFileTypes()), " ");
-        }
-        return cachedPlayableFileTypes;
+        return derived(VIDEO_FILE_TYPES_SET, () -> splitLowerString(getVideoFileTypes(), " "));
     }
 
     public String getCoverArtFileTypes() {
@@ -667,13 +669,11 @@ public class SettingsService {
 
     public void setCoverArtFileTypes(String fileTypes) {
         setProperty(KEY_COVER_ART_FILE_TYPES, fileTypes);
-        derivativeSettingsCache.remove(KEY_COVER_ART_FILE_TYPES);
+        derivativeSettingsCache.remove(COVER_ART_FILE_TYPES_SET);
     }
 
-    @SuppressWarnings("unchecked")
     Set<String> getCoverArtFileTypesSet() {
-        return (Set<String>) derivativeSettingsCache.computeIfAbsent(KEY_COVER_ART_FILE_TYPES,
-            k -> splitLowerString(getCoverArtFileTypes(), " "));
+        return derived(COVER_ART_FILE_TYPES_SET, () -> splitLowerString(getCoverArtFileTypes(), " "));
     }
 
     public CoverArtSource getCoverArtSource() {
@@ -882,8 +882,7 @@ public class SettingsService {
     }
 
     public RateLimiter getDownloadBitrateLimiter() {
-        return (RateLimiter) derivativeSettingsCache.computeIfAbsent(KEY_DOWNLOAD_BITRATE_LIMIT,
-            k -> RateLimiter.create(adjustBitrateLimit(getDownloadBitrateLimit())));
+        return derived(DOWNLOAD_BITRATE_LIMITER, () -> RateLimiter.create(adjustBitrateLimit(getDownloadBitrateLimit())));
     }
 
     /**
@@ -914,8 +913,7 @@ public class SettingsService {
     }
 
     public RateLimiter getUploadBitrateLimiter() {
-        return (RateLimiter) derivativeSettingsCache.computeIfAbsent(KEY_UPLOAD_BITRATE_LIMIT,
-            k -> RateLimiter.create(adjustBitrateLimit(getUploadBitrateLimit())));
+        return derived(UPLOAD_BITRATE_LIMITER, () -> RateLimiter.create(adjustBitrateLimit(getUploadBitrateLimit())));
     }
 
     /**
@@ -1099,13 +1097,12 @@ public class SettingsService {
 
     public void setExcludePatternString(String s) {
         setString(KEY_EXCLUDE_PATTERN_STRING, s);
-        derivativeSettingsCache.remove(KEY_EXCLUDE_PATTERN_STRING);
+        derivativeSettingsCache.remove(EXCLUDE_PATTERN);
     }
 
-    @SuppressWarnings("unchecked")
     public Pattern getExcludePattern() {
-        return ((Optional<Pattern>) derivativeSettingsCache.computeIfAbsent(KEY_EXCLUDE_PATTERN_STRING,
-            k -> Optional.ofNullable(getExcludePatternString()).map(StringUtils::trimToNull).map(Pattern::compile))).orElse(null);
+        return derived(EXCLUDE_PATTERN,
+            () -> Optional.ofNullable(getExcludePatternString()).map(StringUtils::trimToNull).map(Pattern::compile)).orElse(null);
     }
 
     /**

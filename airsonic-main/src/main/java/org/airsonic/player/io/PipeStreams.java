@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.function.BiConsumer;
@@ -38,6 +39,18 @@ public class PipeStreams {
     }
 
     /**
+     * Creates an output stream connected to {@code sink}. Connect on the reading thread before handing the
+     * output stream to a writer thread, so the reader never sees an unconnected pipe.
+     */
+    public static PipedOutputStream connectedOutput(PipedInputStream sink) {
+        try {
+            return new PipedOutputStream(sink);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
      * This class is equivalent to <code>java.io.PipedInputStream</code>. In the
      * interface it only adds a constructor which allows for specifying the buffer
      * size. Its implementation, however, is much simpler and a lot more efficient
@@ -58,7 +71,7 @@ public class PipeStreams {
         boolean closed = false;
         int readLaps = 0;
         int readPosition = 0;
-        public PipedOutputStream source;
+        PipedOutputStream source;
         int writeLaps = 0;
         int writePosition = 0;
 
