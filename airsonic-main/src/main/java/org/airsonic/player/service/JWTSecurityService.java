@@ -103,10 +103,12 @@ public class JWTSecurityService {
         if (expires == null) {
             expires = Instant.now().plus(DEFAULT_DAYS_VALID_FOR, ChronoUnit.DAYS);
         }
+        // Sign the URL as built rather than re-encoded, so values the caller already encoded
+        // (e.g. external caption paths) match the query string the client sends back
         String token = JWTSecurityService.createToken(
                 settingsService.getJWTKey(),
                 user,
-                builder.toUriString(),
+                builder.build().toUriString(),
                 expires,
                 additionalClaims);
         return builder.queryParam(JWTSecurityService.JWT_PARAM_NAME, token);
