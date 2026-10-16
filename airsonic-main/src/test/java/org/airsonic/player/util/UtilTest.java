@@ -14,6 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UtilTest {
 
     @Test
+    public void saturatedCast() {
+        assertEquals(42, Util.saturatedCast(42L));
+        assertEquals(Integer.MAX_VALUE, Util.saturatedCast(Integer.MAX_VALUE + 1L));
+        assertEquals(Integer.MIN_VALUE, Util.saturatedCast(Long.MIN_VALUE));
+    }
+
+    @Test
     public void objectToStringMapNull() {
         MediaLibraryStatistics statistics = null;
         Map<String, String> stringStringMap = Util.objectToStringMap(statistics);

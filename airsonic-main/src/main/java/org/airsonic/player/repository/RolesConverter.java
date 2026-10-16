@@ -18,12 +18,13 @@
  */
 package org.airsonic.player.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.airsonic.player.domain.User.Role;
+import org.airsonic.player.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.AttributeConverter;
 
@@ -32,7 +33,7 @@ import java.util.Set;
 
 public class RolesConverter implements AttributeConverter<Set<Role>, String> {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = Util.jsonMapperBuilder().build();
 
     private static Logger LOG = LoggerFactory.getLogger(RolesConverter.class);
 
@@ -40,7 +41,7 @@ public class RolesConverter implements AttributeConverter<Set<Role>, String> {
     public String convertToDatabaseColumn(Set<Role> roles) {
         try {
             return roles == null ? null : objectMapper.writeValueAsString(roles);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             LOG.warn("Failed to convert roles to json", e);
             return null;
         }
@@ -51,7 +52,7 @@ public class RolesConverter implements AttributeConverter<Set<Role>, String> {
         TypeReference<Set<Role>> typeReference = new TypeReference<>() {};
         try {
             return roles == null ? new HashSet<>() : objectMapper.readValue(roles, typeReference);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             LOG.warn("Failed to convert roles from json", e);
             return new HashSet<>();
         }

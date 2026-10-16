@@ -18,9 +18,6 @@
  */
 package org.airsonic.player.api;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import org.airsonic.player.domain.Album;
@@ -60,6 +57,9 @@ import org.subsonic.restapi.ArtistInfo2;
 import org.subsonic.restapi.ArtistWithAlbumsID3;
 import org.subsonic.restapi.ArtistsID3;
 import org.subsonic.restapi.IndexID3;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import jakarta.transaction.Transactional;
 
@@ -130,7 +130,7 @@ public class ArtistApiTest {
     MusicFolder testFolder = new MusicFolder(1, Paths.get("/test/folder"), "Test Folder", MusicFolder.Type.MEDIA, true,
             Instant.now());
 
-    ObjectMapper objectMapper = JsonMapper.builder()
+    ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults()
             .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
             .build();
 
@@ -212,12 +212,10 @@ public class ArtistApiTest {
                 .getResponse()
                 .getContentAsString();
 
-        ArtistWithAlbumsID3 artistWithAlbums = objectMapper
+        ArtistWithAlbumsID3 artistWithAlbums = objectMapper.treeToValue(objectMapper
                 .readTree(responseBody)
                 .path("subsonic-response")
-                .path("artist")
-                .traverse(objectMapper)
-                .readValueAs(ArtistWithAlbumsID3.class);
+                .path("artist"), ArtistWithAlbumsID3.class);
 
         ArtistWithAlbumsID3 expectedArtist = TestApiUtil.createTestArtistWithAlbumsID3Full("Test Artist");
         expectedArtist.getAlbum().add(TestApiUtil.createTestAlbumID3());
@@ -268,12 +266,10 @@ public class ArtistApiTest {
                 .getResponse()
                 .getContentAsString();
 
-        ArtistWithAlbumsID3 artistWithAlbums = objectMapper
+        ArtistWithAlbumsID3 artistWithAlbums = objectMapper.treeToValue(objectMapper
                 .readTree(responseBody)
                 .path("subsonic-response")
-                .path("artist")
-                .traverse(objectMapper)
-                .readValueAs(ArtistWithAlbumsID3.class);
+                .path("artist"), ArtistWithAlbumsID3.class);
 
         ArtistWithAlbumsID3 expectedArtist = TestApiUtil.createTestArtistWithAlbumsID3Minimum("Test Artist");
         assertAritistWithAlbumID3(expectedArtist, artistWithAlbums);
@@ -463,12 +459,10 @@ public class ArtistApiTest {
                 .getResponse()
                 .getContentAsString();
 
-        ArtistsID3 result = objectMapper
+        ArtistsID3 result = objectMapper.treeToValue(objectMapper
                 .readTree(responseBody)
                 .path("subsonic-response")
-                .path("artists")
-                .traverse(objectMapper)
-                .readValueAs(ArtistsID3.class);
+                .path("artists"), ArtistsID3.class);
 
         ArtistsID3 expected = new ArtistsID3();
         expected.setIgnoredArticles("The El La Los Las Le Les");
@@ -541,12 +535,10 @@ public class ArtistApiTest {
                 .getResponse()
                 .getContentAsString();
 
-        ArtistsID3 result = objectMapper
+        ArtistsID3 result = objectMapper.treeToValue(objectMapper
                 .readTree(responseBody)
                 .path("subsonic-response")
-                .path("artists")
-                .traverse(objectMapper)
-                .readValueAs(ArtistsID3.class);
+                .path("artists"), ArtistsID3.class);
 
         ArtistsID3 expected = new ArtistsID3();
         expected.setIgnoredArticles("The El La Los Las Le Les");
@@ -869,12 +861,10 @@ public class ArtistApiTest {
                 .getResponse()
                 .getContentAsString();
 
-        ArtistInfo2 artistInfo2 = objectMapper
+        ArtistInfo2 artistInfo2 = objectMapper.treeToValue(objectMapper
                 .readTree(responseBody)
                 .path("subsonic-response")
-                .path("artistInfo2")
-                .traverse(objectMapper)
-                .readValueAs(ArtistInfo2.class);
+                .path("artistInfo2"), ArtistInfo2.class);
         ArtistInfo2 expectedArtistInfo2 = new ArtistInfo2();
         expectedArtistInfo2.setBiography(biography);
         expectedArtistInfo2.setMusicBrainzId(musicBrainzId);
@@ -974,12 +964,10 @@ public class ArtistApiTest {
                 .getResponse()
                 .getContentAsString();
 
-        ArtistInfo2 artistInfo2 = objectMapper
+        ArtistInfo2 artistInfo2 = objectMapper.treeToValue(objectMapper
                 .readTree(responseBody)
                 .path("subsonic-response")
-                .path("artistInfo2")
-                .traverse(objectMapper)
-                .readValueAs(ArtistInfo2.class);
+                .path("artistInfo2"), ArtistInfo2.class);
 
         ArtistInfo2 expectedArtistInfo2 = new ArtistInfo2();
         expectedArtistInfo2.setBiography(null);

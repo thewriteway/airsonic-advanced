@@ -1,10 +1,8 @@
 package org.airsonic.player.domain.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 
@@ -16,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class GitHubReleaseTest {
 
     @Test
-    public void testObjectMapper() throws JsonMappingException, JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModules(new JavaTimeModule());
+    public void testObjectMapper() {
+        // same configuration as VersionService
+        ObjectMapper objectMapper = JsonMapper.builder().build();
         String json = """
                  {
     "url": "https://api.github.com/repos/kagemomiji/airsonic-advanced/releases/233347166",

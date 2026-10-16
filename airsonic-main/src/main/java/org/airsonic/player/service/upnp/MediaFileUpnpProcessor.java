@@ -20,13 +20,13 @@
 */
 package org.airsonic.player.service.upnp;
 
-import com.google.common.primitives.Ints;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.ParamSearchResult;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.SearchService;
+import org.airsonic.player.util.Util;
 import org.jupnp.support.model.BrowseResult;
 import org.jupnp.support.model.DIDLContent;
 import org.jupnp.support.model.DIDLObject;
@@ -180,7 +180,7 @@ public class MediaFileUpnpProcessor extends UpnpContentProcessor <MediaFile, Med
         DIDLContent didl = new DIDLContent();
         try {
             List<MusicFolder> allFolders = mediaFolderService.getAllMusicFolders();
-            ParamSearchResult<MediaFile> result = searchService.searchByName(name, Ints.saturatedCast(firstResult), Ints.saturatedCast(maxResults), allFolders, MediaFile.class);
+            ParamSearchResult<MediaFile> result = searchService.searchByName(name, Util.saturatedCast(firstResult), Util.saturatedCast(maxResults), allFolders, MediaFile.class);
             List<MediaFile> selectedItems = result.getItems();
             for (MediaFile item : selectedItems) {
                 addItem(didl, item);

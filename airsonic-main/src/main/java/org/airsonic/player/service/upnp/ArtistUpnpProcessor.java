@@ -20,7 +20,6 @@
 */
 package org.airsonic.player.service.upnp;
 
-import com.google.common.primitives.Ints;
 import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.MusicFolder;
@@ -29,6 +28,7 @@ import org.airsonic.player.repository.AlbumRepository;
 import org.airsonic.player.repository.ArtistRepository;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.SearchService;
+import org.airsonic.player.util.Util;
 import org.jupnp.support.model.BrowseResult;
 import org.jupnp.support.model.DIDLContent;
 import org.jupnp.support.model.SortCriterion;
@@ -132,7 +132,7 @@ public class ArtistUpnpProcessor extends UpnpContentProcessor <Artist, Album> {
         DIDLContent didl = new DIDLContent();
         try {
             List<MusicFolder> allFolders = mediaFolderService.getAllMusicFolders();
-            ParamSearchResult<Artist> result = searchService.searchByName(name, Ints.saturatedCast(firstResult), Ints.saturatedCast(maxResults), allFolders, Artist.class);
+            ParamSearchResult<Artist> result = searchService.searchByName(name, Util.saturatedCast(firstResult), Util.saturatedCast(maxResults), allFolders, Artist.class);
             List<Artist> selectedItems = result.getItems();
             for (Artist item : selectedItems) {
                 addItem(didl, item);
