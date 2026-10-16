@@ -12,7 +12,6 @@ import org.airsonic.player.repository.UserRepository;
 import org.airsonic.player.service.playlist.PlaylistExportHandler;
 import org.airsonic.player.service.playlist.PlaylistImportHandler;
 import org.airsonic.player.util.StringUtil;
-import org.airsonic.player.util.UserUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -193,7 +192,7 @@ public class PlaylistFileService {
             return;
         }
 
-        User sysAdmin = UserUtil.getSysAdmin(userRepository.findAll());
+        User sysAdmin = userRepository.findSysAdmin().orElse(null);
         if (sysAdmin == null) {
             LOG.error("No admin user found, skipping auto-import of playlist {}", file);
             return;

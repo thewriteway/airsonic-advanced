@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Files;
 import java.util.*;
-import java.util.stream.IntStream;
 
 /**
  * A play queue is a list of music files that are associated to a remote player.
@@ -294,12 +293,13 @@ public class PlayQueue {
         }
         makeBackup();
         MediaFile[] newFiles = new MediaFile[files.size()];
-        IntStream.range(0, size()).parallel().forEach(i -> {
+        int oldIndex = index;
+        for (int i = 0; i < newFiles.length; i++) {
             newFiles[i] = files.get(indexes.get(i));
-            if (index == indexes.get(i)) {
+            if (oldIndex == indexes.get(i)) {
                 index = i;
             }
-        });
+        }
 
         files.clear();
         files.addAll(Arrays.asList(newFiles));
@@ -441,11 +441,11 @@ public class PlayQueue {
      * @return The total length in bytes.
      */
     public synchronized long length() {
-        return files.parallelStream().mapToLong(MediaFile::getFileSize).sum();
+        return files.stream().mapToLong(MediaFile::getFileSize).sum();
     }
 
     public synchronized double duration() {
-        return files.parallelStream().filter(m -> m.getDuration() != null).mapToDouble(MediaFile::getDuration).sum();
+        return files.stream().filter(m -> m.getDuration() != null).mapToDouble(MediaFile::getDuration).sum();
     }
 
     private void makeBackup() {

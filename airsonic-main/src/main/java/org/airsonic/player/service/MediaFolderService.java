@@ -365,18 +365,18 @@ public class MediaFolderService {
      */
     public static Triple<List<MusicFolder>, List<MusicFolder>, List<MusicFolder>> getMusicFolderPathOverlaps(MusicFolder folder, List<MusicFolder> allFolders) {
         Path absoluteFolderPath = folder.getPath().normalize().toAbsolutePath();
-        List<MusicFolder> sameFolders = allFolders.parallelStream().filter(f -> {
+        List<MusicFolder> sameFolders = allFolders.stream().filter(f -> {
             // is same but not itself
             Path fAbsolute = f.getPath().normalize().toAbsolutePath();
             return fAbsolute.equals(absoluteFolderPath) && !f.getId().equals(folder.getId());
         }).collect(toList());
-        List<MusicFolder> ancestorFolders = allFolders.parallelStream().filter(f -> {
+        List<MusicFolder> ancestorFolders = allFolders.stream().filter(f -> {
             // is ancestor
             Path fAbsolute = f.getPath().normalize().toAbsolutePath();
             return absoluteFolderPath.getNameCount() > fAbsolute.getNameCount()
                     && absoluteFolderPath.startsWith(fAbsolute);
         }).sorted(Comparator.comparing(f -> f.getPath().getNameCount(), Comparator.reverseOrder())).collect(toList());
-        List<MusicFolder> descendantFolders = allFolders.parallelStream().filter(f -> {
+        List<MusicFolder> descendantFolders = allFolders.stream().filter(f -> {
             // is descendant
             Path fAbsolute = f.getPath().normalize().toAbsolutePath();
             return fAbsolute.getNameCount() > absoluteFolderPath.getNameCount()

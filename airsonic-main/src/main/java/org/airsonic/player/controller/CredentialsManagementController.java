@@ -55,7 +55,7 @@ public class CredentialsManagementController {
     @ModelAttribute
     protected void displayForm(Authentication user, ModelMap map) {
         List<CredentialsCommand> creds = securityService.getCredentials(user.getName(), App.values())
-                .parallelStream()
+                .stream()
                 .map(CredentialsCommand::fromUserCredential)
                 .map(c -> {
                     if (c.getEncoder().startsWith("legacy")) {

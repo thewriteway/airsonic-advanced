@@ -41,6 +41,7 @@ public abstract class MetaDataParser {
     protected static final Pattern GENRE_PATTERN = Pattern.compile("\\((\\d+)\\).*");
     protected static final Pattern TRACK_NUMBER_PATTERN = Pattern.compile("(\\d+)/\\d+");
     protected static final Pattern YEAR_NUMBER_PATTERN = Pattern.compile("(\\d{4}).*");
+    private static final Pattern LEADING_TRACK_NUMBER_PATTERN = Pattern.compile("^\\d{2}[. -]+");
 
     /**
      * Parses meta data for the given file.
@@ -144,7 +145,7 @@ public abstract class MetaDataParser {
     }
 
     private boolean isRoot(Path file) {
-        return getMediaFolderService().getAllMusicFolders(false, true).parallelStream()
+        return getMediaFolderService().getAllMusicFolders(false, true).stream()
                 .anyMatch(folder -> file.equals(folder.getPath()));
     }
 
@@ -287,11 +288,21 @@ public abstract class MetaDataParser {
         title = title.trim();
 
         // Don't remove numbers if true track number is missing, or if title does not start with it.
-        if (trackNumber == null || !title.matches("0?" + trackNumber + "[. -].*")) {
+        if (trackNumber == null || !startsWithTrackNumber(title, trackNumber.toString())) {
             return title;
         }
 
-        String result = title.replaceFirst("^\\d{2}[. -]+", "");
+        String result = LEADING_TRACK_NUMBER_PATTERN.matcher(title).replaceFirst("");
         return result.isEmpty() ? title : result;
+    }
+
+    /** Whether the title starts with the (optionally zero-padded) track number and a separator. Runs per scanned file. */
+    private static boolean startsWithTrackNumber(String title, String trackNumber) {
+        return isFollowedBySeparator(title, trackNumber, 0) || (title.startsWith("0") && isFollowedBySeparator(title, trackNumber, 1));
+    }
+
+    private static boolean isFollowedBySeparator(String title, String trackNumber, int offset) {
+        int end = offset + trackNumber.length();
+        return title.startsWith(trackNumber, offset) && end < title.length() && ". -".indexOf(title.charAt(end)) >= 0;
     }
 }

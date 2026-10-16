@@ -32,6 +32,7 @@ public class HlsSession {
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(Util.getDaemonThreadfactory("hls-destroy-session"));
 
     private static final long SESSION_TIMEOUT_SECONDS = 120L;
+    private static final long SEGMENT_POLL_MILLIS = 200L;
 
     private final Key sessionKey;
 
@@ -73,9 +74,12 @@ public class HlsSession {
             }
         }
         long timeout = currentTimeMillis() + timeoutMillis;
-        while (segment == null && currentTimeMillis() < timeout && isProcessAlive()) {
+        if (segment == null) {
             this.LOG.debug("Segment {} not yet produced. Waiting.", segmentIndex);
-            Thread.sleep(2000L);
+        }
+        // ffmpeg writes a segment every few seconds; a short poll keeps start and seek latency low
+        while (segment == null && currentTimeMillis() < timeout && isProcessAlive()) {
+            Thread.sleep(SEGMENT_POLL_MILLIS);
             segment = getSegment(segmentIndex);
         }
         if (segment != null) {

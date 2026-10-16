@@ -91,7 +91,7 @@ public class PodcastSettingsController {
         command.getRules().add(new PodcastRule(new PodcastChannelRule(-1, settingsService.getPodcastUpdateInterval(), settingsService.getPodcastEpisodeRetentionCount(), settingsService.getPodcastEpisodeDownloadCount()), "DEFAULT"));
 
         command.setNewRule(new PodcastRule());
-        command.setNoRuleChannels(channels.parallelStream()
+        command.setNoRuleChannels(channels.stream()
                 .filter(c -> rules.stream().noneMatch(r -> r.getId().equals(c.getId())))
                 .map(c -> new PodcastRule(c.getId(), c.getTitle()))
                 .collect(toList()));

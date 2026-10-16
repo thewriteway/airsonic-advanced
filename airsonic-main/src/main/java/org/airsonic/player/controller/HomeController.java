@@ -88,7 +88,7 @@ public class HomeController {
         }
 
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(user.getUsername(), userSettings.getSelectedMusicFolderId());
-        MusicFolder selectedMusicFolder = musicFolders.parallelStream().filter(f -> f.getId().equals(userSettings.getSelectedMusicFolderId())).findAny().orElse(null);
+        MusicFolder selectedMusicFolder = musicFolders.stream().filter(f -> f.getId().equals(userSettings.getSelectedMusicFolderId())).findAny().orElse(null);
 
         HomeCommand command = new HomeCommand();
         List<Album> albums = Collections.emptyList();

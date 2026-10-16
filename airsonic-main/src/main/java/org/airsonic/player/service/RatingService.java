@@ -24,22 +24,20 @@ import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.entity.UserRating;
 import org.airsonic.player.repository.MediaFileRepository;
+import org.airsonic.player.repository.OffsetBasedPageRequest;
 import org.airsonic.player.repository.UserRatingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.groupingBy;
 
 /**
  * Provides services for user ratings.
@@ -72,21 +70,25 @@ public class RatingService {
         if (count < 1 || musicFolders.isEmpty()) {
             return Collections.emptyList();
         }
-        Map<Integer, Double> averagePerMediaFileId = userRatingRepository.findAll().stream().collect(groupingBy(UserRating::getMediaFileId, Collectors.averagingDouble(UserRating::getRating)));
-
-        List<MediaFile> sortedAlbums = averagePerMediaFileId.entrySet().stream().map(entry -> {
-            return mediaFileRepository.findByIdAndFolderInAndMediaTypeAndPresentTrue(entry.getKey(), musicFolders, MediaFile.MediaType.ALBUM).map(file -> {
-                file.setAverageRating(entry.getValue());
-                return file;
-            }).orElse(null);
-        }).filter(file -> Objects.nonNull(file) && securityService.isReadAllowed(file, true))
-            .sorted(Comparator.comparing(MediaFile::getAverageRating).reversed())
-            .collect(Collectors.toList());
-
-        if (offset >= sortedAlbums.size()) {
+        // the database averages, orders and pages; only the page's albums are loaded
+        List<Object[]> averages = userRatingRepository.findAverageRatings(musicFolders, MediaFile.MediaType.ALBUM,
+                new OffsetBasedPageRequest(offset, count));
+        if (averages.isEmpty()) {
             return Collections.emptyList();
         }
-        return sortedAlbums.subList(offset, Math.min(offset + count, sortedAlbums.size()));
+        Map<Integer, MediaFile> albumsById = mediaFileRepository
+                .findAllById(averages.stream().map(row -> (Integer) row[0]).toList()).stream()
+                .collect(Collectors.toMap(MediaFile::getId, Function.identity()));
+
+        List<MediaFile> result = new ArrayList<>(averages.size());
+        for (Object[] row : averages) {
+            MediaFile album = albumsById.get((Integer) row[0]);
+            if (album != null && securityService.isReadAllowed(album, true)) {
+                album.setAverageRating(((Number) row[1]).doubleValue());
+                result.add(album);
+            }
+        }
+        return result;
     }
 
     /**
@@ -153,9 +155,7 @@ public class RatingService {
         if (musicFolders.isEmpty()) {
             return 0;
         }
-        List<MediaFile> albums = mediaFileRepository.findByFolderInAndMediaTypeAndPresentTrue(musicFolders, MediaFile.MediaType.ALBUM, PageRequest.of(0, Integer.MAX_VALUE));
-
-        return userRatingRepository.countByUsernameAndMediaFileIdIn(username, albums.stream().map(MediaFile::getId).toList());
+        return userRatingRepository.countRatedByUsername(username, musicFolders, MediaFile.MediaType.ALBUM);
     }
 
 }

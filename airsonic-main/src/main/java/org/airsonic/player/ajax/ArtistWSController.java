@@ -48,7 +48,7 @@ public class ArtistWSController {
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username);
 
         MediaFile artist = mediaFileService.getMediaFile(mediaFileId);
-        return lastFmService.getSimilarArtistsByMediaFile(artist, limit, false, musicFolders).parallelStream()
+        return lastFmService.getSimilarArtistsByMediaFile(artist, limit, false, musicFolders).stream()
                 .map(similarArtist -> new SimilarArtist(similarArtist.getId(), similarArtist.getName()))
                 .toList();
     }

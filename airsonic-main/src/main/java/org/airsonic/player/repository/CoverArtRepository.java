@@ -27,6 +27,22 @@ public interface CoverArtRepository extends JpaRepository<CoverArt, CoverArtKey>
     public void deleteByEntityTypeAndEntityId(EntityType entityType, Integer entityId);
 
     /**
+     * Deletes cover art whose album, artist or media file is missing or no longer present.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Transactional
+    @Query("DELETE FROM CoverArt c WHERE "
+            + "(c.entityType = :album AND NOT EXISTS (SELECT 1 FROM Album a WHERE a.id = c.entityId AND a.present = true)) OR "
+            + "(c.entityType = :artist AND NOT EXISTS (SELECT 1 FROM Artist a WHERE a.id = c.entityId AND a.present = true)) OR "
+            + "(c.entityType = :mediaFile AND NOT EXISTS (SELECT 1 FROM MediaFile m WHERE m.id = c.entityId AND m.present = true))")
+    public int deleteOrphaned(@Param("album") EntityType album, @Param("artist") EntityType artist,
+            @Param("mediaFile") EntityType mediaFile);
+
+    public default int deleteOrphaned() {
+        return deleteOrphaned(EntityType.ALBUM, EntityType.ARTIST, EntityType.MEDIA_FILE);
+    }
+
+    /**
      * Rewrites the path separators of all cover art paths in the given folder, e.g. from
      * backslash to slash when a library scanned on Windows is migrated to a Linux host.
      */

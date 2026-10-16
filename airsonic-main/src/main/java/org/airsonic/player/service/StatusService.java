@@ -154,7 +154,7 @@ public class StatusService {
     }
 
     public void cleanupRemotePlays() {
-        Set<PlayStatus> expired = remotePlays.values().parallelStream().filter(PlayStatus::isExpired)
+        Set<PlayStatus> expired = remotePlays.values().stream().filter(PlayStatus::isExpired)
                 .collect(Collectors.toSet());
         expired.forEach(e -> {
             remotePlays.remove(e.getPlayer().getId());
@@ -250,7 +250,7 @@ public class StatusService {
      * @return a list of inactive play statuses
      */
     public List<PlayStatus> getInactivePlayStatuses() {
-        Map<Integer, PlayStatus> inactivePlayStatuses = inactiveStreamStatuses.values().parallelStream()
+        Map<Integer, PlayStatus> inactivePlayStatuses = inactiveStreamStatuses.values().stream()
                 .map(ts -> getPlayStatus(ts))
                 .collect(Collectors.toMap(s -> s.getPlayer().getId(), s -> s));
         inactivePlayStatuses.putAll(remotePlays);

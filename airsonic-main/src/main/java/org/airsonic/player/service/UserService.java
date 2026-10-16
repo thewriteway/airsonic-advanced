@@ -16,7 +16,7 @@ public interface UserService {
     /**
      * Get system administrator user, which system operations perform on behalf.
      *
-     * @return system admin.
+     * @return system admin, or {@code null} if there is no admin user.
      */
     User getSysAdmin();
 

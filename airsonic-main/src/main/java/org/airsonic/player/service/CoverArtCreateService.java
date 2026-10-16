@@ -253,7 +253,7 @@ public class CoverArtCreateService {
     @Nonnull
     public BufferedImage createPlaylistImage(PlaylistCoverArtRequest request, int size) {
         List<MediaFile> albums = playlistService.getFilesInPlaylist(request.getPlaylist().getId())
-                .parallelStream()
+                .stream()
                 .map(mediaFileService::getParentOf)
                 .filter(album -> album != null && !mediaFileService.isRoot(album))
                 .distinct()

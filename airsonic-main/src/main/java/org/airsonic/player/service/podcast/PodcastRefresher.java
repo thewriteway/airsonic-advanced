@@ -209,7 +209,7 @@ public class PodcastRefresher {
 
         AtomicInteger counter = new AtomicInteger(downloadCount);
 
-        episodeElements.parallelStream()
+        episodeElements.stream()
                 .map(episodeElement -> {
                     String title = StringUtil.removeMarkup(episodeElement.getChildTextTrim("title"));
                     String guid = StringUtil.removeMarkup(episodeElement.getChildTextTrim("guid"));
@@ -276,8 +276,8 @@ public class PodcastRefresher {
                     return podcastPersistenceService.createEpisode(channel, guid, url, title, description, date, duration, length);
                 })
                 .filter(Objects::nonNull)
-                // Sort episode in reverse chronological order (newest first)
-                .sorted(Comparator.comparing((PodcastEpisode episode) -> episode.getPublishDate()).reversed())
+                // Sort episode in reverse chronological order (newest first), undated episodes last
+                .sorted(Comparator.comparing(PodcastEpisode::getPublishDate, Comparator.nullsFirst(Comparator.<Instant>naturalOrder())).reversed())
                 .forEachOrdered(episode -> {
                     if (counter.decrementAndGet() < 0) {
                         episode.setStatus(PodcastStatus.SKIPPED);

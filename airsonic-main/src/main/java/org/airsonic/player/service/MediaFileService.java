@@ -367,11 +367,11 @@ public class MediaFileService {
         // Make sure children are stored and up-to-date in the database.
         try {
             if (!minimizeDiskAccess) {
-                resultStream = Optional.ofNullable(updateChildren(parent)).map(x -> x.parallelStream()).orElse(null);
+                resultStream = Optional.ofNullable(updateChildren(parent)).map(x -> x.stream()).orElse(null);
             }
 
             if (resultStream == null) {
-                resultStream = mediaFileRepository.findByFolderAndParentPathAndPresentTrue(parent.getFolder(), parent.getPath(), Sort.by("startPosition")).parallelStream()
+                resultStream = mediaFileRepository.findByFolderAndParentPathAndPresentTrue(parent.getFolder(), parent.getPath(), Sort.by("startPosition")).stream()
                         .map(x -> checkLastModified(x, minimizeDiskAccess))
                         .filter(this::includeMediaFile);
             }
@@ -549,7 +549,7 @@ public class MediaFileService {
      */
     public boolean isRoot(MediaFile mediaFile) {
         return StringUtils.isEmpty(mediaFile.getPath()) &&
-                mediaFolderService.getAllMusicFolders(true, true).parallelStream()
+                mediaFolderService.getAllMusicFolders(true, true).stream()
                         .anyMatch(x -> mediaFile.getFolder().getId().equals(x.getId()));
     }
 
@@ -766,7 +766,7 @@ public class MediaFileService {
         }
 
         MusicFolder folder = parent.getFolder();
-        Map<Pair<String, Double>, MediaFile> storedChildrenMap = mediaFileRepository.findByFolderAndParentPath(folder, parent.getPath(), Sort.by("startPosition")).parallelStream()
+        Map<Pair<String, Double>, MediaFile> storedChildrenMap = mediaFileRepository.findByFolderAndParentPath(folder, parent.getPath(), Sort.by("startPosition")).stream()
             .collect(Collectors.toConcurrentMap(i -> Pair.of(i.getPath(), i.getStartPosition()), i -> i));
 
         boolean isEnableCueIndexing = settingsService.getEnableCueIndexing();
@@ -821,7 +821,7 @@ public class MediaFileService {
 
         // cue tracks
         if (isEnableCueIndexing) {
-            List<MediaFile> indexedTracks = cueSheets.entrySet().parallelStream().flatMap(e -> {
+            List<MediaFile> indexedTracks = cueSheets.entrySet().stream().flatMap(e -> {
                 String indexPath = e.getKey();
                 CueSheet cueSheet = e.getValue();
 
@@ -848,7 +848,7 @@ public class MediaFileService {
         }
 
         // m4b audio books
-        List<MediaFile> audioBookTracks = audioBooks.entrySet().parallelStream().flatMap(e -> {
+        List<MediaFile> audioBookTracks = audioBooks.entrySet().stream().flatMap(e -> {
             String basePath = e.getKey();
             MediaFile base = e.getValue();
             List<MediaFile> tracks = createAudioBookTracks(base);
@@ -863,7 +863,7 @@ public class MediaFileService {
         result.addAll(audioBookTracks);
 
         // remove indexPath for deleted cuesheets, if any
-        List<MediaFile> nonIndexedTracks = bareFiles.values().stream().parallel()
+        List<MediaFile> nonIndexedTracks = bareFiles.values().stream()
             .map(m -> {
                 if (m.hasIndex()) {
                     m.setIndexPath(null);
@@ -1037,8 +1037,8 @@ public class MediaFileService {
             // Is this an album?
             if (!isRoot(mediaFile)) {
                 try (Stream<Path> stream = Files.list(file)) {
-                    List<Path> children = stream.parallel().toList();
-                    Path firstChild = children.parallelStream()
+                    List<Path> children = stream.toList();
+                    Path firstChild = children.stream()
                             .filter(this::includeMediaFileByPath)
                             .filter(x -> Files.isRegularFile(x))
                             .findFirst().orElse(null);
@@ -1100,7 +1100,7 @@ public class MediaFileService {
             // get existing children
             MusicFolder baseFolder = base.getFolder();
             String basePath = base.getPath();
-            storedChildrenMap = mediaFileRepository.findByFolderAndPath(baseFolder, basePath).parallelStream()
+            storedChildrenMap = mediaFileRepository.findByFolderAndPath(baseFolder, basePath).stream()
                     .filter(MediaFile::isIndexedTrack)
                     .collect(Collectors.toConcurrentMap(i -> Math.round(i.getStartPosition() * 10), i -> i));
 
@@ -1177,7 +1177,7 @@ public class MediaFileService {
     @Nonnull
     private List<MediaFile> createIndexedTracks(@Nonnull MediaFile base, @Nullable CueSheet cueSheet) {
 
-        Map<Pair<String, Double>, MediaFile> storedChildrenMap = mediaFileRepository.findByFolderAndPath(base.getFolder(), base.getPath()).parallelStream()
+        Map<Pair<String, Double>, MediaFile> storedChildrenMap = mediaFileRepository.findByFolderAndPath(base.getFolder(), base.getPath()).stream()
             .filter(MediaFile::isIndexedTrack).collect(Collectors.toConcurrentMap(i -> Pair.of(i.getPath(), i.getStartPosition()), i -> i));
 
         List<MediaFile> children = new ArrayList<>();
@@ -1435,7 +1435,7 @@ public class MediaFileService {
 
     private Path findFileCover(Collection<Path> candidates) {
         for (String mask : settingsService.getCoverArtFileTypesSet()) {
-            Path cand = candidates.parallelStream().filter(c -> {
+            Path cand = candidates.stream().filter(c -> {
                 String candidate = c.getFileName().toString().toLowerCase();
                 return candidate.endsWith(mask) && !candidate.startsWith(".") && Files.isRegularFile(c);
             }).findAny().orElse(null);
@@ -1639,7 +1639,7 @@ public class MediaFileService {
             return true;
         }
         try {
-            paths.entrySet().parallelStream().map(e -> {
+            paths.entrySet().stream().map(e -> {
                 MusicFolder folder = mediaFolderService.getMusicFolderById(e.getKey());
                 if (folder == null) {
                     return true;
@@ -1647,7 +1647,7 @@ public class MediaFileService {
                 Set<String> pathsInFolder = e.getValue();
                 int batches = (pathsInFolder.size() - 1) / BATCH_SIZE;
                 List<String> pathsInFolderList = new ArrayList<>(pathsInFolder);
-                Integer savedCount = IntStream.rangeClosed(0, batches).parallel().map(b -> {
+                Integer savedCount = IntStream.rangeClosed(0, batches).map(b -> {
                     try {
                         List<String> subList = pathsInFolderList.subList(b * BATCH_SIZE, Math.min((b + 1) * BATCH_SIZE, pathsInFolderList.size()));
                         return mediaFileRepository.markPresent(folder, subList, lastScanned);

@@ -19,6 +19,7 @@
  */
 package org.airsonic.player.service;
 
+import com.google.common.util.concurrent.Striped;
 import org.airsonic.player.command.PlayerSettingsCommand;
 import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.Player;
@@ -48,6 +49,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Provides services for maintaining the set of players.
@@ -68,6 +71,7 @@ public class PlayerService {
 
     private static final String COOKIE_NAME = "player";
     private static final int COOKIE_EXPIRY = 365 * 24 * 3600; // One year
+    private static final Duration LAST_SEEN_RESOLUTION = Duration.ofMinutes(1);
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerService.class);
 
@@ -87,6 +91,8 @@ public class PlayerService {
     }
 
     private final Map<Integer, PlayQueue> playlists = new ConcurrentHashMap<>();
+
+    private final Striped<Lock> playerLocks = Striped.lock(64);
 
     /**
      * Adds a playlist to the given player.
@@ -118,7 +124,7 @@ public class PlayerService {
         return getPlayer(request, response, null, username, remoteControlEnabled, isStreamRequest);
     }
 
-    public synchronized Player getPlayer(HttpServletRequest request, HttpServletResponse response,
+    public Player getPlayer(HttpServletRequest request, HttpServletResponse response,
             Integer playerId, String username, boolean remoteControlEnabled, boolean isStreamRequest) throws Exception {
         return getPlayer(request, response, playerId, username, request.getHeader("user-agent"), remoteControlEnabled, isStreamRequest, false);
     }
@@ -137,7 +143,19 @@ public class PlayerService {
      * @param isWebSocketRequest   Whether the HTTP request is a request for a WebSocket.
      * @return The player associated with the given HTTP request. Never <code>null</code>.
      */
-    public synchronized Player getPlayer(HttpServletRequest request, HttpServletResponse response,
+    public Player getPlayer(HttpServletRequest request, HttpServletResponse response,
+            Integer playerId, String username, String userAgent, boolean remoteControlEnabled, boolean isStreamRequest, boolean isWebSocketRequest) throws Exception {
+        // players are looked up and created per user and address, so only requests of the same client wait for each other
+        Lock lock = playerLocks.get(username + "@" + request.getRemoteAddr());
+        lock.lock();
+        try {
+            return findOrCreatePlayer(request, response, playerId, username, userAgent, remoteControlEnabled, isStreamRequest, isWebSocketRequest);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private Player findOrCreatePlayer(HttpServletRequest request, HttpServletResponse response,
             Integer playerId, String username, String userAgent, boolean remoteControlEnabled, boolean isStreamRequest, boolean isWebSocketRequest) throws Exception {
 
         Player player = getPlayerById(playerId);
@@ -214,9 +232,14 @@ public class PlayerService {
             isUpdate = true;
         }
         if (isStreamRequest) {
-            player.setType(userAgent);
-            player.setLastSeen(Instant.now());
-            isUpdate = true;
+            // every stream request would otherwise be a database write; lastSeen only needs to be roughly current
+            Instant now = Instant.now();
+            if (!Strings.CS.equals(userAgent, player.getType()) || player.getLastSeen() == null
+                    || player.getLastSeen().isBefore(now.minus(LAST_SEEN_RESOLUTION))) {
+                player.setType(userAgent);
+                player.setLastSeen(now);
+                isUpdate = true;
+            }
         }
 
         return isUpdate;

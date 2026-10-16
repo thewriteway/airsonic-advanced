@@ -13,4 +13,14 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByEmail(String email);
 
+    /**
+     * Returns the system administrator, which system operations are performed on behalf of: the "admin"
+     * user if it still has the admin role, otherwise any admin.
+     */
+    default Optional<User> findSysAdmin() {
+        return findByUsername(User.USERNAME_ADMIN)
+                .filter(User::isAdminRole)
+                .or(() -> findAll().stream().filter(User::isAdminRole).findFirst());
+    }
+
 }
