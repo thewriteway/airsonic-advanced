@@ -264,7 +264,7 @@ public class PlaylistService {
             p.setChanged(Instant.now());
             playlistRepository.save(p);
             return p;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     /**

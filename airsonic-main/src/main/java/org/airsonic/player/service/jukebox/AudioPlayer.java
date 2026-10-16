@@ -19,7 +19,7 @@
  */
 package org.airsonic.player.service.jukebox;
 
-import org.airsonic.player.util.FileUtil;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +67,7 @@ public class AudioPlayer implements AutoCloseable {
                 gainControl = (FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN);
                 setGain(DEFAULT_GAIN);
             }
-            new AudioDataWriter();
+            new Thread(new AudioDataWriter(), "AudioPlayerDataWriter").start();
         } catch (Throwable x) {
             LOG.warn("Failed to open audio line", x);
             close();
@@ -121,7 +121,7 @@ public class AudioPlayer implements AutoCloseable {
         } catch (Throwable x) {
             LOG.warn("Failed to close player: {}", x, x);
         }
-        FileUtil.closeQuietly(in);
+        IOUtils.closeQuietly(in);
     }
 
     /**
@@ -166,10 +166,6 @@ public class AudioPlayer implements AutoCloseable {
     }
 
     private class AudioDataWriter implements Runnable {
-
-        public AudioDataWriter() {
-            new Thread(this).start();
-        }
 
         @Override
         public void run() {

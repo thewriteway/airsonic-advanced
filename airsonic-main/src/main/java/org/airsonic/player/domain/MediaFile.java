@@ -34,8 +34,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * A media file (audio, video or directory) with an assortment of its meta data.
@@ -558,13 +556,6 @@ public class MediaFile {
         return getName();
     }
 
-    public static List<Integer> toIdList(List<MediaFile> from) {
-        return from.stream().map(toId()).collect(Collectors.toList());
-    }
-
-    public static Function<MediaFile, Integer> toId() {
-        return from -> from.getId();
-    }
 
     public static final double NOT_INDEXED = -1.0;
 

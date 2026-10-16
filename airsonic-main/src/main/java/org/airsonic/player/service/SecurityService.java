@@ -405,12 +405,12 @@ public class SecurityService implements UserDetailsService {
     }
 
     public static List<GrantedAuthority> getGrantedAuthorities(User user) {
-        return Stream.concat(
+        return Stream.<GrantedAuthority>concat(
                 Stream.of(
                         new SimpleGrantedAuthority("IS_AUTHENTICATED_ANONYMOUSLY"),
                         new SimpleGrantedAuthority("ROLE_USER")),
                 user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role.name())))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static final String decodeCredentials(UserCredential reversibleCred) {

@@ -9,11 +9,13 @@ import org.airsonic.player.io.PipeStreams.PipedInputStream;
 import org.airsonic.player.io.PipeStreams.PipedOutputStream;
 import org.airsonic.player.util.FileUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -143,5 +145,26 @@ public class PipeStreamsTest {
         }
 
         assertThat(eventSet).containsOnly("inputStreamOpened", "statusClosed");
+    }
+
+    @Test
+    @Timeout(10)
+    public void connectedOutputCanBeHandedToWriterThread() throws Exception {
+        byte[] data = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+        PipedInputStream pin = new PipedInputStream(null, 4);
+        PipedOutputStream pout = PipeStreams.connectedOutput(pin);
+
+        Thread writer = new Thread(() -> {
+            try (PipedOutputStream out = pout) {
+                out.write(data);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+        writer.start();
+
+        // the pipe is connected before the writer starts, so reading needs no wait for the writer to connect
+        assertThat(pin.readAllBytes()).containsExactly(data);
+        writer.join();
     }
 }

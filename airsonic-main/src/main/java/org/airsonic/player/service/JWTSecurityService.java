@@ -36,7 +36,6 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -74,7 +73,7 @@ public class JWTSecurityService {
                 .withIssuer("airsonic")
                 .withSubject(user)
                 .withClaim(CLAIM_PATH, pathClaim)
-                .withExpiresAt(Date.from(expireDate));
+                .withExpiresAt(expireDate);
 
         for (Entry<String, String> claim : additionalClaims.entrySet()) {
             builder = builder.withClaim(claim.getKey(), claim.getValue());
@@ -131,8 +130,7 @@ public class JWTSecurityService {
     public static Instant getExpiration(JWTAuthenticationToken auth) {
         return Optional.ofNullable(auth)
                 .map(x -> (DecodedJWT) x.getDetails())
-                .map(x -> x.getExpiresAt())
-                .map(x -> x.toInstant())
+                .map(x -> x.getExpiresAtAsInstant())
                 .orElse(null);
     }
 }

@@ -23,6 +23,7 @@ package org.airsonic.player.controller;
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
 import org.airsonic.player.domain.*;
+import org.airsonic.player.io.PipeStreams;
 import org.airsonic.player.io.PipeStreams.MonitoredInputStream;
 import org.airsonic.player.io.PipeStreams.PipedInputStream;
 import org.airsonic.player.io.PipeStreams.PipedOutputStream;
@@ -317,11 +318,13 @@ public class StreamController {
 
         return new ShoutcastDetails(new PipedInputStream(), (i, s) -> {
             PipedInputStream pin = (PipedInputStream) i;
+            // connect before the feeder thread starts, so the reader never sees an unconnected pipe
+            PipedOutputStream pipeOut = PipeStreams.connectedOutput(pin);
 
             // start a new thread to feed data in
             new Thread(() -> {
                 try (InputStream in = input;
-                        PipedOutputStream pout = new PipedOutputStream(pin);
+                        PipedOutputStream pout = pipeOut;
                         ShoutCastOutputStream shout = new ShoutCastOutputStream(pout,
                             () -> Optional.ofNullable(s)
                                     .map(TransferStatus::getMediaFile)
@@ -332,19 +335,6 @@ public class StreamController {
                     LOG.debug("Error with output to Shoutcast stream", e);
                 }
             }, "ShoutcastStreamDatafeed").start();
-
-            // wait for src data thread to connect
-            while (pin.source == null) {
-                // sit and wait and ponder life
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    LOG.debug("Interrupted while waiting for PipedInputStream to connect", e);
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                LOG.debug("Waiting for a source {}", pin.source == null);
-            }
         }, responseHeaders);
     }
 

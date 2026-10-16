@@ -21,6 +21,7 @@
 package org.airsonic.player.controller;
 
 import org.airsonic.player.domain.*;
+import org.airsonic.player.io.PipeStreams;
 import org.airsonic.player.io.PipeStreams.MonitoredResource;
 import org.airsonic.player.io.PipeStreams.PipedInputStream;
 import org.airsonic.player.io.PipeStreams.PipedOutputStream;
@@ -252,10 +253,12 @@ public class DownloadController {
             // zip to out
             BiConsumer<InputStream, TransferStatus> poutInit = (input, status) -> {
                 PipedInputStream pin = (PipedInputStream) input;
+                // connect before the feeder thread starts, so the reader never sees an unconnected pipe
+                PipedOutputStream pipeOut = PipeStreams.connectedOutput(pin);
 
                 // start a new thread to feed data in
                 new Thread(() -> {
-                    try (PipedOutputStream pout = new PipedOutputStream(pin);
+                    try (PipedOutputStream pout = pipeOut;
                             ZipOutputStream zout = new ZipOutputStream(pout)) {
                         zout.setMethod(ZipOutputStream.STORED); // No compression.
                         pathsToZip.stream().forEach(LambdaUtils.uncheckConsumer(f -> {
@@ -280,11 +283,6 @@ public class DownloadController {
                         LOG.debug("Error with output to zip", e1);
                     }
                 }, "DownloadControllerDatafeed").start();
-
-                // wait for src data thread to connect
-                while (pin.source == null) {
-                    // sit and wait and ponder life
-                }
             };
 
             long size = zipSize(pathsToZip.stream().map(e -> e.getRight()));

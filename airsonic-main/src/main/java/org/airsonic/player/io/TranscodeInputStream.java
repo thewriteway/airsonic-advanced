@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.io;
 
-import org.airsonic.player.util.FileUtil;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,16 +72,13 @@ public class TranscodeInputStream extends InputStream {
 
         // Copy data in a separate thread
         if (in != null) {
-            new Thread(name + " TranscodedInputStream copy thread") {
-                @Override
-                public void run() {
-                    try (InputStream source = in; OutputStream sink = processOutputStream) {
-                        IOUtils.copy(source, sink);
-                    } catch (IOException x) {
-                        // Intentionally ignored. Will happen if the remote player closes the stream.
-                    }
+            new Thread(() -> {
+                try (InputStream source = in; OutputStream sink = processOutputStream) {
+                    IOUtils.copy(source, sink);
+                } catch (IOException x) {
+                    // Intentionally ignored. Will happen if the remote player closes the stream.
                 }
-            }.start();
+            }, name + " TranscodedInputStream copy thread").start();
         }
     }
 
@@ -119,8 +115,8 @@ public class TranscodeInputStream extends InputStream {
      */
     @Override
     public void close() {
-        FileUtil.closeQuietly(processInputStream);
-        FileUtil.closeQuietly(processOutputStream);
+        IOUtils.closeQuietly(processInputStream);
+        IOUtils.closeQuietly(processOutputStream);
 
         if (process != null) {
             process.destroy();

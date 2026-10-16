@@ -116,13 +116,13 @@ public class StatusService {
                 snapshot.stream(),
                 inactiveStreamStatuses.values().stream()
                         .filter(s -> !playerIds.contains(s.getPlayer().getId())))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<TransferStatus> getStreamStatusesForPlayer(Player player) {
         return streamStatuses.stream()
                 .filter(s -> s.getPlayer().getId().equals(player.getId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public TransferStatus getInactiveStreamStatusForPlayer(Player player) {
@@ -241,7 +241,7 @@ public class StatusService {
     public List<PlayStatus> getActivePlayStatuses() {
         return activeLocalPlays.stream()
                 .filter(this::isAvailable)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -257,7 +257,7 @@ public class StatusService {
 
         return inactivePlayStatuses.values().stream()
                 .filter(s -> isAvailable(s))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
