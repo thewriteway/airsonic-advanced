@@ -19,14 +19,15 @@
  */
 package org.airsonic.player.util;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.primitives.Ints;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.ser.std.ToStringSerializer;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -62,7 +63,14 @@ public final class Util {
         if (list.size() == Integer.MAX_VALUE) {
             return list.stream().skip(offset).limit(max).collect(toList());
         }
-        return list.subList(Math.min(list.size(), Ints.saturatedCast(offset)), Math.min(list.size(), Ints.saturatedCast(offset + max)));
+        return list.subList(Math.min(list.size(), saturatedCast(offset)), Math.min(list.size(), saturatedCast(offset + max)));
+    }
+
+    /**
+     * Converts a long to an int, clamping values outside the int range to {@link Integer#MIN_VALUE} or {@link Integer#MAX_VALUE}.
+     */
+    public static int saturatedCast(long value) {
+        return Math.clamp(value, Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     public static int[] toIntArray(List<Integer> values) {
@@ -76,9 +84,19 @@ public final class Util {
         return result;
     }
 
-    private static ObjectMapper objectMapper = new ObjectMapper()
-            .findAndRegisterModules()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final ObjectMapper objectMapper = jsonMapperBuilder()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build();
+
+    /**
+     * Returns a mapper builder that writes the same JSON as Jackson 2 did. Some of this JSON is stored in
+     * the database, so it must stay readable by older versions. Jackson 3 writes {@link Locale} as a
+     * language tag ({@code pt-BR}), whereas Jackson 2 used {@link Locale#toString()} ({@code pt_BR}).
+     */
+    public static JsonMapper.Builder jsonMapperBuilder() {
+        return JsonMapper.builderWithJackson2Defaults()
+                .addModule(new SimpleModule("LocaleAsToString").addSerializer(Locale.class, ToStringSerializer.instance));
+    }
 
     public static ObjectMapper getObjectMapper() {
         return objectMapper;
@@ -139,13 +157,6 @@ public final class Util {
         }
     }
 
-    public static String toJson(Object object, SerializationFeature feature) {
-        try {
-            return objectMapper.writer(feature).writeValueAsString(object);
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     public static Map<String, String> objectToStringMap(Object object) {
         return objectMapper.convertValue(object, new TypeReference<Map<String, String>>() {});

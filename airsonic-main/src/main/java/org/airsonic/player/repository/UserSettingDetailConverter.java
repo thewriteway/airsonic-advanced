@@ -18,21 +18,20 @@
  */
 package org.airsonic.player.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.airsonic.player.domain.entity.UserSettingDetail;
+import org.airsonic.player.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.AttributeConverter;
 
 public class UserSettingDetailConverter implements AttributeConverter<UserSettingDetail, String> {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = Util.jsonMapperBuilder().build();
 
     private UserSettingDetailConverter() {
-        objectMapper.registerModule(new JavaTimeModule());
     }
 
     private static Logger LOG = LoggerFactory.getLogger(UserSettingDetailConverter.class);
@@ -41,7 +40,7 @@ public class UserSettingDetailConverter implements AttributeConverter<UserSettin
     public String convertToDatabaseColumn(UserSettingDetail setting) {
         try {
             return setting == null ? null : objectMapper.writeValueAsString(setting);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             LOG.warn("Failed to convert settings column of user_settings to json", e);
             return null;
         }
@@ -51,7 +50,7 @@ public class UserSettingDetailConverter implements AttributeConverter<UserSettin
     public UserSettingDetail convertToEntityAttribute(String setting) {
         try {
             return setting == null ? null : objectMapper.readValue(setting, UserSettingDetail.class);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             LOG.warn("Failed to convert user setting detail from json", e);
             return null;
         }

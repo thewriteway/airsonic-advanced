@@ -110,11 +110,9 @@ public class NowPlayingApiTest extends AbstractRESTTest {
             .andExpect(jsonPath("$.subsonic-response.version").value(AIRSONIC_API_VERSION))
             .andReturn().getResponse().getContentAsString();
 
-        NowPlaying nowPlaying = objectMapper.readTree(response)
+        NowPlaying nowPlaying = objectMapper.treeToValue(objectMapper.readTree(response)
             .path("subsonic-response")
-            .path("nowPlaying")
-            .traverse(objectMapper)
-            .readValueAs(NowPlaying.class);
+            .path("nowPlaying"), NowPlaying.class);
 
         assertEquals(2, nowPlaying.getEntry().size());
         for (int i = 0; i < nowPlaying.getEntry().size(); i++) {
@@ -192,11 +190,9 @@ public class NowPlayingApiTest extends AbstractRESTTest {
             .andReturn().getResponse().getContentAsString();
 
         // deserialize response
-        NowPlaying nowPlaying = objectMapper.readTree(response)
+        NowPlaying nowPlaying = objectMapper.treeToValue(objectMapper.readTree(response)
             .path("subsonic-response")
-            .path("nowPlaying")
-            .traverse(objectMapper)
-            .readValueAs(NowPlaying.class);
+            .path("nowPlaying"), NowPlaying.class);
 
         // assertion
         assertTrue(nowPlaying.getEntry().isEmpty());

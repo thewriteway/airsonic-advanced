@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.controller;
 
-import com.google.common.net.MediaType;
 import org.airsonic.player.controller.SubsonicRESTController.APIException;
 import org.airsonic.player.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
@@ -181,17 +180,17 @@ public class JAXBWriter {
         boolean json = "json".equals(format);
         boolean jsonp = "jsonp".equals(format) && jsonpCallback != null;
         Marshaller marshaller;
-        MediaType type;
+        String type;
 
         if (json) {
             marshaller = createJsonMarshaller();
-            type = MediaType.JSON_UTF_8;
+            type = "application/json; charset=utf-8";
         } else if (jsonp) {
             marshaller = createJsonMarshaller();
-            type = MediaType.JAVASCRIPT_UTF_8;
+            type = "text/javascript; charset=utf-8";
         } else {
             marshaller = createXmlMarshaller();
-            type = MediaType.XML_UTF_8;
+            type = "text/xml; charset=utf-8";
         }
 
         StringWriter writer = new StringWriter();
@@ -208,7 +207,7 @@ public class JAXBWriter {
             throw new RuntimeException(x);
         }
 
-        return Pair.of(type.toString(), writer.toString());
+        return Pair.of(type, writer.toString());
     }
 
     public XMLGregorianCalendar convertDate(Instant date) {

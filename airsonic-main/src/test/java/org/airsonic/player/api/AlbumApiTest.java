@@ -18,9 +18,6 @@
  */
 package org.airsonic.player.api;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
@@ -49,6 +46,9 @@ import org.subsonic.restapi.AlbumID3;
 import org.subsonic.restapi.AlbumList;
 import org.subsonic.restapi.AlbumWithSongsID3;
 import org.subsonic.restapi.Child;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import jakarta.transaction.Transactional;
 
@@ -124,7 +124,7 @@ public class AlbumApiTest {
 
     MusicFolder testFolder = new MusicFolder(1, Paths.get("/test/folder"), "Test Folder", MusicFolder.Type.MEDIA, true, Instant.now());
 
-    ObjectMapper objectMapper = JsonMapper.builder()
+    ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults()
         .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
         .build();
 
@@ -187,12 +187,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumWithSongsID3 resultAlbumWithSongs = objectMapper
+        AlbumWithSongsID3 resultAlbumWithSongs = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("album")
-            .traverse(objectMapper)
-            .readValueAs(AlbumWithSongsID3.class);
+            .path("album"), AlbumWithSongsID3.class);
 
         // create expeced
         // testAlbumwithSongs.song is already added by mockMvc
@@ -239,12 +237,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumWithSongsID3 resultAlbumWithSongs = objectMapper
+        AlbumWithSongsID3 resultAlbumWithSongs = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("album")
-            .traverse(objectMapper)
-            .readValueAs(AlbumWithSongsID3.class);
+            .path("album"), AlbumWithSongsID3.class);
 
         assertAlbumWithSongs(testAlbumWithSongs, resultAlbumWithSongs);
     }
@@ -359,12 +355,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
 
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
@@ -398,12 +392,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -435,12 +427,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -472,12 +462,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -509,12 +497,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -546,12 +532,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -583,12 +567,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -622,12 +604,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -663,12 +643,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -700,12 +678,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -773,12 +749,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        AlbumList albumList = objectMapper
+        AlbumList albumList = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList")
-            .traverse(objectMapper)
-            .readValueAs(AlbumList.class);
+            .path("albumList"), AlbumList.class);
         assertEquals(1, albumList.getAlbum().size());
         assertChild(albumChild, albumList.getAlbum().get(0));
     }
@@ -815,12 +789,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -852,12 +824,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -889,12 +859,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -926,12 +894,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -963,12 +929,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -1002,12 +966,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -1043,12 +1005,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -1080,12 +1040,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -1117,12 +1075,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
@@ -1190,12 +1146,10 @@ public class AlbumApiTest {
             .getResponse()
             .getContentAsString();
 
-        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper
+        org.subsonic.restapi.AlbumList2 albumList2 = objectMapper.treeToValue(objectMapper
             .readTree(response)
             .path("subsonic-response")
-            .path("albumList2")
-            .traverse(objectMapper)
-            .readValueAs(org.subsonic.restapi.AlbumList2.class);
+            .path("albumList2"), org.subsonic.restapi.AlbumList2.class);
         assertEquals(1, albumList2.getAlbum().size());
         assertEquals(testJaxbAlbum.getId(), albumList2.getAlbum().get(0).getId());
     }
