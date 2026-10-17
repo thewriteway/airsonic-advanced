@@ -117,16 +117,15 @@
         },
         // restores a dropped connection (server restart, network change) with exponential backoff, 1s up to 30s
         __scheduleReconnect: function() {
-            var stompclient = this;
-            if (stompclient.manualDisconnect || stompclient.reconnectTimer != null) {
+            if (this.manualDisconnect || this.reconnectTimer != null) {
                 return;
             }
-            var delay = Math.min(30000, 1000 * Math.pow(2, stompclient.reconnectAttempts));
-            stompclient.reconnectAttempts++;
-            stompclient.reconnectTimer = setTimeout(function() {
-                stompclient.reconnectTimer = null;
-                if (stompclient.state == 'dc' && !stompclient.manualDisconnect) {
-                    stompclient.connect();
+            var delay = Math.min(30000, 1000 * Math.pow(2, this.reconnectAttempts));
+            this.reconnectAttempts++;
+            this.reconnectTimer = setTimeout(() => {
+                this.reconnectTimer = null;
+                if (this.state == 'dc' && !this.manualDisconnect) {
+                    this.connect();
                 }
             }, delay);
         },

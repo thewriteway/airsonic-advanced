@@ -173,7 +173,7 @@ public class CoverArtService {
     @Transactional
     public void expunge() {
         coverArtCache.clear();
-        int deleted = coverArtRepository.deleteOrphaned();
+        int deleted = coverArtRepository.deleteOrphaned(EntityType.ALBUM, EntityType.ARTIST, EntityType.MEDIA_FILE);
         LOG.debug("Expunged {} cover art entries", deleted);
     }
 

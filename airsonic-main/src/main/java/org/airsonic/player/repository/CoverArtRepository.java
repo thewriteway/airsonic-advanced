@@ -38,10 +38,6 @@ public interface CoverArtRepository extends JpaRepository<CoverArt, CoverArtKey>
     public int deleteOrphaned(@Param("album") EntityType album, @Param("artist") EntityType artist,
             @Param("mediaFile") EntityType mediaFile);
 
-    public default int deleteOrphaned() {
-        return deleteOrphaned(EntityType.ALBUM, EntityType.ARTIST, EntityType.MEDIA_FILE);
-    }
-
     /**
      * Rewrites the path separators of all cover art paths in the given folder, e.g. from
      * backslash to slash when a library scanned on Windows is migrated to a Linux host.

@@ -43,6 +43,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
 
 import jakarta.servlet.http.Cookie;
@@ -149,56 +150,71 @@ public class PlayerService {
         Lock lock = playerLocks.get(username + "@" + request.getRemoteAddr());
         lock.lock();
         try {
-            return findOrCreatePlayer(request, response, playerId, username, userAgent, remoteControlEnabled, isStreamRequest, isWebSocketRequest);
+            Player player = findRequestedPlayer(request, playerId, username, remoteControlEnabled, isWebSocketRequest);
+
+            // Look for player with same IP address and user name.
+            if (player == null) {
+                player = getNonRestPlayerByIpAddressAndUsername(request.getRemoteAddr(), username);
+            }
+
+            player = saveSeenPlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest);
+            rememberPlayer(request, response, player, username, remoteControlEnabled && !isWebSocketRequest);
+            return player;
         } finally {
             lock.unlock();
         }
     }
 
-    private Player findOrCreatePlayer(HttpServletRequest request, HttpServletResponse response,
-            Integer playerId, String username, String userAgent, boolean remoteControlEnabled, boolean isStreamRequest, boolean isWebSocketRequest) throws Exception {
-
+    /**
+     * Returns the player the request names by ID, 'player' parameter, session or cookie, unless it belongs to another user.
+     */
+    private Player findRequestedPlayer(HttpServletRequest request, Integer playerId, String username,
+            boolean remoteControlEnabled, boolean isWebSocketRequest) throws ServletRequestBindingException {
         Player player = getPlayerById(playerId);
 
-        // Find by 'player' request parameter.
-        if (!isWebSocketRequest && player == null) {
-            player = getPlayerById(ServletRequestUtils.getIntParameter(request, "player"));
-        }
-
-        // Find in session context.
-        if (!isWebSocketRequest && player == null && remoteControlEnabled) {
-            playerId = (Integer) request.getSession().getAttribute("player");
-            if (playerId != null) {
-                player = getPlayerById(playerId);
+        if (!isWebSocketRequest) {
+            // Find by 'player' request parameter.
+            if (player == null) {
+                player = getPlayerById(ServletRequestUtils.getIntParameter(request, "player"));
             }
-        }
-
-        // Find by cookie.
-        if (!isWebSocketRequest && player == null && remoteControlEnabled) {
-            player = getPlayerById(getPlayerIdFromCookie(request, username));
+            // Find in session context.
+            if (player == null && remoteControlEnabled) {
+                player = getPlayerById((Integer) request.getSession().getAttribute("player"));
+            }
+            // Find by cookie.
+            if (player == null && remoteControlEnabled) {
+                player = getPlayerById(getPlayerIdFromCookie(request, username));
+            }
         }
 
         // Make sure we're not hijacking the player of another user.
         if (player != null && player.getUsername() != null && username != null && !player.getUsername().equals(username)) {
-            player = null;
+            return null;
         }
+        return player;
+    }
 
-        // Look for player with same IP address and user name.
+    /**
+     * Creates the player if none was found, otherwise stores what changed about it.
+     */
+    private Player saveSeenPlayer(Player player, String username, String remoteAddress, String userAgent, boolean isStreamRequest) {
         if (player == null) {
-            player = getNonRestPlayerByIpAddressAndUsername(request.getRemoteAddr(), username);
+            Player newPlayer = new Player();
+            newPlayer.setLastSeen(Instant.now());
+            populatePlayer(newPlayer, username, remoteAddress, userAgent, isStreamRequest);
+            return createPlayer(newPlayer);
         }
-
-        // If no player was found, create it.
-        if (player == null) {
-            player = new Player();
-            player.setLastSeen(Instant.now());
-            populatePlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest);
-            player = createPlayer(player);
-        } else if (populatePlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest)) {
+        if (populatePlayer(player, username, remoteAddress, userAgent, isStreamRequest)) {
             updatePlayer(player);
         }
+        return player;
+    }
 
-        // Set cookie in response.
+    /**
+     * Remembers the player in a cookie and, for remote-controlled players, in the session.
+     */
+    private void rememberPlayer(HttpServletRequest request, HttpServletResponse response, Player player, String username,
+            boolean rememberInSession) {
         if (response != null) {
             String cookieName = COOKIE_NAME + "-" + StringUtil.utf8HexEncode(username);
             String path = request.getContextPath();
@@ -211,12 +227,9 @@ public class PlayerService {
             response.addHeader("Set-Cookie", cookie.toString());
         }
 
-        // Save player in session context.
-        if (!isWebSocketRequest && remoteControlEnabled && request.getSession() != null) {
+        if (rememberInSession && request.getSession() != null) {
             request.getSession().setAttribute("player", player.getId());
         }
-
-        return player;
     }
 
     private boolean populatePlayer(Player player, String username, String remoteAddress, String userAgent, boolean isStreamRequest) {

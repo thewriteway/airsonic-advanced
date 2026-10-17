@@ -57,12 +57,12 @@ public class CoverArtRepositoryTest {
     private static Path tempDir;
 
     @BeforeAll
-    public static void init() {
+    static void init() {
         System.setProperty("airsonic.home", tempDir.toString());
     }
 
     @Test
-    public void testDeleteOrphanedKeepsArtOfPresentEntities() {
+    void testDeleteOrphanedKeepsArtOfPresentEntities() {
         MusicFolder folder = musicFolderRepository.save(new MusicFolder(Paths.get("coverArtTest"), "coverArtTest", Type.MEDIA, true,
                 Instant.now().truncatedTo(ChronoUnit.MICROS)));
         Album present = albumRepository.save(new Album("present", "present", "artist", Instant.now(), Instant.now(), true, folder));
@@ -76,7 +76,7 @@ public class CoverArtRepositoryTest {
         coverArtRepository.flush();
 
         // the shared test database may hold orphans of other tests as well
-        assertTrue(coverArtRepository.deleteOrphaned() >= 3);
+        assertTrue(coverArtRepository.deleteOrphaned(EntityType.ALBUM, EntityType.ARTIST, EntityType.MEDIA_FILE) >= 3);
 
         assertTrue(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ALBUM, present.getId()).isPresent());
         assertFalse(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ALBUM, gone.getId()).isPresent());

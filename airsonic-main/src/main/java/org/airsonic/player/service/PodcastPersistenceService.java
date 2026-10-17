@@ -492,7 +492,7 @@ public class PodcastPersistenceService {
             podcastEpisodeRepository.save(episode);
             return episode;
         }).orElseGet(() -> {
-            LOG.info("Podcast episode with id {} not found", episodeId);
+            LOG.info("Podcast episode to download not found");
             return null;
         });
     }
@@ -699,12 +699,13 @@ public class PodcastPersistenceService {
      */
     @Transactional
     public void lockEpisode(int episodeId) {
-        LOG.info("Locking episode with id {}", episodeId);
+        // ids come from requests, so only the stored episode's id is logged
         podcastEpisodeRepository.findById(episodeId).ifPresentOrElse(episode -> {
+            LOG.info("Locking episode with id {}", episode.getId());
             episode.setLocked(true);
             podcastEpisodeRepository.save(episode);
         }, () -> {
-            LOG.warn("Podcast episode with id {} not found", episodeId);
+            LOG.warn("Podcast episode to lock not found");
         });
     }
 
@@ -715,12 +716,12 @@ public class PodcastPersistenceService {
      */
     @Transactional
     public void unlockEpisode(int episodeId) {
-        LOG.info("Unlocking episode with id {}", episodeId);
         podcastEpisodeRepository.findById(episodeId).ifPresentOrElse(episode -> {
+            LOG.info("Unlocking episode with id {}", episode.getId());
             episode.setLocked(false);
             podcastEpisodeRepository.save(episode);
         }, () -> {
-            LOG.warn("Podcast episode with id {} not found", episodeId);
+            LOG.warn("Podcast episode to unlock not found");
         });
     }
 

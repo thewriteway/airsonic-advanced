@@ -150,7 +150,7 @@ public class CoverArtServiceTest {
     void testExpunge() {
         coverArtService.expunge();
         verify(coverArtCache, times(1)).clear();
-        verify(coverArtRepository, times(1)).deleteOrphaned();
+        verify(coverArtRepository, times(1)).deleteOrphaned(EntityType.ALBUM, EntityType.ARTIST, EntityType.MEDIA_FILE);
         verify(coverArtRepository, never()).findAll();
     }
 

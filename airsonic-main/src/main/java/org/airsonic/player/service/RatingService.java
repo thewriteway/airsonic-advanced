@@ -82,7 +82,7 @@ public class RatingService {
 
         List<MediaFile> result = new ArrayList<>(averages.size());
         for (Object[] row : averages) {
-            MediaFile album = albumsById.get((Integer) row[0]);
+            MediaFile album = albumsById.get(row[0]);
             if (album != null && securityService.isReadAllowed(album, true)) {
                 album.setAverageRating(((Number) row[1]).doubleValue());
                 result.add(album);

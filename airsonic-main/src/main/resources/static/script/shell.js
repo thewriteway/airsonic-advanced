@@ -62,7 +62,9 @@
     /** Stops downloading a response that will not be used. */
     function discardBody(response) {
         if (response.body) {
-            response.body.cancel().catch(function () {});
+            response.body.cancel().catch(function () {
+                // the stream is already closed or the request was aborted
+            });
         }
     }
 
