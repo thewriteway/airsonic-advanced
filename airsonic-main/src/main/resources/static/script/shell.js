@@ -59,6 +59,15 @@
         });
     }
 
+    /** Stops downloading a response that will not be used. */
+    function discardBody(response) {
+        if (response.body) {
+            response.body.cancel().catch(function () {
+                // the stream is already closed or the request was aborted
+            });
+        }
+    }
+
     /** Loads a URL the way the old frames did for anything that is not a page, e.g. downloads and m3u files. */
     function openInHiddenFrame(url) {
         hiddenFrame.src = resolve(url).href;
@@ -110,6 +119,7 @@
         this.url = null;
         this.styles = [];
         this.sequence = 0;
+        this.request = null;
     }
 
     /**
@@ -140,13 +150,22 @@
         var hash = resolve(url).hash;
         this.element.setAttribute("aria-busy", "true");
 
+        // a newer navigation replaces the one still loading, so stop downloading the old page
+        if (this.request) {
+            this.request.abort();
+        }
+        var request = new AbortController();
+        this.request = request;
+
         return fetch(url, {
             method: options.method || "GET",
             body: options.body,
             credentials: "same-origin",
-            headers: {"X-Airsonic-Shell": this.name}
+            headers: {"X-Airsonic-Shell": this.name},
+            signal: request.signal
         }).then((response) => {
             if (sequence !== this.sequence) {
+                discardBody(response);
                 return null;
             }
             if (isLoginPage(response.url)) {
@@ -155,6 +174,8 @@
                 return null;
             }
             if ((response.headers.get("Content-Type") || "").indexOf("text/html") === -1) {
+                // the hidden frame requests it again, so don't download it twice
+                discardBody(response);
                 if (!options.method || options.method === "GET") {
                     openInHiddenFrame(url);
                 }
@@ -170,8 +191,13 @@
                 }
             });
         }).catch((error) => {
-            console.error("Could not load " + url + " into the " + this.name + " region", error);
+            if (error.name !== "AbortError") {
+                console.error("Could not load " + url + " into the " + this.name + " region", error);
+            }
         }).finally(() => {
+            if (this.request === request) {
+                this.request = null;
+            }
             if (sequence === this.sequence) {
                 this.element.removeAttribute("aria-busy");
             }

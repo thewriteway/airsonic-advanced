@@ -76,7 +76,7 @@ public class MusicIndexService {
 
     public List<MediaFile> getShortcuts(List<MusicFolder> musicFoldersToUse) {
         return Stream.of(settingsService.getShortcutsAsArray())
-                .flatMap(shortcut -> musicFoldersToUse.parallelStream()
+                .flatMap(shortcut -> musicFoldersToUse.stream()
                         .map(musicFolder -> Pair.of(Paths.get(shortcut), musicFolder)))
                 .map(pair -> mediaFileService.getMediaFile(pair.getLeft(), pair.getRight(), true))
                 .filter(Objects::nonNull)

@@ -116,10 +116,10 @@ public class MediaFileWSController {
     private List<MediaFile> getMediaFiles(List<Integer> ids, Map<Integer, List<String>> paths) {
         return Stream
                 .concat(Optional.ofNullable(paths).orElse(Collections.emptyMap())
-                        .entrySet().parallelStream()
+                        .entrySet().stream()
                         .flatMap(e -> e.getValue().stream().map(p -> Pair.of(e.getKey(), p)))
                         .map(pf -> mediaFileService.getMediaFile(pf.getValue(), pf.getKey())),
-                        Optional.ofNullable(ids).orElse(Collections.emptyList()).parallelStream().map(mediaFileService::getMediaFile))
+                        Optional.ofNullable(ids).orElse(Collections.emptyList()).stream().map(mediaFileService::getMediaFile))
                 .filter(Objects::nonNull)
                 .filter(x -> mediaFileService.showMediaFile(x))
                 .toList();

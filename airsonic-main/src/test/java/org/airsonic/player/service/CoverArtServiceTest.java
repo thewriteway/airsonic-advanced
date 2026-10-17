@@ -39,9 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,9 +72,6 @@ public class CoverArtServiceTest {
 
     @Captor
     private ArgumentCaptor<CoverArt> coverArtCaptor;
-
-    @Captor
-    private ArgumentCaptor<List<CoverArt>> coverArtListCaptor;
 
 
     @Test
@@ -153,48 +148,10 @@ public class CoverArtServiceTest {
 
     @Test
     void testExpunge() {
-
-        List<CoverArt> coverArtList = Stream.of(
-                new CoverArt(1, EntityType.ALBUM, "path/to/image.jpg", null, false),
-                new CoverArt(2, EntityType.ARTIST, "path/to/image.jpg", null, false),
-                new CoverArt(3, EntityType.MEDIA_FILE, "path/to/image.jpg", null, false),
-                new CoverArt(4, EntityType.ALBUM, "path/to/image.jpg", null, false),
-                new CoverArt(5, EntityType.ARTIST, "path/to/image.jpg", null, false),
-                new CoverArt(6, EntityType.MEDIA_FILE, "path/to/image.jpg", null, false),
-                new CoverArt(7, EntityType.ALBUM, "path/to/image.jpg", null, false),
-                new CoverArt(8, EntityType.ARTIST, "path/to/image.jpg", null, false),
-                new CoverArt(9, EntityType.MEDIA_FILE, "path/to/image.jpg", null, false)
-        ).map(art -> {
-            if (art.getEntityId() < 7) {
-                switch (art.getEntityType()) {
-                    case ALBUM:
-                        Album album = new Album();
-                        album.setPresent(art.getEntityId() <= 3); // only album with id 3 has an album present
-                        art.setAlbum(album);
-                        break;
-                    case ARTIST:
-                        Artist artist = new Artist();
-                        artist.setPresent(art.getEntityId() <= 3); // only artist with id 3 has an artist present
-                        art.setArtist(artist);
-                        break;
-                    case MEDIA_FILE:
-                        MediaFile mediaFile = new MediaFile();
-                        mediaFile.setPresent(art.getEntityId() <= 3); // only media file with id 3 has a media file present
-                        art.setMediaFile(mediaFile);
-                        break;
-                    case NONE:
-                        break;
-                }
-            }
-            return art;
-        }).collect(Collectors.toList());
-
-        when(coverArtRepository.findAll()).thenReturn(coverArtList);
         coverArtService.expunge();
-        verify(coverArtRepository, times(1)).deleteAll(coverArtListCaptor.capture());
-        List<CoverArt> deletedCoverArt = coverArtListCaptor.getValue();
-        assertEquals(6, deletedCoverArt.size());
-        assertTrue(deletedCoverArt.stream().allMatch(art -> art.getEntityId() > 3));
+        verify(coverArtCache, times(1)).clear();
+        verify(coverArtRepository, times(1)).deleteOrphaned(EntityType.ALBUM, EntityType.ARTIST, EntityType.MEDIA_FILE);
+        verify(coverArtRepository, never()).findAll();
     }
 
     @Test

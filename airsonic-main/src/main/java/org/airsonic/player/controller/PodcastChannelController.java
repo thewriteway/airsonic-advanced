@@ -141,7 +141,7 @@ public class PodcastChannelController {
             throw new IllegalArgumentException("Channel ID is null");
         }
 
-        command.getEpisodes().parallelStream()
+        command.getEpisodes().stream()
                 .filter(ep -> ep.isSelected() && DOWNLOADABLE_STATUSES.contains(ep.getStatus()))
                 .map(PodcastEpisodeCommand::getId)
                 .forEach(podcastDownloadClient::downloadEpisode);
@@ -166,7 +166,7 @@ public class PodcastChannelController {
             throw new IllegalArgumentException("Channel ID is null");
         }
 
-        command.getEpisodes().parallelStream()
+        command.getEpisodes().stream()
                 .filter(ep -> ep.isSelected() && LOCKABLE_STATUSES.contains(ep.getStatus()))
                 .map(PodcastEpisodeCommand::getId)
                 .forEach(podcastService::lockEpisode);
@@ -191,7 +191,7 @@ public class PodcastChannelController {
             throw new IllegalArgumentException("Channel ID is null");
         }
 
-        command.getEpisodes().parallelStream()
+        command.getEpisodes().stream()
                 .filter(ep -> ep.isSelected() && UNLOCKABLE_STATUSES.contains(ep.getStatus()))
                 .map(PodcastEpisodeCommand::getId)
                 .forEach(podcastService::unlockEpisode);

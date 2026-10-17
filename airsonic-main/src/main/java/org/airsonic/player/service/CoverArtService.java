@@ -31,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
-import java.util.List;
 
 @Service
 public class CoverArtService {
@@ -174,15 +173,8 @@ public class CoverArtService {
     @Transactional
     public void expunge() {
         coverArtCache.clear();
-        List<CoverArt> expungeCoverArts = coverArtRepository.findAll().stream()
-            .filter(art -> switch (art.getEntityType()) {
-                case ALBUM -> art.getAlbum() == null || !art.getAlbum().isPresent();
-                case ARTIST -> art.getArtist() == null || !art.getArtist().isPresent();
-                case MEDIA_FILE -> art.getMediaFile() == null || !art.getMediaFile().isPresent();
-                default -> false;
-            })
-            .toList();
-        coverArtRepository.deleteAll(expungeCoverArts);
+        int deleted = coverArtRepository.deleteOrphaned(EntityType.ALBUM, EntityType.ARTIST, EntityType.MEDIA_FILE);
+        LOG.debug("Expunged {} cover art entries", deleted);
     }
 
     /**

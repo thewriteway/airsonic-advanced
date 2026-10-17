@@ -65,7 +65,7 @@
             page.actions({
                 toggleSideBar: toggleSideBar,
                 toggleConnection() {
-                    setConnectionStatus("connecting");
+                    // the onConnecting/onDisconnect callbacks update the status
                     if (StompClient.state == "connected") {
                         StompClient.disconnect();
                     } else if (StompClient.state == "dc") {

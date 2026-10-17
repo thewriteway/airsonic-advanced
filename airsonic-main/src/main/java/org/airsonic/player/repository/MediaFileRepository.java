@@ -38,8 +38,6 @@ import java.util.Optional;
 @Repository
 public interface MediaFileRepository extends JpaRepository<MediaFile, Integer> {
 
-    public Optional<MediaFile> findByIdAndFolderInAndMediaTypeAndPresentTrue(Integer id, Iterable<MusicFolder> folders, MediaType mediaType);
-
     public List<MediaFile> findByIdInAndFolderInAndMediaTypeAndPresentTrue(Iterable<Integer> ids, Iterable<MusicFolder> folders, MediaType mediaType);
 
     public List<MediaFile> findByPath(String path);

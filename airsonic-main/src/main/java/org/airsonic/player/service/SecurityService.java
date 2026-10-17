@@ -332,7 +332,7 @@ public class SecurityService implements UserDetailsService {
     }
 
     public Map<App, UserCredential> getDecodableCredsForApps(String username, App... apps) {
-        return getCredentials(username, apps).parallelStream()
+        return getCredentials(username, apps).stream()
                 .filter(c -> PasswordEncoderConfig.DECODABLE_ENCODERS.contains(c.getEncoder()))
                 .filter(c -> c.getExpiration() == null || c.getExpiration().isAfter(Instant.now()))
                 .collect(Collectors.groupingByConcurrent(
@@ -345,7 +345,7 @@ public class SecurityService implements UserDetailsService {
     // account still uses the well-known default password so the UI can warn the admin to change it
     @SuppressWarnings("java:S6437")
     public boolean checkDefaultAdminCredsPresent() {
-        return userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC).parallelStream()
+        return userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC).stream()
                 .anyMatch(c -> PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
                         c.getCredential()));
     }
@@ -728,7 +728,7 @@ public class SecurityService implements UserDetailsService {
     }
 
     public boolean isFolderAccessAllowed(MediaFile file, String username) {
-        return mediaFolderService.getMusicFoldersForUser(username).parallelStream()
+        return mediaFolderService.getMusicFoldersForUser(username).stream()
                 .anyMatch(musicFolder -> musicFolder.getId().equals(file.getFolder().getId()));
     }
 

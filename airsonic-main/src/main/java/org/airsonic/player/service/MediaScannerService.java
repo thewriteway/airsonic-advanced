@@ -267,7 +267,7 @@ public class MediaScannerService {
                         musicFolder, statistics, albumCount, artists, albums, albumsInDb, genres, coverArtCache, fetchArtwork));
                 // Update statistics
             statistics.incrementArtists(albumCount.size());
-            statistics.incrementAlbums(albumCount.values().parallelStream().mapToInt(AtomicInteger::get).sum());
+            statistics.incrementAlbums(albumCount.values().stream().mapToInt(AtomicInteger::get).sum());
 
             LOG.info("Scanned media library with {} entries.", scanCount.longValue());
 

@@ -71,7 +71,7 @@ public class UserRolesJsonColumnPopulation implements CustomSqlChange {
             }
         }
 
-        return roles.entrySet().parallelStream()
+        return roles.entrySet().stream()
                 .map(usr -> new UpdateStatement(database.getDefaultCatalogName(), database.getDefaultSchemaName(), "user")
                         .addNewColumnValue("roles", Util.toJson(usr.getValue()))
                         .setWhereClause("username=?")

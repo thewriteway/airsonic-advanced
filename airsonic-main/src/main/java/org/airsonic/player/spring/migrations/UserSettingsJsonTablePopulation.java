@@ -64,7 +64,7 @@ public class UserSettingsJsonTablePopulation implements CustomSqlChange {
             }
         }
 
-        return userSettingRows.parallelStream()
+        return userSettingRows.stream()
                 .map(usr -> new InsertStatement(database.getDefaultCatalogName(), database.getDefaultSchemaName(), "user_settings2")
                         .addColumnValue("username", usr.getUsername())
                         .addColumnValue("settings", Util.toJson(usr)))

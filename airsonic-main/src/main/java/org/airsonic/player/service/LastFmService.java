@@ -48,6 +48,7 @@ public class LastFmService {
     private static final String LAST_FM_KEY = "ece4499898a9440896dfdce5dab26bbf";
     private static final long CACHE_TIME_TO_LIVE_MILLIS = 6 * 30 * 24 * 3600 * 1000L; // 6 months
     private static final Logger LOG = LoggerFactory.getLogger(LastFmService.class);
+    private static final Pattern MISTAGGED_ARTIST_PATTERN = Pattern.compile("(?:This is mistagged for|Fix your tags to)[^>]*class=\"bbcode_artist\">([^<]*)</a>");
 
     private final MediaFileService mediaFileService;
     private final ArtistRepository artistRepository;
@@ -431,10 +432,9 @@ public class LastFmService {
         if (biography == null) {
             return null;
         }
-        Pattern pattern = Pattern.compile("((This is mistagged for)|(Fix your tags to)).*class=\"bbcode_artist\">(.*?)</a>");
-        Matcher matcher = pattern.matcher(biography);
+        Matcher matcher = MISTAGGED_ARTIST_PATTERN.matcher(biography);
         if (matcher.find()) {
-            return matcher.group(4);
+            return matcher.group(1);
         }
         return null;
     }

@@ -256,7 +256,7 @@ public class CaptionsController {
         Path parentPath = parent.getFullPath();
 
         try (Stream<Path> children = Files.walk(parentPath)) {
-            return children.parallel()
+            return children
                     .filter(c -> Files.isRegularFile(c))
                     .filter(c -> CAPTIONS_FORMATS.contains(FilenameUtils.getExtension(c.toString())))
                     .toList();

@@ -15,6 +15,10 @@
             });
         },
         state: 'dc',
+        // set while the user has disconnected on purpose, so the connection is not restored automatically
+        manualDisconnect: false,
+        reconnectAttempts: 0,
+        reconnectTimer: null,
         outstandingConnectionCallbacks: [],
         resubscriptionCallback: null,
         __doConnectionCallbacks: function(stompclient) {
@@ -34,6 +38,8 @@
         },
         connect: function(postConnectCallback) {
             var stompclient = this;
+            stompclient.manualDisconnect = false;
+            stompclient.__cancelReconnect();
             if (postConnectCallback) {
                 stompclient.outstandingConnectionCallbacks.push(postConnectCallback);
             }
@@ -76,6 +82,7 @@
                 stompclient.stompClient.connect(headers, function(frame) {
                     console.log('Connected', frame);
                     stompclient.state='connected';
+                    stompclient.reconnectAttempts = 0;
                     for (var i = 0; i < stompclient.onConnect.length; i++) {
                         try {
                             stompclient.onConnect[i](frame, stompclient);
@@ -104,7 +111,35 @@
                             console.log("Could not execute an onDisconnect callback", e);
                         }
                     }
+                    stompclient.__scheduleReconnect();
                 });
+            }
+        },
+        // restores a dropped connection (server restart, network change) with exponential backoff, 1s up to 30s
+        __scheduleReconnect: function() {
+            if (this.manualDisconnect || this.reconnectTimer != null) {
+                return;
+            }
+            var delay = Math.min(30000, 1000 * Math.pow(2, this.reconnectAttempts));
+            this.reconnectAttempts++;
+            this.reconnectTimer = setTimeout(() => {
+                this.reconnectTimer = null;
+                if (this.state == 'dc' && !this.manualDisconnect) {
+                    this.connect();
+                }
+            }, delay);
+        },
+        __cancelReconnect: function() {
+            if (this.reconnectTimer != null) {
+                clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
+            }
+        },
+        // reconnects right away, e.g. when the network comes back or the tab is shown again
+        reconnectNow: function() {
+            if (this.state == 'dc' && !this.manualDisconnect) {
+                this.reconnectAttempts = 0;
+                this.connect();
             }
         },
         // object containing:
@@ -116,9 +151,13 @@
                 //add subscriptions to the callback obj
                 for (var topic in subscriptions) {
                     var subCallbacks = stompclient.subscriptions[topic];
-                    if (!subCallbacks || stompclient.resubscribeEveryTime(topic)) {
+                    if (!subCallbacks) {
                         // subscribe to topic on server
-                        var subCallbacks = {};
+                        subCallbacks = {};
+                        stompclient.__doSubscription(stompclient, topic, subCallbacks);
+                    } else if (stompclient.resubscribeEveryTime(topic)) {
+                        // one-time replies: subscribe again for a fresh reply (to every owner), replacing the old subscription
+                        stompclient.__undoSubscription(stompclient, topic);
                         stompclient.__doSubscription(stompclient, topic, subCallbacks);
                     }
 
@@ -143,14 +182,30 @@
                 }
             });
         },
+        __undoSubscription: function(stompclient, topic) {
+            var subscription = stompclient.unsubscriptions[topic];
+            delete stompclient.unsubscriptions[topic];
+            if (subscription && stompclient.state == 'connected') {
+                try {
+                    subscription.unsubscribe();
+                } catch (e) {
+                    console.log("Could not unsubscribe from", topic, e);
+                }
+            }
+        },
         resubscribeEveryTime: function(topic) {
             return topic.startsWith("/app/");
         },
         unsubscribe: function(topic, owner) {
-            if (topic && owner && this.subscriptions[topic] && this.subscriptions[topic][owner]) {
-                delete this.subscriptions[topic][owner];
+            var subCallbacks = topic && this.subscriptions[topic];
+            if (owner && subCallbacks && subCallbacks[owner]) {
+                delete subCallbacks[owner];
+                // the last owner is gone: stop the server from sending messages nobody handles
+                if (Object.keys(subCallbacks).length === 0) {
+                    delete this.subscriptions[topic];
+                    this.__undoSubscription(this, topic);
+                }
             }
-            // can also delete the subscription to the topic itself (if that is the last owner), but not necessary
         },
         unsubscribeOwner: function(owner) {
             for (var topic in this.subscriptions) {
@@ -159,6 +214,8 @@
         },
         disconnect: function() {
             var stompclient = this;
+            stompclient.manualDisconnect = true;
+            stompclient.__cancelReconnect();
             if (stompclient.stompClient != null) {
                 stompclient.stompClient.disconnect(function(frame) {
                     console.log('Disconnected from Airsonic websocket');
@@ -175,4 +232,12 @@
             }
         }
     }
+    window.addEventListener('online', function() {
+        StompClient.reconnectNow();
+    });
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            StompClient.reconnectNow();
+        }
+    });
 </script>

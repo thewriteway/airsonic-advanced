@@ -190,7 +190,7 @@ public class DownloadController {
             throws IOException {
         if (indices == null) {
             indices = IntStream.range(0, files.size()).boxed().toList();
-        } else if (indices.parallelStream().anyMatch(i -> i >= files.size())) {
+        } else if (indices.stream().anyMatch(i -> i >= files.size())) {
             throw new IllegalArgumentException("Can't have index > number of files");
         }
 

@@ -40,13 +40,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getSysAdmin() {
-        List<User> admins = userRepository.findAll().stream()
-                .filter(User::isAdminRole).toList();
-
-        return admins.stream()
-                .filter(user -> User.USERNAME_ADMIN.equals(user.getUsername()))
-                .findAny()
-                .orElseGet(() -> admins.iterator().next());
+        return userRepository.findSysAdmin().orElse(null);
     }
 
 
