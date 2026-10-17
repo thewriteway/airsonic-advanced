@@ -35,6 +35,9 @@ public class TransferStatus {
     private static final int HISTORY_LENGTH = 200;
     private static final long SAMPLE_INTERVAL_MILLIS = 5000;
 
+    /** Request attribute under which a streaming request exposes its status. */
+    public static final String REQUEST_ATTRIBUTE = TransferStatus.class.getName();
+
     private final UUID id = UUID.randomUUID();
     private final Player player;
     private Path externalFile;

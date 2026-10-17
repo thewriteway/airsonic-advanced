@@ -37,6 +37,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -127,6 +128,22 @@ public class StatusService {
 
     public TransferStatus getInactiveStreamStatusForPlayer(Player player) {
         return inactiveStreamStatuses.get(player.getId());
+    }
+
+    /**
+     * Returns whether the same player started another stream at or after the given one,
+     * meaning the client replaced it (track change, seek) rather than going away.
+     *
+     * @param status the stream status to check
+     * @return true if a newer stream exists for the same player
+     */
+    public boolean isStreamSuperseded(TransferStatus status) {
+        Integer playerId = status.getPlayer().getId();
+        // A short replacement may already have finished and moved to the inactive map
+        return Stream.concat(streamStatuses.stream(), Stream.ofNullable(inactiveStreamStatuses.get(playerId)))
+                .anyMatch(s -> s != status
+                        && Objects.equals(s.getPlayer().getId(), playerId)
+                        && s.getStarted() >= status.getStarted());
     }
 
     public TransferStatus createDownloadStatus(Player player) {

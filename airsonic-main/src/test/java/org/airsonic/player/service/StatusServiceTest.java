@@ -106,6 +106,59 @@ class StatusServiceTest {
     }
 
     @Nested
+    class StreamSupersededTest {
+        private Player newPlayer(int id) {
+            Player p = new Player();
+            p.setId(id);
+            return p;
+        }
+
+        @Test
+        void loneStreamIsNotSuperseded() {
+            TransferStatus status = statusService.createStreamStatus(newPlayer(1));
+            assertFalse(statusService.isStreamSuperseded(status));
+        }
+
+        @Test
+        void newerStreamForSamePlayerSupersedes() {
+            TransferStatus old = statusService.createStreamStatus(newPlayer(1));
+            statusService.createStreamStatus(newPlayer(1));
+            assertTrue(statusService.isStreamSuperseded(old));
+        }
+
+        @Test
+        void newerStreamForOtherPlayerDoesNotSupersede() {
+            TransferStatus old = statusService.createStreamStatus(newPlayer(1));
+            statusService.createStreamStatus(newPlayer(2));
+            assertFalse(statusService.isStreamSuperseded(old));
+        }
+
+        @Test
+        void olderStreamDoesNotSupersede() throws InterruptedException {
+            statusService.createStreamStatus(newPlayer(1));
+            Thread.sleep(5);
+            TransferStatus newer = statusService.createStreamStatus(newPlayer(1));
+            assertFalse(statusService.isStreamSuperseded(newer));
+        }
+
+        @Test
+        void finishedNewerStreamStillSupersedes() {
+            TransferStatus old = statusService.createStreamStatus(newPlayer(1));
+            statusService.removeStreamStatus(old);
+            TransferStatus replacement = statusService.createStreamStatus(newPlayer(1));
+            statusService.removeStreamStatus(replacement);
+            assertTrue(statusService.isStreamSuperseded(old));
+        }
+
+        @Test
+        void ownInactiveStatusDoesNotSupersede() {
+            TransferStatus status = statusService.createStreamStatus(newPlayer(1));
+            statusService.removeStreamStatus(status);
+            assertFalse(statusService.isStreamSuperseded(status));
+        }
+    }
+
+    @Nested
     class LackedPlayStatusTest {
         @Test
         void testGetInactivePlayStatusesWithFilteredByPlayerUserName() {

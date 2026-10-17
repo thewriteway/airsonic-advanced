@@ -50,12 +50,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
-import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -217,6 +215,8 @@ public class StreamController {
 
         VideoTranscodingSettings videoTranscodingSettingsF = videoTranscodingSettings;
         TransferStatus status = statusService.createStreamStatus(player);
+        // Lets LoggingExceptionResolver tell a replaced stream from a dropped client
+        swr.getRequest().setAttribute(TransferStatus.REQUEST_ATTRIBUTE, status);
 
         Consumer<MediaFile> fileStartListener = mediaFile -> {
             LOG.info("{}: {} listening to {} in folder {}", player.getIpAddress(), player.getUsername(), FileUtil.getShortPath(mediaFile.getRelativePath()), mediaFile.getFolder().getId());
@@ -293,11 +293,6 @@ public class StreamController {
         headers.setContentType(MediaType.parseMediaType(StringUtil.getMimeType(suffix, sonos)));
 
         return ResponseEntity.ok().headers(headers).body(resource);
-    }
-
-    @ExceptionHandler(AsyncRequestNotUsableException.class)
-    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
-        LOG.info("Client Aborted");
     }
 
     private void scrobble(MediaFile mediaFile, Player player, boolean submission) {
