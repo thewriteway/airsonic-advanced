@@ -8,6 +8,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,6 +30,13 @@ public class LoggingExceptionResolver implements HandlerExceptionResolver, Order
         boolean shouldCatch = isClientAbortException(e);
         if (shouldCatch) {
             LOG.info("{}: Client unexpectedly closed connection while loading {}", request.getRemoteAddr(), Util.getAnonymizedURLForRequest(request));
+            return null;
+        }
+
+        // Requests for missing paths (browser probes, scanners) are ordinary 404s;
+        // let Spring answer them without logging a stack trace.
+        if (e instanceof NoResourceFoundException || e instanceof NoHandlerFoundException) {
+            LOG.debug("{}: Not found: {}", request.getRemoteAddr(), Util.getAnonymizedURLForRequest(request));
             return null;
         }
 

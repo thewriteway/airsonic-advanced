@@ -117,9 +117,16 @@
             <artifactId>cache-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-            <classifier>jakarta</classifier>
+            <!-- JCache provider; ServerMetricsService reads its JMX statistics (puts, removals) -->
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>jcache</artifactId>
+            <exclusions>
+                <exclusion>
+                    <!-- OSGi DS annotations, not needed at runtime -->
+                    <groupId>org.osgi</groupId>
+                    <artifactId>org.osgi.service.component.annotations</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
