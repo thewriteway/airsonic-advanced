@@ -1,9 +1,5 @@
 package org.airsonic.player.spring;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.TransferStatus;
 import org.airsonic.player.service.StatusService;
@@ -14,7 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
+import org.springframework.boot.logging.LogLevel;
+import org.springframework.boot.logging.LoggingSystem;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
@@ -30,16 +29,16 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class LoggingExceptionResolverTest {
 
     @Mock
     private StatusService statusService;
 
+    private static final String LOGGER = LoggingExceptionResolver.class.getName();
+
     private final List<Runnable> deferred = new ArrayList<>();
-    private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
-    private final Logger logger = (Logger) LoggerFactory.getLogger(LoggingExceptionResolver.class);
-    private Level originalLevel;
+    private final LoggingSystem loggingSystem = LoggingSystem.get(getClass().getClassLoader());
 
     private LoggingExceptionResolver resolver;
     private MockHttpServletRequest request;
@@ -51,17 +50,12 @@ class LoggingExceptionResolverTest {
         request = new MockHttpServletRequest("GET", "/stream");
         request.setQueryString("player=17&id=1718148");
         status = new TransferStatus(new Player());
-
-        originalLevel = logger.getLevel();
-        logger.setLevel(Level.DEBUG);
-        appender.start();
-        logger.addAppender(appender);
+        loggingSystem.setLogLevel(LOGGER, LogLevel.DEBUG);
     }
 
     @AfterEach
     void tearDown() {
-        logger.detachAppender(appender);
-        logger.setLevel(originalLevel);
+        loggingSystem.setLogLevel(LOGGER, null);
     }
 
     private ModelAndView resolveAbort() {
@@ -69,56 +63,61 @@ class LoggingExceptionResolverTest {
         return resolver.resolveException(request, new MockHttpServletResponse(), null, abort);
     }
 
-    private void assertSingleLog(Level level, String text) {
-        assertEquals(1, appender.list.size());
-        ILoggingEvent event = appender.list.get(0);
-        assertEquals(level, event.getLevel());
-        assertTrue(event.getFormattedMessage().contains(text), event.getFormattedMessage());
+    private static List<String> resolverLines(CapturedOutput output) {
+        return output.getAll().lines()
+                .filter(line -> line.contains("LoggingExceptionResolver"))
+                .toList();
+    }
+
+    private static void assertSingleLog(CapturedOutput output, LogLevel level, String text) {
+        List<String> lines = resolverLines(output);
+        assertEquals(1, lines.size(), String.join(System.lineSeparator(), lines));
+        assertTrue(lines.get(0).contains(level.name()), lines.get(0));
+        assertTrue(lines.get(0).contains(text), lines.get(0));
     }
 
     @Test
-    void abortWithoutStreamStatusLogsClosedAndStopsOtherResolvers() {
+    void abortWithoutStreamStatusLogsClosedAndStopsOtherResolvers(CapturedOutput output) {
         ModelAndView result = resolveAbort();
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        assertSingleLog(Level.INFO, "Client closed connection");
+        assertSingleLog(output, LogLevel.INFO, "Client closed connection");
         verify(statusService, never()).isStreamSuperseded(status);
     }
 
     @Test
-    void streamAlreadyReplacedLogsSupersededImmediately() {
+    void streamAlreadyReplacedLogsSupersededImmediately(CapturedOutput output) {
         request.setAttribute(TransferStatus.REQUEST_ATTRIBUTE, status);
         when(statusService.isStreamSuperseded(status)).thenReturn(true);
 
         resolveAbort();
 
         assertTrue(deferred.isEmpty());
-        assertSingleLog(Level.DEBUG, "replaced stream");
+        assertSingleLog(output, LogLevel.DEBUG, "replaced stream");
     }
 
     @Test
-    void streamReplacedDuringGracePeriodLogsSuperseded() {
+    void streamReplacedDuringGracePeriodLogsSuperseded(CapturedOutput output) {
         request.setAttribute(TransferStatus.REQUEST_ATTRIBUTE, status);
         when(statusService.isStreamSuperseded(status)).thenReturn(false, true);
 
         resolveAbort();
-        assertTrue(appender.list.isEmpty());
+        assertTrue(resolverLines(output).isEmpty());
         assertEquals(1, deferred.size());
 
         deferred.get(0).run();
-        assertSingleLog(Level.DEBUG, "replaced stream");
+        assertSingleLog(output, LogLevel.DEBUG, "replaced stream");
     }
 
     @Test
-    void streamNotReplacedLogsClosedAfterGracePeriod() {
+    void streamNotReplacedLogsClosedAfterGracePeriod(CapturedOutput output) {
         request.setAttribute(TransferStatus.REQUEST_ATTRIBUTE, status);
         when(statusService.isStreamSuperseded(status)).thenReturn(false);
 
         resolveAbort();
         deferred.get(0).run();
 
-        assertSingleLog(Level.INFO, "Client closed connection while loading");
-        assertTrue(appender.list.get(0).getFormattedMessage().contains("/stream?player=17&id=1718148"));
+        assertSingleLog(output, LogLevel.INFO, "Client closed connection while loading http://localhost/stream?player=17&id=1718148");
     }
 }
