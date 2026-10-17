@@ -72,6 +72,9 @@ public class PlaylistController {
         if (playlist == null) {
             return new ModelAndView(new RedirectView("notFound"));
         }
+        if (!playlistService.isReadAllowed(playlist, username)) {
+            return new ModelAndView(new RedirectView("accessDenied"));
+        }
 
         map.put("playlist", playlist);
         map.put("user", user);

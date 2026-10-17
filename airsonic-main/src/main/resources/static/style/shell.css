@@ -331,3 +331,26 @@ body.shell {
         transition: none;
     }
 }
+
+/* Drag and drop of media (mediadrag.js): where a drop is possible, and where it would go. */
+[data-media-ids][draggable="true"],
+table[data-drag-media] > tbody > tr[draggable="true"] {
+    cursor: grab;
+}
+.media-dragging .playqueue-container,
+.media-dragging .playlist.drop-allowed {
+    outline: 2px dashed color-mix(in srgb, var(--shell-link-color, currentColor) 50%, transparent);
+    outline-offset: -2px;
+}
+.playqueue-container.drop-hover,
+.playlist.drop-hover {
+    outline-style: solid;
+    outline-color: var(--shell-link-color, currentColor);
+    background-color: color-mix(in srgb, var(--shell-link-color, currentColor) 12%, transparent);
+}
+#playQueueMusic > tbody > tr.drop-before > td {
+    box-shadow: inset 0 2px 0 var(--shell-link-color, currentColor);
+}
+#playQueueMusic > tbody > tr.drop-after > td {
+    box-shadow: inset 0 -2px 0 var(--shell-link-color, currentColor);
+}

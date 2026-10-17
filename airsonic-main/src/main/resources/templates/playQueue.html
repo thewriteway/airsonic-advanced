@@ -676,7 +676,11 @@
                             $(mediaElement).on("timeupdate", () => pq.updateProgressionBookmark());
                             $(mediaElement).on("seeked", () => pq.setBookmark());
                             $(mediaElement).on("paused", () => pq.setBookmark());
-                        
+
+                            // keep the progress shown by the OS (lock screen, media flyouts) in sync
+                            $(mediaElement).on("loadedmetadata durationchange play pause seeked ratechange", () => pq.updateMediaSessionPosition());
+                            pq.setUpMediaSessionSeeking();
+
                             // skip to first song if no src loaded
                             $(".mejs__controls .mejs__button.mejs__playpause-button.mejs__play button").on("click", () => {
                                 if (!instance.src || pq.currentSongIndex == -1) {
@@ -1103,6 +1107,58 @@
                         navigator.mediaSession.setActionHandler('nexttrack', () => this.onNext('OFF'));
                     }
                 },
+                /** Lets the OS media controls (lock screen, media keys, headsets) seek in the web player. */
+                setUpMediaSessionSeeking() {
+                    if (!('mediaSession' in navigator)) {
+                        return;
+                    }
+                    var seekTo = time => {
+                        var duration = this.getMediaDuration();
+                        this.audioPlayer.currentTime = Math.max(0, duration ? Math.min(time, duration) : time);
+                    };
+                    var handlers = {
+                        seekto: details => seekTo(details.seekTime),
+                        seekbackward: details => seekTo(this.audioPlayer.currentTime - (details.seekOffset || 10)),
+                        seekforward: details => seekTo(this.audioPlayer.currentTime + (details.seekOffset || 10))
+                    };
+                    Object.keys(handlers).forEach(action => {
+                        try {
+                            navigator.mediaSession.setActionHandler(action, handlers[action]);
+                        } catch (e) {
+                            // the browser does not support this action
+                        }
+                    });
+                },
+                /** The duration of the song playing, from the stream or else from the library (transcoded streams have none). */
+                getMediaDuration() {
+                    var media = this.audioPlayer.media;
+                    if (media && Number.isFinite(media.duration) && media.duration > 0) {
+                        return media.duration;
+                    }
+                    var song = this.songs[this.currentSongIndex];
+                    return song && song.duration > 0 ? song.duration : null;
+                },
+                updateMediaSessionPosition() {
+                    if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) {
+                        return;
+                    }
+                    var media = this.audioPlayer.media;
+                    navigator.mediaSession.playbackState = media.paused ? "paused" : "playing";
+                    var duration = this.getMediaDuration();
+                    try {
+                        if (duration) {
+                            navigator.mediaSession.setPositionState({
+                                duration: duration,
+                                playbackRate: media.playbackRate > 0 ? media.playbackRate : 1,
+                                position: Math.min(Math.max(media.currentTime || 0, 0), duration)
+                            });
+                        } else {
+                            navigator.mediaSession.setPositionState();
+                        }
+                    } catch (e) {
+                        // a position the browser rejects (e.g. while a new source loads) is not worth reporting
+                    }
+                },
                 showNotification(song) {
                     if (!("Notification" in window)) {
                         return;
@@ -1209,23 +1265,95 @@
                 }
             };
 
-            Page.define("playQueue", function (page) {
-                playQueue.init();
-                page.actions({
-                    changePlayer: select => playQueue.onPlayerChanged(select.value),
-                    start: () => playQueue.onStart(),
-                    stop: () => playQueue.onStop(),
-                    previous: () => playQueue.onPrevious(),
-                    next: () => playQueue.onNext('OFF'),
-                    clear: () => playQueue.onClear(),
-                    shuffle: () => playQueue.onShuffle(),
-                    toggleRepeat: () => playQueue.onToggleRepeat(),
-                    undo: () => playQueue.onUndo(),
-                    playerSettings: () => playQueue.playerSettingsPage(),
-                    moreActions: select => playQueue.actionSelected(select.options[select.selectedIndex].id),
-                    togglePlayQueue: () => playQueue.onTogglePlayQueue(!playQueue.isVisible)
+            /*
+             * Media dragged from the pages (see mediadrag.js) is added to the play queue: before the
+             * row it is dropped on (after it, in the lower half of the row), else at the end.
+             */
+            (function () {
+                var markedRow = null;
+
+                function markRow(row, after) {
+                    if (markedRow && markedRow !== row) {
+                        markedRow.classList.remove("drop-before", "drop-after");
+                    }
+                    markedRow = row;
+                    if (row) {
+                        row.classList.toggle("drop-before", !after);
+                        row.classList.toggle("drop-after", after);
+                    }
+                }
+
+                function clear(container) {
+                    markRow(null);
+                    container.classList.remove("drop-hover");
+                }
+
+                /** The queue row under the pointer and whether the drop goes after it. */
+                function rowAt(event) {
+                    var row = event.target.closest && event.target.closest("#playQueueMusic > tbody > tr");
+                    if (!row || !playQueue.musicTable.row(row).data()) {
+                        return null;
+                    }
+                    var box = row.getBoundingClientRect();
+                    return {row: row, after: event.clientY > box.top + box.height / 2};
+                }
+
+                function installDrop(page) {
+                    var container = page.root;
+                    page.listen(container, "dragover", event => {
+                        if (!window.MediaDrag || !MediaDrag.accepts(event) || !playQueue.player.id) {
+                            return;
+                        }
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "copy";
+                        container.classList.add("drop-hover");
+                        var target = MediaDrag.payload().ids ? rowAt(event) : null;
+                        markRow(target && target.row, target && target.after);
+                    });
+                    page.listen(container, "dragleave", event => {
+                        if (!container.contains(event.relatedTarget)) {
+                            clear(container);
+                        }
+                    });
+                    page.listen(container, "drop", event => {
+                        var payload = window.MediaDrag && MediaDrag.accepts(event) ? MediaDrag.payload() : null;
+                        var target = payload && payload.ids ? rowAt(event) : null;
+                        clear(container);
+                        if (!payload || !playQueue.player.id) {
+                            return;
+                        }
+                        event.preventDefault();
+                        if (payload.playlistId != null) {
+                            playQueue.onAddPlaylist(payload.playlistId);
+                        } else if (target) {
+                            var index = playQueue.musicTable.row(target.row).index() + (target.after ? 1 : 0);
+                            top.StompClient.send("/app/playqueues/" + playQueue.player.id + "/add", JSON.stringify({ids: payload.ids, index: index}));
+                        } else {
+                            playQueue.onAdd(payload.ids);
+                        }
+                    });
+                    page.listen(document, "dragend", () => clear(container));
+                }
+
+                Page.define("playQueue", function (page) {
+                    playQueue.init();
+                    installDrop(page);
+                    page.actions({
+                        changePlayer: select => playQueue.onPlayerChanged(select.value),
+                        start: () => playQueue.onStart(),
+                        stop: () => playQueue.onStop(),
+                        previous: () => playQueue.onPrevious(),
+                        next: () => playQueue.onNext('OFF'),
+                        clear: () => playQueue.onClear(),
+                        shuffle: () => playQueue.onShuffle(),
+                        toggleRepeat: () => playQueue.onToggleRepeat(),
+                        undo: () => playQueue.onUndo(),
+                        playerSettings: () => playQueue.playerSettingsPage(),
+                        moreActions: select => playQueue.actionSelected(select.options[select.selectedIndex].id),
+                        togglePlayQueue: () => playQueue.onTogglePlayQueue(!playQueue.isVisible)
+                    });
                 });
-            });
+            })();
         </script>
     </th:block></head>
     <body>

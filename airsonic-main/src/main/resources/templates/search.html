@@ -39,7 +39,7 @@
         </tr>
         <th:block th:each="match, loopStatus:${command.artists}">
 
-            <tr class="artistRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}">
+            <tr class="artistRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" th:data-media-ids="${command.user.streamRole and !command.partyModeEnabled ? match.mediaFileIds : null}">
                 <th:block th:replace="~{playButtons :: buttons(id=${match.mediaFileIds}, playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                     addEnabled=${command.user.downloadRole and !command.partyModeEnabled}, asTable=true)}" />
                 <td class="truncate"><a th:href="@{/main.view(id=${match.mediaFileIds})}" th:text="${match.artist}"></a></td>
@@ -63,7 +63,7 @@
         </tr>
         <th:block th:each="match,loopStatus:${command.albums}">
 
-            <tr class="albumRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" >
+            <tr class="albumRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" th:data-media-ids="${command.user.streamRole and !command.partyModeEnabled ? match.mediaFileIds : null}">
                 <th:block th:replace="~{playButtons :: buttons(
                         id=${match.mediaFileIds},
                         playEnabled=${command.user.streamRole and !command.partyModeEnabled},
@@ -91,7 +91,7 @@
         </tr>
         <th:block th:each="match,loopStatus:${command.songs}">
 
-            <tr class="songRow" th:style="${loopStatus.count > 10 ? 'display:none' : ''}">
+            <tr class="songRow" th:style="${loopStatus.count > 10 ? 'display:none' : ''}" th:data-media-ids="${command.user.streamRole and !command.partyModeEnabled ? match.id : null}">
                     <th:block th:replace="~{playButtons :: buttons(id=${match.id},
                             playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                             addEnabled=${command.user.downloadRole and !command.partyModeEnabled},
@@ -122,7 +122,7 @@
         </tr>
         <th:block th:each="match, loopStatus:${command.artistsFromTag}">
 
-            <tr class="artistFromTagRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}">
+            <tr class="artistFromTagRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" th:data-media-ids="${command.user.streamRole and !command.partyModeEnabled ? match.mediaFileIds : null}">
                 <th:block th:replace="~{playButtons :: buttons(id=${match.mediaFileIds}, playEnabled=${command.user.streamRole and !command.partyModeEnabled},
                     addEnabled=${command.user.downloadRole and !command.partyModeEnabled}, asTable=true)}" />
                 <td class="truncate"><a th:href="@{/main.view(id=${match.mediaFileIds})}" th:text="${match.artist}"></a></td>
@@ -145,7 +145,7 @@
         </tr>
          <th:block th:each="match,loopStatus:${command.albumsFromTag}">
 
-            <tr class="albumFromTagRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" >
+            <tr class="albumFromTagRow" th:style="${loopStatus.count > 5 ? 'display:none' : ''}" th:data-media-ids="${command.user.streamRole and !command.partyModeEnabled ? match.mediaFileIds : null}">
                 <th:block th:replace="~{playButtons :: buttons(
                         id=${match.mediaFileIds},
                         playEnabled=${command.user.streamRole and !command.partyModeEnabled},

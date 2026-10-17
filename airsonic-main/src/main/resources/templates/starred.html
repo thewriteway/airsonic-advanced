@@ -60,7 +60,7 @@
     <h2 th:text="#{search.hits.artists}"></h2>
     <table class="music indent">
         <th:block th:each="artist:${model.artists}">
-            <tr>
+            <tr th:data-media-ids="${model.user.streamRole and !model.partyModeEnabled ? artist.id : null}">
                 <th:block th:replace="~{playButtons::buttons(
                     id=${artist.id},
                     playEnabled=${model.user.streamRole and !model.partyModeEnabled},
@@ -82,7 +82,7 @@
     <table class="music indent">
         <th:block th:each="song:${model.songs}">
 
-            <tr>
+            <tr th:data-media-ids="${model.user.streamRole and !model.partyModeEnabled ? song.id : null}">
                 <th:block th:replace="~{playButtons::buttons(
                     id=${song.id},
                     playEnabled=${model.user.streamRole and !model.partyModeEnabled},
