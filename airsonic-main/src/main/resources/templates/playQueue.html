@@ -13,337 +13,94 @@
         <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/speed/speed.min.css}">
         <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/chromecast/chromecast.min.css}">
 
-        <style>
-            #jukeboxVolume {
-                width: 80px;
-                cursor: pointer;
-            }
-            #playQueueSpacer {
-                height: 1em;
-            }
-            #playQueueHeading {
-                display: inline-block;
-            }
-            #playQueueInfo {
-                display: inline-block;
-            }
-        </style>
-        <script type="text/javascript" th:inline="javascript" language="javascript"
-        th:with="paginationaddition=${#strings.contains(' 10 20 50 100 -1', ' '.concat(model['initialPaginationSize'] ?: '') ) ?
-                                    '' : ', '.concat(model['initialPaginationSize'] ?: '')}">
+        <script type="text/javascript" th:inline="javascript" language="javascript">
             "use strict";
 
+            /*
+             * The play queue: the player bar along the bottom of the shell (now playing, transport
+             * controls and the web player) and the queue in the side panel, a list of the songs with
+             * their own selection, filter and reordering.
+             */
             var playQueue = {
                 // Changed when player is changed
                 player: {},
-            
+
                 // These variables store the media player state, received via websockets in the
                 // playQueueCallback function below.
-            
+
                 // List of songs (of type PlayQueueInfo.Entry)
                 songs: [],
 
                 bookmarks: {},
                 autoBookmark: /*[(${model['autoBookmark'] ?: false})]*/ false,
                 audioBookmarkFrequency: /*[[${model['audioBookmarkFrequency']}]]*/ 10,
-            
+
                 // Stream URL of the media being played
                 currentStreamUrl: null,
-            
+
                 currentSongIndex: -1,
-            
+
                 // Is autorepeat enabled?
                 repeatStatus: 'OFF',
-            
+
                 // Play status on the server
                 playStatus: 'PLAYING',
-            
+
                 // Is the "shuffle radio" playing? (More > Shuffle Radio)
                 shuffleRadioEnabled: false,
-            
+
                 // Is the "internet radio" playing?
                 internetRadioEnabled: false,
-            
-                // Is the play queue visible?
-                isVisible: false,
-            
-                musicTable: null,
+
+                // Is the play queue (the side panel) visible?
+                isVisible: true,
+
                 audioPlayer: null,
-            
-                init() {
-                    var ratingOnImage = "[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]";
-                    var ratingOffImage = "[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]";
+
+                // indexes of the selected songs, the last one clicked (for shift-click ranges) and the filter
+                selected: new Set(),
+                lastCheckedIndex: null,
+                filterText: "",
+                // index of a song to focus once the queue is shown again (after moving it with the keyboard)
+                focusAfterRender: null,
+
+                // the details shown under each title, as chosen in the personal settings
+                details: {
+                    artist: /*[[${model['visibility']?.artistVisible == true}]]*/ true,
+                    album: /*[[${model['visibility']?.albumVisible == true}]]*/ true,
+                    albumArtist: /*[[${model['visibility']?.albumArtistVisible == true}]]*/ false,
+                    genre: /*[[${model['visibility']?.genreVisible == true}]]*/ false,
+                    year: /*[[${model['visibility']?.yearVisible == true}]]*/ false,
+                    format: /*[[${model['visibility']?.formatVisible == true}]]*/ false,
+                    fileSize: /*[[${model['visibility']?.fileSizeVisible == true}]]*/ false,
+                    bitRate: /*[[${model['visibility']?.bitRateVisible == true}]]*/ false,
+                    duration: /*[[${model['visibility']?.durationVisible == true}]]*/ true
+                },
+
+                labels: {
+                    play: /*[[#{common.play}]]*/ "Play",
+                    pause: /*[[#{playlist.stop}]]*/ "Stop",
+                    star: /*[[#{playlist.more.star}]]*/ "Star",
+                    unstar: /*[[#{playlist.more.unstar}]]*/ "Unstar",
+                    remove: /*[[#{playlist.remove}]]*/ "Remove",
+                    reorder: /*[[#{playqueue.reorder}]]*/ "Drag to reorder",
+                    songs: /*[[#{playlist2.songs}]]*/ "songs",
+                    selected: /*[[#{playqueue.selected('#')}]]*/ "# selected",
+                    showQueue: /*[[#{playqueue.panel.show}]]*/ "Show play queue",
+                    hideQueue: /*[[#{playqueue.panel.hide}]]*/ "Hide play queue",
+                    nothingPlaying: /*[[#{playqueue.nothingplaying}]]*/ "Nothing playing",
+                    repeatOff: /*[[#{playqueue.repeat.off}]]*/ "Repeat: off",
+                    repeatQueue: /*[[#{playqueue.repeat.queue}]]*/ "Repeat: whole queue",
+                    repeatTrack: /*[[#{playqueue.repeat.track}]]*/ "Repeat: current song",
+                    repeatRadio: /*[[#{playlist.repeat_radio}]]*/ "Stop shuffle radio"
+                },
+
+                init(root) {
                     var pq = this;
-                
-                    pq.musicTable = $("#playQueueMusic").DataTable( {
-                        deferRender: true,
-                        createdRow(row, data, dataIndex, cells) {
-                            var rowNode = $(row);
-                            if (pq.currentSongIndex == dataIndex) {
-                                rowNode.addClass("currently-playing").find(".currentImage").show();
-                            }
-                        
-                            if (rowNode.hasClass("selected")) {
-                                rowNode.find(".songIndex").prop("checked", true);
-                            }
-                        },
-                        colReorder: true,
-                        fixedHeader: true,
-                        stateSave: true,
-                        stateDuration: 60 * 60 * 24 * 365,
-                        ordering: true,
-                        order: [],
-                        orderFixed: [ 0, 'asc' ],
-                        orderMulti: false,
-                        pageLength: /*[[${model['initialPaginationSize']}]]*/ 10,
-                        /*[+
-                        lengthMenu: [ 
-                            [10, 20, 50, 100, -1 [(${paginationaddition})] ], 
-                            [10, 20, 50, 100, "All" [(${paginationaddition})] ] 
-                        ],
-                        +]*/
-                        /*[- */
-                        lengthMenu: [ 
-                            [10, 20, 50, 100, -1], 
-                            [10, 20, 50, 100, "All"] 
-                        ],
-                        /* -]*/
-                    
-                        buttons: [
-                            {
-                              text: /*[[#{main.nowplaying}]]*/ "Now Playing",
-                              action: function (e, dt, node, config) {
-                                  if (pq.currentSongIndex != -1) {
-                                      dt.row(pq.currentSongIndex).show().draw(false);
-                                      var container = $('#playQueueMusic_wrapper .dataTables_scrollBody');
-                                      var target = $('.currently-playing');
-                                      container.animate({
-                                        scrollTop: Math.floor(target.offset().top - container.offset().top + container.scrollTop())
-                                      }, 150, function() {
-                                        target.fadeOut(100, function() {target.fadeIn(100);});
-                                      });
-                                  }
-                              }
-                            }
-                        ],
-                        processing: true,
-                        autoWidth: true,
-                        scrollCollapse: true,
-                        scrollY: "calc(80vh - 350px)",
-                        scrollX: true,
-                        dom: "<'#playQueueHeading'><'#playQueueInfo'><'#playQueueSpacer'>lfrtipB",
-                        select: {
-                            style: "multi",
-                            selector: ".songIndex"
-                        },
-                        rowReorder: {
-                            dataSrc: "seq",
-                            selector: "td:not(.not-draggable)"
-                        },
-                        language: {
-                            emptyTable: /*[[#{playlist.empty}]]*/ "No data available in table"
-                        },
-                        ajax(ajaxData, callback) {
-                            for ( var i=0, len=pq.songs.length ; i<len ; i++ ) {
-                              pq.songs[i].seq = i;
-                            }
-                            callback({data: pq.songs});
-                        },
-                        stripeClasses: ["bgcolor1", "bgcolor2"],
-                        columnDefs: [{ targets: "_all", orderable: false }],
-                        columns: [
-                            { data: "seq", className: "detail fit", visible: true },
-                            { data: null,
-                              searchable: false,
-                              name: "songcheckbox",
-                              className: "fit not-draggable centeralign",
-                              title: "<input type='checkbox' class='songSelectAll'>",
-                              defaultContent: "<input type='checkbox' class='songIndex'>"
-                            },
-                            { data: "starred",
-                              name: "starred",
-                              className: "fit not-draggable centeralign",
-                              render(starred, type) {
-                                  if (type == "display") {
-                                      return "<img class='starSong' src='" + (starred ? ratingOnImage : ratingOffImage) + "' style='height:18px;cursor:pointer' alt='' title=''>";
-                                  }
-                                  return starred ? "onlystarred" : "unstarred";
-                              }
-                            },
-                            { data: null,
-                              searchable: false,
-                              name: "remove",
-                              className: "fit not-draggable centeralign",
-                              defaultContent: "<img class='removeSong' src=\"[( ${themes?.get('removeImage') ?: 'icons/default_light/remove.svg'} )]\" style='height:18px;' " +
-                                  "alt=\"[(#{playlist.remove})]\" title=\"[(#{playlist.remove})]\">"
-                            },
-                            { data: "trackNumber", className: "detail fit", visible: /*[( ${model['visibility']?.trackNumberVisible == true} )]*/ false, title: /*[[#{personalsettings.tracknumber}]]*/ "Track" },
-                            { data: "discNumber", className: "detail fit", visible: /*[( ${model['visibility']?.discNumberVisible} == true)]*/ false, title: /*[[#{personalsettings.discnumber}]]*/ "Disc" },
-                            { data: "title",
-                              className: "detail songTitle truncate",
-                              title: /*[[#{edittags.songtitle}]]*/ "Title",
-                              render(title, type, row) {
-                                  if (type == "display") {
-                                      var img = "<img class='currentImage' src=\"[( ${themes?.get('currentImage') ?: 'icons/default_light/current.svg'} )]\" alt='' style='display: none; padding-right: 0.5em' />";
-                                      if (playQueue.player.tech != "EXTERNAL_WITH_PLAYLIST") {
-                                          return img + $("<a>", {title: title, text: title}).addClass("titleUrl").attr("href", "#")[0].outerHTML;
-                                      } else {
-                                          return img + $("<span>", {title: title, alt: title, text: title})[0].outerHTML;
-                                      }
-                                  }
-                                  return title;
-                              }
-                            },
-                            { data: "album",
-                              className: "detail truncate",
-                              visible: /*[[${model['visibility']?.albumVisible == true} ]]*/ true,
-                              title: /*[[ #{personalsettings.album} ]]*/ "Album",
-                              render(album, type, row) {
-                                  if (type == "display" && album != null) {
-                                      return $("<a>", {title: album, alt: album, text: album}).attr("href", row.albumUrl).attr("target", !pq.internetRadioEnabled ? "main" : "_blank").attr("rel", !pq.internetRadioEnabled ? "" : "noopener noreferrer")[0].outerHTML;
-                                  }
-                                  return album;
-                              }
-                            },
-                            { data: "artist",
-                              className: "detail truncate",
-                              visible: /*[[ ${model['visibility']?.artistVisible == true} ]]*/ true,
-                              title: /*[[#{personalsettings.artist}]]*/ "Artist",
-                              render(artist, type) {
-                                  if (type == "display" && artist != null) {
-                                      return $("<span>", {title: artist, alt: artist, text: artist})[0].outerHTML;
-                                  }
-                                  return artist;
-                              }
-                            },
-                            { data: "albumArtist",
-                              className: "detail truncate",
-                              visible: /*[[ ${model['visibility']?.albumArtistVisible == true} ]]*/ true,
-                              title: /*[[ #{personalsettings.albumartist} ]]*/ "Album Artist",
-                              render(artist, type) {
-                                  if (type == "display" && artist != null) {
-                                      return $("<span>", {title: artist, alt: artist, text: artist})[0].outerHTML;
-                                  }
-                                  return artist;
-                              }
-                            },
-                            { data: "genre",
-                              className: "detail truncate",
-                              visible: /*[[${model['visibility']?.genreVisible == true}]]*/ true,
-                              title: /*[[ #{personalsettings.genre} ]]*/ "Genre",
-                              render(genre, type) {
-                                  if (type == "display" && genre != null) {
-                                      return $("<span>", {title: genre, alt: genre, text: genre})[0].outerHTML;
-                                  }
-                                  return genre;
-                              }
-                            },
-                            { data: "year", className: "detail fit rightalign", visible: /*[[${model['visibility']?.yearVisible}]]*/ true, title: /*[[ #{personalsettings.year} ]]*/ "Year" },
-                            { data: "format", className: "detail fit rightalign", visible: /*[[${model['visibility']?.formatVisible}]]*/ true, title: /*[[ #{personalsettings.format} ]]*/ "Format" },
-                            { data: "fileSize", className: "detail fit rightalign", visible: /*[[${model['visibility']?.fileSizeVisible}]]*/ true, title: /*[[ #{personalsettings.filesize} ]]*/ "File Size" },
-                            { data: "duration",
-                              className: "detail fit rightalign",
-                              visible: /*[[${model['visibility']?.durationVisible == true}]]*/ true,
-                              title: /*[[#{personalsettings.duration}]]*/ "Duration",
-                              render: function(data, type, row) {
-                                  if (type == "display" && data != null) {
-                                      return formatDuration(Math.round(data));
-                                  }
-                                  return data;
-                              }
-                            },
-                            { data: "bitRate", className: "detail fit rightalign", visible: /*[[${model['visibility']?.bitRateVisible}]]*/ false, title: /*[[#{personalsettings.bitrate}]]*/ "Bit Rate" },
-                            { data: "playCount", className: "detail fit rightalign", visible: /*[[${model['visibility']?.playCountVisible}]]*/ false, title: /*[[#{personalsettings.playcount}]]*/ "Play Count" },
-        	                { data: "lastPlayed",
-        	                  className: "detail fit rightalign",
-        	                  visible: /*[[${model['visibility']?.lastPlayedVisible == true}]]*/ false,
-        	                  title: /*[[#{personalsettings.lastplayed}]]*/ "Last Played",
-        	                  render: function(data, type, row) {
-        	                      if (data != null) {
-        	                          if (type == "display") {
-        	                              return new Date(data).toLocaleString();
-        	                          }
-        	                          return new Date(data).getTime();
-        	                      }
-        	                      return data;
-        	                  }
-        	                },
-        	                { data: "lastScanned",
-        	                  className: "detail fit rightalign",
-        	                  visible: /*[[${model['visibility']?.lastScannedVisible == true}]]*/ false,
-        	                  title: /*[[#{personalsettings.lastscanned}]]*/ "Last Scanned",
-        	                  render: function(data, type, row) {
-        	                      if (data != null) {
-        	                          if (type == "display") {
-        	                              return new Date(data).toLocaleString();
-        	                          }
-        	                          return new Date(data).getTime();
-        	                      }
-        	                      return data;
-        	                  }
-        	                },
-        	                { data: "created",
-        	                  className: "detail fit rightalign",
-        	                  visible: /*[[${model['visibility']?.createdVisible == true }]]*/ false,
-        	                  title: /*[[#{personalsettings.created}]]*/ "Created",
-        	                  render: function(data, type, row) {
-        	                      if (data != null) {
-        	                          if (type == "display") {
-        	                              return new Date(data).toLocaleString();
-        	                          }
-        	                          return new Date(data).getTime();
-        	                      }
-        	                      return data;
-        	                  }
-        	                },
-        	                { data: "changed",
-        	                  className: "detail fit rightalign",
-        	                  visible: /*[[${model['visibility']?.changedVisible == true}]]*/ false,
-        	                  title: /*[[#{personalsettings.changed}]]*/ "Changed",
-        	                  render: function(data, type, row) {
-        	                      if (data != null) {
-        	                          if (type == "display") {
-        	                              return new Date(data).toLocaleString();
-        	                          }
-        	                          return new Date(data).getTime();
-        	                      }
-        	                      return data;
-        	                  }
-        	                }
-                        ]
-                    } );
-                
-                    pq.musicTable.on( 'select', function ( e, dt, type, indexes ) {
-                        pq.musicTable.cells( indexes, "songcheckbox:name" ).nodes().to$().find("input").prop("checked", true);
-                        pq.updateSelectAllCheckboxStatus();
-                    } );
-                    pq.musicTable.on( 'deselect', function ( e, dt, type, indexes ) {
-                        pq.musicTable.cells( indexes, "songcheckbox:name" ).nodes().to$().find("input").prop("checked", false);
-                        pq.updateSelectAllCheckboxStatus();
-                    } );
-                    $("#playQueueMusic tbody").on( "click", ".starSong", function () {
-                        pq.onToggleStar(pq.musicTable.row( $(this).parents('tr') ).index());
-                    } );
-                    $("#playQueueMusic tbody").on( "click", ".removeSong", function () {
-                        pq.onRemove(pq.musicTable.row( $(this).parents('tr') ).index());
-                    } );
-                    $("#playQueueMusic tbody").on( "click", ".titleUrl", function () {
-                        pq.onSkip(pq.musicTable.row( $(this).parents('tr') ).index());
-                        return false;
-                    } );
-                    $(".songSelectAll").on( "change", function (e) {
-                        pq.selectAll(e.target.checked);
-                    } );
-                    pq.musicTable.on( "row-reordered", function (e, diff, edit) {
-                        if (diff.length > 0) {
-                            pq.musicTable.one( "draw", function () {
-                                pq.onRearrange(pq.musicTable.rows().indexes().toArray());
-                            });
-                        }
-                    });
-                
-                    $("#playQueueHeading").html("<h2>[(#{playlist.more.playlist})]</h2>");
-                
+                    pq.root = root;
+                    pq.list = document.getElementById("playQueueList");
+                    pq.rowTemplate = pq.createRowTemplate();
+
                     top.StompClient.subscribe("playQueue.html", {
                         // Now playing
                         '/topic/nowPlaying/current/add'(msg) {
@@ -358,7 +115,7 @@
                                 }
                             }
                         },
-                    
+
                         // Playlists
                         '/user/queue/playlists/writable'(msg) {
                             pq.playlistSelectionCallback(JSON.parse(msg.body));
@@ -369,7 +126,7 @@
                         '/user/queue/playlists/create/playqueue'(msg) {
                             pq.playlistUpdatedCallback(JSON.parse(msg.body), /*[[#{playlist.toast.saveasplaylist}]]*/ "Saved as playlist");
                         },
-                    
+
                         // Players
                         '/user/queue/players/updated'(msg) {
                             pq.onPlayerUpdated(JSON.parse(msg.body));
@@ -380,38 +137,32 @@
                         '/topic/players/deleted'(msg) {
                             pq.onPlayerDeleted(JSON.parse(msg.body));
                         },
-                    
+
                         // Bookmarks
                         '/user/queue/bookmarks/added': function(msg) {
-        	                pq.addedBookmarksCallback(JSON.parse(msg.body));
-        	            },
-        	            '/user/queue/bookmarks/deleted': function(msg) {
-        	                pq.deleteBookmarksCallback(JSON.parse(msg.body));
-        	            },
-        	            '/user/queue/bookmarks/get': function(msg) {
-        	                pq.getBookmarkCallback(JSON.parse(msg.body));
-        	            },
-        	            //one-time population only
-        	            '/app/bookmarks/list': function(msg) {
-        	                pq.getBookmarksCallback(JSON.parse(msg.body));
-        	            }
+                            pq.addedBookmarksCallback(JSON.parse(msg.body));
+                        },
+                        '/user/queue/bookmarks/deleted': function(msg) {
+                            pq.deleteBookmarksCallback(JSON.parse(msg.body));
+                        },
+                        '/user/queue/bookmarks/get': function(msg) {
+                            pq.getBookmarkCallback(JSON.parse(msg.body));
+                        },
+                        //one-time population only
+                        '/app/bookmarks/list': function(msg) {
+                            pq.getBookmarksCallback(JSON.parse(msg.body));
+                        }
                     });
-                
+
                     $("#jukeboxVolume").on("change", () => pq.onJukeboxVolumeChanged());
 
                     pq.createMediaElementPlayer();
-                    var initAutoHide = /*[[${model['autoHidePlayQueue'] == true}]]*/ false;
-                    if (initAutoHide) {
-                        pq.initAutoHide();
-                    }
-                    // on narrow screens the queue starts collapsed, below the player bar
-                    var showQueue = /*[[${model['autoHidePlayQueue'] != true}]]*/ true;
-                    pq.onTogglePlayQueue(showQueue && !window.matchMedia("(max-width: 760px)").matches);
-                
+                    pq.renderList();
+
                     // load default player
                     pq.onPlayerChanged(null);
                 },
-            
+
                 onPlayerChanged(playerId) {
                     var pq = this;
                     var playerUrl = "[(@{/playQueue/player})]";
@@ -425,21 +176,13 @@
                           pq.onStop();
                           // emulate callback because callbacks for the player will be deregistered by the time call returns
                           pq.playQueuePlayStatusCallback("STOPPED");
-                    
+
                           //reset everything
                           $(".player-tech").hide();
                           pq.unsubscribePlayerSpecificCallbacks();
                           pq.currentStreamUrl = null;
                           pq.currentSongIndex = -1;
-                          if (pq.player.tech == 'WEB') {
-                              //if (this.CastPlayer.castSession) {
-                              //    pq.CastPlayer.stopCastApp();
-                              //}
-                            
-                              // no need to change src on audioPlayer because start button will see currentSongIndex
-                              //pq.audioPlayer.setSrc(null);
-                          }
-                      
+
                           //switch to new player
                           $("#playerSelector").val(player.id);
                           pq.player = player;
@@ -451,20 +194,20 @@
                       }
                     });
                 },
-            
+
                 playerSpecificCallbacks: {},
-            
+
                 unsubscribePlayerSpecificCallbacks() {
                     for (var topic in this.playerSpecificCallbacks) {
                         top.StompClient.unsubscribe(topic, "playQueue.html");
                         delete this.playerSpecificCallbacks[topic];
                     }
                 },
-            
+
                 subscribePlayerSpecificCallbacks() {
                     if (this.player.id) {
                         var pq = this;
-                    
+
                         // Playqueues
                         pq.playerSpecificCallbacks['/user/queue/playqueues/' + this.player.id + '/playstatus'] = function(msg) {
                             pq.playQueuePlayStatusCallback(JSON.parse(msg.body));
@@ -491,11 +234,11 @@
                         pq.playerSpecificCallbacks['/app/playqueues/' + this.player.id + '/get'] = function(msg) {
                             pq.playQueueCallback(JSON.parse(msg.body), true);
                         };
-                    
+
                         top.StompClient.subscribe("playQueue.html", pq.playerSpecificCallbacks);
                     }
                 },
-            
+
                 // Player updates
                 onPlayerCreated(player) {
                     // create node if necessary
@@ -518,60 +261,19 @@
                 },
                 onPlayerDeleted(id) {
                     $("#playerSelector option[value='" + id + "']").remove();
-                
+
                     if (this.player.id == id) {
                         this.onPlayerChanged(null);
                     }
                 },
-            
-                // Show/hide play queue
-                onHidePlayQueue() {
-                    this.isVisible = false;
-                    $("#playQueueMusic_wrapper").hide();
-                    $(".playqueue-shown").hide();
-                    $(".playqueue-hidden").show();
-                    $("#togglePlayQueue").attr("aria-expanded", "false");
-                },
-                onShowPlayQueue() {
-                    this.isVisible = true;
-                    $("#playQueueMusic_wrapper").show();
-                    $(".playqueue-shown").show();
-                    $(".playqueue-hidden").hide();
-                    $("#togglePlayQueue").attr("aria-expanded", "true");
-                    if (this.musicTable) {
-                        this.musicTable.columns.adjust();
-                    }
-                },
+
+                // Show/hide the play queue (the side panel, see the panel code below)
                 onTogglePlayQueue(visible) {
-                    if (visible) {
-                        this.onShowPlayQueue();
-                    } else {
-                        this.onHidePlayQueue();
+                    if (this.panel) {
+                        this.panel.setOpen(visible);
                     }
                 },
-                initAutoHide() {
-                    var pq = this;
-                    if (window.matchMedia("(max-width: 760px)").matches) {
-                        // no hovering on phones: the queue opens with its toggle button
-                        return;
-                    }
-                    $(".playqueue-container").mouseleave(function (event) {
-                        var divRect = document.getElementById('playQueueMusic_wrapper').getBoundingClientRect();
-                        if (event.clientX >= divRect.left && event.clientX <= divRect.right &&
-                        event.clientY >= divRect.top && event.clientY <= divRect.bottom) {
-                            // mouse is still within the playqueue and mouseleave event has probably been triggered by a click
-                        }
-                        else
-                        {
-                            pq.onHidePlayQueue();
-                        }
-                    });
-                
-                    $(".playqueue-container").mouseenter(function () {
-                        pq.onShowPlayQueue();
-                    });
-                },
-            
+
                 jukeBoxPositionCallback(pos) {
                     //nothing for now
                 },
@@ -582,7 +284,7 @@
                     var value = Number.parseInt($("#jukeboxVolume").val(), 10);
                     top.StompClient.send("/app/playqueues/" + this.player.id + "/jukebox/gain", value / 100);
                 },
-            
+
                 /**
                  * Increase or decrease volume by a certain amount
                  *
@@ -598,7 +300,7 @@
                         // UI updated at callback
                     }
                 },
-            
+
                 onNowPlayingChanged(nowPlayingInfo) {
                     const nowPlayingStreamUrl = "stream?player=" + nowPlayingInfo.playerId + "&id=" + nowPlayingInfo.mediaFileId;
                     if (nowPlayingInfo != null && nowPlayingStreamUrl != this.currentStreamUrl && nowPlayingInfo.playerId == this.player.id) {
@@ -606,21 +308,21 @@
                             // matched by stream URL, so if a song is queued more than once the first occurrence is selected
                             this.currentStreamUrl = nowPlayingInfo.streamUrl;
                             this.currentSongIndex = this.getCurrentSongIndex();
-                        
+
                             this.playQueueSkipCallback({index: this.currentSongIndex, offset: 0});
                         }
                         return true;
                     }
                     return false;
                 },
-            
+
                 onEnded() {
                     this.setBookmark();
                     var song = this.songs[this.currentSongIndex];
                     top.StompClient.send("/app/playqueues/" + this.player.id + "/endMedia", song.id);
                     this.onNext(this.repeatStatus);
                 },
-            
+
                 setBookmark() {
                     if (this.autoBookmark) {
                         var song = this.songs[this.currentSongIndex];
@@ -631,7 +333,6 @@
                 lastProgressionBookmarkTime: 0,
                 updateProgressionBookmark() {
                     if (this.autoBookmark) {
-                        var song = this.songs[this.currentSongIndex];
                         var position = Math.round(this.audioPlayer.currentTime);
                         if ((this.lastProgressionBookmarkTime != position) && (position % this.audioBookmarkFrequency == 0)) {
                             this.lastProgressionBookmarkTime = position;
@@ -639,7 +340,7 @@
                         }
                     }
                 },
-            
+
                 deleteBookmarksCallback(mediaFileId) {
                     delete this.bookmarks[mediaFileId];
                 },
@@ -653,41 +354,39 @@
                 getBookmarksCallback(bookmarks) {
                     this.bookmarks = bookmarks;
                 },
-            
+
                 createMediaElementPlayer() {
                     var pq = this;
-                    // Manually run MediaElement.js initialization.
+                    // Manually run MediaElement.js initialization. Play/pause, previous and next are
+                    // the player bar's own buttons, so the player only shows the time, volume and speed.
                     this.audioPlayer = new MediaElementPlayer("audioPlayer", {
                         alwaysShowControls: true,
                         enableKeyboard: false,
-                        useDefaultControls: true,
+                        useDefaultControls: false,
                         iconSprite: /*[[@{/script/mediaelement/mejs-controls.svg}]]*/ "",
                         castAppID: "4FBFE470",
-                        features: ["speed", "chromecast"],
+                        features: ["current", "progress", "duration", "volume", "speed", "chromecast"],
                         defaultSpeed: "1.00",
                         speeds: ["2.00", "1.50", "1.25", "1.00", "0.75", "0.5"],
                         success(mediaElement, originalNode, instance) {
                             // "hack" html5 renderer and reinitialize speed
                             instance.media.rendererName = "html5";
                             instance.buildspeed(instance, instance.getElement(instance.controls), instance.getElement(instance.layers), instance.media);
-                        
+
                             // Once playback reaches the end, go to the next song, if any.
                             $(mediaElement).on("ended", () => pq.onEnded());
                             $(mediaElement).on("timeupdate", () => pq.updateProgressionBookmark());
                             $(mediaElement).on("seeked", () => pq.setBookmark());
                             $(mediaElement).on("paused", () => pq.setBookmark());
-                        
-                            // skip to first song if no src loaded
-                            $(".mejs__controls .mejs__button.mejs__playpause-button.mejs__play button").on("click", () => {
-                                if (!instance.src || pq.currentSongIndex == -1) {
-                                    pq.onSkip(0);
-                                    return false;
-                                }
-                            });
+                            $(mediaElement).on("play playing pause ended emptied", () => pq.updatePlayButton());
+
+                            // keep the progress shown by the OS (lock screen, media flyouts) in sync
+                            $(mediaElement).on("loadedmetadata durationchange play pause seeked ratechange", () => pq.updateMediaSessionPosition());
+                            pq.setUpMediaSessionSeeking();
                         }
                     });
                 },
-            
+
                 onClear() {
                     var partyMode = /*[[${model['partyMode']}]]*/ false;
                     var confirmed = partyMode
@@ -703,24 +402,46 @@
                 playQueuePlayStatusCallback(status, nonWebOnly) {
                     this.playStatus = status;
                     if (status == "PLAYING") {
-                        $("#audioStart").hide();
-                        $("#audioStop").show();
                         if (this.player.tech == 'WEB' && !nonWebOnly) {
                             if (this.audioPlayer.src) {
                                 this.audioPlayer.play();  // Resume playing if the player was paused
-                            } else {
+                            } else if (this.songs.length > 0) {
                                 this.onSkip(0);  // Start the first track if the player was not yet loaded
                             }
                         }
-                    } else {
-                        $("#audioStop").hide();
-                        $("#audioStart").show();
-                        if (this.player.tech == 'WEB' && !nonWebOnly) {
-                            this.audioPlayer.pause();
-                        }
+                    } else if (this.player.tech == 'WEB' && !nonWebOnly) {
+                        this.audioPlayer.pause();
+                    }
+                    this.updatePlayButton();
+                },
+
+                /** Shows the play or the pause button: the web player's state, or the server's for the other players. */
+                updatePlayButton() {
+                    var playing = this.player.tech == 'WEB'
+                        // paused is null until a song is loaded
+                        ? !!(this.audioPlayer && this.audioPlayer.media && this.audioPlayer.paused === false)
+                        : this.playStatus == "PLAYING";
+                    var button = document.getElementById("playPauseButton");
+                    if (button) {
+                        button.classList.toggle("is-playing", playing);
+                        var label = playing ? this.labels.pause : this.labels.play;
+                        button.setAttribute("aria-label", label);
+                        button.title = label;
                     }
                 },
-            
+
+                /** The play/pause button: starts the queue from the top when nothing was loaded yet. */
+                onPlayPause() {
+                    if (this.songs.length == 0) {
+                        return;
+                    }
+                    if (this.player.tech == 'WEB' && (!this.audioPlayer.src || this.currentSongIndex == -1)) {
+                        this.onSkip(0);
+                    } else {
+                        this.onToggleStartStop();
+                    }
+                },
+
                 /**
                  * Start/resume playing from the current playlist
                  */
@@ -732,7 +453,7 @@
                         top.StompClient.send("/app/playqueues/" + this.player.id + "/start", "");
                     }
                 },
-            
+
                 /**
                  * Pause playing
                  */
@@ -746,7 +467,7 @@
                         }
                     }
                 },
-            
+
                 /**
                  * Toggle play/pause (bound to the space key in keyboard_shortcuts.js)
                  */
@@ -761,31 +482,35 @@
                         top.StompClient.send("/app/playqueues/" + this.player.id + "/toggleStartStop", "");
                     }
                 },
-            
+
                 playQueueSkipCallback(location) {
                     if (location.index < 0 || location.index >= this.songs.length) {
                         return;
                     }
-                
+
                     var song = this.songs[location.index];
                     this.currentStreamUrl = song.streamUrl;
                     this.currentSongIndex = location.index;
                     this.updateCurrentImage();
-                
+
                     if (this.player.tech == 'WEB') {
                         this.webSkip(song, location.offset / 1000);
                     }
-                
+
                     this.updateWindowTitle(song);
                     this.showMediaSessionMetadata(song);
-                
+                    this.updateNowPlaying(song);
+
                     var notify = /*[[${model['notify']}]]*/ true;
                     if (notify) {
                         this.showNotification(song);
                     }
                 },
-            
+
                 onSkip(index, offset, nobookmarks) {
+                    if (index < 0 || index >= this.songs.length) {
+                        return;
+                    }
                     if (!offset && !nobookmarks) {
                         var bookmark = this.bookmarks[this.songs[index].id];
                         if (bookmark) {
@@ -798,14 +523,14 @@
                         top.StompClient.send("/app/playqueues/" + this.player.id + "/skip", JSON.stringify({index: index, offset: offset}));
                     }
                 },
-            
+
                 webSkip(song, position) {
                     this.loadMediaElementPlayer(song, position);
                 },
-            
+
                 loadMediaElementPlayer(song, position) {
                     var player = this.audioPlayer;
-                
+
                     // Is this a new song?
                     if (player.src == null || !player.src.endsWith(song.streamUrl)) {
                         // Stop the current playing song and change the media source.
@@ -821,18 +546,18 @@
                         if (position && position > 0) {
                             player.currentTime = position;
                         }
-                    
+
                     // Are we seeking on an already-playing song?
                     } else {
                         // Seeking also starts playing. The 'canplay' event will be
                         // fired after setting 'currentTime'.
                         player.currentTime = position || 0;
                     }
-                
+
                     // Start playback immediately.
                     player.play();
                 },
-            
+
                 onNext(repeatStatus) {
                     var index = this.currentSongIndex;
                     if (this.shuffleRadioEnabled && (index + 1) >= this.songs.length) {
@@ -893,11 +618,10 @@
                     top.StompClient.send("/app/playqueues/" + this.player.id + "/shuffle", "");
                 },
                 onStar(indices, status) {
-                    var par = this;
                     var ids = indices.map(index => {
-                        par.songs[index].starred = status;
-                        par.musicTable.cell(index, "starred:name").invalidate();
-                        return par.songs[index].id;
+                        this.songs[index].starred = status;
+                        this.updateStar(index);
+                        return this.songs[index].id;
                     });
 
                     if (status) {
@@ -920,9 +644,9 @@
                     top.StompClient.send("/app/playqueues/" + this.player.id + "/remove", JSON.stringify([index]));
                 },
                 onRemoveSelected() {
-                    top.StompClient.send("/app/playqueues/" + this.player.id + "/remove", JSON.stringify(this.musicTable.rows({ selected: true }).indexes().toArray()));
+                    top.StompClient.send("/app/playqueues/" + this.player.id + "/remove", JSON.stringify(this.getSelectedIndexes()));
                 },
-            
+
                 onRearrange(indexes) {
                     top.StompClient.send("/app/playqueues/" + this.player.id + "/rearrange", JSON.stringify(indexes));
                 },
@@ -933,13 +657,13 @@
                     top.StompClient.send("/app/playqueues/" + this.player.id + "/undo", "");
                 },
                 onSortByTrack() {
-                    top.StompClient.send("/app/playqueues/" + this.player.id + "/sort", "TRACK");
+                    top.StompClient.send("/app/playqueues/" + this.player.id + "/sort", JSON.stringify("TRACK"));
                 },
                 onSortByArtist() {
-                    top.StompClient.send("/app/playqueues/" + this.player.id + "/sort", "ARTIST");
+                    top.StompClient.send("/app/playqueues/" + this.player.id + "/sort", JSON.stringify("ARTIST"));
                 },
                 onSortByAlbum() {
-                    top.StompClient.send("/app/playqueues/" + this.player.id + "/sort", "ALBUM");
+                    top.StompClient.send("/app/playqueues/" + this.player.id + "/sort", JSON.stringify("ALBUM"));
                 },
                 onSavePlayQueue() {
                     var positionMillis = 0;
@@ -984,15 +708,15 @@
                 },
                 appendPlaylists() {
                     var pq = this;
-                
-                    var mediaFileIds = this.musicTable.rows({selected:true}).data().map(d => d.id).toArray();
-                
+
+                    var mediaFileIds = this.getSelectedIndexes().map(i => this.songs[i].id);
+
                     $("#dialog-select-playlist-list input:checked").each((i, e) => pq.appendPlaylist(e.value, mediaFileIds));
                 },
                 appendPlaylist(playlistId, mediaFileIds) {
                     top.StompClient.send("/app/playlists/files/append", JSON.stringify({id: playlistId, modifierIds: mediaFileIds}));
                 },
-            
+
                 playlistUpdatedCallback(playlistId, toastMsg) {
                     if (!main.location.href.endsWith("playlist.view?id=" + playlistId)) {
                         // change page
@@ -1000,89 +724,120 @@
                     }
                     $().toastmessage("showSuccessToast", toastMsg);
                 },
-            
+
                 playQueueRepeatStatusCallback(incomingStatus) {
                     this.repeatStatus = incomingStatus;
-                    if ($("#toggleRepeat").length != 0) {
-                        if (this.shuffleRadioEnabled) {
-                            $("#toggleRepeat").html(/*[[#{playlist.repeat_radio}]]*/ "Repeat Radio");
-                        } else if (this.repeatStatus == 'QUEUE') {
-                            $("#toggleRepeat").attr('src', /*[[${themes?.get('repeatAll')}]]*/ "icons/default_light/repeat_all.svg");
-                            $("#toggleRepeat").attr('alt', 'Repeat All/Queue');
-                        } else if (this.repeatStatus == 'OFF') {
-                            $("#toggleRepeat").attr('src', /*[[${themes?.get('repeatOff')}]]*/ "icons/default_light/repeat_off.svg");
-                            $("#toggleRepeat").attr('alt', 'Repeat Off');
-                        } else if (this.repeatStatus == 'TRACK') {
-                            $("#toggleRepeat").attr('src', /*[[${themes?.get('repeatOne')}]]*/ "icons/default_light/repeat_one.svg");
-                            $("#toggleRepeat").attr('alt', 'Repeat One/Track');
-                        }
+                    var button = document.getElementById("repeatQueue");
+                    if (!button) {
+                        return;
                     }
+                    var label;
+                    if (this.shuffleRadioEnabled) {
+                        label = this.labels.repeatRadio;
+                    } else if (this.repeatStatus == 'QUEUE') {
+                        label = this.labels.repeatQueue;
+                    } else if (this.repeatStatus == 'TRACK') {
+                        label = this.labels.repeatTrack;
+                    } else {
+                        label = this.labels.repeatOff;
+                    }
+                    button.dataset.repeat = this.repeatStatus;
+                    button.setAttribute("aria-pressed", String(this.repeatStatus != 'OFF'));
+                    button.setAttribute("aria-label", label);
+                    button.title = label;
                 },
-            
+
                 playQueueCallback(playQueue, initial) {
                     this.songs = playQueue.entries;
                     this.shuffleRadioEnabled = playQueue.shuffleRadioEnabled;
                     this.internetRadioEnabled = playQueue.internetRadioEnabled;
-                
+
                     // If an internet radio has no sources, display a message to the user.
                     if (this.internetRadioEnabled && this.songs.length == 0) {
                         $().toastmessage("showErrorToast", /*[[#{playlist.toast.radioerror}]]*/ "No sources available for this internet radio.");
                         this.onStop();
                     }
-                
+
                     this.playQueueRepeatStatusCallback(playQueue.repeatStatus);
                     this.playQueuePlayStatusCallback(playQueue.playStatus, true);
-                
+
                     // download m3u for external player only once at the beginning, every subsequent change is just reflected on the server
                     // download m3u for external with playlist player every time the playlist changes
                     if ((this.player.tech == 'EXTERNAL' && initial) || this.player.tech == 'EXTERNAL_WITH_PLAYLIST') {
                         Page.navigate("play.m3u?");
                     }
-                
-                    // Disable some UI items if internet radio is playing
-                    $("select#playQueueActions #loadPlayQueue").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #savePlayQueue").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #savePlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #downloadPlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #sharePlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #sortByTrack").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #sortByAlbum").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #sortByArtist").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #removeSelected").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #download").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #appendPlaylist").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #star").prop("disabled", this.internetRadioEnabled);
-                    $("select#playQueueActions #unstar").prop("disabled", this.internetRadioEnabled);
-                    $("#shuffleQueue, #repeatQueue, #undoQueue").prop("disabled", this.internetRadioEnabled);
-                
-                    if (this.songs.length == 0) {
-                        $("#playQueueInfo").text("");
-                    } else {
+
+                    // Disable the actions that do not apply to internet radio
+                    this.root.querySelectorAll("[data-not-radio]").forEach(element => {
+                        element.disabled = this.internetRadioEnabled;
+                    });
+
+                    var info = "";
+                    if (this.songs.length > 0) {
                         var totDuration = this.songs.map(s => s.duration).filter(d => d != null).reduce((a,b) => a + b, 0);
-                        $("#playQueueInfo").html("&nbsp;|&nbsp;" + this.songs.length + " [(#{playlist2.songs})] &nbsp;|&nbsp;" + formatDuration(Math.round(totDuration)));
+                        info = this.songs.length + " " + this.labels.songs + (totDuration > 0 ? " · " + formatDuration(Math.round(totDuration)) : "");
                     }
-                
-                    if (this.internetRadioEnabled) {
-                        this.musicTable.column("starred:name").visible(false, false);
-                        this.musicTable.column("remove:name").visible(false, false);
-                        this.musicTable.column("songcheckbox:name").visible(false, false);
-                    } else {
-                        this.musicTable.column("starred:name").visible(true, false);
-                        this.musicTable.column("remove:name").visible(true, false);
-                        this.musicTable.column("songcheckbox:name").visible(true, false);
-                    }
-                
+                    $("#playQueueInfo").text(info);
+                    $("#queueTabCount, #queueToggleCount").text(this.songs.length > 0 ? this.songs.length : "");
+
                     this.currentSongIndex = this.getCurrentSongIndex();
-                    this.musicTable.ajax.reload().columns.adjust();
-                    this.updateCurrentImage();
-                
+                    if (this.songs.length == 0) {
+                        this.updateNowPlaying(null);
+                    }
+                    this.selected.clear();
+                    this.lastCheckedIndex = null;
+                    this.renderList();
+
                     this.jukeBoxGainCallback(playQueue.gain);
                 },
-            
+
                 updateWindowTitle(song) {
                     top.document.title = song.title + " - " + song.artist + " - Airsonic";
                 },
-            
+
+                /** The cover art URL of a song, or null for internet radio sources (which have no cover). */
+                coverUrl(song, size) {
+                    return song && song.id > 0 ? "coverArt.view?id=" + song.id + "&size=" + size : null;
+                },
+
+                /** Shows the song in the player bar (null: nothing playing). */
+                updateNowPlaying(song) {
+                    var cover = document.getElementById("nowPlayingCover");
+                    var title = document.getElementById("nowPlayingTitle");
+                    var artist = document.getElementById("nowPlayingArtist");
+                    var coverUrl = this.coverUrl(song, 96);
+                    cover.hidden = !coverUrl;
+                    if (coverUrl) {
+                        cover.src = coverUrl;
+                    } else {
+                        cover.removeAttribute("src");
+                    }
+                    title.textContent = song ? song.title : this.labels.nothingPlaying;
+                    title.title = song ? song.title : "";
+                    artist.textContent = song ? (song.artist || song.album || "") : "";
+                    artist.title = artist.textContent;
+                    // the title and cover lead to the album, unless it is an internet radio's home page
+                    var albumUrl = song && song.albumUrl && !this.internetRadioEnabled ? song.albumUrl : null;
+                    [title, document.getElementById("nowPlayingCoverLink")].forEach(link => {
+                        if (albumUrl) {
+                            link.setAttribute("href", albumUrl);
+                        } else {
+                            link.removeAttribute("href");
+                        }
+                    });
+                    $("#nowPlayingStar").prop("hidden", !song || this.internetRadioEnabled);
+                    this.updateNowPlayingStar();
+                },
+                updateNowPlayingStar() {
+                    var song = this.songs[this.currentSongIndex];
+                    var button = document.getElementById("nowPlayingStar");
+                    if (button && song) {
+                        button.setAttribute("aria-pressed", String(!!song.starred));
+                        button.title = song.starred ? this.labels.unstar : this.labels.star;
+                        button.setAttribute("aria-label", button.title);
+                    }
+                },
+
                 showMediaSessionMetadata(song) {
                     if ('mediaSession' in navigator) {
                         var metadata = new MediaMetadata({
@@ -1101,6 +856,58 @@
                         navigator.mediaSession.setActionHandler('pause', () => this.onStop());
                         navigator.mediaSession.setActionHandler('previoustrack', () => this.onPrevious());
                         navigator.mediaSession.setActionHandler('nexttrack', () => this.onNext('OFF'));
+                    }
+                },
+                /** Lets the OS media controls (lock screen, media keys, headsets) seek in the web player. */
+                setUpMediaSessionSeeking() {
+                    if (!('mediaSession' in navigator)) {
+                        return;
+                    }
+                    var seekTo = time => {
+                        var duration = this.getMediaDuration();
+                        this.audioPlayer.currentTime = Math.max(0, duration ? Math.min(time, duration) : time);
+                    };
+                    var handlers = {
+                        seekto: details => seekTo(details.seekTime),
+                        seekbackward: details => seekTo(this.audioPlayer.currentTime - (details.seekOffset || 10)),
+                        seekforward: details => seekTo(this.audioPlayer.currentTime + (details.seekOffset || 10))
+                    };
+                    Object.keys(handlers).forEach(action => {
+                        try {
+                            navigator.mediaSession.setActionHandler(action, handlers[action]);
+                        } catch (e) {
+                            // the browser does not support this action
+                        }
+                    });
+                },
+                /** The duration of the song playing, from the stream or else from the library (transcoded streams have none). */
+                getMediaDuration() {
+                    var media = this.audioPlayer.media;
+                    if (media && Number.isFinite(media.duration) && media.duration > 0) {
+                        return media.duration;
+                    }
+                    var song = this.songs[this.currentSongIndex];
+                    return song && song.duration > 0 ? song.duration : null;
+                },
+                updateMediaSessionPosition() {
+                    if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) {
+                        return;
+                    }
+                    var media = this.audioPlayer.media;
+                    navigator.mediaSession.playbackState = media.paused ? "paused" : "playing";
+                    var duration = this.getMediaDuration();
+                    try {
+                        if (duration) {
+                            navigator.mediaSession.setPositionState({
+                                duration: duration,
+                                playbackRate: media.playbackRate > 0 ? media.playbackRate : 1,
+                                position: Math.min(Math.max(media.currentTime || 0, 0), duration)
+                            });
+                        } else {
+                            navigator.mediaSession.setPositionState();
+                        }
+                    } catch (e) {
+                        // a position the browser rejects (e.g. while a new source loads) is not worth reporting
                     }
                 },
                 showNotification(song) {
@@ -1127,12 +934,7 @@
                         setTimeout(function() {n.close()}, 5000);
                     }
                 },
-            
-                updateCurrentImage() {
-                    $(this.musicTable.rows().nodes()).removeClass("currently-playing").find(".currentImage").hide();
-                    $(this.musicTable.row(this.currentSongIndex).node()).addClass("currently-playing").find(".currentImage").show();
-                },
-            
+
                 getCurrentSongIndex() {
                     for (var i = 0, len = this.songs.length; i < len; i++) {
                         if (this.songs[i].streamUrl == this.currentStreamUrl) {
@@ -1141,205 +943,975 @@
                     }
                     return -1;
                 },
-            
-                // actionSelected() is invoked when the users selects from the "More actions..." combo box.
-                actionSelected(id) {
-                    var selectedIndexes;
-                    if (id == "top") {
-                        return;
-                    } else if (id == "savePlayQueue") {
-                        this.onSavePlayQueue();
-                    } else if (id == "loadPlayQueue") {
-                        this.onLoadPlayQueue();
-                    } else if (id == "savePlaylist") {
-                        this.onSavePlaylist();
-                    } else if (id == "downloadPlaylist") {
-                        Page.navigate("download.view?player=" + this.player.id);
-                    } else if (id == "sharePlaylist") {
-                        Page.navigate("createShare.view?player=" + this.player.id + "&" + this.querize(this.getSelectedIndexes(), "i"));
-                    } else if (id == "sortByTrack") {
-                        this.onSortByTrack();
-                    } else if (id == "sortByArtist") {
-                        this.onSortByArtist();
-                    } else if (id == "sortByAlbum") {
-                        this.onSortByAlbum();
-                    } else if (id == "removeSelected") {
-                        this.onRemoveSelected();
-                    } else if ((selectedIndexes = this.getSelectedIndexes()).length > 0 && id == "star") { // define selectedIndexes first so it always evaluates
-                        this.onStar(selectedIndexes, true);
-                    } else if (id == "unstar" && selectedIndexes.length > 0) {
-                        this.onStar(selectedIndexes, false);
-                    } else if (id == "download" && selectedIndexes.length > 0) {
-                        Page.navigate("download.view?player=" + this.player.id + "&" + this.querize(selectedIndexes, "i"));
-                    } else if (id == "appendPlaylist" && selectedIndexes.length > 0) {
-                        this.onAppendPlaylist();
-                    }
-                    $("#playQueueActions").prop("selectedIndex", 0);
+
+                /* The queue list */
+
+                /** One row of the list, cloned for every song. */
+                createRowTemplate() {
+                    var row = document.createElement("li");
+                    row.className = "queue-row";
+                    // constant markup; the song's data is filled in with textContent and attributes
+                    row.innerHTML =
+                        '<span class="queue-handle" aria-hidden="true"></span>' +
+                        '<span class="queue-pos"><span class="queue-num"></span><span class="queue-now"></span>' +
+                        '<input type="checkbox" class="queue-check"></span>' +
+                        '<span class="queue-cover"><img alt="" loading="lazy" decoding="async"></span>' +
+                        '<span class="queue-text"><a href="#" class="queue-title"></a><span class="queue-meta"></span></span>' +
+                        '<span class="queue-duration"></span>' +
+                        '<button type="button" class="icon-button queue-star"></button>' +
+                        '<button type="button" class="icon-button queue-remove"></button>';
+                    row.querySelector(".queue-handle").appendChild(Icons.svg("grip-vertical", {"class": "icon-sm"}));
+                    row.querySelector(".queue-now").appendChild(Icons.svg("volume-2", {"class": "icon-sm"}));
+                    row.querySelector(".queue-cover").appendChild(Icons.svg("music", {"class": "icon-sm"}));
+                    row.querySelector(".queue-star").appendChild(Icons.svg("star", {"class": "icon-sm"}));
+                    var remove = row.querySelector(".queue-remove");
+                    remove.appendChild(Icons.svg("x", {"class": "icon-sm"}));
+                    remove.title = this.labels.remove;
+                    remove.setAttribute("aria-label", this.labels.remove);
+                    row.querySelector(".queue-handle").title = this.labels.reorder;
+                    return row;
                 },
+
+                renderRow(song, index) {
+                    var row = this.rowTemplate.cloneNode(true);
+                    row.dataset.index = index;
+                    row.querySelector(".queue-num").textContent = index + 1;
+                    row.querySelector(".queue-check").setAttribute("aria-label", song.title || "");
+
+                    var cover = row.querySelector(".queue-cover");
+                    var coverUrl = this.coverUrl(song, 80);
+                    if (coverUrl) {
+                        cover.querySelector("img").src = coverUrl;
+                    } else {
+                        cover.querySelector("img").remove();
+                    }
+
+                    var title = row.querySelector(".queue-title");
+                    title.textContent = song.title;
+                    title.title = song.title || "";
+                    if (this.player.tech == "EXTERNAL_WITH_PLAYLIST") {
+                        title.removeAttribute("href");
+                    }
+
+                    row.querySelector(".queue-meta").append(...this.renderDetails(song));
+                    if (this.details.duration && song.duration > 0) {
+                        row.querySelector(".queue-duration").textContent = formatDuration(Math.round(song.duration));
+                    }
+                    this.renderStar(row, song);
+                    return row;
+                },
+
+                /** The details under the title: artist, album (a link to it) and what else the settings ask for. */
+                renderDetails(song) {
+                    var parts = [];
+                    var add = value => {
+                        if (value != null && value !== "" && value !== 0) {
+                            parts.push(document.createTextNode(String(value)));
+                        }
+                    };
+                    if (this.details.artist) {
+                        add(song.artist);
+                    }
+                    if (this.details.albumArtist && song.albumArtist != song.artist) {
+                        add(song.albumArtist);
+                    }
+                    if (this.details.album && song.album) {
+                        var album = document.createElement("a");
+                        album.textContent = song.album;
+                        album.title = song.album;
+                        album.href = song.albumUrl || "#";
+                        if (this.internetRadioEnabled) {
+                            album.target = "_blank";
+                            album.rel = "noopener noreferrer";
+                        } else {
+                            album.target = "main";
+                        }
+                        parts.push(album);
+                    }
+                    if (this.details.year) {
+                        add(song.year);
+                    }
+                    if (this.details.genre) {
+                        add(song.genre);
+                    }
+                    if (this.details.format) {
+                        add(song.format);
+                    }
+                    if (this.details.bitRate) {
+                        add(song.bitRate);
+                    }
+                    if (this.details.fileSize) {
+                        add(song.fileSize);
+                    }
+                    var nodes = [];
+                    parts.forEach((part, i) => {
+                        if (i > 0) {
+                            nodes.push(document.createTextNode(" · "));
+                        }
+                        nodes.push(part);
+                    });
+                    return nodes;
+                },
+
+                renderStar(row, song) {
+                    var star = row.querySelector(".queue-star");
+                    var label = song.starred ? this.labels.unstar : this.labels.star;
+                    star.setAttribute("aria-pressed", String(!!song.starred));
+                    star.setAttribute("aria-label", label);
+                    star.title = label;
+                },
+
+                updateStar(index) {
+                    var row = this.rowAt(index);
+                    if (row) {
+                        this.renderStar(row, this.songs[index]);
+                    }
+                    if (index == this.currentSongIndex) {
+                        this.updateNowPlayingStar();
+                    }
+                },
+
+                rowAt(index) {
+                    return this.list.querySelector('.queue-row[data-index="' + Number(index) + '"]');
+                },
+
+                renderList() {
+                    var fragment = document.createDocumentFragment();
+                    this.songs.forEach((song, i) => fragment.appendChild(this.renderRow(song, i)));
+                    this.list.replaceChildren(fragment);
+                    this.list.classList.toggle("is-radio", this.internetRadioEnabled);
+                    this.list.classList.toggle("is-static", this.player.tech == "EXTERNAL_WITH_PLAYLIST");
+                    document.getElementById("playQueueEmpty").hidden = this.songs.length > 0;
+                    this.applyFilter();
+                    this.updateCurrentImage(true);
+                    this.updateSelection();
+                    if (this.focusAfterRender != null) {
+                        var row = this.rowAt(this.focusAfterRender);
+                        this.focusAfterRender = null;
+                        if (row) {
+                            row.querySelector(".queue-title").focus();
+                        }
+                    }
+                },
+
+                /** Marks the row of the current song; follows it if the previous one was in view. */
+                updateCurrentImage(rendered) {
+                    var previous = this.list.querySelector(".queue-row.currently-playing");
+                    var follow = !rendered && previous && this.isRowInView(previous);
+                    if (previous) {
+                        previous.classList.remove("currently-playing");
+                        previous.removeAttribute("aria-current");
+                    }
+                    var row = this.rowAt(this.currentSongIndex);
+                    if (row) {
+                        row.classList.add("currently-playing");
+                        row.setAttribute("aria-current", "true");
+                        if (follow && row !== previous) {
+                            row.scrollIntoView({block: "nearest"});
+                        }
+                    }
+                },
+
+                isRowInView(row) {
+                    var box = row.getBoundingClientRect();
+                    var view = this.list.getBoundingClientRect();
+                    return box.height > 0 && box.bottom > view.top && box.top < view.bottom;
+                },
+
+                /** Scrolls the current song into view (the locate button). */
+                scrollToCurrent() {
+                    var row = this.rowAt(this.currentSongIndex);
+                    if (!row) {
+                        return;
+                    }
+                    if (row.hidden) {
+                        this.setFilter("");
+                    }
+                    row.scrollIntoView({block: "center"});
+                    row.classList.add("flash");
+                    row.addEventListener("animationend", () => row.classList.remove("flash"), {once: true});
+                },
+
+                /* Filter */
+
+                setFilter(text) {
+                    this.filterText = text;
+                    document.getElementById("queueFilter").value = text;
+                    this.applyFilter();
+                },
+
+                applyFilter() {
+                    var query = this.filterText.trim().toLowerCase();
+                    this.list.querySelectorAll(".queue-row").forEach(row => {
+                        var song = this.songs[row.dataset.index];
+                        row.hidden = query !== "" && ![song.title, song.artist, song.album, song.albumArtist]
+                            .some(value => value && String(value).toLowerCase().includes(query));
+                    });
+                    this.list.classList.toggle("is-filtered", query !== "");
+                },
+
+                /* Selection */
+
+                setSelected(index, selected) {
+                    if (selected) {
+                        this.selected.add(index);
+                    } else {
+                        this.selected.delete(index);
+                    }
+                    var row = this.rowAt(index);
+                    if (row) {
+                        row.classList.toggle("selected", selected);
+                        row.querySelector(".queue-check").checked = selected;
+                    }
+                },
+
+                /** A row's checkbox; with shift, every visible row from the last one clicked follows it. */
+                onCheck(index, checked, range) {
+                    if (range && this.lastCheckedIndex != null) {
+                        var from = Math.min(this.lastCheckedIndex, index);
+                        var to = Math.max(this.lastCheckedIndex, index);
+                        for (var i = from; i <= to; i++) {
+                            var row = this.rowAt(i);
+                            if (row && !row.hidden) {
+                                this.setSelected(i, checked);
+                            }
+                        }
+                    } else {
+                        this.setSelected(index, checked);
+                    }
+                    this.lastCheckedIndex = index;
+                    this.updateSelection();
+                },
+
+                selectAll(selected) {
+                    this.list.querySelectorAll(".queue-row").forEach(row => {
+                        if (!row.hidden || !selected) {
+                            this.setSelected(Number(row.dataset.index), selected);
+                        }
+                    });
+                    this.updateSelection();
+                },
+
+                /** Shows the selection bar with the number of selected songs, or hides it. */
+                updateSelection() {
+                    var count = this.selected.size;
+                    document.getElementById("queueSelectionBar").hidden = count == 0;
+                    document.getElementById("queueSelectedCount").textContent = this.labels.selected.replace("#", count);
+                    this.list.classList.toggle("is-selecting", count > 0);
+                    var selectAll = document.getElementById("queueSelectAll");
+                    selectAll.checked = count > 0 && count == this.songs.length;
+                    selectAll.indeterminate = count > 0 && count < this.songs.length;
+                },
+
                 getSelectedIndexes() {
-                    return this.musicTable.rows({ selected: true }).indexes().toArray();
+                    return Array.from(this.selected).sort((a, b) => a - b);
+                },
+
+                /* Reordering */
+
+                /**
+                 * Moves songs (indexes, in order) so that they come before the song at insertAt
+                 * (songs.length: at the end), and sends the new order to the server.
+                 */
+                moveSongs(indexes, insertAt) {
+                    var moving = new Set(indexes);
+                    var rest = this.songs.map((song, i) => i).filter(i => !moving.has(i));
+                    var position = rest.filter(i => i < insertAt).length;
+                    var order = rest.slice(0, position).concat(indexes, rest.slice(position));
+                    if (order.some((value, i) => value !== i)) {
+                        this.onRearrange(order);
+                        return order;
+                    }
+                    return null;
+                },
+
+                canReorder() {
+                    return !this.internetRadioEnabled && this.filterText.trim() === "" && this.songs.length > 1;
+                },
+
+                /** Moves the song of a row one place up or down (Alt+arrow keys). */
+                moveByKey(index, delta) {
+                    if (!this.canReorder()) {
+                        return;
+                    }
+                    var target = index + delta;
+                    if (target < 0 || target >= this.songs.length) {
+                        return;
+                    }
+                    if (this.moveSongs([index], delta < 0 ? target : target + 1)) {
+                        this.focusAfterRender = target;
+                    }
+                },
+
+                /** Drags rows by their handle with the mouse, pen or a finger (pointer events, so it also works on touch screens). */
+                startDrag(event, row) {
+                    if (!this.canReorder() || event.button > 0) {
+                        return;
+                    }
+                    event.preventDefault();
+                    var pq = this;
+                    var index = Number(row.dataset.index);
+                    var moving = this.selected.has(index) ? this.getSelectedIndexes() : [index];
+                    var handle = event.target.closest(".queue-handle");
+                    var marked = null;
+                    var insertAt = null;
+                    var pointerY = event.clientY;
+
+                    moving.forEach(i => {
+                        var r = pq.rowAt(i);
+                        if (r) {
+                            r.classList.add("is-moving");
+                        }
+                    });
+                    this.list.classList.add("is-reordering");
+                    try {
+                        // the handle keeps getting the pointer's events while it moves over other rows
+                        handle.setPointerCapture(event.pointerId);
+                    } catch (e) {
+                        // not an active pointer: the events still reach the handle while over it
+                    }
+
+                    function mark(target, after) {
+                        if (marked && marked !== target) {
+                            marked.classList.remove("drop-before", "drop-after");
+                        }
+                        marked = target;
+                        if (target) {
+                            target.classList.toggle("drop-before", !after);
+                            target.classList.toggle("drop-after", after);
+                        }
+                    }
+
+                    function track() {
+                        var view = pq.list.getBoundingClientRect();
+                        var y = Math.min(Math.max(pointerY, view.top + 1), view.bottom - 1);
+                        var element = document.elementFromPoint(view.left + view.width / 2, y);
+                        var target = element && element.closest(".queue-row");
+                        if (!target || !pq.list.contains(target)) {
+                            return;
+                        }
+                        var box = target.getBoundingClientRect();
+                        var after = pointerY > box.top + box.height / 2;
+                        mark(target, after);
+                        insertAt = Number(target.dataset.index) + (after ? 1 : 0);
+                    }
+
+                    // scrolls the list while the pointer is near its top or bottom edge
+                    var scroller = window.setInterval(() => {
+                        var view = pq.list.getBoundingClientRect();
+                        var edge = Math.min(48, view.height / 4);
+                        if (pointerY < view.top + edge) {
+                            pq.list.scrollTop -= 12;
+                            track();
+                        } else if (pointerY > view.bottom - edge) {
+                            pq.list.scrollTop += 12;
+                            track();
+                        }
+                    }, 30);
+
+                    function onMove(e) {
+                        pointerY = e.clientY;
+                        track();
+                    }
+
+                    function finish(e) {
+                        window.clearInterval(scroller);
+                        handle.removeEventListener("pointermove", onMove);
+                        handle.removeEventListener("pointerup", finish);
+                        handle.removeEventListener("pointercancel", finish);
+                        mark(null);
+                        pq.list.classList.remove("is-reordering");
+                        pq.list.querySelectorAll(".is-moving").forEach(r => r.classList.remove("is-moving"));
+                        if (e.type === "pointerup" && insertAt != null) {
+                            pq.moveSongs(moving, insertAt);
+                        }
+                    }
+
+                    handle.addEventListener("pointermove", onMove);
+                    handle.addEventListener("pointerup", finish);
+                    handle.addEventListener("pointercancel", finish);
+                },
+
+                /** Handles clicks, checkboxes and keys inside the list (one listener for all rows). */
+                bindList(page) {
+                    var pq = this;
+                    var list = this.list;
+                    var indexOf = element => Number(element.closest(".queue-row").dataset.index);
+
+                    page.listen(list, "click", event => {
+                        var target = event.target;
+                        if (target.closest(".queue-title")) {
+                            event.preventDefault();
+                            pq.onSkip(indexOf(target));
+                        } else if (target.closest(".queue-star")) {
+                            pq.onToggleStar(indexOf(target));
+                        } else if (target.closest(".queue-remove")) {
+                            pq.onRemove(indexOf(target));
+                        } else if (target.closest(".queue-check")) {
+                            pq.onCheck(indexOf(target), target.checked, event.shiftKey);
+                        } else if (target.closest(".queue-meta a[href='#']")) {
+                            event.preventDefault();
+                        }
+                    });
+                    // a double click anywhere on a row plays it
+                    page.listen(list, "dblclick", event => {
+                        if (event.target.closest(".queue-row") && !event.target.closest("a, button, input")) {
+                            pq.onSkip(indexOf(event.target));
+                        }
+                    });
+                    page.listen(list, "keydown", event => {
+                        var row = event.target.closest(".queue-row");
+                        if (!row || !event.altKey || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) {
+                            return;
+                        }
+                        event.preventDefault();
+                        pq.moveByKey(Number(row.dataset.index), event.key === "ArrowUp" ? -1 : 1);
+                    });
+                    page.listen(list, "pointerdown", event => {
+                        var handle = event.target.closest(".queue-handle");
+                        if (handle) {
+                            pq.startDrag(event, handle.closest(".queue-row"));
+                        }
+                    });
+                },
+
+                /* Actions of the menu and the selection bar */
+
+                runAction(id) {
+                    var selection = this.getSelectedIndexes();
+                    var actions = new Map([
+                        ["savePlayQueue", () => this.onSavePlayQueue()],
+                        ["loadPlayQueue", () => this.onLoadPlayQueue()],
+                        ["savePlaylist", () => this.onSavePlaylist()],
+                        ["downloadPlaylist", () => Page.navigate("download.view?player=" + this.player.id)],
+                        ["sharePlaylist", () => Page.navigate("createShare.view?player=" + this.player.id + "&" + this.querize(selection, "i"))],
+                        ["sortByTrack", () => this.onSortByTrack()],
+                        ["sortByArtist", () => this.onSortByArtist()],
+                        ["sortByAlbum", () => this.onSortByAlbum()],
+                        ["playerSettings", () => this.playerSettingsPage()],
+                        ["removeSelected", () => this.onRemoveSelected()],
+                        ["star", () => this.onStar(selection, true)],
+                        ["unstar", () => this.onStar(selection, false)],
+                        ["download", () => Page.navigate("download.view?player=" + this.player.id + "&" + this.querize(selection, "i"))],
+                        ["appendPlaylist", () => this.onAppendPlaylist()]
+                    ]);
+                    var selectionActions = ["removeSelected", "star", "unstar", "download", "appendPlaylist"];
+                    var action = actions.get(id);
+                    if (action && (selection.length > 0 || !selectionActions.includes(id))) {
+                        action();
+                    }
                 },
                 querize(arr, queryVar) {
                     return arr.map(i => queryVar + "=" + i).join("&");
                 },
-            
-                selectAll(b) {
-                    if (b) {
-                        this.musicTable.rows().select();
-                    } else {
-                        this.musicTable.rows().deselect();
-                    }
-                },
-            
-                updateSelectAllCheckboxStatus() {
-                    var pq = this;
-                    if (pq.musicTable.rows({selected: true}).indexes().length == 0) {
-                        $('.songSelectAll').prop('checked', false);
-                        $('.songSelectAll').prop('indeterminate', false);
-                    } else if (pq.musicTable.rows({selected: true}).indexes().length == pq.musicTable.rows().indexes().length) {
-                        $('.songSelectAll').prop('checked', true);
-                        $('.songSelectAll').prop('indeterminate', false);
-                    } else {
-                        $('.songSelectAll').prop('indeterminate', true);
-                    }
-                },
-            
+
                 playerSettingsPage() {
                     Page.navigate("playerSettings.view?id=" + this.player.id);
                 }
             };
 
-            Page.define("playQueue", function (page) {
-                playQueue.init();
-                page.actions({
-                    changePlayer: select => playQueue.onPlayerChanged(select.value),
-                    start: () => playQueue.onStart(),
-                    stop: () => playQueue.onStop(),
-                    previous: () => playQueue.onPrevious(),
-                    next: () => playQueue.onNext('OFF'),
-                    clear: () => playQueue.onClear(),
-                    shuffle: () => playQueue.onShuffle(),
-                    toggleRepeat: () => playQueue.onToggleRepeat(),
-                    undo: () => playQueue.onUndo(),
-                    playerSettings: () => playQueue.playerSettingsPage(),
-                    moreActions: select => playQueue.actionSelected(select.options[select.selectedIndex].id),
-                    togglePlayQueue: () => playQueue.onTogglePlayQueue(!playQueue.isVisible)
+            /*
+             * The side panel: docked next to the main page on wide screens, where it stays open or
+             * closed as the user leaves it (remembered by the browser), and slid in over the page on
+             * smaller screens. Its width can be
+             * dragged, and it has tabs when the activity (now playing, recently played) is shown too.
+             */
+            (function () {
+                var STORE_OPEN = "airsonic.queuePanel.open";
+                var STORE_WIDTH = "airsonic.queuePanel.width";
+                var STORE_TAB = "airsonic.queuePanel.tab";
+
+                function load(key) {
+                    try {
+                        return window.localStorage.getItem(key);
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
+                function store(key, value) {
+                    try {
+                        if (value == null) {
+                            window.localStorage.removeItem(key);
+                        } else {
+                            window.localStorage.setItem(key, value);
+                        }
+                    } catch (e) {
+                        // storage unavailable (private window, blocked site data): nothing to remember
+                    }
+                }
+
+                function SidePanel(page) {
+                    this.page = page;
+                    this.body = document.body;
+                    this.overlay = window.matchMedia("(max-width: 1200px)");
+                    var stored = load(STORE_OPEN);
+                    this.dockedOpen = stored !== "false";
+                    this.overlayOpen = false;
+                    this.toggle = document.getElementById("togglePlayQueue");
+                    this.labels = playQueue.labels;
+
+                    page.listen(this.overlay, "change", () => {
+                        this.overlayOpen = false;
+                        this.apply();
+                    });
+                    // on small screens the panel gets out of the way once a page is shown
+                    page.listen(document.querySelector('[data-shell-region="main"]'), "shell:load", () => {
+                        if (this.overlay.matches && this.overlayOpen) {
+                            this.setOpen(false);
+                        }
+                    });
+                    page.listen(document.querySelector(".shell-backdrop"), "click", () => {
+                        if (this.overlay.matches) {
+                            this.setOpen(false);
+                        }
+                    });
+                    page.listen(document, "keydown", event => {
+                        if (event.key === "Escape" && this.overlay.matches && this.overlayOpen && !event.defaultPrevented) {
+                            this.setOpen(false);
+                            this.toggle.focus();
+                        }
+                    });
+
+                    this.initWidth();
+                    this.initTabs();
+                    this.trackPlayerBarHeight();
+                    this.apply();
+                }
+
+                SidePanel.prototype.isOpen = function () {
+                    return this.overlay.matches ? this.overlayOpen : this.dockedOpen;
+                };
+
+                SidePanel.prototype.setOpen = function (open) {
+                    if (this.overlay.matches) {
+                        this.overlayOpen = open;
+                    } else {
+                        this.dockedOpen = open;
+                        store(STORE_OPEN, String(open));
+                    }
+                    this.apply();
+                    if (open && this.overlay.matches) {
+                        var focus = document.querySelector("#shell-side .side-tab[aria-selected='true']");
+                        if (focus) {
+                            focus.focus();
+                        }
+                    }
+                };
+
+                SidePanel.prototype.apply = function () {
+                    var open = this.isOpen();
+                    playQueue.isVisible = open;
+                    this.body.classList.toggle("shell-side-closed", !open);
+                    this.body.classList.toggle("shell-side-overlay", this.overlay.matches);
+                    var label = open ? this.labels.hideQueue : this.labels.showQueue;
+                    this.toggle.setAttribute("aria-expanded", String(open));
+                    this.toggle.setAttribute("aria-label", label);
+                    this.toggle.title = label;
+                    document.getElementById("shell-side").inert = !open;
+                };
+
+                /** The resize handle on the panel's left edge (pointer drag, or arrow keys when focused). */
+                SidePanel.prototype.initWidth = function () {
+                    var body = this.body;
+                    var handle = document.querySelector("#shell-side .side-resizer");
+                    var side = document.getElementById("shell-side");
+
+                    function setWidth(width, save) {
+                        var max = Math.max(280, Math.min(720, window.innerWidth * 0.6));
+                        var value = Math.round(Math.min(Math.max(width, 260), max));
+                        body.style.setProperty("--side-width", value + "px");
+                        if (save) {
+                            store(STORE_WIDTH, String(value));
+                        }
+                    }
+
+                    var saved = Number.parseInt(load(STORE_WIDTH), 10);
+                    if (saved > 0) {
+                        setWidth(saved, false);
+                    }
+
+                    this.page.listen(handle, "pointerdown", event => {
+                        if (this.overlay.matches || event.button > 0) {
+                            return;
+                        }
+                        event.preventDefault();
+                        handle.setPointerCapture(event.pointerId);
+                        body.classList.add("shell-side-resizing");
+                        var right = side.getBoundingClientRect().right;
+                        var move = e => setWidth(right - e.clientX, false);
+                        var end = e => {
+                            handle.removeEventListener("pointermove", move);
+                            handle.removeEventListener("pointerup", end);
+                            handle.removeEventListener("pointercancel", end);
+                            body.classList.remove("shell-side-resizing");
+                            setWidth(right - e.clientX, true);
+                        };
+                        handle.addEventListener("pointermove", move);
+                        handle.addEventListener("pointerup", end);
+                        handle.addEventListener("pointercancel", end);
+                    });
+                    this.page.listen(handle, "keydown", event => {
+                        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                            event.preventDefault();
+                            setWidth(side.getBoundingClientRect().width + (event.key === "ArrowLeft" ? 24 : -24), true);
+                        }
+                    });
+                    // double click: back to the default width
+                    this.page.listen(handle, "dblclick", () => {
+                        body.style.removeProperty("--side-width");
+                        store(STORE_WIDTH, null);
+                    });
+                };
+
+                SidePanel.prototype.initTabs = function () {
+                    var tabs = Array.from(document.querySelectorAll("#shell-side .side-tab"));
+                    var select = (tab, focus) => {
+                        tabs.forEach(t => {
+                            var selected = t === tab;
+                            t.setAttribute("aria-selected", String(selected));
+                            t.tabIndex = selected ? 0 : -1;
+                            document.getElementById(t.getAttribute("aria-controls")).hidden = !selected;
+                        });
+                        store(STORE_TAB, tab.dataset.tab);
+                        if (focus) {
+                            tab.focus();
+                        }
+                    };
+                    this.page.actions({showSideTab: tab => select(tab, false)});
+                    if (tabs.length < 2) {
+                        return;
+                    }
+                    this.page.listen(tabs[0].parentElement, "keydown", event => {
+                        var index = tabs.indexOf(event.target);
+                        if (index < 0 || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) {
+                            return;
+                        }
+                        event.preventDefault();
+                        select(tabs[(index + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length], true);
+                    });
+                    var saved = tabs.find(t => t.dataset.tab === load(STORE_TAB));
+                    select(saved || tabs[0], false);
+                };
+
+                /** The overlaid panel ends above the player bar, whose height depends on the screen. */
+                SidePanel.prototype.trackPlayerBarHeight = function () {
+                    var bar = document.getElementById("playerBar");
+                    var body = this.body;
+                    if (!bar || !window.ResizeObserver) {
+                        return;
+                    }
+                    var observer = new ResizeObserver(() => body.style.setProperty("--player-bar-height", bar.offsetHeight + "px"));
+                    observer.observe(bar);
+                    this.page.onDestroy(() => observer.disconnect());
+                };
+
+                playQueue.createPanel = page => new SidePanel(page);
+            })();
+
+            /*
+             * Media dragged from the pages (see mediadrag.js) is added to the play queue: before the
+             * row it is dropped on (after it, in the lower half of the row), else at the end.
+             */
+            (function () {
+                var markedRow = null;
+
+                function markRow(row, after) {
+                    if (markedRow && markedRow !== row) {
+                        markedRow.classList.remove("drop-before", "drop-after");
+                    }
+                    markedRow = row;
+                    if (row) {
+                        row.classList.toggle("drop-before", !after);
+                        row.classList.toggle("drop-after", after);
+                    }
+                }
+
+                function clear() {
+                    markRow(null);
+                    document.body.classList.remove("queue-drop-hover");
+                }
+
+                /** The queue row under the pointer and whether the drop goes after it. */
+                function rowAt(event) {
+                    var row = event.target.closest && event.target.closest("#playQueueList > .queue-row");
+                    if (!row) {
+                        return null;
+                    }
+                    var box = row.getBoundingClientRect();
+                    return {row: row, after: event.clientY > box.top + box.height / 2};
+                }
+
+                function installDrop(page) {
+                    // the container has no box of its own: it holds the side panel and the player bar
+                    var container = page.root;
+                    page.listen(container, "dragover", event => {
+                        if (!window.MediaDrag || !MediaDrag.accepts(event) || !playQueue.player.id) {
+                            return;
+                        }
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "copy";
+                        document.body.classList.add("queue-drop-hover");
+                        var target = MediaDrag.payload().ids ? rowAt(event) : null;
+                        markRow(target && target.row, target && target.after);
+                    });
+                    page.listen(container, "dragleave", event => {
+                        if (!container.contains(event.relatedTarget)) {
+                            clear();
+                        }
+                    });
+                    page.listen(container, "drop", event => {
+                        var payload = window.MediaDrag && MediaDrag.accepts(event) ? MediaDrag.payload() : null;
+                        var target = payload && payload.ids ? rowAt(event) : null;
+                        clear();
+                        if (!payload || !playQueue.player.id) {
+                            return;
+                        }
+                        event.preventDefault();
+                        if (payload.playlistId != null) {
+                            playQueue.onAddPlaylist(payload.playlistId);
+                        } else if (target) {
+                            var index = Number(target.row.dataset.index) + (target.after ? 1 : 0);
+                            top.StompClient.send("/app/playqueues/" + playQueue.player.id + "/add", JSON.stringify({ids: payload.ids, index: index}));
+                        } else {
+                            playQueue.onAdd(payload.ids);
+                        }
+                    });
+                    page.listen(document, "dragend", clear);
+                }
+
+                /** Opens the menus (popovers) next to their button: below it, or above it near the bottom of the screen. */
+                function installMenus(page) {
+                    page.findAll(".menu-popover").forEach(menu => {
+                        page.listen(menu, "beforetoggle", event => {
+                            var button = page.find('[popovertarget="' + menu.id + '"]');
+                            if (event.newState !== "open" || !button) {
+                                return;
+                            }
+                            var box = button.getBoundingClientRect();
+                            var below = box.top < window.innerHeight / 2;
+                            var rightAligned = box.left > window.innerWidth / 2;
+                            Object.assign(menu.style, {
+                                top: below ? (box.bottom + 4) + "px" : "auto",
+                                bottom: below ? "auto" : (window.innerHeight - box.top + 4) + "px",
+                                left: rightAligned ? "auto" : box.left + "px",
+                                right: rightAligned ? (window.innerWidth - box.right) + "px" : "auto",
+                                maxHeight: (below ? window.innerHeight - box.bottom : box.top) - 16 + "px"
+                            });
+                        });
+                        // an action closes its menu
+                        page.listen(menu, "click", event => {
+                            if (event.target.closest("button")) {
+                                menu.hidePopover();
+                            }
+                        });
+                    });
+                }
+
+                Page.define("playQueue", function (page) {
+                    playQueue.panel = playQueue.createPanel(page);
+                    playQueue.init(page.root);
+                    playQueue.bindList(page);
+                    installDrop(page);
+                    installMenus(page);
+                    page.actions({
+                        changePlayer: select => playQueue.onPlayerChanged(select.value),
+                        playPause: () => playQueue.onPlayPause(),
+                        previous: () => playQueue.onPrevious(),
+                        next: () => playQueue.onNext('OFF'),
+                        clear: () => playQueue.onClear(),
+                        shuffle: () => playQueue.onShuffle(),
+                        toggleRepeat: () => playQueue.onToggleRepeat(),
+                        undo: () => playQueue.onUndo(),
+                        starCurrent: () => playQueue.onStarCurrent(),
+                        locate: () => playQueue.scrollToCurrent(),
+                        filter: input => playQueue.setFilter(input.value),
+                        selectAll: input => playQueue.selectAll(input.checked),
+                        clearSelection: () => playQueue.selectAll(false),
+                        queueAction: button => playQueue.runAction(button.dataset.action),
+                        togglePlayQueue: () => playQueue.onTogglePlayQueue(!playQueue.isVisible)
+                    });
                 });
-            });
+            })();
         </script>
     </th:block></head>
     <body>
-        <div class="bgcolor2 playqueue-container" th:fragment="container" data-page="playQueue">
-            <table class="music indent hover nowrap stripe compact" th:classappend="${model['visibility']?.headerVisible != true ? 'hide-table-header' : ''}" id="playQueueMusic" style="cursor:pointer; width: 100%;"></table>
+        <!-- No box of its own (display: contents): the side panel and the player bar are placed by the shell's grid. -->
+        <div class="playqueue-container" th:fragment="container" data-page="playQueue">
+            <aside id="shell-side" class="shell-side bgcolor1" th:aria-label="#{playlist.more.playlist}">
+                <div class="side-resizer" role="separator" aria-orientation="vertical" tabindex="0" th:title="#{playqueue.panel.resize}" th:aria-label="#{playqueue.panel.resize}"></div>
 
-            <div class="bgcolor2 playqueue-controlbar">
-                <div th:if="${model['user']?.settingsRole == true and model.players.size() > 1}" style="padding-right: 5px">
-                    <label for="playerSelector" class="visually-hidden" th:text="#{playersettings.title}">Player</label>
-                    <select id="playerSelector" name="playerSelector" data-on-change="changePlayer">
-                        <option th:each="player: ${model.players}" th:value="${player.id}" th:text="${player.shortDescription}"></option>
-                    </select>
+                <div class="side-header">
+                    <div class="side-tabs" role="tablist">
+                        <button type="button" role="tab" class="side-tab" id="side-tab-queue" data-tab="queue" aria-controls="side-queue" aria-selected="true" data-on-click="showSideTab">
+                            <span th:text="#{playlist.more.playlist}">Play queue</span>
+                            <span class="side-tab-count" id="queueTabCount"></span>
+                        </button>
+                        <button th:if="${model.showRight}" type="button" role="tab" class="side-tab" id="side-tab-activity" data-tab="activity" aria-controls="side-activity" aria-selected="false" tabindex="-1" data-on-click="showSideTab" th:text="#{playqueue.activity}">Activity</button>
+                    </div>
+                    <button type="button" class="icon-button side-close" data-on-click="togglePlayQueue" th:title="#{playqueue.panel.hide}" th:aria-label="#{playqueue.panel.hide}">
+                        <i data-icon="panel-right-close" class="icon-sm"></i>
+                    </button>
                 </div>
 
-                <div class="player-tech player-tech-web playqueue-audio">
-                    <div id="player" style="height:40px">
-                        <audio id="audioPlayer" style="width:100%; height:40px" tabindex="-1" ></audio>
+                <section id="side-queue" class="side-panel queue-panel" role="tabpanel" aria-labelledby="side-tab-queue">
+                    <div class="queue-toolbar">
+                        <span id="playQueueInfo" class="queue-info"></span>
+                        <span class="queue-tools">
+                            <button type="button" class="icon-button queue-tool" data-on-click="locate" th:title="#{playqueue.locate}" th:aria-label="#{playqueue.locate}">
+                                <i data-icon="locate" class="icon-sm"></i>
+                            </button>
+                            <button type="button" class="icon-button queue-tool" id="undoQueue" data-not-radio data-on-click="undo" th:title="#{playlist.undo}" th:aria-label="#{playlist.undo}">
+                                <i data-icon="undo-2" class="icon-sm"></i>
+                            </button>
+                            <button type="button" class="icon-button queue-tool" data-on-click="clear" th:title="#{playlist.clear}" th:aria-label="#{playlist.clear}">
+                                <i data-icon="list-x" class="icon-sm"></i>
+                            </button>
+                            <button type="button" class="icon-button queue-tool" id="queueMenuButton" popovertarget="queueMenu" th:title="#{playlist.more}" th:aria-label="#{playlist.more}">
+                                <i data-icon="ellipsis" class="icon-sm"></i>
+                            </button>
+                        </span>
+                    </div>
+
+                    <div class="queue-filter">
+                        <label for="queueFilter" class="visually-hidden" th:text="#{playqueue.filter}">Filter play queue</label>
+                        <input type="search" id="queueFilter" autocomplete="off" th:placeholder="#{playqueue.filter}" data-on-input="filter">
+                    </div>
+
+                    <div id="queueSelectionBar" class="queue-selectionbar" hidden>
+                        <input type="checkbox" id="queueSelectAll" data-on-change="selectAll" th:title="#{playlist.more.selectall}">
+                        <label for="queueSelectAll" id="queueSelectedCount"></label>
+                        <span class="queue-tools">
+                            <button type="button" class="icon-button queue-tool" data-not-radio data-on-click="queueAction" data-action="star" th:title="#{playlist.more.star}" th:aria-label="#{playlist.more.star}">
+                                <i data-icon="star" class="icon-sm"></i>
+                            </button>
+                            <button type="button" class="icon-button queue-tool" data-not-radio data-on-click="queueAction" data-action="unstar" th:title="#{playlist.more.unstar}" th:aria-label="#{playlist.more.unstar}">
+                                <i data-icon="star-off" class="icon-sm"></i>
+                            </button>
+                            <button type="button" class="icon-button queue-tool" data-not-radio data-on-click="queueAction" data-action="appendPlaylist" th:title="#{playlist.append}" th:aria-label="#{playlist.append}">
+                                <i data-icon="list-plus" class="icon-sm"></i>
+                            </button>
+                            <button th:if="${model['user']?.downloadRole == true}" type="button" class="icon-button queue-tool" data-not-radio data-on-click="queueAction" data-action="download" th:title="#{common.download}" th:aria-label="#{common.download}">
+                                <i data-icon="download" class="icon-sm"></i>
+                            </button>
+                            <button th:if="${model['user']?.shareRole == true}" type="button" class="icon-button queue-tool" data-not-radio data-on-click="queueAction" data-action="sharePlaylist" th:title="#{main.more.share}" th:aria-label="#{main.more.share}">
+                                <i data-icon="share-2" class="icon-sm"></i>
+                            </button>
+                            <button type="button" class="icon-button queue-tool" data-not-radio data-on-click="queueAction" data-action="removeSelected" th:title="#{playlist.remove}" th:aria-label="#{playlist.remove}">
+                                <i data-icon="trash-2" class="icon-sm"></i>
+                            </button>
+                            <button type="button" class="icon-button queue-tool" data-on-click="clearSelection" th:title="#{playqueue.clearselection}" th:aria-label="#{playqueue.clearselection}">
+                                <i data-icon="x" class="icon-sm"></i>
+                            </button>
+                        </span>
+                    </div>
+
+                    <ol id="playQueueList" class="queue-list" th:aria-label="#{playlist.more.playlist}"></ol>
+                    <p id="playQueueEmpty" class="queue-empty" th:text="#{playlist.empty}">Play queue empty.</p>
+
+                    <div id="queueMenu" class="menu-popover" popover>
+                        <div class="menu-heading" th:text="#{playlist.more.playlist}">Play queue</div>
+                        <button type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="savePlayQueue">
+                            <i data-icon="save" class="icon-sm"></i><span th:text="#{playlist.saveplayqueue}"></span>
+                        </button>
+                        <button type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="loadPlayQueue">
+                            <i data-icon="folder-open" class="icon-sm"></i><span th:text="#{playlist.loadplayqueue}"></span>
+                        </button>
+                        <button type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="savePlaylist">
+                            <i data-icon="list-plus" class="icon-sm"></i><span th:text="#{playlist.save}"></span>
+                        </button>
+                        <button th:if="${model['user']?.downloadRole == true}" type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="downloadPlaylist">
+                            <i data-icon="download" class="icon-sm"></i><span th:text="#{common.download}"></span>
+                        </button>
+                        <button th:if="${model['user']?.shareRole == true}" type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="sharePlaylist">
+                            <i data-icon="share-2" class="icon-sm"></i><span th:text="#{main.more.share}"></span>
+                        </button>
+                        <div class="menu-heading" th:text="#{playqueue.sort}">Sort</div>
+                        <button type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="sortByTrack">
+                            <i data-icon="arrow-up-down" class="icon-sm"></i><span th:text="#{playlist.more.sortbytrack}"></span>
+                        </button>
+                        <button type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="sortByAlbum">
+                            <i data-icon="arrow-up-down" class="icon-sm"></i><span th:text="#{playlist.more.sortbyalbum}"></span>
+                        </button>
+                        <button type="button" class="menu-item" data-not-radio data-on-click="queueAction" data-action="sortByArtist">
+                            <i data-icon="arrow-up-down" class="icon-sm"></i><span th:text="#{playlist.more.sortbyartist}"></span>
+                        </button>
+                    </div>
+                </section>
+
+                <section th:if="${model.showRight}" id="side-activity" class="side-panel shell-right" role="tabpanel" aria-labelledby="side-tab-activity" hidden
+                         data-shell-region="right" th:data-shell-src="@{/right}">
+                    <div class="shell-content"></div>
+                </section>
+            </aside>
+
+            <footer id="playerBar" class="player-bar bgcolor2">
+                <div class="player-now">
+                    <a id="nowPlayingCoverLink" class="player-cover" target="main">
+                        <i data-icon="music"></i>
+                        <img id="nowPlayingCover" alt="" hidden>
+                    </a>
+                    <div class="player-now-text">
+                        <a id="nowPlayingTitle" class="player-title" target="main" th:text="#{playqueue.nothingplaying}">Nothing playing</a>
+                        <span id="nowPlayingArtist" class="player-artist"></span>
+                    </div>
+                    <button type="button" class="icon-button player-button player-star" id="nowPlayingStar" data-on-click="starCurrent" aria-pressed="false" hidden
+                            th:title="#{playlist.more.star}" th:aria-label="#{playlist.more.star}">
+                        <i data-icon="star" class="icon-sm"></i>
+                    </button>
+                </div>
+
+                <div class="player-transport">
+                    <button type="button" class="icon-button player-button" id="shuffleQueue" data-not-radio data-on-click="shuffle" th:title="#{playlist.shuffle}" th:aria-label="#{playlist.shuffle}">
+                        <i data-icon="shuffle" class="icon-sm"></i>
+                    </button>
+                    <button type="button" class="icon-button player-button" data-on-click="previous" th:title="#{common.previous}" th:aria-label="#{common.previous}">
+                        <i data-icon="skip-back" class="icon-filled"></i>
+                    </button>
+                    <button type="button" class="player-play" id="playPauseButton" data-on-click="playPause" th:title="#{common.play}" th:aria-label="#{common.play}">
+                        <i data-icon="play" class="icon-filled player-icon-play"></i>
+                        <i data-icon="pause" class="icon-filled player-icon-pause"></i>
+                    </button>
+                    <button type="button" class="icon-button player-button" data-on-click="next" th:title="#{common.next}" th:aria-label="#{common.next}">
+                        <i data-icon="skip-forward" class="icon-filled"></i>
+                    </button>
+                    <button type="button" class="icon-button player-button player-repeat player-tech player-tech-web player-tech-jukebox player-tech-external" id="repeatQueue"
+                            data-not-radio data-on-click="toggleRepeat" data-repeat="OFF" aria-pressed="false" th:title="#{playqueue.repeat.off}" th:aria-label="#{playqueue.repeat.off}">
+                        <i data-icon="repeat" class="icon-sm player-icon-repeat"></i>
+                        <i data-icon="repeat-1" class="icon-sm player-icon-repeat-one"></i>
+                    </button>
+                </div>
+
+                <div class="player-progress">
+                    <div class="player-tech player-tech-web playqueue-audio">
+                        <audio id="audioPlayer" style="width:100%; height:40px" tabindex="-1"></audio>
+                    </div>
+                    <div class="player-tech player-tech-jukebox player-jukebox">
+                        <label for="jukeboxVolume">
+                            <img th:src="${themes?.get('volumeImage') ?: 'icons/default_light/volume.svg'}" alt="Volume">
+                        </label>
+                        <input type="range" id="jukeboxVolume" min="0" max="100" value="50">
                     </div>
                 </div>
 
-                <div th:if="${model['user']?.streamRole == true}" class="player-tech player-tech-non-web" style="white-space:nowrap;">
-                    <button type="button" class="icon-button" id="audioStart" data-on-click="start" th:title="#{common.play}">
-                        <img th:src="${themes?.get('castPlayImage') ?: 'icons/default_light/play.svg'}" alt="Start">
-                    </button>
-                    <button type="button" class="icon-button" id="audioStop" data-on-click="stop" style="display:none" title="Stop">
-                        <img th:src="${themes?.get('castPauseImage') ?: 'icons/default_light/cast_pause.svg'}" alt="Stop">
-                    </button>
-                </div>
-
-                <div class="player-tech player-tech-jukebox" style="white-space:nowrap;">
-                    <label for="jukeboxVolume">
-                        <img th:src="${themes?.get('volumeImage') ?: 'icons/default_light/volume.svg'}" alt="Volume">
-                    </label>
-                </div>
-                <div class="player-tech player-tech-jukebox" style="white-space:nowrap;">
-                    <input type="range" id="jukeboxVolume" min="0" max="100" value="50">
-                </div>
-
-                <div class="player-tech player-tech-web" style="white-space:nowrap;">
-                    <button type="button" class="icon-button header" data-on-click="previous" title="Play previous">
-                        <img th:src="${themes?.get('backImage') ?: 'icons/default_light/back.svg'}" alt="Play previous">
-                    </button>
-                </div>
-                <div class="player-tech player-tech-web" style="white-space:nowrap;">
-                    <button type="button" class="icon-button header" data-on-click="next" title="Play next">
-                        <img th:src="${themes?.get('forwardImage') ?: 'icons/default_light/forward.svg'}" alt="Play next">
-                    </button> |
-                </div>
-
-                <div style="white-space:nowrap;">
-                    <button type="button" class="icon-button header player-control" data-on-click="clear" title="Clear playlist">
-                        <img th:src="${themes?.get('clearImage') ?: 'icons/default_light/clear.svg'}" alt="Clear playlist" style="height:18px">
-                    </button> |
-                </div>
-
-                <div style="white-space:nowrap;">
-                    <button type="button" class="icon-button header player-control" id="shuffleQueue" data-on-click="shuffle" title="Shuffle">
-                        <img th:src="${themes?.get('shuffleImage') ?: 'icons/default_light/shuffle.svg'}" alt="Shuffle" style="height:18px">
-                    </button> |
-                </div>
-
-                <div class="player-tech player-tech-web player-tech-jukebox player-tech-external" style="white-space:nowrap;">
-                    <button type="button" class="icon-button header player-control" id="repeatQueue" data-on-click="toggleRepeat" title="Toggle repeat">
-                        <img id="toggleRepeat" th:src="${themes?.get('repeatOff') ?: 'icons/default_light/repeat_off.svg'}" alt="Toggle repeat" style="height:18px">
-                    </button> |
-                </div>
-
-                <div style="white-space:nowrap;">
-                    <button type="button" class="icon-button header player-control" id="undoQueue" data-on-click="undo" title="Undo">
-                        <img th:src="${themes?.get('undoImage')}" alt="Undo" style="height:18px">
-                    </button> |
-                </div>
-
-                <div th:if="${model['user']?.settingsRole == true}" style="white-space:nowrap;">
-                    <button type="button" class="icon-button header player-control" data-on-click="playerSettings" title="Settings">
-                        <img th:src="${themes?.get('settingsImage') ?: 'icons/default_light/settings.svg'}" alt="Settings" style="height:18px">
-                    </button> |
-                </div>
-
-                <div style="white-space:nowrap;">
-                    <span class="header">
-                        <label for="playQueueActions" class="visually-hidden" th:text="#{playlist.more}">More actions</label>
-                        <select id="playQueueActions" data-on-change="moreActions">
-                            <option id="top" selected="selected" th:text="#{playlist.more}">more</option>
-                            <optgroup th:label="#{playlist.more.playlist}">
-                                <option id="savePlayQueue" th:text="#{playlist.saveplayqueue}"></option>
-                                <option id="loadPlayQueue" th:text="#{playlist.loadplayqueue}"></option>
-                                <option id="savePlaylist" th:text="#{playlist.save}"></option>
-                                <option th:if="${model['user']?.downloadRole == true}" id="downloadPlaylist" th:text="#{common.download}"></option>
-                                <option th:if="${model['user']?.shareRole == true}" id="sharePlaylist" th:text="#{main.more.share}"></option>
-                                <option id="sortByTrack" th:text="#{playlist.more.sortbytrack}"></option>
-                                <option id="sortByAlbum" th:text="#{playlist.more.sortbyalbum}"></option>
-                                <option id="sortByArtist" th:text="#{playlist.more.sortbyartist}"></option>
-                            </optgroup>
-                            <optgroup th:label="#{playlist.more.selection}">
-                                <option id="removeSelected" th:text="#{playlist.remove}"></option>
-
-                                <option th:if="${model['user']?.downloadRole == true}" id="download" th:text="#{common.download}"></option>
-                                <option id="appendPlaylist" th:text="#{playlist.append}"></option>
-                                <option id="star" th:text="#{playlist.more.star}"></option>
-                                <option id="unstar" th:text="#{playlist.more.unstar}"></option>
-                            </optgroup>
+                <div class="player-extras">
+                    <div th:if="${model['user']?.settingsRole == true and model.players.size() > 1}" class="player-select">
+                        <label for="playerSelector" class="visually-hidden" th:text="#{playersettings.title}">Player</label>
+                        <select id="playerSelector" name="playerSelector" data-on-change="changePlayer">
+                            <option th:each="player: ${model.players}" th:value="${player.id}" th:text="${player.shortDescription}"></option>
                         </select>
-                    </span>
-                </div>
-
-                <div class="playqueue-toggle" th:classappend="${model['autoHide'] == true} ? 'playqueue-toggle-autohide'">
-                    <button type="button" class="icon-button" id="togglePlayQueue" data-on-click="togglePlayQueue" aria-controls="playQueueMusic_wrapper" aria-expanded="true">
-                        <img class="playqueue-shown" th:src="${themes?.get('playQueueHide') ?: 'icons/default_light/chevrons-up.svg'}" alt="Hide play queue" title="Hide play queue" style="height:18px;"/>
-                        <img class="playqueue-hidden" th:src="${themes?.get('playQueueShow') ?: 'icons/default_light/chevrons-down.svg'}" alt="Show play queue" title="Show play queue" style="height:18px; display: none;"/>
+                    </div>
+                    <button th:if="${model['user']?.settingsRole == true}" type="button" class="icon-button player-button" data-on-click="queueAction" data-action="playerSettings"
+                            th:title="#{playlist.settings}" th:aria-label="#{playlist.settings}">
+                        <i data-icon="settings" class="icon-sm"></i>
+                    </button>
+                    <button type="button" class="icon-button player-button player-queue-toggle" id="togglePlayQueue" data-on-click="togglePlayQueue"
+                            aria-controls="shell-side" aria-expanded="true" th:title="#{playqueue.panel.hide}" th:aria-label="#{playqueue.panel.hide}">
+                        <i data-icon="list-music"></i>
+                        <span class="player-badge" id="queueToggleCount"></span>
                     </button>
                 </div>
-
-            </div>
+            </footer>
 
             <dialog id="dialog-select-playlist" class="page-dialog">
                 <form method="dialog">

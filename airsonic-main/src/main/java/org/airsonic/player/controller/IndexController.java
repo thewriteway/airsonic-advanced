@@ -38,7 +38,6 @@ public class IndexController {
 
         Map<String, Object> map = new HashMap<>();
         map.put("showRight", userSettings.getShowNowPlayingEnabled());
-        map.put("autoHidePlayQueue", userSettings.getAutoHidePlayQueue());
         map.put("keyboardShortcutsEnabled", userSettings.getKeyboardShortcutsEnabled());
         map.put("showSideBar", userSettings.getShowSideBar());
         map.put("brand", settingsService.getBrand());
@@ -53,7 +52,6 @@ public class IndexController {
         map.put("visibility", userSettings.getPlayqueueVisibility());
         map.put("partyMode", userSettings.getPartyModeEnabled());
         map.put("notify", userSettings.getSongNotificationEnabled());
-        map.put("autoHide", userSettings.getAutoHidePlayQueue());
         map.put("initialPaginationSize", userSettings.getPaginationSizePlayqueue());
         map.put("autoBookmark", userSettings.getAutoBookmark());
         map.put("audioBookmarkFrequency", userSettings.getAudioBookmarkFrequency());

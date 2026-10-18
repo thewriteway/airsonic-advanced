@@ -120,7 +120,79 @@
         this.styles = [];
         this.sequence = 0;
         this.request = null;
+        this.scrollSave = null;
+        this.scrollRestore = null;
+        if (this.history) {
+            element.addEventListener("scroll", () => this.scheduleScrollSave(), {passive: true});
+        }
     }
+
+    /*
+     * The history region remembers its scroll position in the history entry of the page it shows,
+     * so that going back or forward returns to where the page was left. The position is saved
+     * shortly after scrolling stops (browsers limit how often history.replaceState may be called)
+     * and right before navigating away.
+     */
+    var SCROLL_SAVE_DELAY = 200;
+
+    Region.prototype.scheduleScrollSave = function () {
+        clearTimeout(this.scrollSave);
+        this.scrollSave = setTimeout(() => this.saveScroll(), SCROLL_SAVE_DELAY);
+    };
+
+    Region.prototype.saveScroll = function () {
+        clearTimeout(this.scrollSave);
+        this.scrollSave = null;
+        // after a back/forward navigation the current entry already belongs to the page being loaded
+        var state = history.state;
+        if (!state || state.shell !== this.url || state.scroll === this.element.scrollTop) {
+            return;
+        }
+        history.replaceState(Object.assign({}, state, {scroll: this.element.scrollTop}), "", location.href);
+    };
+
+    /**
+     * Scrolls back to a saved position. Pages often fill in their content after they are mounted
+     * (tables loaded over the websocket, images), so the position is retried as the content grows,
+     * until it is reached, the user scrolls or a few seconds have passed.
+     */
+    Region.prototype.restoreScroll = function (top) {
+        this.cancelScrollRestore();
+        var element = this.element;
+        var attempt = function () {
+            element.scrollTop = top;
+            return Math.abs(element.scrollTop - top) <= 1;
+        };
+        if (attempt() || !window.ResizeObserver) {
+            return;
+        }
+        var observer = new ResizeObserver(() => {
+            if (attempt()) {
+                this.cancelScrollRestore();
+            }
+        });
+        var cancel = () => this.cancelScrollRestore();
+        var events = ["wheel", "touchstart", "keydown", "pointerdown"];
+        observer.observe(this.content);
+        events.forEach(function (type) {
+            element.addEventListener(type, cancel, {passive: true});
+        });
+        var timeout = setTimeout(cancel, 5000);
+        this.scrollRestore = function () {
+            observer.disconnect();
+            clearTimeout(timeout);
+            events.forEach(function (type) {
+                element.removeEventListener(type, cancel);
+            });
+        };
+    };
+
+    Region.prototype.cancelScrollRestore = function () {
+        if (this.scrollRestore) {
+            this.scrollRestore();
+            this.scrollRestore = null;
+        }
+    };
 
     /**
      * Navigates the region to a URL, as assigning frame.location did. URLs that are not pages
@@ -136,17 +208,22 @@
     };
 
     Region.prototype.reload = function () {
-        return this.url ? this.load(this.url, {history: "none"}) : Promise.resolve();
+        // a reload keeps the place on the page, like the browser does
+        return this.url ? this.load(this.url, {history: "none", scroll: this.element.scrollTop}) : Promise.resolve();
     };
 
     /**
      * @param url the URL to load
      * @param options method and body for form submissions, history: "push" (default for the
-     *        history region), "replace" or "none"
+     *        history region), "replace" or "none", scroll: position to restore (back/forward)
      */
     Region.prototype.load = function (url, options) {
         options = options || {};
         var sequence = ++this.sequence;
+        if (this.history) {
+            this.saveScroll();
+            this.cancelScrollRestore();
+        }
         var hash = resolve(url).hash;
         this.element.setAttribute("aria-busy", "true");
 
@@ -266,7 +343,9 @@
 
         var anchor = new URL(url).hash.substring(1);
         var anchorTarget = anchor && (document.getElementById(anchor) || document.getElementsByName(anchor)[0]);
-        if (anchorTarget) {
+        if (typeof options.scroll === "number") {
+            this.restoreScroll(options.scroll);
+        } else if (anchorTarget) {
             anchorTarget.scrollIntoView();
         } else {
             this.element.scrollTop = 0;
@@ -436,7 +515,7 @@
     function onPopState(event) {
         var main = regions.get("main");
         if (event.state && event.state.shell && event.state.shell !== main.url) {
-            main.load(event.state.shell, {history: "none"});
+            main.load(event.state.shell, {history: "none", scroll: event.state.scroll});
         }
     }
 

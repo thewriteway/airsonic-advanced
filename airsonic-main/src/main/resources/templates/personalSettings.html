@@ -203,8 +203,6 @@
         <tr>
             <td><input type="checkbox" th:field="*{nowPlayingAllowed}" id="nowPlayingAllowed" class="checkbox"/></td>
             <td><label for="nowPlayingAllowed" th:text="#{personalsettings.nowplayingallowed}"></label></td>
-            <td style="padding-left:2em"><input type="checkbox" th:field="*{autoHidePlayQueue}" id="autoHidePlayQueue" class="checkbox"/></td>
-            <td><label for="autoHidePlayQueue" th:text="#{personalsettings.autohideplayqueue}"></label></td>
             <td style="padding-left:2em"><input type="checkbox" th:field="*{partyModeEnabled}" id="partyModeEnabled" class="checkbox"/></td>
             <td><label for="partyModeEnabled" th:text="#{personalsettings.partymode}"></label>
                 <th:block th:replace="~{helpToolTip((topic=partymode))}" />

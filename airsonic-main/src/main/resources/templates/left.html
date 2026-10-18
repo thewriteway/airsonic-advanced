@@ -6,7 +6,9 @@
             function playlistNode(playlist) {
                 var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
                 return $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
-                        playlist.id + "'>" + playlistName + "</a></p>");
+                        playlist.id + "'>" + playlistName + "</a></p>")
+                    .attr("data-playlist-id", playlist.id)
+                    .attr("data-owner", playlist.username || "");
             }
             function showAllPlaylists() {
                 $('#playlistOverflow').show();
@@ -22,6 +24,10 @@
             }
 
             Page.define("left", function (page) {
+                var messages = {
+                    added: /*[[#{playlist.toast.addedtoplaylist}]]*/ "{0} song(s) added to {1}",
+                    notAllowed: /*[[#{playlist.toast.notwritable}]]*/ "You are not allowed to change this playlist."
+                };
 
                 function populatePlaylistCallback(playlists) {
                     $("#playlists").empty();
@@ -76,7 +82,75 @@
                     }
                 });
 
+                /*
+                 * Media dragged from the pages (see mediadrag.js) can be dropped on the playlists the
+                 * user may change (their own, or any for an administrator).
+                 */
+                var markedPlaylist = null;
+                function markPlaylist(node) {
+                    if (markedPlaylist && markedPlaylist !== node) {
+                        markedPlaylist.classList.remove("drop-hover");
+                    }
+                    markedPlaylist = node;
+                    if (node) {
+                        node.classList.add("drop-hover");
+                    }
+                }
+                function isWritable(node) {
+                    return page.root.dataset.admin === "true" || node.dataset.owner === page.root.dataset.username;
+                }
+                function dropTarget(event) {
+                    var node = event.target.closest && event.target.closest(".playlist[data-playlist-id]");
+                    var payload = window.MediaDrag && MediaDrag.accepts(event) ? MediaDrag.payload() : null;
+                    return node && isWritable(node) && payload && payload.ids ? {node: node, ids: payload.ids} : null;
+                }
+                function showDropTargets(show) {
+                    page.root.querySelectorAll(".playlist[data-playlist-id]").forEach(node => {
+                        node.classList.toggle("drop-allowed", show && isWritable(node));
+                    });
+                }
+                // mediadrag.js has seen the dragstart first, so it knows what is dragged
+                page.listen(document, "dragstart", () => {
+                    var payload = window.MediaDrag && MediaDrag.payload();
+                    showDropTargets(Boolean(payload && payload.ids));
+                });
+                page.listen(page.root, "dragover", event => {
+                    var target = dropTarget(event);
+                    markPlaylist(target && target.node);
+                    if (target) {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "copy";
+                    }
+                });
+                page.listen(page.root, "dragleave", event => {
+                    if (markedPlaylist && !markedPlaylist.contains(event.relatedTarget)) {
+                        markPlaylist(null);
+                    }
+                });
+                page.listen(page.root, "drop", event => {
+                    var target = dropTarget(event);
+                    markPlaylist(null);
+                    showDropTargets(false);
+                    if (target) {
+                        event.preventDefault();
+                        StompClient.send("/app/playlists/files/add", JSON.stringify({id: Number(target.node.dataset.playlistId), modifierIds: target.ids}));
+                    }
+                });
+                page.listen(document, "dragend", () => {
+                    markPlaylist(null);
+                    showDropTargets(false);
+                });
+
+                function addedToPlaylistCallback(result) {
+                    if (result.allowed) {
+                        $().toastmessage("showSuccessToast", messages.added.replace("{0}", result.added).replace("{1}", () => escapeHtml(result.name)));
+                    } else {
+                        $().toastmessage("showErrorToast", messages.notAllowed);
+                    }
+                }
+
                 page.subscribe({
+                    '/user/queue/playlists/files/add': msg => addedToPlaylistCallback(JSON.parse(msg.body)),
                     '/user/queue/playlists/deleted': msg => deletedPlaylistCallback(JSON.parse(msg.body)),
                     '/topic/playlists/deleted': msg => deletedPlaylistCallback(JSON.parse(msg.body)),
                     '/user/queue/playlists/updated': msg => updatedPlaylistCallback(JSON.parse(msg.body)),
@@ -95,7 +169,8 @@
     </script>
 </head>
 
-<body class="bgcolor2 leftframe" data-page="left" th:data-music-folder-changed="${model.musicFolderChanged}">
+<body class="bgcolor2 leftframe" data-page="left" th:data-music-folder-changed="${model.musicFolderChanged}"
+      th:data-username="${model.user.username}" th:data-admin="${model.user.adminRole}">
 <div id="left-top" style="padding-bottom:1.5em">
     <a th:href="@{/home}" target="main">
       <img th:src="${themes?.get('logoImage') ?: 'icons/default_light/logo.png'}" style="width:196px" th:title="#{top.help}" alt="">

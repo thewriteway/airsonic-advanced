@@ -1335,7 +1335,7 @@
 
 <div class="tableSpacer"></div>
 
-<table id="filesTable" class="music indent hover nowrap stripe compact" th:classappend="${model.visibility.headerVisible != true?'hide-table-header':''}" style="width: 100%;">
+<table id="filesTable" data-drag-media class="music indent hover nowrap stripe compact" th:classappend="${model.visibility.headerVisible != true?'hide-table-header':''}" style="width: 100%;">
 </table>
 
 <label for="moreActions" class="visually-hidden" th:text="#{main.more.selection}">More actions</label>
@@ -1354,7 +1354,7 @@
 
 <div style="display: flex; flex-flow: row wrap;">
     <div id="mediaDirThumb" class="albumThumb pagetype-dependent type-album"></div>
-    <table id="subDirsTable" class="music indent hover nowrap stripe compact hide-table-header" style="width: 100%;"></table>
+    <table id="subDirsTable" data-drag-media class="music indent hover nowrap stripe compact hide-table-header" style="width: 100%;"></table>
 </div>
 
 <div class="tableSpacer"></div>
@@ -1386,7 +1386,7 @@
     <tr><td style="height: 100%"></td></tr>
 </table>
 
-<table id="artistTopSongsTable" class="music indent hover nowrap stripe compact hide-table-header" style="width: 100%;">
+<table id="artistTopSongsTable" data-drag-media class="music indent hover nowrap stripe compact hide-table-header" style="width: 100%;">
 </table>
 
 <dialog id="mediaMain-select-playlist" class="page-dialog">
