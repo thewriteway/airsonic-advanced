@@ -12,7 +12,6 @@
  * dragover handler and MediaDrag.payload() on drop. While something is dragged, the <html>
  * element has the class media-dragging, so that targets can show where a drop is possible.
  */
-/* global jQuery */
 (function () {
     "use strict";
 
@@ -27,10 +26,11 @@
 
     function dataTableOf(row) {
         var table = row.closest("table[data-drag-media]");
-        if (!table || !row.closest("tbody") || !jQuery || !jQuery.fn.dataTable || !jQuery.fn.dataTable.isDataTable(table)) {
+        var $ = window.jQuery;
+        if (!table || !row.closest("tbody") || !$ || !$.fn.dataTable || !$.fn.dataTable.isDataTable(table)) {
             return null;
         }
-        return jQuery(table).DataTable();
+        return $(table).DataTable();
     }
 
     /** The element a drag would start from, if the target is part of a drag source. */

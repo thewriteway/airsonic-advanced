@@ -10,7 +10,6 @@ import org.airsonic.player.service.PlaylistService;
 import org.airsonic.player.service.SecurityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -36,16 +35,20 @@ import java.util.Objects;
 public class PlaylistWSController {
     private static final Logger LOG = LoggerFactory.getLogger(PlaylistWSController.class);
 
-    @Autowired
-    private MediaFileService mediaFileService;
-    @Autowired
-    private PlaylistService playlistService;
-    @Autowired
-    private LocaleResolver localeResolver;
-    @Autowired
-    private SecurityService securityService;
-    @Autowired
-    private PlayerService playerService;
+    private final MediaFileService mediaFileService;
+    private final PlaylistService playlistService;
+    private final LocaleResolver localeResolver;
+    private final SecurityService securityService;
+    private final PlayerService playerService;
+
+    public PlaylistWSController(MediaFileService mediaFileService, PlaylistService playlistService,
+            LocaleResolver localeResolver, SecurityService securityService, PlayerService playerService) {
+        this.mediaFileService = mediaFileService;
+        this.playlistService = playlistService;
+        this.localeResolver = localeResolver;
+        this.securityService = securityService;
+        this.playerService = playerService;
+    }
 
     /**
      * Requests for playlists the user may not see or change get no reply. The pages only offer what
@@ -254,7 +257,8 @@ public class PlaylistWSController {
         List<MediaFile> files = playlistService.getFilesInPlaylist(req.getId(), true);
         List<Integer> order = req.getModifierIds();
         if (!isPermutation(order, files.size())) {
-            LOG.warn("Ignored rearrangement of playlist {}: {} is not an order of its {} files", req.getId(), order, files.size());
+            // the requested order is not logged: it comes from the client
+            LOG.warn("Ignored rearrangement of playlist {}: the new order does not list each of its {} files once", req.getId(), files.size());
             return req.getId();
         }
         playlistService.setFilesInPlaylist(req.getId(), order.stream().map(files::get).toList());
