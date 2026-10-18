@@ -71,14 +71,14 @@
     // rows are not draggable by default: make a source draggable when the pointer reaches it
     document.addEventListener("pointerover", function (event) {
         var source = sourceOf(event.target);
-        if (source && !source.hasAttribute("draggable") && !source.closest(".playqueue-container")) {
+        if (source && !source.hasAttribute("draggable") && !source.closest(".queue-list")) {
             source.setAttribute("draggable", "true");
         }
     }, {passive: true});
 
     document.addEventListener("dragstart", function (event) {
         var source = sourceOf(event.target);
-        if (!source || source.closest(".playqueue-container")) {
+        if (!source || source.closest(".queue-list")) {
             return;
         }
         // form controls inside a row keep their own behaviour

@@ -17,27 +17,24 @@
     <script type="text/javascript" th:src="@{/script/mediadrag.js}"></script>
 </head>
 
-<body class="bgcolor2 shell" th:classappend="${!model.showSideBar} ? 'shell-sidebar-hidden'">
+<!--
+  Regions: the top bar, the left navigation, the main page, the side panel (play queue and, when
+  enabled, the activity of the "right" region) and the player bar along the bottom.
+-->
+<body class="bgcolor2 shell" th:classappend="${!model.showSideBar ? 'shell-sidebar-hidden' : ''}">
     <header class="shell-upper bgcolor2 topframe" data-shell-region="upper" data-page="top">
         <div class="shell-content" th:insert="~{top :: region}"></div>
     </header>
 
-    <div class="shell-lower">
-        <nav id="shell-left" class="shell-left bgcolor2" data-shell-region="left" th:data-shell-src="@{/left}">
-            <div class="shell-content"></div>
-        </nav>
-        <div class="shell-center">
-            <div class="shell-main-right">
-                <main class="shell-main bgcolor1" data-shell-region="main" th:data-shell-src="@{/} + ${model.mainUrl}">
-                    <div class="shell-content"></div>
-                </main>
-                <aside th:if="${model.showRight}" class="shell-right bgcolor1" data-shell-region="right" th:data-shell-src="@{/right}">
-                    <div class="shell-content"></div>
-                </aside>
-            </div>
-            <div class="bgcolor2 playqueue-container" th:replace="~{playQueue::container}"></div>
-        </div>
-    </div>
+    <nav id="shell-left" class="shell-left bgcolor2" data-shell-region="left" th:data-shell-src="@{/left}">
+        <div class="shell-content"></div>
+    </nav>
+
+    <main class="shell-main bgcolor1" data-shell-region="main" th:data-shell-src="@{/} + ${model.mainUrl}">
+        <div class="shell-content"></div>
+    </main>
+
+    <div class="playqueue-container" th:replace="~{playQueue::container}"></div>
 
     <div class="shell-backdrop" data-on-click="closeDrawer"></div>
 
