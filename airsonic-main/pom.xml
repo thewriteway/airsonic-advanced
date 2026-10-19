@@ -430,10 +430,12 @@
             <version>5.1.0</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Needed at runtime by commons-configuration2's FileBasedConfigurationBuilder -->
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
             <version>1.11.0</version>
+            <scope>runtime</scope>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
