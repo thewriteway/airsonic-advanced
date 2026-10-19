@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
@@ -22,13 +23,20 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.DefaultSecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 
@@ -179,6 +187,18 @@ public class GlobalSecurityConfig {
                     .requestMatchers("/changeCoverArt*", "/editTags*", "/editMediaDir*").hasRole("COVERART").requestMatchers("/setMusicFileInfo*").hasRole("COMMENT")
                     .requestMatchers("/podcastReceiverAdmin*", "/podcastEpisodes*").hasRole("PODCAST")
                     .requestMatchers("/**").hasRole("USER").anyRequest().authenticated())
+            // Unauthenticated requests otherwise get the Basic challenge unless they accept text/html,
+            // so an expired session made the browser pop up its own sign-in dialog. Shell page loads
+            // are sent to the login form instead (the shell leaves for it), and other requests from
+            // the web UI get a plain 401. Entries added here are consulted before the defaults.
+            .exceptionHandling(handling -> handling
+                    .defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"),
+                            new RequestHeaderRequestMatcher("X-Airsonic-Shell"))
+                    .defaultAuthenticationEntryPointFor(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                            new OrRequestMatcher(
+                                    new RequestHeaderRequestMatcher("X-Requested-With", "XMLHttpRequest"),
+                                    PathPatternRequestMatcher.withDefaults().matcher("/websocket/**"),
+                                    GlobalSecurityConfig::isSameOriginSubresource)))
             .formLogin((login) -> login
                     .loginPage("/login")
                     .permitAll()
@@ -196,6 +216,13 @@ public class GlobalSecurityConfig {
                 .key(rememberMeKey)
                 .userDetailsService(securityService));
         return http.build();
+    }
+
+    // Fetch metadata headers are only sent to secure origins (HTTPS or localhost), so this misses
+    // plain-HTTP installs; the other matchers cover the web UI's own background requests there
+    private static boolean isSameOriginSubresource(HttpServletRequest request) {
+        return "same-origin".equals(request.getHeader("Sec-Fetch-Site"))
+                && !"navigate".equals(request.getHeader("Sec-Fetch-Mode"));
     }
 
     /*
