@@ -70,6 +70,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +108,8 @@ public class SecurityService implements UserDetailsService {
     private UserCredentialRepository userCredentialRepository;
     @Autowired
     private UserCache userCache;
+
+    private volatile Map<String, Boolean> defaultAdminCredMatches = Map.of();
 
     /**
      * Locates the user based on the username.
@@ -345,9 +348,24 @@ public class SecurityService implements UserDetailsService {
     // account still uses the well-known default password so the UI can warn the admin to change it
     @SuppressWarnings("java:S6437")
     public boolean checkDefaultAdminCredsPresent() {
-        return userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC).stream()
-                .anyMatch(c -> PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
-                        c.getCredential()));
+        // Matching runs the credential's (deliberately slow) password hash, and this is called on
+        // every login and credentials page view. An encoded credential never changes in place, so
+        // the outcome is remembered per encoded value; only the current admin creds are retained.
+        Map<String, Boolean> previous = defaultAdminCredMatches;
+        Map<String, Boolean> current = new HashMap<>();
+        boolean present = false;
+        for (UserCredential c : userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC)) {
+            String key = c.getEncoder() + '\0' + c.getCredential();
+            Boolean matches = previous.get(key);
+            if (matches == null) {
+                matches = PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
+                        c.getCredential());
+            }
+            current.put(key, matches);
+            present |= matches;
+        }
+        defaultAdminCredMatches = current;
+        return present;
     }
 
     /**
