@@ -10,7 +10,6 @@ import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.validator.CredentialsManagementValidators.CredentialCreateChecks;
 import org.airsonic.player.validator.CredentialsManagementValidators.CredentialUpdateChecks;
-import org.apache.commons.beanutils.BeanMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -85,7 +84,13 @@ public class CredentialsManagementController {
         map.addAttribute("newCreds", new CredentialsCommand());
 
         map.addAttribute("apps", EnumSet.allOf(App.class));
-        map.addAttribute("appsMap", EnumSet.allOf(App.class).stream().collect(toMap(a -> a, a -> new BeanMap(a))));
+        // Built by hand rather than with BeanMap: its bean introspection probes the webapp class loader
+        // for BeanInfo classes that don't exist, which scans the jars inside the war and made the
+        // first load of this page take seconds
+        map.addAttribute("appsMap", EnumSet.allOf(App.class).stream().collect(toMap(a -> a, a -> Map.of(
+                "name", a.getName(),
+                "usernameRequired", a.getUsernameRequired(),
+                "nonDecodableEncodersAllowed", a.getNonDecodableEncodersAllowed()))));
 
         map.addAttribute("decodableEncoders", PasswordEncoderConfig.NONLEGACY_DECODABLE_ENCODERS);
         map.addAttribute("nonDecodableEncoders", PasswordEncoderConfig.NONLEGACY_NONDECODABLE_ENCODERS);
