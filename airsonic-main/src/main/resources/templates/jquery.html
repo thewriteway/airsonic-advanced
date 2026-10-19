@@ -2,10 +2,16 @@
 <link rel="stylesheet" th:href="@{/script/jquery.toastmessage/css/jquery.toastmessage.css}" type="text/css" >
 <script type="text/javascript" th:src="@{/script/jquery-3.7.1.min.js}"></script>
 <script type="text/javascript" th:src="@{/script/jquery.toastmessage/jquery.toastmessage.js}"></script>
-<script>
+<script th:inline="javascript">
 $.ajaxSetup({
   xhrFields: {
     withCredentials: true
+  }
+});
+// the server answers background requests with a plain 401 once the session has expired
+$(document).ajaxError(function (event, xhr) {
+  if (xhr.status === 401) {
+    window.top.location.assign(/*[[@{/login}]]*/ "/login");
   }
 });
 </script>
