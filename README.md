@@ -17,6 +17,43 @@ Airsonic is a free, web-based media streamer providing ubiquitous access to your
 
 **This repository (thewriteway/airsonic-advanced)** focuses on keeping Airsonic-Advanced safe for use: adding tests to prevent regressions and upgrading dependent libraries. PRs for additional features are welcome!
 
+Highlights of this fork
+-----------------------
+
+Compared with [kagemomiji/airsonic-advanced](https://github.com/kagemomiji/airsonic-advanced), this fork adds:
+
+- **A modern platform.** It runs on Spring Boot 4.1 and Java 21 or later, and is tested on JDK 25. Jackson 3 handles JSON and jUPnP replaces the unmaintained Cling for DLNA/UPnP. Caffeine replaces Ehcache for caching, and outbound requests share one pooled HTTP client. Libraries are kept current, including Lucene, CXF, Liquibase and Logback.
+- **Security hardening.**
+  - Protection against SSRF, log injection, XSS, path traversal and mass assignment.
+  - A Content-Security-Policy with per-request script nonces.
+  - Login errors no longer reveal whether a username exists.
+  - Status and actuator endpoints are admin-only, and media and playlist access checks are centralised.
+  - JWT URL verification is fixed.
+  - Legacy crypto methods are removed.
+  - Admin password:
+    - A random admin password is generated on first start, and the login page shows where to find it.
+    - Password hashes are upgraded safely, and credentials that apps need for token authentication are kept.
+- **A rebuilt web interface.**
+  - A single-page shell replaces the old iframe frameset.
+  - The layout works on phones and tablets.
+  - Themes are based on CSS variables, and a new *Automatic* theme follows your device's light or dark mode.
+  - Native dialogs and popovers replace jQuery UI and the old tooltip library.
+  - Accessibility is improved.
+- **A redesigned play queue.** It now sits in a side panel above a persistent player bar. You can filter, select and reorder tracks, and drag music into the queue or into playlists. Seeking works from your device's media controls.
+- **A new status page.** It shows transfer history over 7 to 365 days and live streams with their bitrate. Admins also get system, storage, service, cache and scheduled-task details, plus recent log warnings and errors. All of this comes from one efficient endpoint.
+- **Better Subsonic and OpenSubsonic API support.**
+  - New: `getOpenSubsonicExtensions`, `getVideoInfo`, `getCaptions`, and lyrics read from tags embedded in audio files.
+  - Fixed: cover art requested by album ID, starred albums in `search3`, album play counts, and `/stream` errors for unknown IDs.
+- **Performance and reliability.**
+  - Faster database queries.
+  - Less lock contention.
+  - Quicker HLS streaming.
+  - Cache-busting asset URLs, so upgrades are never hidden by cached files.
+  - Websockets reconnect automatically.
+  - Bursts of playlist-folder changes are handled without slowdowns.
+  - Fixes for podcasts, resource leaks, MariaDB transcoding and expired sessions.
+- **Tooling and docs.** The test suite passes on all supported databases. Edge and stable release workflows are fixed, Renovate, CodeQL and Snyk run in CI, and Docker images can be built on demand. The documentation is consolidated into [Advanced Topics](docs/ADVANCED.md).
+
 Features
 --------
 - Handles very large music collections (hundreds of gigabytes). Although optimized for MP3 streaming, it works for any audio or video format that can stream over HTTP, for instance AAC and OGG.
