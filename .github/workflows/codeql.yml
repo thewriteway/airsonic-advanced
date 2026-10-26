@@ -6,13 +6,13 @@ on:
     paths-ignore:
       - "**.md"
       - "*.txt"
-      - ".github/**" 
+      - ".github/**"
   pull_request:
     branches: [ 'main' ]
     paths-ignore:
       - "**.md"
       - "*.txt"
-      - ".github/**" 
+      - ".github/**"
   schedule:
     - cron: '0 19 * * 6'
 
@@ -41,16 +41,16 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v6
       with:
-        java-version: 21
+        java-version: 25
         distribution: 'temurin'
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v4.38.3
+      uses: github/codeql-action/init@v4.39.1
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v4.38.3
+      uses: github/codeql-action/analyze@v4.39.1
       with:
         category: "/language:${{matrix.language}}"
