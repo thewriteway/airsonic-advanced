@@ -16,17 +16,6 @@
     <link rel="stylesheet" th:href="@{/script/mediaelement/plugins/chromecast/chromecast.min.css}">
 
     <style>
-        .ui-slider .ui-slider-handle {
-            width: 11px;
-            height: 11px;
-            cursor: pointer;
-        }
-        .ui-slider a {
-            outline:none;
-        }
-        .ui-slider {
-            cursor: pointer;
-        }
         #videoPlayer {
             height: 100%;
             width: 100%;
@@ -34,75 +23,64 @@
     </style>
 
     <script type="text/javascript" th:inline="javascript">
-        function toggleStar(mediaFileId, imageId) {
-            if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]") != -1) {
-                $(imageId).attr("src", "[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]");
-                top.StompClient.send("/app/rate/mediafile/unstar", JSON.stringify([mediaFileId]));
-            }
-            else if ($(imageId).attr("src").indexOf("[(${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'})]") != -1) {
-                $(imageId).attr("src", "[(${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'})]");
-                top.StompClient.send("/app/rate/mediafile/star", JSON.stringify([mediaFileId]));
-            }
-        }
+        Page.define("videoPlayer", function (page) {
+            var videoModel = {
+                streamable: /*[[${model.streamable}]]*/ false,
+                remoteCaptionsListUrl: /*[[${model.remoteCaptionsUrl}]]*/ "",
+                remoteCaptions: [],
+                currentUrl: /*[[${model.defaultBitRate}]]*/ "",
+                videoId: /*[[${model.video.id}]]*/ 0,
+                position: /*[[${model.position}]]*/ 0,
+                autoBookmark: /*[[${model.autoBookmark}]]*/ false,
+                videoBookmarkFrequency: /*[[${model.videoBookmarkFrequency}]]*/ 30,
+                playerId: /*[[${model.playerId}]]*/ 0
+            };
+            var videoPlayer = null;
 
-        var videoModel = {
-          duration: /*[(${#strings.isEmpty(model.video.duration) ? -1 : model.video.duration})]*/ -1,
-          videoTitle: "[(${model.video.title})]",
-          streamable: /*[(${model.streamable})]*/ false,
-          castable: /*[(${model.castable})]*/ false,
-          streamUrls: /*[[${model.streamUrls}]]*/ {},
-          remoteCoverArtUrl: "[(${model.remoteCoverArtUrl})]",
-          remoteStreamUrl: "[(${model.remoteStreamUrl})]",
-          remoteCaptionsListUrl: "[(${model.remoteCaptionsUrl})]",
-          remoteCaptions: [],
-          currentUrl: "[(${model.defaultBitRate})]",
-          videoId: "[(${model.video.id})]",
-          position: /*[(${model.position})]*/ 0,
-          autoBookmark: /*[(${model.autoBookmark})]*/ false,
-          videoBookmarkFrequency: /*[(${model.videoBookmarkFrequency})]*/ 30,
-          contentType: "[(${model.contentType})]",
-          hideShare: /*[(${model.user.shareRole ? 'true': 'false'})]*/ false,
-          hideDownload: /*[(${model.user.downloadRole ? 'true': 'false'})]*/ false,
-          playerId: /*[(${model.playerId})]*/ 0
-        }
-
-        function setBookmark() {
-            if (videoModel.autoBookmark) {
-                var position = Math.round(this.videoPlayer.currentTime);
-                if ((videoModel.position != (position * 1000)) && (position % videoModel.videoBookmarkFrequency == 0)) {
-                    videoModel.position = position * 1000;
-                    top.StompClient.send("/app/bookmarks/set", JSON.stringify({positionMillis: videoModel.position, comment: "Played on Web Video Player", mediaFileId: videoModel.videoId}));
+            function setBookmark() {
+                if (videoModel.autoBookmark) {
+                    var position = Math.round(videoPlayer.currentTime);
+                    if ((videoModel.position != (position * 1000)) && (position % videoModel.videoBookmarkFrequency == 0)) {
+                        videoModel.position = position * 1000;
+                        StompClient.send("/app/bookmarks/set", JSON.stringify({positionMillis: videoModel.position, comment: "Played on Web Video Player", mediaFileId: videoModel.videoId}));
+                    }
                 }
             }
-        }
-        function onEnded() {
-            this.setBookmark();
-            top.StompClient.send("/app/playqueues/" + videoModel.playerId + "/endMedia", videoModel.videoId);
-        }
- 
 
-        function init() {
+            function onEnded() {
+                setBookmark();
+                StompClient.send("/app/playqueues/" + videoModel.playerId + "/endMedia", videoModel.videoId);
+            }
+
+            page.actions({
+                share() {
+                    Page.navigate("createShare.view?id=" + videoModel.videoId);
+                },
+                download() {
+                    Page.navigate("download.view?id=" + videoModel.videoId);
+                }
+            });
+
             $.get(videoModel.remoteCaptionsListUrl, data => {
                 videoModel.remoteCaptions = data;
             });
-            var vpr = this;
-            this.videoPlayer = new MediaElementPlayer("videoPlayer", {
+            videoPlayer = new MediaElementPlayer("videoPlayer", {
                 alwaysShowControls: true,
-                iconSprite: "[(@{/script/mediaelement/mejs-controls.svg})]",
+                iconSprite: /*[[@{/script/mediaelement/mejs-controls.svg}]]*/ "",
                 enableKeyboard: true,
                 useDefaultControls: true,
                 enableTracks: true,
                 castAppID: "4FBFE470",
                 features: ["speed", "quality", "chromecast"],
                 hls: {
-                    path: "[(@{/script/mediaelement/renderers/hls-1.3.4/hls.min.js})]"
+                    path: /*[[@{/script/mediaelement/renderers/hls-1.3.4/hls.min.js}]]*/ ""
                 },
                 dash: {
-                    path: "[(@{/script/mediaelement/renderers/dash.all-4.6.0.min.js})]"
+                    path: /*[[@{/script/mediaelement/renderers/dash.all-4.6.0.min.js}]]*/ ""
                 },
                 defaultSpeed: "1.00",
                 speeds: ["2.00", "1.50", "1.25", "1.00", "0.75", "0.5"],
-                defaultQuality: "[(${model.defaultBitRate})]",
+                defaultQuality: videoModel.currentUrl,
                 videoWidth: "100%",
                 videoHeight: "100%",
                 qualityChangeCallback: function(media, node, newQuality, url, event) {
@@ -114,34 +92,32 @@
                         instance.media.rendererName = "html5";
                         instance.buildspeed(instance, instance.getElement(instance.controls), instance.getElement(instance.layers), instance.media);
                     }
-                    let shareRole = /*[[${model.user.shareRole} == true]]*/ false;
-					if(shareRole) {
-						$("#share").on('click', () => location.href = "createShare.view?id=" + videoModel.videoId);
-					}
-					let downloadRole = /*[[${model.user.downloadRole} == true]]*/ false;
-					if(downloadRole) {
-						$("#download").on('click', () => location.href = "download.view?id=" + videoModel.videoId);
-					}
 
                     // add dimensions to playing vid
-                    instance.setSrc($('#videoPlayer source[data-quality="[(${model.defaultBitRate})]"]')[0].src);
+                    var source = Array.prototype.find.call(document.querySelectorAll('#videoPlayer source'),
+                        s => s.dataset.quality == videoModel.currentUrl);
+                    instance.setSrc(source.src);
                     // set position
                     instance.setCurrentTime(videoModel.position/1000);
 
-                    // Once playback reaches the end, go to the next song, if any.
-                    $(mediaElement).on("ended", () => vpr.onEnded());
-                    $(mediaElement).on("timeupdate", () => vpr.setBookmark());
-                    $(mediaElement).on("seeked", () => vpr.setBookmark());
-                    $(mediaElement).on("paused", () => vpr.setBookmark());
+                    $(mediaElement).on("ended", onEnded);
+                    $(mediaElement).on("timeupdate", setBookmark);
+                    $(mediaElement).on("seeked", setBookmark);
+                    $(mediaElement).on("paused", setBookmark);
                 }
             });
             // add dimensions to play at
             $('#videoPlayer source').each((s, d) => d.src = d.src + "&size=" + Math.floor($('.mejs__container').width()) + "x" + Math.floor($('.mejs__container').height()));
-        }
+
+            return function () {
+                videoPlayer.pause();
+                videoPlayer.remove();
+            };
+        });
     </script>
 </head>
 
-<body class="mainframe bgcolor1" style="padding-bottom:0.5em" onload="init();">
+<body class="mainframe bgcolor1" style="padding-bottom:0.5em" data-page="videoPlayer">
 
 <div style="width:100%;height:100%;display:flex;flex-direction:column;">
     <div style="flex:0 1 auto">
@@ -162,16 +138,18 @@
 
 	<div>
 	  <th:block th:if="${model.user.shareRole}">
-	    <img id="share" th:src="${themes?.get('shareImage') ?: 'icons/default_light/share.svg'}" th:title="#{main.more.share}" th:alt="#{main.more.share}">
+	    <img id="share" data-on-click="share" style="cursor:pointer" th:src="${themes?.get('shareImage') ?: 'icons/default_light/share.svg'}" th:title="#{main.more.share}" th:alt="#{main.more.share}">
 	  </th:block>
 	  <th:block th:if="${model.user.downloadRole}">
-	    <img id="download" th:src="${themes?.get('downloadImage') ?: 'icons/default_light/download.svg'}"
+	    <img id="download" data-on-click="download" style="cursor:pointer" th:src="${themes?.get('downloadImage') ?: 'icons/default_light/download.svg'}"
 			 th:title="#{common.download}"
 			 th:alt="#{common.download}">
 	  </th:block>
 	  <img id="starImage" th:src="${themes?.get('__${!#strings.isEmpty(model.video.starredDate) ? 'ratingOnImage' : 'ratingOffImage'}__')}"
-		   th:data-video-id="${model.video.id}"
-	         onclick="toggleStar(this.getAttribute('data-video-id'), '#starImage'); return false;"
+		   th:data-id="${model.video.id}" th:data-starred="${!#strings.isEmpty(model.video.starredDate)}"
+		   th:data-star-on="${themes?.get('ratingOnImage') ?: 'icons/default_light/ratingOn.svg'}"
+		   th:data-star-off="${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}"
+		   data-on-click="toggleStar" style="cursor:pointer"
 		   th:title="|#{playlist.more.star} / #{playlist.more.unstar}|"
 		   th:alt="|#{playlist.more.star} / #{playlist.more.unstar}|">
 	</div>

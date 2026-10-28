@@ -39,7 +39,8 @@ import org.airsonic.player.service.hls.HlsSession;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -82,7 +82,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Controller which produces the HLS (Http Live Streaming) playlist.
@@ -142,10 +141,7 @@ public class HLSController {
             return;
         }
 
-        if (!(authentication instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(mediaFile, username)) {
-            throw new AccessDeniedException("Access to file " + mediaFile.getId() + " is forbidden for user " + username);
-        }
+        securityService.checkFolderAccess(mediaFile, username, authentication);
 
         Double duration = mediaFile.getDuration();
         if (duration == null || duration < 0.0001) {
@@ -161,14 +157,14 @@ public class HLSController {
                 .map(b -> b.getRight() != null ? b
                         : Pair.of(b.getLeft(), TranscodingService.getSuitableVideoSize(mediaFile.getWidth(),
                                 mediaFile.getHeight(), b.getLeft())))
-                .collect(Collectors.toList());
+                .toList();
         if (bitRates.isEmpty())
             bitRates = Collections.singletonList(
                     Pair.of(VideoPlayerController.DEFAULT_BIT_RATE, TranscodingService.getSuitableVideoSize(
                             mediaFile.getWidth(), mediaFile.getHeight(), VideoPlayerController.DEFAULT_BIT_RATE)));
 
         String requestWithoutContextPath = request.getRequestURI().substring(request.getContextPath().length() + 1);
-        UriComponentsBuilder prefix = UriComponentsBuilder.fromUriString(StringUtils.removeEndIgnoreCase(requestWithoutContextPath, "/hls.m3u8")); // ext/hls or hls
+        UriComponentsBuilder prefix = UriComponentsBuilder.fromUriString(Strings.CI.removeEnd(requestWithoutContextPath, "/hls.m3u8")); // ext/hls or hls
         String basePath = NetworkUtil.getBaseUrl(request);
         PrintWriter writer = response.getWriter();
         if (bitRates.size() > 1) {
@@ -221,7 +217,6 @@ public class HLSController {
             int id, Player player, List<Pair<Integer, Dimension>> bitRates, PrintWriter writer) {
         writer.println("#EXTM3U");
         writer.println("#EXT-X-VERSION:1");
-//        writer.println("#EXT-X-TARGETDURATION:" + SEGMENT_DURATION);
 
         for (Pair<Integer, Dimension> bitRate : bitRates) {
             Integer kbps = bitRate.getLeft();
@@ -234,14 +229,13 @@ public class HLSController {
                     .queryParam("maxBitRate", kbps + Optional.ofNullable(bitRate.getRight()).map(d -> "@" + d.width + "x" + d.height).orElse(""));
             if (authentication instanceof JWTAuthenticationToken) {
                 DecodedJWT token = (DecodedJWT) authentication.getDetails();
-                Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAt()).map(x -> x.toInstant()).orElse(null);
+                Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAtAsInstant()).orElse(null);
                 url = jwtSecurityService.addJWTToken(authentication.getName(), url, expires);
             }
 
             writer.print(basePath + url.toUriString());
             writer.println();
         }
-//        writer.println("#EXT-X-ENDLIST");
     }
 
     private void generateNormalPlaylist(Authentication authentication, String basePath, UriComponentsBuilder prefix,
@@ -285,7 +279,7 @@ public class HLSController {
 
         if (authentication instanceof JWTAuthenticationToken) {
             DecodedJWT token = (DecodedJWT) authentication.getDetails();
-            Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAt()).map(x -> x.toInstant()).orElse(null);
+            Instant expires = Optional.ofNullable(token).map(x -> x.getExpiresAtAsInstant()).orElse(null);
             builder = jwtSecurityService.addJWTToken(authentication.getName(), builder, expires);
         }
         return basePath + builder.toUriString();
@@ -307,10 +301,7 @@ public class HLSController {
         }
         User user = securityService.getUserByName(auth.getName());
         Player player = this.playerService.getPlayer(swr.getRequest(), swr.getResponse(), user.getUsername());
-        if (!(auth instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(mediaFile, user.getUsername())) {
-            throw new AccessDeniedException("Access to file " + id + " is forbidden for user " + user.getUsername());
-        }
+        securityService.checkFolderAccess(mediaFile, user.getUsername(), auth);
         TransferStatus status = this.statusService.createStreamStatus(player);
         status.setMediaFile(mediaFile);
         HlsSession.Key sessionKey = new HlsSession.Key(id, playerId, maxBitRate, size, duration, audioTrack);
@@ -346,7 +337,7 @@ public class HLSController {
         return this.sessions.computeIfAbsent(sessionKey, k -> {
             for (HlsSession.Key k1 : sessions.keySet()) {
                 if (k1.getMediaFileId() == k.getMediaFileId()
-                        && StringUtils.equals(k1.getPlayerId(), k.getPlayerId())) {
+                        && Strings.CS.equals(k1.getPlayerId(), k.getPlayerId())) {
                     sessions.remove(k1).destroySession();
                 }
             }

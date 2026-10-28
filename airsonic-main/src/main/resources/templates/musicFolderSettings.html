@@ -5,42 +5,35 @@
     <th:block th:replace="~{jquery}" />
 
     <script th:inline="javascript">
-        function init() {
-            $("#newMusicFolderName").attr("placeholder", "[(#{musicfoldersettings.name})]");
-            $("#newMusicFolderPath").attr("placeholder", "[(#{musicfoldersettings.path})]");
-
-            let settingsReload = /*[[${settings_reload}]]*/ false;
-            if(settingsReload) {
-                parent.frames.left.location.href="left";
+        Page.define("musicFolderSettings", function (page) {
+            function updateClearFullScan() {
+                var fullScan = $("input[type=checkbox][name=fullScan]").prop("checked");
+                var clear = $("input[type=checkbox][name=clearFullScanSettingAfterScan]");
+                clear.prop("disabled", !fullScan);
+                if (!fullScan) {
+                    clear.prop("checked", false);
+                }
             }
 
+            page.actions({
+                updateClearFullScan: updateClearFullScan,
+                /** Only one podcast folder can be enabled: checking one unchecks the others. */
+                enablePodcastFolder(radio) {
+                    $('.podcast-enable-radio[value="false"]').prop("checked", true);
+                    $(radio).prop("checked", true);
+                }
+            });
+
+            $("#newMusicFolderName").attr("placeholder", /*[[#{musicfoldersettings.name}]]*/ "");
+            $("#newMusicFolderPath").attr("placeholder", /*[[#{musicfoldersettings.path}]]*/ "");
+            if (page.root.dataset.reloadLeft === "true") {
+                Page.loadRegion("left", "left");
+            }
             updateClearFullScan();
-
-            /*[+
-            $([[|#${#ids.next('fullScan')}|]]).change(function() {updateClearFullScan();});
-            +]*/
-        }
-
-        function updateClearFullScan() {
-            /*[+
-            if (!$([[|#${#ids.next('fullScan')}|]]).prop("checked")) {
-                $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("disabled", true);
-                $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("checked", false);
-            } else {
-                $([[|#${#ids.next('clearFullScanSettingAfterScan')}|]]).prop("disabled", false);
-            }
-            +]*/
-        }
-
-        function podcastEnabler(event, el) {
-            $('.podcast-enable-radio[value="false"]').prop("checked", true);
-            $(el).prop("checked", true);
-        }
+        });
     </script>
 </head>
-<body class="mainframe bgcolor1" onload="init()">
-<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
-<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+<body class="mainframe bgcolor1 settings-page" data-page="musicFolderSettings" th:data-reload-left="${settings_reload == true}">
 
 
 <th:block th:replace="~{settingsHeader::header(cat='musicFolder',toast=${settings_toast})}" />
@@ -65,7 +58,8 @@
             <input type="checkbox" th:field="*{musicFolders[__${loopStatus.index}__].enabled}" class="checkbox"/>
           </th:block>
           <th:block th:if="${folder.type == 'PODCAST'}">
-              <input type="radio" th:field="*{musicFolders[__${loopStatus.index}__].enabled}" value="true"  class="podcast-enable-radio" onchange="podcastEnabler(event, this)"/>
+              <label for="podcastFolderEnabled" th:for="|podcastFolderEnabled${loopStatus.index}|" class="visually-hidden" th:text="#{musicfoldersettings.enabled}">Enabled</label>
+              <input type="radio" id="podcastFolderEnabled" th:id="|podcastFolderEnabled${loopStatus.index}|" th:field="*{musicFolders[__${loopStatus.index}__].enabled}" value="true"  class="podcast-enable-radio" data-on-change="enablePodcastFolder"/>
               <input type="radio" th:field="*{musicFolders[__${loopStatus.index}__].enabled}" value="false" class="podcast-enable-radio" style="display: none;"/>
           </th:block>
         </td>
@@ -151,13 +145,13 @@
     </div>
 
     <div>
-        <input type="checkbox" th:field="*{fullScan}" size="70"/>
-        <label th:for="${#ids.prev('fullScan')}" th:text="#{musicfoldersettings.fullscan}"></label>
+        <input type="checkbox" id="fullScan" th:field="*{fullScan}" data-on-change="updateClearFullScan"/>
+        <label for="fullScan" th:text="#{musicfoldersettings.fullscan}"></label>
         <th:block th:replace="~{helpToolTip((topic=fullscan))}" />
     </div>
     <div style="margin-left:1em;">
-        <input type="checkbox" th:field="*{clearFullScanSettingAfterScan}" size="70"/>
-        <label th:for="${#ids.prev('clearFullScanSettingAfterScan')}" th:text="#{musicfoldersettings.fullscanclear}"></label>
+        <input type="checkbox" id="clearFullScanSettingAfterScan" th:field="*{clearFullScanSettingAfterScan}"/>
+        <label for="clearFullScanSettingAfterScan" th:text="#{musicfoldersettings.fullscanclear}"></label>
         <th:block th:replace="~{helpToolTip((topic=clearfullscan))}" />
     </div>
 
@@ -229,7 +223,7 @@
         <input type="text" name="migrateNew" size="70"/>
     </div>
     <div style="margin-top:0.5em">
-        <input type="submit" th:value="#{musicfoldersettings.migrate.submit}" value="Migrate" onclick="return confirm('Are you sure you want to migrate matching music folder roots? This will update folder paths in the database.');"/>
+        <input type="submit" th:value="#{musicfoldersettings.migrate.submit}" value="Migrate" data-on-click="confirmSubmit" data-confirm="Are you sure you want to migrate matching music folder roots? This will update folder paths in the database."/>
     </div>
 </form>
 

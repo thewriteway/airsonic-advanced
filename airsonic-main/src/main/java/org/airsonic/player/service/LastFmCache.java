@@ -131,7 +131,9 @@ public class LastFmCache extends Cache {
         try (Stream<Path> walk = Files.list(cacheDir)) {
             walk.filter(Files::isRegularFile)
                 .forEach(LambdaUtils.uncheckConsumer(Files::deleteIfExists));
-        } catch (Exception ignore) {}
+        } catch (Exception e) {
+            LOG.debug("Failed to clear Last.fm cache in {}", cacheDir, e);
+        }
     }
 
     private Path getXmlFile(String cacheEntryName) {

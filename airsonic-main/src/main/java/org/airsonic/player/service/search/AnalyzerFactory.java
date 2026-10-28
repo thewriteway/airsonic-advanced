@@ -61,7 +61,7 @@ public final class AnalyzerFactory {
     private Analyzer queryAnalyzer;
 
     /*
-     * XXX 3.x -> 8.x : Convert UAX#29 Underscore Analysis to Legacy Analysis
+     * Lucene 3.x -> 8.x migration: Convert UAX#29 Underscore Analysis to Legacy Analysis
      *
      * Because changes in underscores before and after words
      * have a major effect on user's forward match search.
@@ -77,7 +77,7 @@ public final class AnalyzerFactory {
     }
 
     /*
-     * XXX 3.x -> 8.x : Handle brackets correctly
+     * Lucene 3.x -> 8.x migration: Handle brackets correctly
      *
      * Process the input value of Genre search for search of domain value.
      *

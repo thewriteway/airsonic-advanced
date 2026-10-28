@@ -17,20 +17,25 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.1</version>
+        <version>4.1.2</version>
         <relativePath />
     </parent>
 
     <properties>
+        <!-- minimum supported Java (bytecode target and API level); enforced by maven-enforcer requireJavaVersion -->
+        <java.version>21</java.version>
+        <docker.java.version>21</docker.java.version>
         <failOnDependencyWarning>true</failOnDependencyWarning>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cxf.version>4.2.3</cxf.version>
+        <cxf.version>4.2.4</cxf.version>
         <snakeyaml.version>2.6</snakeyaml.version>
-        <lucene.version>10.5.1</lucene.version>
-        <logback.version>1.6.3</logback.version>
+        <lucene.version>10.5.2</lucene.version>
+        <logback.version>1.6.6</logback.version>
         <!-- override Spring Boot managed version until it ships >= 42.7.11 (CVE-2026-42198) -->
         <postgresql.version>42.7.11</postgresql.version>
         <docker.container.repo>ghcr.io/thewriteway/airsonic-advanced</docker.container.repo>
+        <!-- extra JVM flags for forked test JVMs; set by JDK-specific profiles -->
+        <surefire.jdk.flags></surefire.jdk.flags>
     </properties>
 
 
@@ -98,7 +103,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.20.0</version>
+                <version>3.21.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -113,7 +118,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>33.7.1-jre</version>
+                <version>33.7.2-jre</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.xml.bind</groupId>
@@ -148,7 +153,7 @@
             <dependency>
                 <groupId>org.jsoup</groupId>
                 <artifactId>jsoup</artifactId>
-                <version>1.23.1</version>
+                <version>1.23.2</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.activation</groupId>
@@ -158,7 +163,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>4.2.3</version>
+                <version>4.3.1</version>
             </dependency>
             <dependency>
                 <groupId>com.google.j2objc</groupId>
@@ -208,7 +213,7 @@
             <dependency>
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>org.eclipse.persistence.moxy</artifactId>
-                <version>5.0.1</version>
+                <version>5.0.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -273,7 +278,7 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>14.1.0</version>
+                            <version>14.3.0</version>
                         </dependency>
                     </dependencies>
                 </plugin>
@@ -297,14 +302,10 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.6.0</version>
+                    <version>3.6.1</version>
                     <configuration>
-                        <!-- #1186 Temporarily skip a test. -->
-                        <excludes>
-                            <exclude>org.airsonic.player.service.search.*TestCase.java</exclude>
-                        </excludes>
                         <!-- see https://github.com/mockito/mockito/issues/3037#issuecomment-1930132240-->
-                        <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+                        <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar} ${surefire.jdk.flags}</argLine>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -338,8 +339,12 @@
                     <encoding>UTF-8</encoding>
                     <verbose>false</verbose>
                     <showWarnings>true</showWarnings>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <!-- release checks API usage against java.version even when building on a newer JDK -->
+                    <release>${java.version}</release>
+                    <compilerArgs>
+                        <!-- list each deprecated / for-removal API use so JDK upgrades don't surprise us -->
+                        <arg>-Xlint:deprecation,removal</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -386,7 +391,6 @@
 				                <ignoredUsedUndeclaredDependency>org.junit.jupiter:junit-jupiter-params:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>jakarta.transaction:jakarta.transaction-api:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.springframework.data:spring-data-commons:*</ignoredUsedUndeclaredDependency>
-                                <ignoredUsedUndeclaredDependency>commons-collections:commons-collections:*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>com.sun.mail:jakarta.mail*</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>org.glassfish.jaxb:jaxb-runtime</ignoredUsedUndeclaredDependency>
                                 <ignoredUsedUndeclaredDependency>com.jayway.jsonpath:json-path:</ignoredUsedUndeclaredDependency>
@@ -397,8 +401,6 @@
                             <ignoredUnusedDeclaredDependencies>
                                 <!-- Needed at compile time so ajc (aspectj-maven-plugin) finds aspectjrt on the classpath -->
                                 <ignoredUnusedDeclaredDependency>org.aspectj:aspectjrt:*</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>com.google.code.findbugs:jsr305:*</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>com.fasterxml.jackson.module:jackson-module-jaxb-annotations</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>taglibs:string:jar*</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.tukaani:xz:*</ignoredUnusedDeclaredDependency>
                                 <!-- Needed for airsonic-booter to load Airsonic correctly -->
@@ -417,7 +419,6 @@
                                 <ignoredUnusedDeclaredDependency>org.apache.cxf:cxf-tools-wsdlto-databinding-jaxb</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>org.apache.lucene:lucene-backward-codecs</ignoredUnusedDeclaredDependency>
                                 <ignoredUnusedDeclaredDependency>com.twelvemonkeys.imageio:imageio-webp</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>org.apache.httpcomponents.client5:httpclient5</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>
@@ -433,6 +434,10 @@
                         <configuration>
                             <rules>
                                 <dependencyConvergence/>
+                                <requireJavaVersion>
+                                    <version>[21,)</version>
+                                    <message>Airsonic-Advanced requires JDK 21 or newer to build.</message>
+                                </requireJavaVersion>
                             </rules>
                         </configuration>
                         <goals>
@@ -465,13 +470,15 @@
             </modules>
         </profile>
         <profile>
-            <id>default-java</id>
+            <!-- JDK 24+ (JEP 471/472): Byte Buddy, used by Mockito, still calls sun.misc.Unsafe memory-access
+                 methods and libraries may call restricted native methods. Allow both explicitly so tests keep
+                 working when the JDK default changes from "warn" to "deny". The Unsafe flag is unknown to JDK 21. -->
+            <id>jdk24-test-flags</id>
             <activation>
-                <jdk>[21,)</jdk>
+                <jdk>[24,)</jdk>
             </activation>
             <properties>
-                <java.version>21</java.version>
-                <docker.java.version>21</docker.java.version>
+                <surefire.jdk.flags>--sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED</surefire.jdk.flags>
             </properties>
         </profile>
     </profiles>

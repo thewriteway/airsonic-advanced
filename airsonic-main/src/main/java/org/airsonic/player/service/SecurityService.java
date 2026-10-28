@@ -32,6 +32,8 @@ import org.airsonic.player.domain.UserCredential;
 import org.airsonic.player.domain.UserCredential.App;
 import org.airsonic.player.repository.UserCredentialRepository;
 import org.airsonic.player.repository.UserRepository;
+import org.airsonic.player.security.JWTAuthenticationProvider;
+import org.airsonic.player.security.JWTAuthenticationToken;
 import org.airsonic.player.security.PasswordDecoder;
 import org.airsonic.player.security.PasswordEncoderConfig;
 import org.airsonic.player.service.cache.UserCache;
@@ -44,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -67,6 +70,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +108,8 @@ public class SecurityService implements UserDetailsService {
     private UserCredentialRepository userCredentialRepository;
     @Autowired
     private UserCache userCache;
+
+    private volatile Map<String, Boolean> defaultAdminCredMatches = Map.of();
 
     /**
      * Locates the user based on the username.
@@ -329,7 +335,7 @@ public class SecurityService implements UserDetailsService {
     }
 
     public Map<App, UserCredential> getDecodableCredsForApps(String username, App... apps) {
-        return getCredentials(username, apps).parallelStream()
+        return getCredentials(username, apps).stream()
                 .filter(c -> PasswordEncoderConfig.DECODABLE_ENCODERS.contains(c.getEncoder()))
                 .filter(c -> c.getExpiration() == null || c.getExpiration().isAfter(Instant.now()))
                 .collect(Collectors.groupingByConcurrent(
@@ -342,9 +348,24 @@ public class SecurityService implements UserDetailsService {
     // account still uses the well-known default password so the UI can warn the admin to change it
     @SuppressWarnings("java:S6437")
     public boolean checkDefaultAdminCredsPresent() {
-        return userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC).parallelStream()
-                .anyMatch(c -> PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
-                        c.getCredential()));
+        // Matching runs the credential's (deliberately slow) password hash, and this is called on
+        // every login and credentials page view. An encoded credential never changes in place, so
+        // the outcome is remembered per encoded value; only the current admin creds are retained.
+        Map<String, Boolean> previous = defaultAdminCredMatches;
+        Map<String, Boolean> current = new HashMap<>();
+        boolean present = false;
+        for (UserCredential c : userCredentialRepository.findByUserUsernameAndApp(User.USERNAME_ADMIN, App.AIRSONIC)) {
+            String key = c.getEncoder() + '\0' + c.getCredential();
+            Boolean matches = previous.get(key);
+            if (matches == null) {
+                matches = PasswordEncoderConfig.ENCODERS.get(c.getEncoder()).matches(User.USERNAME_ADMIN,
+                        c.getCredential());
+            }
+            current.put(key, matches);
+            present |= matches;
+        }
+        defaultAdminCredMatches = current;
+        return present;
     }
 
     /**
@@ -402,12 +423,12 @@ public class SecurityService implements UserDetailsService {
     }
 
     public static List<GrantedAuthority> getGrantedAuthorities(User user) {
-        return Stream.concat(
+        return Stream.<GrantedAuthority>concat(
                 Stream.of(
                         new SimpleGrantedAuthority("IS_AUTHENTICATED_ANONYMOUSLY"),
                         new SimpleGrantedAuthority("ROLE_USER")),
                 user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role.name())))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static final String decodeCredentials(UserCredential reversibleCred) {
@@ -479,13 +500,12 @@ public class SecurityService implements UserDetailsService {
     }
 
     /**
-     * Increment the number of bytes downloaded by the given user.
+     * Increment the number of bytes streamed by the given user.
      *
-     * @param username             user name.
-     * @param deltaBytesDownloaded number of bytes downloaded.
+     * @param username           user name.
+     * @param deltaBytesStreamed number of bytes streamed.
      * @return updated user.
      */
-    // TODO: This is not security related. Move to a different service.
     @Transactional
     public User incrementBytesStreamed(String username, long deltaBytesStreamed) {
         User user = getUserByName(username);
@@ -497,13 +517,12 @@ public class SecurityService implements UserDetailsService {
     }
 
     /**
-     * Increment the number of bytes streamed by the given user.
+     * Increment the number of bytes downloaded by the given user.
      *
-     * @param username           user name.
-     * @param deltaBytesStreamed number of bytes streamed.
+     * @param username             user name.
+     * @param deltaBytesDownloaded number of bytes downloaded.
      * @return updated user.
      */
-    // TODO: This is not security related. Move to a different service.
     @Transactional
     public User incrementBytesDownloaded(String username, long deltaBytesDownloaded) {
         User user = getUserByName(username);
@@ -521,7 +540,6 @@ public class SecurityService implements UserDetailsService {
      * @param deltaBytesUploaded number of bytes uploaded.
      * @return updated user.
      */
-    // TODO: This is not security related. Move to a different service.
     @Transactional
     public User incrementBytesUploaded(String username, long deltaBytesUploaded) {
         User user = getUserByName(username);
@@ -728,8 +746,30 @@ public class SecurityService implements UserDetailsService {
     }
 
     public boolean isFolderAccessAllowed(MediaFile file, String username) {
-        return mediaFolderService.getMusicFoldersForUser(username).parallelStream()
+        return mediaFolderService.getMusicFoldersForUser(username).stream()
                 .anyMatch(musicFolder -> musicFolder.getId().equals(file.getFolder().getId()));
+    }
+
+    /**
+     * Throws if the given user may not access the music folder containing the file.
+     *
+     * @throws org.springframework.security.access.AccessDeniedException If access is not allowed.
+     */
+    public void checkFolderAccess(MediaFile file, String username) {
+        if (!isFolderAccessAllowed(file, username)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Access to file " + file.getId() + " is forbidden for user " + username);
+        }
+    }
+
+    /**
+     * Same as {@link #checkFolderAccess(MediaFile, String)}, but lets JWT-authenticated requests through,
+     * since {@link JWTAuthenticationProvider} has already checked that the token was issued for the requested path.
+     */
+    public void checkFolderAccess(MediaFile file, String username, Authentication authentication) {
+        if (!(authentication instanceof JWTAuthenticationToken)) {
+            checkFolderAccess(file, username);
+        }
     }
 
     public static class UserDetail extends org.springframework.security.core.userdetails.User {

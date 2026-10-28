@@ -19,6 +19,15 @@ public class AesGcmPasswordEncoderTest {
     }
 
     @Test
+    public void testDecryptsValueEncryptedByLegacyEncryptorsDelux() throws Exception {
+        // "randomstring" encrypted with the deprecated Encryptors.delux(testPass, testSalt) used before; stored
+        // credentials in existing databases are in this format and must keep decrypting
+        String legacyEncoded = "16c7fa5357ffc4eac18ed6b1bf4f5bcb75684cd0eb4bee753f02d64f9257be77945b5bdc8ac7687c15b8183f";
+        assertThat(encoder.decode(legacyEncoded)).isEqualTo("randomstring");
+        assertThat(encoder.matches("randomstring", legacyEncoded)).isTrue();
+    }
+
+    @Test
     public void testEncryptionAndDecryption_anotherEncoder_samePassword() throws Exception {
         String plaintext = "randomstring";
         AesGcmPasswordEncoder encoder2 = new AesGcmPasswordEncoder(testPass, testSalt);

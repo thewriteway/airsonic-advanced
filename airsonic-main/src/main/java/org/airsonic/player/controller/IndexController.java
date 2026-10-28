@@ -1,5 +1,6 @@
 package org.airsonic.player.controller;
 
+import org.airsonic.player.domain.AvatarScheme;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.UserSettings;
 import org.airsonic.player.service.PersonalSettingsService;
@@ -35,18 +36,22 @@ public class IndexController {
         User user = securityService.getCurrentUser(request);
         UserSettings userSettings = personalSettingsService.getUserSettings(user.getUsername());
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("showRight", userSettings.getShowNowPlayingEnabled());
-        map.put("autoHidePlayQueue", userSettings.getAutoHidePlayQueue());
         map.put("keyboardShortcutsEnabled", userSettings.getKeyboardShortcutsEnabled());
         map.put("showSideBar", userSettings.getShowSideBar());
         map.put("brand", settingsService.getBrand());
+        map.put("showAvatar", userSettings.getAvatarScheme() != AvatarScheme.NONE);
+
+        // page shown in the main region: forwarded deep link, or explicit ?main= parameter
+        String main = (String) request.getAttribute(ShellPages.MAIN_ATTRIBUTE);
+        map.put("mainUrl", ShellPages.toMainUrl(main != null ? main : request.getParameter("main")));
+        map.put("shellPages", ShellPages.PAGES);
 
         //Add settings from PlayQueueController as well
         map.put("visibility", userSettings.getPlayqueueVisibility());
         map.put("partyMode", userSettings.getPartyModeEnabled());
         map.put("notify", userSettings.getSongNotificationEnabled());
-        map.put("autoHide", userSettings.getAutoHidePlayQueue());
         map.put("initialPaginationSize", userSettings.getPaginationSizePlayqueue());
         map.put("autoBookmark", userSettings.getAutoBookmark());
         map.put("audioBookmarkFrequency", userSettings.getAudioBookmarkFrequency());

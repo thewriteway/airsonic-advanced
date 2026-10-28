@@ -119,7 +119,7 @@ public class PlaylistService {
 
         // Remove duplicates.
         return Stream.of(result1, result2, result3)
-                .flatMap(r -> r.parallelStream())
+                .flatMap(r -> r.stream())
                 .filter(LambdaUtils.distinctByKey(p -> p.getId()))
                 .sorted(Comparator.comparing(Playlist::getName))
                 .toList();
@@ -264,7 +264,7 @@ public class PlaylistService {
             p.setChanged(Instant.now());
             playlistRepository.save(p);
             return p;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     /**

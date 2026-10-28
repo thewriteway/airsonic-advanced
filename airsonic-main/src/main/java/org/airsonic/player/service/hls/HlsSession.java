@@ -1,6 +1,5 @@
 package org.airsonic.player.service.hls;
 
-import com.google.common.io.MoreFiles;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.VideoTranscodingSettings;
 import org.airsonic.player.io.InputStreamReaderThread;
@@ -8,6 +7,7 @@ import org.airsonic.player.io.TranscodeInputStream;
 import org.airsonic.player.service.TranscodingService;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.Util;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +32,7 @@ public class HlsSession {
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(Util.getDaemonThreadfactory("hls-destroy-session"));
 
     private static final long SESSION_TIMEOUT_SECONDS = 120L;
+    private static final long SEGMENT_POLL_MILLIS = 200L;
 
     private final Key sessionKey;
 
@@ -73,9 +74,12 @@ public class HlsSession {
             }
         }
         long timeout = currentTimeMillis() + timeoutMillis;
-        while (segment == null && currentTimeMillis() < timeout && isProcessAlive()) {
+        if (segment == null) {
             this.LOG.debug("Segment {} not yet produced. Waiting.", segmentIndex);
-            Thread.sleep(2000L);
+        }
+        // ffmpeg writes a segment every few seconds; a short poll keeps start and seek latency low
+        while (segment == null && currentTimeMillis() < timeout && isProcessAlive()) {
+            Thread.sleep(SEGMENT_POLL_MILLIS);
             segment = getSegment(segmentIndex);
         }
         if (segment != null) {
@@ -111,7 +115,7 @@ public class HlsSession {
     private SortedSet<Integer> getCompletedSegmentIndexes() {
         try (Stream<Path> children = Files.list(getDirectory())) {
             SortedSet<Integer> result = children.filter(Files::isRegularFile)
-                    .filter(c -> "ts".equals(MoreFiles.getFileExtension(c))).map(MoreFiles::getNameWithoutExtension)
+                    .filter(c -> "ts".equals(FilenameUtils.getExtension(c.toString()))).map(c -> FilenameUtils.getBaseName(c.toString()))
                     .map(Integer::valueOf).collect(Collectors.toCollection(() -> new TreeSet<>()));
             if (!result.isEmpty() && isProcessAlive()) {
                 result.remove(result.last());

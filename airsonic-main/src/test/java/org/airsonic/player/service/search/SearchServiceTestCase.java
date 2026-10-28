@@ -234,7 +234,7 @@ public class SearchServiceTestCase {
                 Integer.MAX_VALUE, allMusicFolders, Artist.class);
 
         /*
-         * // XXX 3.x -> 8.x :
+         * // Lucene 3.x -> 8.x migration:
          * Hit 'Nash*' as ​​the slash becomes a delimiter.
          */
         assertEquals(1,

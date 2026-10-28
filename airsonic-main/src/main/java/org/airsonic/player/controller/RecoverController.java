@@ -4,7 +4,7 @@ import de.triology.recaptchav2java.ReCaptcha;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +50,7 @@ public class RecoverController {
     @RequestMapping(method = {RequestMethod.GET, RequestMethod.POST})
     public ModelAndView recover(HttpServletRequest request, HttpServletResponse response) {
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         String usernameOrEmail = StringUtils.trimToNull(request.getParameter("usernameOrEmail"));
 
         if (usernameOrEmail != null) {

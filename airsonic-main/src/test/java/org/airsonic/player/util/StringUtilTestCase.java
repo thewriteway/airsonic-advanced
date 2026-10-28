@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.util;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.Locale;
@@ -36,11 +35,13 @@ public class StringUtilTestCase {
 
     @Test
     public void testToHtml() {
-        assertEquals(null, StringEscapeUtils.escapeHtml(null));
-        assertEquals("", StringEscapeUtils.escapeHtml(""));
-        assertEquals(" ", StringEscapeUtils.escapeHtml(" "));
-        assertEquals("q &amp; a", StringEscapeUtils.escapeHtml("q & a"));
-        assertEquals("q &amp; a &lt;&gt; b", StringEscapeUtils.escapeHtml("q & a <> b"));
+        assertEquals(null, StringUtil.escapeHtml(null));
+        assertEquals("", StringUtil.escapeHtml(""));
+        assertEquals(" ", StringUtil.escapeHtml(" "));
+        assertEquals("q &amp; a", StringUtil.escapeHtml("q & a"));
+        assertEquals("q &amp; a &lt;&gt; b", StringUtil.escapeHtml("q & a <> b"));
+        assertEquals("caf&eacute; &quot;x&quot;", StringUtil.escapeHtml("café \"x\""));
+        assertEquals("&#26085;&#26412; &euro;", StringUtil.escapeHtml("日本 €"));
     }
 
     @Test
@@ -77,7 +78,7 @@ public class StringUtilTestCase {
         assertEquals("410.00 TB", StringUtil.formatBytes(450799767388160L, locale), "Error in formatBytes()");
         assertEquals("4413.43 TB", StringUtil.formatBytes(4852617603375432L, locale), "Error in formatBytes()");
 
-        locale = new Locale("no", "", "");
+        locale = Locale.of("no", "", "");
         assertEquals("918 B", StringUtil.formatBytes(918L, locale), "Error in formatBytes()");
         assertEquals("1023 B", StringUtil.formatBytes(1023L, locale), "Error in formatBytes()");
         assertEquals("1 KB", StringUtil.formatBytes(1024L, locale), "Error in formatBytes()");
@@ -135,12 +136,12 @@ public class StringUtilTestCase {
 
     @Test
     public void testParseLocale() {
-        assertEquals(new Locale("en"), StringUtil.parseLocale("en"), "Error in parseLocale()");
-        assertEquals(new Locale("en"), StringUtil.parseLocale("en_"), "Error in parseLocale()");
-        assertEquals(new Locale("en"), StringUtil.parseLocale("en__"), "Error in parseLocale()");
-        assertEquals(new Locale("en", "US"), StringUtil.parseLocale("en_US"), "Error in parseLocale()");
-        assertEquals(new Locale("en", "US", "WIN"), StringUtil.parseLocale("en_US_WIN"), "Error in parseLocale()");
-        assertEquals(new Locale("en", "", "WIN"), StringUtil.parseLocale("en__WIN"), "Error in parseLocale()");
+        assertEquals(Locale.of("en"), StringUtil.parseLocale("en"), "Error in parseLocale()");
+        assertEquals(Locale.of("en"), StringUtil.parseLocale("en_"), "Error in parseLocale()");
+        assertEquals(Locale.of("en"), StringUtil.parseLocale("en__"), "Error in parseLocale()");
+        assertEquals(Locale.of("en", "US"), StringUtil.parseLocale("en_US"), "Error in parseLocale()");
+        assertEquals(Locale.of("en", "US", "WIN"), StringUtil.parseLocale("en_US_WIN"), "Error in parseLocale()");
+        assertEquals(Locale.of("en", "", "WIN"), StringUtil.parseLocale("en__WIN"), "Error in parseLocale()");
     }
 
     @Test

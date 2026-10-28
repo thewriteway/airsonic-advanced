@@ -4,107 +4,82 @@
 
     <th:block th:replace="~{head :: common_head}" />
     <th:block th:replace="~{jquery}" />
-    <script>
-        function updateShownOptions() {
-            $(".hideawayDatabaseOptions").hide();
-            var value = $('select#configType').val();
-            var objToShow = $("#" + value + "DatabaseOptions");
-            if (objToShow.length) {
-                objToShow.show();
-            }
-            if(value != 'BUILTIN') {
-                $("#nonBUILTINDatabaseOptions").show();
-            }
-        }
-
-        function uploadStatus(uploadInfo) {
-            var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
-
-            if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
-                if (progressBarHolder.length != 0) {
-                    // remove it
-                    progressBarHolder.remove();
+    <script type="text/javascript" th:inline="javascript">
+        (function () {
+            function updateShownOptions() {
+                $(".hideawayDatabaseOptions").hide();
+                var value = $('select#configType').val();
+                var objToShow = $("#" + value + "DatabaseOptions");
+                if (objToShow.length) {
+                    objToShow.show();
                 }
-            } else {
-                if (progressBarHolder.length == 0) {
-                    // create it
-                    progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
-                    $("#progressBars").append(progressBarHolder);
+                if (value != 'BUILTIN') {
+                    $("#nonBUILTINDatabaseOptions").show();
+                }
+            }
+            function status(button, label) {
+                return function (msg) {
+                    if (msg.body == "ended") {
+                        $(button).prop("disabled", false);
+                    }
+                    $().toastmessage('showSuccessToast', label + ': ' + msg.body);
+                };
+            }
+
+            Page.define("databaseSettings", function (page) {
+                var progressLabel = /*[[#{more.upload.progress}]]*/ "% complete";
+
+                function uploadStatus(uploadInfo) {
+                    var progressBarHolder = $("#progressBarHolder" + uploadInfo.transferId);
+
+                    if (uploadInfo.bytesTotal <= 0 || uploadInfo.bytesUploaded > uploadInfo.bytesTotal) {
+                        if (progressBarHolder.length != 0) {
+                            // remove it
+                            progressBarHolder.remove();
+                        }
+                    } else {
+                        if (progressBarHolder.length == 0) {
+                            // create it
+                            progressBarHolder = $("<div id='progressBarHolder" + uploadInfo.transferId + "'><p class='detail progress-text'/><div class='progress-bar'><div class='progress-bar-content'></div></div></div>");
+                            $("#progressBars").append(progressBarHolder);
+                        }
+
+                        var progressBarContent = progressBarHolder.find(".progress-bar-content");
+                        var progressText = progressBarHolder.find(".progress-text");
+
+                        var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
+                        progressBarContent.width(Math.round(percent * 3.5));
+                        progressText.text(percent + progressLabel);
+                    }
                 }
 
-                var progressBarContent = progressBarHolder.find(".progress-bar-content");
-                var progressText = progressBarHolder.find(".progress-text");
+                page.actions({
+                    updateShownOptions: updateShownOptions,
+                    backupDB() {
+                        $("#backupdb").prop("disabled", true);
+                        $.get("databaseSettings/backup");
+                    },
+                    exportDB() {
+                        $("#exportdb").prop("disabled", true);
+                        Page.navigate("databaseSettings/export");
+                    },
+                    importDB() {
+                        $("#importdb").prop("disabled", true);
+                    }
+                });
 
-                var percent = Math.ceil((uploadInfo.bytesUploaded / uploadInfo.bytesTotal) * 100);
-                progressBarContent.width(parseInt(percent * 3.5));
-                progressText.text(percent + "<fmt:message key='more.upload.progress'/>");
-            }
-        }
-
-        function backupDB() {
-            $("#backupdb").prop("disabled", true);
-            $.get("databaseSettings/backup");
-        }
-
-        function exportDB() {
-            $("#exportdb").prop("disabled", true);
-            location.href="databaseSettings/export";
-        }
-
-        function importDB() {
-            $("#importdb").prop("disabled", true);
-        }
-
-        function backupStatus(msg) {
-            if (msg == "ended") {
-               $("#backupdb").prop("disabled", false);
-            }
-            $().toastmessage('showSuccessToast', 'Backup DB: ' + msg);
-        }
-
-        function importStatus(msg) {
-            if (msg == "ended") {
-               $("#importdb").prop("disabled", false);
-            }
-            $().toastmessage('showSuccessToast', 'Import DB: ' + msg);
-        }
-
-        function exportStatus(msg) {
-            if (msg == "ended") {
-               $("#exportdb").prop("disabled", false);
-            }
-            $().toastmessage('showSuccessToast', 'Export DB: ' + msg);
-        }
-
-        function bindComponentHandling() {
-            // blur out sensitive data
-            $('.sensitive').hover(function() {
-              $(this).removeClass('blur');
-            }).mouseout(function() {
-              $(this).addClass('blur');
-            });
-        }
-
-        $(document).ready(function () {
-            updateShownOptions();
-            bindComponentHandling();
-            $('select#configType').on('change', function () {
                 updateShownOptions();
+                page.subscribe({
+                    '/user/queue/uploads/status': msg => uploadStatus(JSON.parse(msg.body)),
+                    '/topic/backupStatus': status("#backupdb", "Backup DB"),
+                    '/topic/importStatus': status("#importdb", "Import DB"),
+                    '/topic/exportStatus': status("#exportdb", "Export DB")
+                });
             });
-            top.StompClient.subscribe("databaseSettings.html", {
-                '/user/queue/uploads/status': function(msg) { uploadStatus(JSON.parse(msg.body)); },
-                '/topic/backupStatus': function(msg) { backupStatus(msg.body); },
-                '/topic/importStatus': function(msg) { importStatus(msg.body); },
-                '/topic/exportStatus': function(msg) { exportStatus(msg.body); }
-            });
-        });
+        })();
     </script>
-    <style>
-    </style>
 </head>
-<body class="mainframe bgcolor1">
-<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
-<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+<body class="mainframe bgcolor1 settings-page" data-page="databaseSettings">
 
 <th:block th:replace="~{settingsHeader::header(cat='database',toast=${settings_toast})}" />
 
@@ -113,9 +88,9 @@
 
     <table style="white-space:nowrap" class="indent">
         <tr>
-            <td th:text="#{databasesettings.configtype}"></td>
+            <td><label for="configType" th:text="#{databasesettings.configtype}">Type</label></td>
             <td>
-                <select th:field="*{configType}" style="width:12em">
+                <select id="configType" th:field="*{configType}" style="width:12em" data-on-change="updateShownOptions">
                     <option value="BUILTIN" th:text="Built-in"></option>
                     <option value="EXTERNAL" th:text="External"></option>
                     <option value="JNDI" th:text="JNDI"></option>
@@ -229,21 +204,21 @@
 <div style="display:table;">
   <div style="display:table-row;">
     <div th:if="${command.backuppable}" style="display:table-cell; padding:0.5em;">
-      <button id="backupdb" onclick="backupDB()">
+      <button id="backupdb" type="button" data-on-click="backupDB">
         <span th:text="#{databasesettings.backup}"></span>
-          <th:block th:replace="~{helpToolTip((topic=backupdb))}" />
       </button>
+      <th:block th:replace="~{helpToolTip((topic=backupdb))}" />
     </div>
 
     <div style="display:table-cell; padding:0.5em;">
-      <button id="exportdb" onclick="exportDB()">
+      <button id="exportdb" type="button" data-on-click="exportDB">
         <img th:src="${themes?.get('downloadImage') ?: 'icons/default_light/download.svg'}" alt=""/>
         <span th:text="#{databasesettings.export}"></span>
-          <th:block th:replace="~{helpToolTip((topic=exportdb))}" />
       </button>
+      <th:block th:replace="~{helpToolTip((topic=exportdb))}" />
     </div>
 
-    <form method="post" enctype="multipart/form-data" th:action="@{/upload.view}" th:object="${command}" onsubmit="importDB()">
+    <form method="post" enctype="multipart/form-data" th:action="@{/upload.view}" th:object="${command}" data-on-submit="importDB">
         <input type="hidden" id="dir" name="dir" th:value="*{importFolder}"/>
         <input type="hidden" name="callback" th:value="*{callback}"/>
         <input type="hidden" name="unzip" value="true"/>
@@ -252,8 +227,8 @@
           <button id="importdb" type="submit">
             <img th:src="${themes?.get('uploadImage') ?: 'icons/default_light/upload.svg'}" alt=""/>
             <span style="vertical-align: middle" th:text="#{databasesettings.import}"></span>
-              <th:block th:replace="~{helpToolTip((topic=importdb))}" />
           </button>
+          <th:block th:replace="~{helpToolTip((topic=importdb))}" />
         </div>
     </form>
   </div>

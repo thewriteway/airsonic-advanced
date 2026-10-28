@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="add-user-transfer-snapshot-table" author="chosenpath">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_transfer_snapshot"/>
+            </not>
+        </preConditions>
+        <comment>
+            Daily snapshots of the transfer totals of each user, from which the status page
+            draws its transfer history. No foreign key to users: the history of deleted users
+            still belongs to the server totals.
+        </comment>
+        <createTable tableName="user_transfer_snapshot">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="${varchar_type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="snapshot_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bytes_streamed" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bytes_downloaded" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bytes_uploaded" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="user_transfer_snapshot" columnNames="username, snapshot_date"
+                             constraintName="uk_user_transfer_snapshot"/>
+        <createIndex tableName="user_transfer_snapshot" indexName="idx_user_transfer_snapshot_date">
+            <column name="snapshot_date"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="user_transfer_snapshot"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

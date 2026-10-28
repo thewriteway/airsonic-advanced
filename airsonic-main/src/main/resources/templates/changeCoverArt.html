@@ -5,110 +5,125 @@
     <th:block th:replace="~{jquery}" />
 
     <script type="text/javascript" th:inline="javascript">
-        function cloneNodeBySelector(selector, idToAppend) {
-            var cloned = $(selector).clone();
-            cloned.each(function() {
-                if (this.id) {
-                    this.id = this.id + idToAppend;
-                }
-            });
-            cloned.find("*").each(function() {
-                if (this.id) {
-                    this.id = this.id + idToAppend;
-                }
-            });
+        (function () {
+            function cloneNodeBySelector(selector, idToAppend) {
+                var cloned = $(selector).clone();
+                cloned.each(function() {
+                    if (this.id) {
+                        this.id = this.id + idToAppend;
+                    }
+                });
+                cloned.find("*").each(function() {
+                    if (this.id) {
+                        this.id = this.id + idToAppend;
+                    }
+                });
 
-            return cloned;
-        }
-
-        function setImage(imageUrl) {
-            $("#wait").show();
-            $("#result").hide();
-            $("#success").hide();
-            $("#error").hide();
-            $("#errorDetails").hide();
-            $("#noImagesFound").hide();
-            top.StompClient.send("/app/coverart/set", JSON.stringify({
-                id: /*[[${command.id}]]*/ 0, 
-                url: imageUrl
-            }));
-        }
-
-        function setImageComplete(errorDetails) {
-            $("#wait").hide();
-            if (errorDetails != "OK") {
-                $("#errorDetails").text(errorDetails).show();
-                $("#error").show();
-            } else {
-                $("#success").show();
+                return cloned;
             }
-        }
-
-        function searchComplete(searchResults) {
-            $("#wait").hide();
-
-            if (searchResults.length > 0) {
-                var images = $("#images");
-                images.empty();
-
-                for (var i = 0; i < searchResults.length; i++) {
-                    var result = searchResults[i];
-                    var node = cloneNodeBySelector("#template", i);
-                    node.appendTo(images);
-
-                    node.find(".search-result-link").attr("href", "javascript:setImage('" + result.imageUrl + "');");
-                    node.find(".search-result-image").attr("src", result.imageUrl);
-                    node.find(".search-result-artist").text(result.artist);
-                    node.find(".search-result-album").text(result.album);
-
-                    node.show();
+            function setImageComplete(errorDetails) {
+                $("#wait").hide();
+                if (errorDetails != "OK") {
+                    $("#errorDetails").text(errorDetails).show();
+                    $("#error").show();
+                } else {
+                    $("#success").show();
                 }
-
-                $("#result").show();
-            } else {
-                $("#noImagesFound").show();
             }
-        }
+            function search() {
+                $("#wait").show();
+                $("#result").hide();
+                $("#success").hide();
+                $("#error").hide();
+                $("#errorDetails").hide();
+                $("#noImagesFound").hide();
 
-        function search() {
-            $("#wait").show();
-            $("#result").hide();
-            $("#success").hide();
-            $("#error").hide();
-            $("#errorDetails").hide();
-            $("#noImagesFound").hide();
+                var artist = $("#artist").val();
+                var album = $("#album").val();
+                StompClient.send("/app/coverart/search", JSON.stringify({artist: artist, album: album}));
+            }
 
-            var artist = $("#artist").val();
-            var album = $("#album").val();
-            top.StompClient.send("/app/coverart/search", JSON.stringify({artist: artist, album: album}));
-        }
+            Page.define("changeCoverArt", function (page) {
+                var mediaFileId = /*[[${command.id}]]*/ 0;
 
-        function init() {
-            top.StompClient.subscribe("changeCoverArt.html", {
-                "/user/queue/coverart/search": function(msg) {
-                    searchComplete(JSON.parse(msg.body));
-                },
-                "/user/queue/coverart/set": function(msg) {
-                    setImageComplete(msg.body);
+                function setImage(imageUrl) {
+                    $("#wait").show();
+                    $("#result").hide();
+                    $("#success").hide();
+                    $("#error").hide();
+                    $("#errorDetails").hide();
+                    $("#noImagesFound").hide();
+                    StompClient.send("/app/coverart/set", JSON.stringify({id: mediaFileId, url: imageUrl}));
                 }
-            }, search);
-        }
+
+                function searchComplete(searchResults) {
+                    $("#wait").hide();
+
+                    if (searchResults.length > 0) {
+                        var images = $("#images");
+                        images.empty();
+
+                        for (var i = 0; i < searchResults.length; i++) {
+                            var result = searchResults[i];
+                            var node = cloneNodeBySelector("#template", i);
+                            node.appendTo(images);
+
+                            node.find(".search-result-link").attr("href", result.imageUrl).attr("data-on-click", "setImage");
+                            node.find(".search-result-image").attr("src", result.imageUrl);
+                            node.find(".search-result-artist").text(result.artist);
+                            node.find(".search-result-album").text(result.album);
+
+                            node.show();
+                        }
+
+                        $("#result").show();
+                    } else {
+                        $("#noImagesFound").show();
+                    }
+                }
+
+                page.actions({
+                    search() {
+                        search();
+                        return false;
+                    },
+                    setImageFromAddress() {
+                        setImage($("#url").val());
+                        return false;
+                    },
+                    setImage(link) {
+                        setImage(link.getAttribute("href"));
+                        return false;
+                    },
+                    selectText(input) {
+                        input.select();
+                    }
+                });
+
+                page.subscribe({
+                    "/user/queue/coverart/search": msg => searchComplete(JSON.parse(msg.body)),
+                    "/user/queue/coverart/set": msg => setImageComplete(msg.body)
+                }, search);
+            });
+        })();
     </script>
 </head>
-<body class="mainframe bgcolor1" onload="init()">
+<body class="mainframe bgcolor1" data-page="changeCoverArt">
 <h1 th:text="#{changecoverart.title}"></h1>
-<form th:action="@{/changeCoverArt}" onsubmit="search(); return false;" th:object="${command}">
+<form th:action="@{/changeCoverArt}" data-on-submit="search" th:object="${command}">
     <table class="indent"><tr>
-        <td><input th:field="*{artist}" th:placeholder="#{changecoverart.artist}" size="35" type="text" onclick="select()"/></td>
-        <td><input th:field="*{album}" th:placeholder="#{changecoverart.album}" size="35" type="text" onclick="select()"/></td>
+        <td><label for="artist" class="visually-hidden" th:text="#{changecoverart.artist}">Artist</label>
+            <input id="artist" th:field="*{artist}" th:placeholder="#{changecoverart.artist}" size="35" type="text" data-on-click="selectText"/></td>
+        <td><label for="album" class="visually-hidden" th:text="#{changecoverart.album}">Album</label>
+            <input id="album" th:field="*{album}" th:placeholder="#{changecoverart.album}" size="35" type="text" data-on-click="selectText"/></td>
         <td style="padding-left:0.5em"><input type="submit" th:value="#{changecoverart.search}"/></td>
     </tr></table>
 </form>
 
-<form th:action="@{/changeCoverArt}" onsubmit="setImage($('input[name=\'url\']').val()); return false;">
+<form th:action="@{/changeCoverArt}" data-on-submit="setImageFromAddress">
     <table><tr>
         <td><label for="url" th:text="#{changecoverart.address}"></label></td>
-        <td style="padding-left:0.5em"><input type="text" name="url" id="url" size="50" placeholder="http://" onclick="select()"/></td>
+        <td style="padding-left:0.5em"><input type="text" name="url" id="url" size="50" placeholder="http://" data-on-click="selectText"/></td>
         <td style="padding-left:0.5em"><input type="submit" th:value="#{common.ok}"/></td>
     </tr></table>
 </form>

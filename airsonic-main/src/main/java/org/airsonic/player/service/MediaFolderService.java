@@ -1,6 +1,5 @@
 package org.airsonic.player.service;
 
-import com.google.common.collect.Streams;
 import org.airsonic.player.command.MusicFolderSettingsCommand.MusicFolderInfo;
 import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.domain.MusicFolder;
@@ -79,7 +78,7 @@ public class MediaFolderService {
     }
 
     public List<MusicFolder> getAllMusicFolders(boolean includeDisabled, boolean includeNonExisting, boolean includeDeleted) {
-        return Streams.concat(
+        return Stream.concat(
                 getAllMusicFolders(includeDisabled, includeNonExisting).stream(),
                 includeDeleted ? getDeletedMusicFolders().stream() : Stream.empty())
             .collect(toList());
@@ -366,18 +365,18 @@ public class MediaFolderService {
      */
     public static Triple<List<MusicFolder>, List<MusicFolder>, List<MusicFolder>> getMusicFolderPathOverlaps(MusicFolder folder, List<MusicFolder> allFolders) {
         Path absoluteFolderPath = folder.getPath().normalize().toAbsolutePath();
-        List<MusicFolder> sameFolders = allFolders.parallelStream().filter(f -> {
+        List<MusicFolder> sameFolders = allFolders.stream().filter(f -> {
             // is same but not itself
             Path fAbsolute = f.getPath().normalize().toAbsolutePath();
             return fAbsolute.equals(absoluteFolderPath) && !f.getId().equals(folder.getId());
         }).collect(toList());
-        List<MusicFolder> ancestorFolders = allFolders.parallelStream().filter(f -> {
+        List<MusicFolder> ancestorFolders = allFolders.stream().filter(f -> {
             // is ancestor
             Path fAbsolute = f.getPath().normalize().toAbsolutePath();
             return absoluteFolderPath.getNameCount() > fAbsolute.getNameCount()
                     && absoluteFolderPath.startsWith(fAbsolute);
         }).sorted(Comparator.comparing(f -> f.getPath().getNameCount(), Comparator.reverseOrder())).collect(toList());
-        List<MusicFolder> descendantFolders = allFolders.parallelStream().filter(f -> {
+        List<MusicFolder> descendantFolders = allFolders.stream().filter(f -> {
             // is descendant
             Path fAbsolute = f.getPath().normalize().toAbsolutePath();
             return fAbsolute.getNameCount() > absoluteFolderPath.getNameCount()
@@ -405,7 +404,7 @@ public class MediaFolderService {
 
     @CacheEvict(cacheNames = { "mediaFilePathCache", "mediaFileIdCache" }, allEntries = true)
     public void clearMediaFileCache() {
-        // TODO: optimize cache eviction
+        // eviction is done by @CacheEvict
     }
 
     /**

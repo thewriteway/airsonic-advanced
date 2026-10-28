@@ -43,13 +43,15 @@ public class XspfPlaylistExportHandler implements PlaylistExportHandler {
 
     private chameleon.playlist.xspf.Playlist createXsfpPlaylistFromDBId(int id) {
         chameleon.playlist.xspf.Playlist newPlaylist = new chameleon.playlist.xspf.Playlist();
-        Playlist playlist = playlistRepository.findById(id).orElseGet(() -> {
+        Playlist playlist = playlistRepository.findById(id).orElse(null);
+        if (playlist == null) {
+            // same as DefaultPlaylistExportHandler: export an empty playlist rather than fail
             LOG.error("Playlist with id {} not found", id);
-            return null;
-        });
+            return newPlaylist;
+        }
         newPlaylist.setTitle(playlist.getName());
         newPlaylist.setCreator("Airsonic user " + playlist.getUsername());
-        newPlaylist.setDate(Date.from(Instant.now())); //TODO switch to Instant upstream
+        newPlaylist.setDate(Date.from(Instant.now()));
 
         playlist.getPlaylistMediaFiles().stream().map(pmf -> {
             MediaFile mediaFile = pmf.getMediaFile();
@@ -58,7 +60,13 @@ public class XspfPlaylistExportHandler implements PlaylistExportHandler {
             track.setCreator(mediaFile.getArtist());
             track.setTitle(mediaFile.getTitle());
             track.setAlbum(mediaFile.getAlbumName());
-            track.setDuration((int) Math.round(mediaFile.getDuration())); // TODO switch to Double upstream
+            // XSPF durations are milliseconds and must be strictly positive
+            if (mediaFile.getDuration() != null) {
+                int durationMillis = (int) Math.round(mediaFile.getDuration() * 1000);
+                if (durationMillis > 0) {
+                    track.setDuration(durationMillis);
+                }
+            }
             track.setImage(Optional.ofNullable(coverArtService.getMediaFileArtPath(mediaFile.getId())).map(p -> p.toString()).orElse(null));
             Location location = new Location();
             location.setText(mediaFile.getFullPath().toString());

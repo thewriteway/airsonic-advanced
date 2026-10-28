@@ -50,7 +50,7 @@ public class SearchServiceImpl implements SearchService {
     @Autowired
     private SearchServiceUtilities util;
 
-    // TODO Should be changed to SecureRandom?
+    // only used to shuffle results, so it doesn't need to be a SecureRandom
     private final Random random = new Random(System.currentTimeMillis());
 
     /**
@@ -225,7 +225,7 @@ public class SearchServiceImpl implements SearchService {
         IndexType indexType = util.getIndexType.apply(assignableClass);
         String fieldName = util.getFieldName.apply(assignableClass);
 
-        ParamSearchResult<T> result = new ParamSearchResult<T>();
+        ParamSearchResult<T> result = new ParamSearchResult<>();
         result.setOffset(offset);
 
         if (isEmpty(indexType) || isEmpty(fieldName) || count <= 0) {

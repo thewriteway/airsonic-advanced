@@ -1,6 +1,5 @@
 package org.airsonic.player.ajax;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MediaFileComparator;
 import org.airsonic.player.service.MediaFileService;
@@ -23,7 +22,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Controller
@@ -44,7 +42,7 @@ public class MediaFileWSController {
         List<MediaFile> mediaFiles = getMediaFiles(req.getIds(), req.getPaths());
 
         if (mediaFiles.isEmpty()) {
-            return ImmutableMap.of("contentType", "notFound");
+            return Map.of("contentType", "notFound");
         }
 
         MediaFile dir = mediaFiles.get(0);
@@ -54,11 +52,11 @@ public class MediaFileWSController {
 
         // Redirect if root directory.
         if (mediaFileService.isRoot(dir)) {
-            return ImmutableMap.of("contentType", "home");
+            return Map.of("contentType", "home");
         }
 
         if (!securityService.isFolderAccessAllowed(dir, user.getName())) {
-            return ImmutableMap.of("contentType", "accessDenied");
+            return Map.of("contentType", "accessDenied");
         }
 
         List<MediaFile> children = getChildren(mediaFiles);
@@ -118,13 +116,13 @@ public class MediaFileWSController {
     private List<MediaFile> getMediaFiles(List<Integer> ids, Map<Integer, List<String>> paths) {
         return Stream
                 .concat(Optional.ofNullable(paths).orElse(Collections.emptyMap())
-                        .entrySet().parallelStream()
+                        .entrySet().stream()
                         .flatMap(e -> e.getValue().stream().map(p -> Pair.of(e.getKey(), p)))
                         .map(pf -> mediaFileService.getMediaFile(pf.getValue(), pf.getKey())),
-                        Optional.ofNullable(ids).orElse(Collections.emptyList()).parallelStream().map(mediaFileService::getMediaFile))
+                        Optional.ofNullable(ids).orElse(Collections.emptyList()).stream().map(mediaFileService::getMediaFile))
                 .filter(Objects::nonNull)
                 .filter(x -> mediaFileService.showMediaFile(x))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private String guessArtist(List<MediaFile> children) {
@@ -195,7 +193,7 @@ public class MediaFileWSController {
         if (Objects.nonNull(parent) && !mediaFileService.isRoot(parent)) {
             List<MediaFile> siblings = mediaFileService.getChildrenOf(parent, false, true, true);
             result.addAll(siblings.stream().filter(sibling -> sibling.isAlbum() && !sibling.equals(dir))
-                    .collect(Collectors.toList()));
+                    .toList());
         }
         return result;
     }

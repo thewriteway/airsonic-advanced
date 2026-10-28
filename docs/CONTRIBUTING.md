@@ -20,8 +20,8 @@ Airsonic uses [Maven](https://maven.apache.org/) to manage its build process.
 You will need Maven and a JDK of **21** or later installed; the build does not
 ship a Maven wrapper.
 
-Two dependencies are not published to Maven Central (`chameleon` and `natpmp`);
-they are vendored in the `repo/` folder at the root of the checkout and are
+One dependency is not published to Maven Central (`chameleon`);
+it is vendored in the `repo/` folder at the root of the checkout and is
 resolved from there automatically, so no extra Maven configuration is needed.
 
 To run the testsuite and get a `.war` if everything went fine, use this command:

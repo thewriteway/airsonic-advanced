@@ -1,117 +1,185 @@
 <!DOCTYPE html>
-<html><head>
-    <th:block th:replace="~{head :: common_head}" />
-    <th:block th:replace="~{jquery}" />
+<html xmlns:th="http://www.thymeleaf.org"><head>
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
     <script type="text/javascript" th:inline="javascript">
-        function init() {
-            top.StompClient.subscribe("left.html", {
-                '/user/queue/playlists/deleted': function(msg) {
-                    deletedPlaylistCallback(JSON.parse(msg.body));
-                },
-                '/topic/playlists/deleted': function(msg) {
-                    deletedPlaylistCallback(JSON.parse(msg.body));
-                },
-                '/user/queue/playlists/updated': function(msg) {
-                    updatedPlaylistCallback(JSON.parse(msg.body));
-                },
-                '/topic/playlists/updated': function(msg) {
-                    updatedPlaylistCallback(JSON.parse(msg.body));
-                },
-                // Add existing (initial population, one time)
-                '/app/playlists/readable': function(msg) {
-                    populatePlaylistCallback(JSON.parse(msg.body));
-                }
-            });
-
-            var mainLocation = top.main.location.href;
-            if (/*[[${model.musicFolderChanged}]]*/ false) {
-                if (mainLocation.indexOf("/home") != -1) {
-                    top.main.location.href = mainLocation;
-                }
-            }
-
-            $('.radio-play').on('click', function(evt) {
-                top.playQueue.onPlayInternetRadio($(this).data("id"), 0);
-                evt.preventDefault();
-            });
-        }
-
-        function createEmptyPlaylist() {
-            showAllPlaylists();
-            top.StompClient.send("/app/playlists/create/empty", "");
-        }
-
-        function showAllPlaylists() {
-            $('#playlistOverflow').show('blind');
-            $('#showAllPlaylists').hide('blind');
-        }
-
-        function populatePlaylistCallback(playlists) {
-            $("#playlists").empty();
-            $("#playlistOverflow").empty();
-            for (var i = 0; i < playlists.length; i++) {
-                var playlist = playlists[i];
+        (function () {
+            function playlistNode(playlist) {
                 var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
-                var node = $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
-                        playlist.id + "'>" + playlistName + "</a></p>");
-                var overflow = i > 9;
-                if (!overflow) {
-                    node.addClass("nonoverflown");
+                return $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
+                        playlist.id + "'>" + playlistName + "</a></p>")
+                    .attr("data-playlist-id", playlist.id)
+                    .attr("data-owner", playlist.username || "");
+            }
+            function showAllPlaylists() {
+                $('#playlistOverflow').show();
+                $('#showAllPlaylists').hide();
+            }
+            function deletedPlaylistCallback(id) {
+                var node = $("#playlistid-" + id);
+                if (node.hasClass("nonoverflown")) {
+                    // move one element over to take the place
+                    $("#playlistOverflow").children().first().addClass("nonoverflown").appendTo("#playlists");
                 }
-
-                //append only if not already there
-                if ($("#playlistid-" + playlist.id).length == 0) {
-                    node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
-                }
+                node.remove();
             }
 
-            if (playlists.length > 10 && !$('#playlistOverflow').is(":visible")) {
-                $('#showAllPlaylists').show();
-            }
-        }
+            Page.define("left", function (page) {
+                var messages = {
+                    added: /*[[#{playlist.toast.addedtoplaylist}]]*/ "{0} song(s) added to {1}",
+                    notAllowed: /*[[#{playlist.toast.notwritable}]]*/ "You are not allowed to change this playlist."
+                };
 
-        function updatedPlaylistCallback(playlist) {
-            var oldNode = $("#playlistid-" + playlist.id);
-            var playlistName = escapeHtml(playlist.name) + "&nbsp;(" + playlist.fileCount + ")";
-            var node = $("<p class='dense truncate playlist' id='playlistid-" + playlist.id + "' title='" + playlistName + "'><a target='main' href='playlist?id=" +
-                        playlist.id + "'>" + playlistName + "</a></p>");
-            if (oldNode.length == 0) {
-                var overflow = $(".playlist").length > 10;
-                if (!overflow) {
-                    node.toggleClass("nonoverflown");
-                }
-                node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
-            } else {
-                if (oldNode.hasClass("nonoverflown")) {
-                    node.addClass("nonoverflown");
-                }
-                oldNode.replaceWith(node);
-            }
-        }
+                function populatePlaylistCallback(playlists) {
+                    $("#playlists").empty();
+                    $("#playlistOverflow").empty();
+                    for (var i = 0; i < playlists.length; i++) {
+                        var node = playlistNode(playlists[i]);
+                        var overflow = i > 9;
+                        if (!overflow) {
+                            node.addClass("nonoverflown");
+                        }
 
-        function deletedPlaylistCallback(id) {
-            var node = $("#playlistid-" + id);
-            if (node.hasClass("nonoverflown")) {
-                // move one element over to take the place
-                $("#playlistOverflow").children().first().addClass("nonoverflown").appendTo("#playlists");
-            }
-            node.remove();
-        }
+                        //append only if not already there
+                        if ($("#playlistid-" + playlists[i].id).length == 0) {
+                            node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
+                        }
+                    }
+
+                    if (playlists.length > 10 && !$('#playlistOverflow').is(":visible")) {
+                        $('#showAllPlaylists').show();
+                    }
+                }
+
+                function updatedPlaylistCallback(playlist) {
+                    var oldNode = $("#playlistid-" + playlist.id);
+                    var node = playlistNode(playlist);
+                    if (oldNode.length == 0) {
+                        var overflow = $(".playlist").length > 10;
+                        if (!overflow) {
+                            node.toggleClass("nonoverflown");
+                        }
+                        node.appendTo(overflow ? "#playlistOverflow" : "#playlists");
+                    } else {
+                        if (oldNode.hasClass("nonoverflown")) {
+                            node.addClass("nonoverflown");
+                        }
+                        oldNode.replaceWith(node);
+                    }
+                }
+
+                page.actions({
+                    selectMusicFolder(select) {
+                        left.location.href = "left?musicFolderId=" + select.value;
+                    },
+                    showAllPlaylists: showAllPlaylists,
+                    createEmptyPlaylist() {
+                        showAllPlaylists();
+                        StompClient.send("/app/playlists/create/empty", "");
+                    },
+                    playRadio(link) {
+                        playQueue.onPlayInternetRadio(link.dataset.id, 0);
+                        return false;
+                    }
+                });
+
+                /*
+                 * Media dragged from the pages (see mediadrag.js) can be dropped on the playlists the
+                 * user may change (their own, or any for an administrator).
+                 */
+                var markedPlaylist = null;
+                function markPlaylist(node) {
+                    if (markedPlaylist && markedPlaylist !== node) {
+                        markedPlaylist.classList.remove("drop-hover");
+                    }
+                    markedPlaylist = node;
+                    if (node) {
+                        node.classList.add("drop-hover");
+                    }
+                }
+                function isWritable(node) {
+                    return page.root.dataset.admin === "true" || node.dataset.owner === page.root.dataset.username;
+                }
+                function dropTarget(event) {
+                    var node = event.target.closest && event.target.closest(".playlist[data-playlist-id]");
+                    var payload = window.MediaDrag && MediaDrag.accepts(event) ? MediaDrag.payload() : null;
+                    return node && isWritable(node) && payload && payload.ids ? {node: node, ids: payload.ids} : null;
+                }
+                function showDropTargets(show) {
+                    page.root.querySelectorAll(".playlist[data-playlist-id]").forEach(node => {
+                        node.classList.toggle("drop-allowed", show && isWritable(node));
+                    });
+                }
+                // mediadrag.js has seen the dragstart first, so it knows what is dragged
+                page.listen(document, "dragstart", () => {
+                    var payload = window.MediaDrag && MediaDrag.payload();
+                    showDropTargets(Boolean(payload && payload.ids));
+                });
+                page.listen(page.root, "dragover", event => {
+                    var target = dropTarget(event);
+                    markPlaylist(target && target.node);
+                    if (target) {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "copy";
+                    }
+                });
+                page.listen(page.root, "dragleave", event => {
+                    if (markedPlaylist && !markedPlaylist.contains(event.relatedTarget)) {
+                        markPlaylist(null);
+                    }
+                });
+                page.listen(page.root, "drop", event => {
+                    var target = dropTarget(event);
+                    markPlaylist(null);
+                    showDropTargets(false);
+                    if (target) {
+                        event.preventDefault();
+                        StompClient.send("/app/playlists/files/add", JSON.stringify({id: Number(target.node.dataset.playlistId), modifierIds: target.ids}));
+                    }
+                });
+                page.listen(document, "dragend", () => {
+                    markPlaylist(null);
+                    showDropTargets(false);
+                });
+
+                function addedToPlaylistCallback(result) {
+                    if (result.allowed) {
+                        $().toastmessage("showSuccessToast", messages.added.replace("{0}", result.added).replace("{1}", () => escapeHtml(result.name)));
+                    } else {
+                        $().toastmessage("showErrorToast", messages.notAllowed);
+                    }
+                }
+
+                page.subscribe({
+                    '/user/queue/playlists/files/add': msg => addedToPlaylistCallback(JSON.parse(msg.body)),
+                    '/user/queue/playlists/deleted': msg => deletedPlaylistCallback(JSON.parse(msg.body)),
+                    '/topic/playlists/deleted': msg => deletedPlaylistCallback(JSON.parse(msg.body)),
+                    '/user/queue/playlists/updated': msg => updatedPlaylistCallback(JSON.parse(msg.body)),
+                    '/topic/playlists/updated': msg => updatedPlaylistCallback(JSON.parse(msg.body)),
+                    // Add existing (initial population, one time)
+                    '/app/playlists/readable': msg => populatePlaylistCallback(JSON.parse(msg.body))
+                });
+
+                if (page.root.dataset.musicFolderChanged === "true") {
+                    if (main.location.href.includes("/home")) {
+                        main.location.reload();
+                    }
+                }
+            });
+        })();
     </script>
 </head>
 
-<body class="bgcolor2 leftframe" onload="init()">
-<a id="top"></a>
-
-<div style="padding-bottom:1.5em">
+<body class="bgcolor2 leftframe" data-page="left" th:data-music-folder-changed="${model.musicFolderChanged}"
+      th:data-username="${model.user.username}" th:data-admin="${model.user.adminRole}">
+<div id="left-top" style="padding-bottom:1.5em">
     <a th:href="@{/home}" target="main">
       <img th:src="${themes?.get('logoImage') ?: 'icons/default_light/logo.png'}" style="width:196px" th:title="#{top.help}" alt="">
     </a>
 </div>
 
 <div style="padding-bottom:1.0em" th:if="${#lists.size(model.musicFolders) > 1}">
-<select name="musicFolderId" style="width:100%" onchange="location='left?musicFolderId=' + options[selectedIndex].value;">
+<label for="musicFolderId" class="shell-visually-hidden" th:text="#{settingsheader.musicFolder}">Media folders</label>
+<select id="musicFolderId" name="musicFolderId" style="width:100%" data-on-change="selectMusicFolder">
         <option value="-1" th:text="#{left.allfolders}">All folders</option>
         <option th:each="musicFolder:${model.musicFolders}" th:selected="${model.selectedMusicFolder?.id == musicFolder.id}"
                     th:value="${musicFolder.id}" th:text="${musicFolder.name}">folder name</option>
@@ -144,17 +212,16 @@
     <div id="playlists"></div>
     <div id="playlistOverflow" style="display:none"></div>
     <div style="padding-top: 0.3em"></div>
-    <div class="forward" id="showAllPlaylists" style="display: none"><a href="#" onclick="showAllPlaylists()" th:text="#{left.showallplaylists}">show all</a></div>
-    <div class="forward"><a href="#" onclick="createEmptyPlaylist()" th:text="#{left.createplaylist}">create</a></div>
+    <div class="forward" id="showAllPlaylists" style="display: none"><button type="button" class="shell-link-button" data-on-click="showAllPlaylists" th:text="#{left.showallplaylists}">show all</button></div>
+    <div class="forward"><button type="button" class="shell-link-button" data-on-click="createEmptyPlaylist" th:text="#{left.createplaylist}">create</button></div>
     <div class="forward"><a th:href="@{/importPlaylist}" target="main" th:text="#{left.importplaylist}">import</a></div>
 </div>
 
 <th:block th:unless="${#lists.isEmpty(model.radios)}">
     <h2 class="bgcolor1" style="padding-left: 2px" th:utext="#{left.radio}">radio</h2>
-    <iframe id="radio-playlist-data" style="display:none;"></iframe>
     <th:block th:each="radio : ${model.radios}">
         <p class="dense truncate" style="padding-left: 2px">
-        <a target="hidden" th:href="${radio.streamUrl}" class="radio-play" th:data-id="${radio.id}">
+        <a target="hidden" th:href="${radio.streamUrl}" class="radio-play" th:data-id="${radio.id}" data-on-click="playRadio">
             <img th:src="${themes?.get('playImage') ?: 'icons/default_light/play.svg'}" th:alt="#{common.play}" th:title="#{common.play}"></a>
             <span style="vertical-align: middle">
                 <span th:if="${#strings.isEmpty(radio.homepageUrl)}" th:title="${radio.name}" th:text="${radio.name}">name</span>
@@ -171,14 +238,14 @@
                 <h2 style="padding:0;margin:0;border:0" th:text="${entry.key.index}">index</h2>
             </th>
             <th style="text-align:right;">
-                <a href="#top"><img th:src="${themes?.get('upImage') ?: 'icons/default_light/up.svg'}" alt="" style="height:18px;"></a>
+                <a href="#left-top"><img th:src="${themes?.get('upImage') ?: 'icons/default_light/up.svg'}" alt="" style="height:18px;"></a>
             </th>
         </tr>
     </table>
 
     <p th:each="artist : ${entry.value}" class="dense truncate" style="padding-left:2px">
         <span th:title="${artist.name}">
-<!--            TODO CDC is mediafiles always a single element?-->
+<!--            an artist can have several folders (one per music folder); link to the first -->
             <a target="main"
                th:href="@{/main(id=${artist.mediaFiles[0].id})}"
                th:text="${#strings.abbreviate(artist.name, 35)}">artist.name</a>
@@ -204,10 +271,8 @@
 th:utext="#{left.statistics(${model.statistics.artistCount}, ${model.statistics.albumCount}, ${model.statistics.songCount}, ${model.bytes}, ${model.hours})}">
 </div>
 
-<div style="height:5em"></div>
 
-<div class="bgcolor2" style="opacity: 1.0; clear: both; position: fixed; bottom: 0px; right: 0; left: 0;
-      padding: 0.25em 0.75em 0.25em 0.75em; border-top:1px solid black; max-width: 850px;">
+<div class="bgcolor2 shell-left-index">
     <th:block th:each="index: ${model.indexes}">
         <a th:href="|#${index.index}|" th:text="${index.index}">A</a>
     </th:block>

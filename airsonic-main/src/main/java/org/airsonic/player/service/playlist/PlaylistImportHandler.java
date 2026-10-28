@@ -6,6 +6,7 @@ import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.SettingsService;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
@@ -20,7 +21,6 @@ import java.util.Optional;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
 
 public abstract class PlaylistImportHandler implements Ordered {
     @Autowired
@@ -59,7 +59,7 @@ public abstract class PlaylistImportHandler implements Ordered {
                 // look relative to all music folders
                 possibles.addAll(mediaFileService.getMediaFilesByRelativePath(path).stream()
                         .filter(m -> !EnumSet.of(MediaType.DIRECTORY, MediaType.ALBUM).contains(m.getMediaType()))
-                        .collect(toList()));
+                        .toList());
 
                 // look relative to home
                 Path resolvedFile = Paths.get(".").toAbsolutePath().resolve(path).normalize();
@@ -81,7 +81,7 @@ public abstract class PlaylistImportHandler implements Ordered {
      * path character — so convert them explicitly.
      */
     private static Path toPath(String pathInPlaylist) {
-        if (StringUtils.startsWithIgnoreCase(pathInPlaylist, "file:")) {
+        if (Strings.CI.startsWith(pathInPlaylist, "file:")) {
             try {
                 return Paths.get(URI.create(pathInPlaylist.replace(" ", "%20")));
             } catch (Exception e) {

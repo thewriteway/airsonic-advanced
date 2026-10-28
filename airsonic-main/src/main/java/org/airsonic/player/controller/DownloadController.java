@@ -21,6 +21,7 @@
 package org.airsonic.player.controller;
 
 import org.airsonic.player.domain.*;
+import org.airsonic.player.io.PipeStreams;
 import org.airsonic.player.io.PipeStreams.MonitoredResource;
 import org.airsonic.player.io.PipeStreams.PipedInputStream;
 import org.airsonic.player.io.PipeStreams.PipedOutputStream;
@@ -40,7 +41,6 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -127,9 +127,7 @@ public class DownloadController {
         Collection<Pair<Path, MusicFolder>> additionalFiles = Collections.emptyList();
 
         if (mediaFile != null) {
-            if (!securityService.isFolderAccessAllowed(mediaFile, user.getUsername())) {
-                throw new AccessDeniedException("Access to file " + mediaFile.getId() + " is forbidden for user " + user.getUsername());
-            }
+            securityService.checkFolderAccess(mediaFile, user.getUsername());
             if (mediaFile.isFile()) {
                 response = prepareResponse(Collections.singletonList(mediaFile), null, statusSupplier, statusCloser, additionalFiles);
                 defaultDownloadName = FilenameUtils.getName(mediaFile.getPath());
@@ -191,8 +189,8 @@ public class DownloadController {
             Supplier<TransferStatus> statusSupplier, Consumer<TransferStatus> statusCloser, Collection<Pair<Path, MusicFolder>> additionalFiles)
             throws IOException {
         if (indices == null) {
-            indices = IntStream.range(0, files.size()).boxed().collect(Collectors.toList());
-        } else if (indices.parallelStream().anyMatch(i -> i >= files.size())) {
+            indices = IntStream.range(0, files.size()).boxed().toList();
+        } else if (indices.stream().anyMatch(i -> i >= files.size())) {
             throw new IllegalArgumentException("Can't have index > number of files");
         }
 
@@ -243,7 +241,7 @@ public class DownloadController {
                                         return Pair.of(f, Pair.of(zipName, size));
                                     })
                                     // need to create a new stream, because try-with-resources will close the paths stream before it exits
-                                    .collect(Collectors.toList()).stream();
+                                    .toList().stream();
                         } catch (Exception e) {
                             LOG.warn("Error retrieving file to zip", e);
                             return Stream.empty();
@@ -255,10 +253,12 @@ public class DownloadController {
             // zip to out
             BiConsumer<InputStream, TransferStatus> poutInit = (input, status) -> {
                 PipedInputStream pin = (PipedInputStream) input;
+                // connect before the feeder thread starts, so the reader never sees an unconnected pipe
+                PipedOutputStream pipeOut = PipeStreams.connectedOutput(pin);
 
                 // start a new thread to feed data in
                 new Thread(() -> {
-                    try (PipedOutputStream pout = new PipedOutputStream(pin);
+                    try (PipedOutputStream pout = pipeOut;
                             ZipOutputStream zout = new ZipOutputStream(pout)) {
                         zout.setMethod(ZipOutputStream.STORED); // No compression.
                         pathsToZip.stream().forEach(LambdaUtils.uncheckConsumer(f -> {
@@ -283,11 +283,6 @@ public class DownloadController {
                         LOG.debug("Error with output to zip", e1);
                     }
                 }, "DownloadControllerDatafeed").start();
-
-                // wait for src data thread to connect
-                while (pin.source == null) {
-                    // sit and wait and ponder life
-                }
             };
 
             long size = zipSize(pathsToZip.stream().map(e -> e.getRight()));

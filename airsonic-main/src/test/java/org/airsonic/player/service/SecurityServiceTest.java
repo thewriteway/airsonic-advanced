@@ -25,7 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.nio.file.Path;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -98,7 +98,7 @@ public class SecurityServiceTest {
         command.setEncoder("encrypted-AES-GCM");
         command.setCredential("testPassword");
         command.setApp(App.LASTFM);
-        command.setExpiration(new Date());
+        command.setExpiration(LocalDateTime.now());
         command.setUsername(TEST_USER_NAME);
 
         // when

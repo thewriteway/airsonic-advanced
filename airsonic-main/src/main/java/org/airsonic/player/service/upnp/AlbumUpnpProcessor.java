@@ -20,7 +20,6 @@
 */
 package org.airsonic.player.service.upnp;
 
-import com.google.common.primitives.Ints;
 import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
@@ -29,6 +28,7 @@ import org.airsonic.player.service.AlbumService;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.SearchService;
+import org.airsonic.player.util.Util;
 import org.jupnp.support.model.BrowseResult;
 import org.jupnp.support.model.DIDLContent;
 import org.jupnp.support.model.PersonWithRole;
@@ -83,7 +83,7 @@ public class AlbumUpnpProcessor extends UpnpContentProcessor <Album, MediaFile> 
         DIDLContent didl = new DIDLContent();
 
         List<MusicFolder> allFolders = mediaFolderService.getAllMusicFolders();
-        List<Album> selectedItems = albumService.getAlphabeticalAlbums(Ints.saturatedCast(firstResult), Ints.saturatedCast(maxResults), false, true, allFolders);
+        List<Album> selectedItems = albumService.getAlphabeticalAlbums(Util.saturatedCast(firstResult), Util.saturatedCast(maxResults), false, true, allFolders);
         for (Album item : selectedItems) {
             addItem(didl, item);
         }
@@ -103,7 +103,6 @@ public class AlbumUpnpProcessor extends UpnpContentProcessor <Album, MediaFile> 
         }
         container.setParentID(getRootId());
         container.setTitle(album.getName());
-        // TODO: correct artist?
         if (album.getArtist() != null) {
             container.setArtists(getAlbumArtists(album.getArtist()));
         }
@@ -175,7 +174,7 @@ public class AlbumUpnpProcessor extends UpnpContentProcessor <Album, MediaFile> 
         DIDLContent didl = new DIDLContent();
         try {
             List<MusicFolder> allFolders = mediaFolderService.getAllMusicFolders();
-            ParamSearchResult<Album> result = searchService.searchByName(name, Ints.saturatedCast(firstResult), Ints.saturatedCast(maxResults), allFolders, Album.class);
+            ParamSearchResult<Album> result = searchService.searchByName(name, Util.saturatedCast(firstResult), Util.saturatedCast(maxResults), allFolders, Album.class);
             List<Album> selectedItems = result.getItems();
             for (Album item : selectedItems) {
                 addItem(didl, item);

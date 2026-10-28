@@ -100,17 +100,17 @@ public class SearchServiceStartWithStopwardsTestCase {
 
         criteria.setQuery("the");
         result = searchService.search(criteria, folders, IndexType.SONG);
-        // XXX 3.x -> 8.x : The filter is properly applied to the input(Stopward)
+        // Lucene 3.x -> 8.x migration: The filter is properly applied to the input(Stopward)
         assertEquals(0, result.getTotalHits(), "Theater hit by \"the\" ");
 
         criteria.setQuery("willi");
         result = searchService.search(criteria, folders, IndexType.ARTIST_ID3);
-        // XXX 3.x -> 8.x : Normal forward matching
+        // Lucene 3.x -> 8.x migration: Normal forward matching
         assertEquals(1, result.getTotalHits(), "Williams hit by \"Williams\" ");
 
         criteria.setQuery("thea");
         result = searchService.search(criteria, folders, IndexType.SONG);
-        // XXX 3.x -> 8.x : Normal forward matching
+        // Lucene 3.x -> 8.x migration: Normal forward matching
         assertEquals(1, result.getTotalHits(), "Theater hit by \"thea\" ");
 
     }

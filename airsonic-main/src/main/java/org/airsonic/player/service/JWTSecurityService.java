@@ -36,7 +36,6 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -47,7 +46,6 @@ public class JWTSecurityService {
     public static final String JWT_PARAM_NAME = "jwt";
     public static final String CLAIM_PATH = "path";
 
-    // TODO make this configurable
     public static final int DEFAULT_DAYS_VALID_FOR = 7;
     private static SecureRandom secureRandom = new SecureRandom();
 
@@ -75,7 +73,7 @@ public class JWTSecurityService {
                 .withIssuer("airsonic")
                 .withSubject(user)
                 .withClaim(CLAIM_PATH, pathClaim)
-                .withExpiresAt(Date.from(expireDate));
+                .withExpiresAt(expireDate);
 
         for (Entry<String, String> claim : additionalClaims.entrySet()) {
             builder = builder.withClaim(claim.getKey(), claim.getValue());
@@ -104,10 +102,12 @@ public class JWTSecurityService {
         if (expires == null) {
             expires = Instant.now().plus(DEFAULT_DAYS_VALID_FOR, ChronoUnit.DAYS);
         }
+        // Sign the URL as built rather than re-encoded, so values the caller already encoded
+        // (e.g. external caption paths) match the query string the client sends back
         String token = JWTSecurityService.createToken(
                 settingsService.getJWTKey(),
                 user,
-                builder.toUriString(),
+                builder.build().toUriString(),
                 expires,
                 additionalClaims);
         return builder.queryParam(JWTSecurityService.JWT_PARAM_NAME, token);
@@ -130,8 +130,7 @@ public class JWTSecurityService {
     public static Instant getExpiration(JWTAuthenticationToken auth) {
         return Optional.ofNullable(auth)
                 .map(x -> (DecodedJWT) x.getDetails())
-                .map(x -> x.getExpiresAt())
-                .map(x -> x.toInstant())
+                .map(x -> x.getExpiresAtAsInstant())
                 .orElse(null);
     }
 }

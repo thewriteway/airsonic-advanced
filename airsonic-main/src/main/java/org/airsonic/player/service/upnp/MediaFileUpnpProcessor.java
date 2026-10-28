@@ -20,13 +20,13 @@
 */
 package org.airsonic.player.service.upnp;
 
-import com.google.common.primitives.Ints;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.ParamSearchResult;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.SearchService;
+import org.airsonic.player.util.Util;
 import org.jupnp.support.model.BrowseResult;
 import org.jupnp.support.model.DIDLContent;
 import org.jupnp.support.model.DIDLObject;
@@ -127,7 +127,7 @@ public class MediaFileUpnpProcessor extends UpnpContentProcessor <MediaFile, Med
     @Override
     public List<MediaFile> getChildren(MediaFile item) {
         List<MediaFile> children = mediaFileService.getVisibleChildrenOf(item, true, true);
-        children.sort((MediaFile o1, MediaFile o2) -> o1.getPath().replaceAll("\\W", "").compareToIgnoreCase(o2.getPath().replaceAll("\\W", "")));
+        sortByWordCharacters(children, MediaFile::getPath);
         return children;
     }
 
@@ -180,7 +180,7 @@ public class MediaFileUpnpProcessor extends UpnpContentProcessor <MediaFile, Med
         DIDLContent didl = new DIDLContent();
         try {
             List<MusicFolder> allFolders = mediaFolderService.getAllMusicFolders();
-            ParamSearchResult<MediaFile> result = searchService.searchByName(name, Ints.saturatedCast(firstResult), Ints.saturatedCast(maxResults), allFolders, MediaFile.class);
+            ParamSearchResult<MediaFile> result = searchService.searchByName(name, Util.saturatedCast(firstResult), Util.saturatedCast(maxResults), allFolders, MediaFile.class);
             List<MediaFile> selectedItems = result.getItems();
             for (MediaFile item : selectedItems) {
                 addItem(didl, item);

@@ -22,7 +22,7 @@ package org.airsonic.player.service.metadata;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jaudiotagger.tag.reference.GenreTypes;
 
 import java.nio.file.Path;
@@ -41,6 +41,7 @@ public abstract class MetaDataParser {
     protected static final Pattern GENRE_PATTERN = Pattern.compile("\\((\\d+)\\).*");
     protected static final Pattern TRACK_NUMBER_PATTERN = Pattern.compile("(\\d+)/\\d+");
     protected static final Pattern YEAR_NUMBER_PATTERN = Pattern.compile("(\\d{4}).*");
+    private static final Pattern LEADING_TRACK_NUMBER_PATTERN = Pattern.compile("^\\d{2}[. -]+");
 
     /**
      * Parses meta data for the given file.
@@ -125,9 +126,7 @@ public abstract class MetaDataParser {
     }
 
     /**
-     * Guesses the album for the given file.
-     *
-     * TODO: public as it is used in EditTagsController
+     * Guesses the album for the given file. Also used by EditTagsController.
      */
     public String guessAlbum(Path file, String artist) {
         Path parent = file.getParent();
@@ -139,16 +138,14 @@ public abstract class MetaDataParser {
     }
 
     /**
-     * Guesses the title for the given file.
-     *
-     * TODO: public as it is used in EditTagsController
+     * Guesses the title for the given file. Also used by EditTagsController.
      */
     public static String guessTitle(Path file) {
         return StringUtils.trim(FilenameUtils.getBaseName(file.toString()));
     }
 
     private boolean isRoot(Path file) {
-        return getMediaFolderService().getAllMusicFolders(false, true).parallelStream()
+        return getMediaFolderService().getAllMusicFolders(false, true).stream()
                 .anyMatch(folder -> file.equals(folder.getPath()));
     }
 
@@ -156,7 +153,7 @@ public abstract class MetaDataParser {
      * Returns all tags supported by id3v1.
      */
     public static SortedSet<String> getID3V1Genres() {
-        return new TreeSet<String>(GenreTypes.getInstanceOf().getAlphabeticalValueList());
+        return new TreeSet<>(GenreTypes.getInstanceOf().getAlphabeticalValueList());
     }
 
     /**
@@ -291,11 +288,21 @@ public abstract class MetaDataParser {
         title = title.trim();
 
         // Don't remove numbers if true track number is missing, or if title does not start with it.
-        if (trackNumber == null || !title.matches("0?" + trackNumber + "[. -].*")) {
+        if (trackNumber == null || !startsWithTrackNumber(title, trackNumber.toString())) {
             return title;
         }
 
-        String result = title.replaceFirst("^\\d{2}[. -]+", "");
+        String result = LEADING_TRACK_NUMBER_PATTERN.matcher(title).replaceFirst("");
         return result.isEmpty() ? title : result;
+    }
+
+    /** Whether the title starts with the (optionally zero-padded) track number and a separator. Runs per scanned file. */
+    private static boolean startsWithTrackNumber(String title, String trackNumber) {
+        return isFollowedBySeparator(title, trackNumber, 0) || (title.startsWith("0") && isFollowedBySeparator(title, trackNumber, 1));
+    }
+
+    private static boolean isFollowedBySeparator(String title, String trackNumber, int offset) {
+        int end = offset + trackNumber.length();
+        return title.startsWith(trackNumber, offset) && end < title.length() && ". -".indexOf(title.charAt(end)) >= 0;
     }
 }

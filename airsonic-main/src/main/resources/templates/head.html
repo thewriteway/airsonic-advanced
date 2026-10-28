@@ -2,7 +2,8 @@
 
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
-        <th:block th:fragment="common_head">
+        <!--/* Left out of pages the shell loads (shellFragment): the shell document has all of it already. */-->
+        <th:block th:fragment="common_head"><th:block th:unless="${shellFragment}">
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <link rel="apple-touch-icon" sizes="180x180" th:href="@{/icons/apple-touch-icon.png}"/>
             <link rel="icon" type="image/png" sizes="32x32" th:href="@{/icons/favicon-32x32.png}"/>
@@ -20,16 +21,14 @@
             <script th:if="${model != null && model['keyboardShortcutsEnabled'] != null}" type="text/javascript" th:inline="javascript">
                 var keyboardShortcutsEnabled = /*[[${model['keyboardShortcutsEnabled']}]]*/ false;
             </script>
+            <script type="text/javascript" th:src="@{/script/page.js}"></script>
+            <script type="text/javascript" th:inline="javascript">
+                Page.setLabels({ok: /*[[#{common.ok}]]*/ "OK", cancel: /*[[#{common.cancel}]]*/ "Cancel"});
+            </script>
             <script defer type="text/javascript" th:src="@{/script/mousetrap-1.6.5.min.js}"></script>
             <script defer type="text/javascript" th:src="@{/script/keyboard_shortcuts.js}"></script>
-            <script defer type="text/javascript" th:src="@{/script/feather-4.29.2.min.js}"></script>
+            <script type="text/javascript" th:src="@{/script/icons.js}"></script>
             <script type="text/javascript" th:src="@{/script/purify.min.js}"></script>
-            <script type="text/javascript">
-                function changeLocation(dest) {
-                    const safeDest = DOMPurify.sanitize(dest);
-                    location.href = safeDest;
-                }
-            </script>
-        </th:block>
+        </th:block></th:block>
     </head>
 </html>

@@ -91,7 +91,7 @@ public class SearchServiceSpecialGenreTestCase {
      * Legacy can not search all these genres.
      * (Strictly speaking, the genre field is not created at index creation.)
      *
-     * // XXX 3.x -> 8.x : Do the process more strictly.
+     * // Lucene 3.x -> 8.x migration: Do the process more strictly.
      *
      *  - Values ​​that can be cross-referenced with DB are stored in the index.
      *  - Search is also possible with user's readable value (file tag value).
@@ -109,27 +109,27 @@ public class SearchServiceSpecialGenreTestCase {
         );
 
         List<MediaFile> songs = searchService.getRandomSongs(simpleStringCriteria.apply("+"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("+", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 1", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("-"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("-", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 2", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("&&"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("&&", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 3", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("||"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("||", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 4", songs.get(0).getTitle());
 
         /*
-         * // XXX 3.x -> 8.x : Brackets ()
+         * // Lucene 3.x -> 8.x migration: Brackets ()
          *
          * Lucene can handle these.
          * However, brackets are specially parsed before the index creation process.
@@ -144,7 +144,7 @@ public class SearchServiceSpecialGenreTestCase {
         assertEquals(0, songs.size());
 
         /*
-         * // XXX 3.x -> 8.x : Brackets {}[]
+         * // Lucene 3.x -> 8.x migration: Brackets {}[]
          *
          * Lucene can handle these.
          * However, brackets are specially parsed before the index creation process.
@@ -158,7 +158,7 @@ public class SearchServiceSpecialGenreTestCase {
          * >>>>>
          */
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("{}"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         /*
          * This is the result of the tag parser and domain value.
          * It is different from the tag value in file.
@@ -166,11 +166,11 @@ public class SearchServiceSpecialGenreTestCase {
         assertEquals("{ }", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 7", songs.get(0).getTitle());
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("{ }"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("Query Escape Requires 7", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("[]"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         /*
          * This is the result of the tag parser and domain value.
          * It is different from the tag value in file.
@@ -178,47 +178,47 @@ public class SearchServiceSpecialGenreTestCase {
         assertEquals("[ ]", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 8", songs.get(0).getTitle());
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("[ ]"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("Query Escape Requires 8", songs.get(0).getTitle());
         // <<<<<
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("^"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("^", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 9", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("\""));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("\"", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 10", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("~"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("~", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 11", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("*"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("*", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 12", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("?"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("?", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 13", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply(":"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals(":", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 14", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("\\"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("\\", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 15", songs.get(0).getTitle());
 
         songs = searchService.getRandomSongs(simpleStringCriteria.apply("/"));
-        assertEquals(1, songs.size());// XXX 3.x -> 8.x : Searchable
+        assertEquals(1, songs.size());// Lucene 3.x -> 8.x migration: Searchable
         assertEquals("/", songs.get(0).getGenre());
         assertEquals("Query Escape Requires 16", songs.get(0).getTitle());
 
@@ -226,7 +226,7 @@ public class SearchServiceSpecialGenreTestCase {
 
     /*
      * Jaudiotagger applies special treatment to bracket (FILE17).
-     * XXX 3.x -> 8.x : Specification of genre search became more natural.
+     * Lucene 3.x -> 8.x migration: Specification of genre search became more natural.
      */
     @Test
     public void testBrackets() {
@@ -313,7 +313,7 @@ public class SearchServiceSpecialGenreTestCase {
                 getMusicFolders() // musicFolders
         );
 
-        // XXX 3.x -> 8.x : Do the process more strictly.
+        // Lucene 3.x -> 8.x migration: Do the process more strictly.
         List<MediaFile> songs = searchService
                 .getRandomSongs(simpleStringCriteria.apply("{'“『【【】】[︴○◎@ $〒→+]ＦＵＬＬ－ＷＩＤＴＨCæsar's"));
         assertEquals(1, songs.size());

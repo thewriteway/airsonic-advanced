@@ -22,13 +22,15 @@ package org.airsonic.player.util;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.text.translate.CharSequenceTranslator;
+import org.apache.commons.text.translate.NumericEntityEscaper;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.*;
@@ -46,6 +48,12 @@ public final class StringUtil {
     public static final String ENCODING_UTF8 = "UTF-8";
 
     private static final Pattern SPLIT_PATTERN = Pattern.compile("\"([^\"]*)\"|(\\S+)");
+    private static final Pattern LOG_UNSAFE_PATTERN = Pattern.compile("[\\p{Cntrl}\\u2028\\u2029]");
+    private static final Pattern MARKUP_PATTERN = Pattern.compile("<.*?>");
+    // re2j matches in linear time, which matters for long user-supplied runs of dots
+    private static final com.google.re2j.Pattern DOT_SLASH_PATTERN = com.google.re2j.Pattern.compile("\\.+/");
+    private static final CharSequenceTranslator HTML_ESCAPER =
+            StringEscapeUtils.ESCAPE_HTML4.with(NumericEntityEscaper.above(0x7f));
 
     private static final String[][] MIME_TYPES = {
             {"mp3", "audio/mpeg"},
@@ -232,8 +240,8 @@ public final class StringUtil {
      * @throws IOException If an I/O error occurs.
      */
     public static String[] readLines(InputStream in) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
-            List<String> result = new ArrayList<String>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            List<String> result = new ArrayList<>();
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 line = line.trim();
                 if (!line.startsWith("#") && !line.isEmpty()) {
@@ -241,9 +249,6 @@ public final class StringUtil {
                 }
             }
             return result.toArray(new String[result.size()]);
-
-        } finally {
-            FileUtil.closeQuietly(in);
         }
     }
 
@@ -262,29 +267,14 @@ public final class StringUtil {
         while (elements.size() < 3) {
             elements.add("");
         }
-        return new Locale(elements.get(0), elements.get(1), elements.get(2));
+        return Locale.of(elements.get(0), elements.get(1), elements.get(2));
     }
 
     /**
      * URL-encodes the input value using UTF-8.
      */
     public static String urlEncode(String s) {
-        try {
-            return URLEncoder.encode(s, StringUtil.ENCODING_UTF8);
-        } catch (UnsupportedEncodingException x) {
-            throw new RuntimeException(x);
-        }
-    }
-
-    /**
-     * URL-decodes the input value using UTF-8.
-     */
-    public static String urlDecode(String s) {
-        try {
-            return URLDecoder.decode(s, StringUtil.ENCODING_UTF8);
-        } catch (UnsupportedEncodingException x) {
-            throw new RuntimeException(x);
-        }
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
     /**
@@ -372,13 +362,35 @@ public final class StringUtil {
         if (s == null) {
             return null;
         }
-        return s.replaceAll("[\\p{Cntrl}\\u2028\\u2029]", "_");
+        return LOG_UNSAFE_PATTERN.matcher(s).replaceAll("_");
     }
 
     public static String removeMarkup(String s) {
         if (s == null) {
             return null;
         }
-        return s.replaceAll("<.*?>", "");
+        return MARKUP_PATTERN.matcher(s).replaceAll("");
+    }
+
+    /**
+     * Escapes the given string using HTML 4.0 entities. Characters without a named
+     * entity above U+007F are written as numeric character references.
+     *
+     * @param s The string to escape, may be {@code null}.
+     * @return The escaped string, or {@code null} if the input was {@code null}.
+     */
+    public static String escapeHtml(String s) {
+        return s == null ? null : HTML_ESCAPER.translate(s);
+    }
+
+    /**
+     * Removes runs of dots followed by a slash (such as {@code ../}), so that a
+     * user-supplied path cannot climb out of the directory it is resolved against.
+     *
+     * @param s The path to clean.
+     * @return The path without any dot-slash sequences.
+     */
+    public static String removeDotSlash(String s) {
+        return DOT_SLASH_PATTERN.matcher(s).replaceAll("");
     }
 }

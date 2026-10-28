@@ -20,9 +20,6 @@
  */
 package org.airsonic.player.service.metadata;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.SettingsService;
@@ -34,6 +31,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
@@ -95,9 +94,9 @@ public class FFmpegParser extends MetaDataParser {
                 process.destroy();
             }
 
-            metaData.setDuration(result.at("/format/duration").asDouble());
+            metaData.setDuration(result.at("/format/duration").asDouble(0));
             // Bitrate is in Kb/s
-            metaData.setBitRate(result.at("/format/bit_rate").asInt() / 1000);
+            metaData.setBitRate(result.at("/format/bit_rate").asInt(0) / 1000);
 
             metaData.setAlbumArtist(getData(result, "album_artist"));
             metaData.setArtist(getData(result, "artist"));
@@ -134,12 +133,12 @@ public class FFmpegParser extends MetaDataParser {
             // Find the first (if any) stream that has dimensions and use those.
             // 'width' and 'height' are display dimensions; compare to 'coded_width', 'coded_height'.
             for (JsonNode stream : result.at("/streams")) {
-                Track track = new Track(stream.get("index").asInt(), stream.get("codec_type").asText(), stream.at("/tags/language").asText(), stream.get("codec_name").asText());
+                Track track = new Track(stream.get("index").asInt(0), stream.get("codec_type").asString(), stream.at("/tags/language").asString(), stream.get("codec_name").asString());
                 metaData.addTrack(track);
 
                 if (track.isVideo() && stream.has("width") && stream.has("height")) {
-                    metaData.setWidth(stream.get("width").asInt());
-                    metaData.setHeight(stream.get("height").asInt());
+                    metaData.setWidth(stream.get("width").asInt(0));
+                    metaData.setHeight(stream.get("height").asInt(0));
                 }
             }
             ObjectMapper mapper = Util.getObjectMapper();
@@ -147,7 +146,7 @@ public class FFmpegParser extends MetaDataParser {
                 Chapter chapter = mapper.convertValue(chapterJson, Chapter.class);
                 metaData.addChapter(chapter);
             }
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Error when parsing metadata in {}", file, x);
         }
 
@@ -156,7 +155,7 @@ public class FFmpegParser extends MetaDataParser {
 
     private static String getData(JsonNode node, String keyName) {
         // Create a list of key variations to handle different cases
-        List<String> keyVariations = ImmutableList.of(
+        List<String> keyVariations = List.of(
             keyName.toLowerCase(),
             keyName.toUpperCase(),
             StringUtils.capitalize(keyName)  // Capitalizes only the first letter
@@ -164,7 +163,7 @@ public class FFmpegParser extends MetaDataParser {
         // Try to find data in /format/tags/ with different key cases
         for (String key : keyVariations) {
             String path = "/format/tags/" + key;
-            String value = node.at(path).asText();
+            String value = node.at(path).asString();
             if (StringUtils.isNotBlank(value)) {
                 return value;
             }
@@ -174,7 +173,7 @@ public class FFmpegParser extends MetaDataParser {
             for (JsonNode stream : node.at("/streams")) {
                 for (String key : keyVariations) {
                     String tagPath = "/tags/" + key;
-                    String value = stream.at(tagPath).asText();
+                    String value = stream.at(tagPath).asString();
                     if (StringUtils.isNotBlank(value)) {
                         return value;
                     }

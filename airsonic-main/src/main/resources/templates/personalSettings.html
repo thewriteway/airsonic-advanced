@@ -6,35 +6,32 @@
     <script type="text/javascript" th:src="@{/script/utils.js}"></script>
 
     <script th:inline="javascript">
-        var lastfmCredsAbsent = /*[[${lastfmCredsAbsent}]]*/ false;
-        var listenBrainzCredsAbsent = /*[[${listenBrainzCredsAbsent}]]*/ false;
-        var podcastIndexCredsAbsent = /*[[${podcastIndexCredsAbsent}]]*/ false;
-        function enableFields() {
-            $("#lastFm").is(":checked") ? $(".lastFmRow").show() : $(".lastFmRow").hide();
-            if (lastfmCredsAbsent) {
-                $(".lastFmRow .nocreds").show();
-            } else {
-                $(".lastFmRow .nocreds").hide();
+        Page.define("personalSettings", function (page) {
+            var credsAbsent = {
+                lastFm: /*[[${lastfmCredsAbsent}]]*/ false,
+                listenBrainz: /*[[${listenBrainzCredsAbsent}]]*/ false,
+                podcastIndex: /*[[${podcastIndexCredsAbsent}]]*/ false
+            };
+
+            function enableFields() {
+                Object.keys(credsAbsent).forEach(function (service) {
+                    $("." + service + "Row").toggle($("#" + service).is(":checked"));
+                    $("." + service + "Row .nocreds").toggle(credsAbsent[service]);
+                });
             }
-            $("#listenBrainz").is(":checked") ? $(".listenBrainzRow").show() : $(".listenBrainzRow").hide();
-            if (listenBrainzCredsAbsent) {
-                $(".listenBrainzRow .nocreds").show();
-            } else {
-                $(".listenBrainzRow .nocreds").hide();
+
+            page.actions({enableFields: enableFields});
+            enableFields();
+
+            if (page.root.dataset.reloadApplication === "true") {
+                // the theme or language changed: reload the whole application
+                window.top.location.href = "index.view?main=personalSettings.view";
             }
-            $("#podcastIndex").is(":checked") ? $(".podcastIndexRow").show() : $(".podcastIndexRow").hide();
-            if (podcastIndexCredsAbsent) {
-                $(".podcastIndexRow .nocreds").show();
-            } else {
-                $(".podcastIndexRow .nocreds").hide();
-            }
-        }
+        });
     </script>
 </head>
 
-<body class="mainframe bgcolor1" onload="enableFields()">
-<script type="text/javascript" th:src="@{/script/wz_tooltip.js}"></script>
-<script type="text/javascript" th:src="@{/script/tip_balloon.js}"></script>
+<body class="mainframe bgcolor1 settings-page" data-page="personalSettings" th:data-reload-application="${settings_reload == true}">
 
 <th:block th:replace="~{settingsHeader::header(cat='personal',toast=${settings_toast},restricted=${!command.user.adminRole})}" />
 
@@ -206,8 +203,6 @@
         <tr>
             <td><input type="checkbox" th:field="*{nowPlayingAllowed}" id="nowPlayingAllowed" class="checkbox"/></td>
             <td><label for="nowPlayingAllowed" th:text="#{personalsettings.nowplayingallowed}"></label></td>
-            <td style="padding-left:2em"><input type="checkbox" th:field="*{autoHidePlayQueue}" id="autoHidePlayQueue" class="checkbox"/></td>
-            <td><label for="autoHidePlayQueue" th:text="#{personalsettings.autohideplayqueue}"></label></td>
             <td style="padding-left:2em"><input type="checkbox" th:field="*{partyModeEnabled}" id="partyModeEnabled" class="checkbox"/></td>
             <td><label for="partyModeEnabled" th:text="#{personalsettings.partymode}"></label>
                 <th:block th:replace="~{helpToolTip((topic=partymode))}" />
@@ -240,7 +235,7 @@
 
     <table class="indent">
         <tr>
-            <td><input type="checkbox" th:field="*{lastFmEnabled}" id="lastFm" class="checkbox" onclick="enableFields()"/></td>
+            <td><input type="checkbox" th:field="*{lastFmEnabled}" id="lastFm" class="checkbox" data-on-change="enableFields"/></td>
             <td><label for="lastFm" th:utext="#{personalsettings.lastfmenabled}"></label></td>
             <td></td>
         </tr>
@@ -252,7 +247,7 @@
             </td>
         </tr>
         <tr>
-            <td><input type="checkbox" th:field="*{listenBrainzEnabled}" id="listenBrainz" class="checkbox" onclick="enableFields()"/></td>
+            <td><input type="checkbox" th:field="*{listenBrainzEnabled}" id="listenBrainz" class="checkbox" data-on-change="enableFields"/></td>
             <td><label for="listenBrainz" th:utext="#{personalsettings.listenbrainzenabled}"></label></td>
             <td></td>
         </tr>
@@ -269,7 +264,7 @@
             </td>
         </tr>
         <tr>
-            <td><input type="checkbox" th:field="*{podcastIndexEnabled}" id="podcastIndex" class="checkbox" onclick="enableFields()"/></td>
+            <td><input type="checkbox" th:field="*{podcastIndexEnabled}" id="podcastIndex" class="checkbox" data-on-change="enableFields"/></td>
             <td><label for="podcastIndex" th:utext="#{personalsettings.podcastindexenabled}"></label></td>
             <td></td>
         </tr>
@@ -379,9 +374,5 @@
 
 <p class="detail" style="text-align:right" th:utext="#{personalsettings.avatar.courtesy}">
 </p>
-
-<script th:if="${settings_reload}" language="javascript" type="text/javascript">
-    parent.location.href="index.view?main=personalSettings.view";
-</script>
 
 </body></html>

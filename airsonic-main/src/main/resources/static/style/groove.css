@@ -17,16 +17,18 @@
 @import "mediaelement-dark.css";
 @import "dark-theme.css";
 
-/* The primary background colour. */
-.bgcolor1, table.music tr:nth-of-type(even) {
-    background-color: #222;
+:root {
+    --bg1: #222;
+    --bg2: #222;
+    --row-hover: #333333;
+    --row-playing: #4D4D4D;
+    --row-playing-hover: #404040;
+    --warning: #990099;
 }
 
 /* The secondary background colour, light blue, primary theme colour. */
 .bgcolor2, .ruleTableHeader, .log, table.music tr:nth-of-type(odd) {
-    background-color: #222;
     color: #FFFFFF;
-
 }
 
 /* Background colour for selected header, log etc. */
@@ -34,10 +36,6 @@
     color: #FFFFFF;
     background-color: #222;
     border: 1px solid #eee;
-}
-
-table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover {
-    background-color: #333333;
 }
 
 table.dataTable tbody>tr.selected, table.dataTable tbody>tr>.selected {
@@ -48,14 +46,6 @@ table.dataTable.hover tbody>tr.selected:hover, table.dataTable.hover tbody>tr>.s
     background-color: #595959;
 }
 
-table.music.dataTable tbody tr.currently-playing {
-    background-color: #4D4D4D;
-}
-
-table.music.dataTable tbody tr.currently-playing:hover {
-    background-color: #404040;
-}
-
 /* Table sizing */
 table {
     margin: 0 0 0 0;
@@ -63,26 +53,21 @@ table {
 
 /* Main frame image & colour */
 .mainframe {
-    background-image:url( "../icons/groove/background_main.png" );
-    background-repeat:no-repeat;
-    background-attachment:fixed;
+    background-image: url( "../icons/groove/background_main.png" );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     background-color: #222;
-    background-position:right;
+    background-position: right;
 }
 
 /* Back image */
 .back {
-    background-image:url( "../icons/groove/back.png" );
+    background-image: url( "../icons/groove/back.png" );
 }
 
 /* Button colors */
 input[type="button"], button {
     color: #000000;
-}
-
-/* Colour for warning messages. */
-.warning {
-    color: #990099;
 }
 
 /* The primary foreground colour. */
@@ -95,5 +80,5 @@ html {
 }
 
 label, p {
-	color: #CCC;
+    color: #CCC;
 }

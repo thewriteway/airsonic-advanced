@@ -37,7 +37,6 @@ public class VideoTranscodingSettings {
     // HLS stuff
     private int hlsSegmentIndex;
     private String hlsSegmentFilename;
-    // TODO shouldn't be part of this file
     private String outputFilename;
 
     public VideoTranscodingSettings(int width, int height, int timeOffset, double duration) {

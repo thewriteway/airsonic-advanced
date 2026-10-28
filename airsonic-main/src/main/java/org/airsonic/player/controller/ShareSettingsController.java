@@ -27,7 +27,7 @@ import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.ShareService;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -65,7 +65,7 @@ public class ShareSettingsController {
     @GetMapping
     public String doGet(HttpServletRequest request, Model model) {
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("shareInfos", getShareInfos(request));
         map.put("user", securityService.getCurrentUser(request));
 
@@ -115,7 +115,7 @@ public class ShareSettingsController {
     }
 
     private List<ShareInfo> getShareInfos(HttpServletRequest request) {
-        List<ShareInfo> result = new ArrayList<ShareInfo>();
+        List<ShareInfo> result = new ArrayList<>();
         User user = securityService.getCurrentUser(request);
         List<MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(user.getUsername());
 

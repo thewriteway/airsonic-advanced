@@ -25,7 +25,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -48,7 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Controller
@@ -83,10 +81,7 @@ public class CaptionsController {
 
         User user = securityService.getUserByName(authentication.getName());
         MediaFile video = this.mediaFileService.getMediaFile(id);
-        if (!(authentication instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(video, user.getUsername())) {
-            throw new AccessDeniedException("Access to file " + id + " is forbidden for user " + user.getUsername());
-        }
+        securityService.checkFolderAccess(video, user.getUsername(), authentication);
 
         List<CaptionInfo> captions = listCaptions(video, NetworkUtil.getBaseUrl(request));
         CaptionInfo res;
@@ -156,7 +151,7 @@ public class CaptionsController {
                     }
 
                     return i;
-                }).collect(Collectors.toList());
+                }).toList();
         Process process = new ProcessBuilder(command).start();
         Resource resource = new InputStreamResource(process.getInputStream());
         // Must read stderr from the process, otherwise it may block.
@@ -165,39 +160,31 @@ public class CaptionsController {
     }
 
     public static String getForceFormat(String format) {
-        switch (format) {
-            case CAPTION_FORMAT_VTT:
-                return "webvtt";
-            default:
-                return format;
-        }
+        return switch (format) {
+            case CAPTION_FORMAT_VTT -> "webvtt";
+            default -> format;
+        };
     }
 
     public static String getDisplayFormat(String format) {
-        switch (format) {
-            case "webvtt":
-                return CAPTION_FORMAT_VTT;
-            case "subrip":
-                return CAPTION_FORMAT_SRT;
-            default:
-                return format;
-        }
+        return switch (format) {
+            case "webvtt" -> CAPTION_FORMAT_VTT;
+            case "subrip" -> CAPTION_FORMAT_SRT;
+            default -> format;
+        };
     }
 
     @GetMapping("/list")
     public @ResponseBody List<CaptionInfo> listCaptions(Authentication authentication, @RequestParam("id") int id, HttpServletRequest request) {
         MediaFile video = mediaFileService.getMediaFile(id);
-        if (!(authentication instanceof JWTAuthenticationToken)
-                && !securityService.isFolderAccessAllowed(video, authentication.getName())) {
-            throw new AccessDeniedException("Access to file " + id + " is forbidden for user " + authentication.getName());
-        }
+        securityService.checkFolderAccess(video, authentication.getName(), authentication);
 
         String user = null;
         Instant expiration = null;
 
-        if (authentication instanceof JWTAuthenticationToken) {
+        if (authentication instanceof JWTAuthenticationToken jwtToken) {
             user = authentication.getName();
-            expiration = JWTSecurityService.getExpiration((JWTAuthenticationToken) authentication);
+            expiration = JWTSecurityService.getExpiration(jwtToken);
         }
 
         return listCaptions(video, NetworkUtil.getBaseUrl(request), user, expiration);
@@ -231,7 +218,7 @@ public class CaptionsController {
                         getUrl(basePath, externalUser, externalExpiration, video.getId(),
                                 URLEncoder.encode(c.toString(), StandardCharsets.UTF_8))));
 
-        return Stream.concat(internalCaptions, externalCaptions).collect(Collectors.toList());
+        return Stream.concat(internalCaptions, externalCaptions).toList();
     }
 
     public MetaData getVideoMetaData(MediaFile video) {
@@ -269,10 +256,10 @@ public class CaptionsController {
         Path parentPath = parent.getFullPath();
 
         try (Stream<Path> children = Files.walk(parentPath)) {
-            return children.parallel()
+            return children
                     .filter(c -> Files.isRegularFile(c))
                     .filter(c -> CAPTIONS_FORMATS.contains(FilenameUtils.getExtension(c.toString())))
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IOException e) {
             LOG.warn("Could not retrieve directory list for {} to find subtitle files for {}", parentPath, video, e);
 

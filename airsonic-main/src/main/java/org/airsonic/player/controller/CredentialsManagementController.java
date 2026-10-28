@@ -1,6 +1,5 @@
 package org.airsonic.player.controller;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.command.CredentialsManagementCommand;
 import org.airsonic.player.command.CredentialsManagementCommand.AdminControls;
 import org.airsonic.player.command.CredentialsManagementCommand.CredentialsCommand;
@@ -11,7 +10,6 @@ import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.validator.CredentialsManagementValidators.CredentialCreateChecks;
 import org.airsonic.player.validator.CredentialsManagementValidators.CredentialUpdateChecks;
-import org.apache.commons.beanutils.BeanMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -45,7 +43,7 @@ public class CredentialsManagementController {
     @Autowired
     private SettingsService settingsService;
 
-    private static final Map<String, String> ENCODER_ALIASES = ImmutableMap.of("noop", "plaintext", "legacynoop",
+    private static final Map<String, String> ENCODER_ALIASES = Map.of("noop", "plaintext", "legacynoop",
             "legacyplaintext (deprecated)", "legacyhex", "legacyhex (deprecated)");
 
     @GetMapping
@@ -56,7 +54,7 @@ public class CredentialsManagementController {
     @ModelAttribute
     protected void displayForm(Authentication user, ModelMap map) {
         List<CredentialsCommand> creds = securityService.getCredentials(user.getName(), App.values())
-                .parallelStream()
+                .stream()
                 .map(CredentialsCommand::fromUserCredential)
                 .map(c -> {
                     if (c.getEncoder().startsWith("legacy")) {
@@ -86,7 +84,13 @@ public class CredentialsManagementController {
         map.addAttribute("newCreds", new CredentialsCommand());
 
         map.addAttribute("apps", EnumSet.allOf(App.class));
-        map.addAttribute("appsMap", EnumSet.allOf(App.class).stream().collect(toMap(a -> a, a -> new BeanMap(a))));
+        // Built by hand rather than with BeanMap: its bean introspection probes the webapp class loader
+        // for BeanInfo classes that don't exist, which scans the jars inside the war and made the
+        // first load of this page take seconds
+        map.addAttribute("appsMap", EnumSet.allOf(App.class).stream().collect(toMap(a -> a, a -> Map.of(
+                "name", a.getName(),
+                "usernameRequired", a.getUsernameRequired(),
+                "nonDecodableEncodersAllowed", a.getNonDecodableEncodersAllowed()))));
 
         map.addAttribute("decodableEncoders", PasswordEncoderConfig.NONLEGACY_DECODABLE_ENCODERS);
         map.addAttribute("nonDecodableEncoders", PasswordEncoderConfig.NONLEGACY_NONDECODABLE_ENCODERS);

@@ -5,34 +5,28 @@
     <th:block th:replace="~{jquery}" />
 
     <script type="text/javascript" th:inline="javascript">
-        function init() {
-            let musicFoldersExist = /*[[${model.musicFoldersExist}]]*/ false;
-            /*[+
-            if(!musicFoldersExist) {
-                $().toastmessage("showNoticeToast", [[#{top.missing}]]);
+        Page.define("home", function (page) {
+            if (page.root.dataset.musicFoldersExist !== "true") {
+                $().toastmessage("showNoticeToast", /*[[#{top.missing}]]*/ "");
             }
-            +]*/
-            let isIndexBeingCreated = /*[[${model.isIndexBeingCreated}]]*/ false;
-            /*[+
-            if(isIndexBeingCreated) {
-                $().toastmessage("showNoticeToast", [[#{home.scan}]]);
+            if (page.root.dataset.indexBeingCreated === "true") {
+                $().toastmessage("showNoticeToast", /*[[#{home.scan}]]*/ "");
             }
-            +]*/
-        }
 
-        function refresh() {
-            top.main.location.href = top.main.location.href;
-        }
-
-        function playShuffle() {
-            /*[+
-            top.playQueue.onPlayShuffle([[${model.listType}]], [[${model.listOffset}]], [[${model.listSize}]], [[${model.genre}]], [[${model.decade}]]);
-            +]*/
-        }
-
+            page.actions({
+                refresh() {
+                    Page.reloadRegion("main");
+                },
+                playShuffle() {
+                    top.playQueue.onPlayShuffle(/*[[${model.listType}]]*/ "random", /*[[${model.listOffset}]]*/ 0,
+                        /*[[${model.listSize}]]*/ 10, /*[[${model.genre}]]*/ null, /*[[${model.decade}]]*/ null);
+                }
+            });
+        });
     </script>
 </head>
-<body class="mainframe bgcolor1" onload="init();">
+<body class="mainframe bgcolor1" data-page="home"
+      th:data-music-folders-exist="${model.musicFoldersExist}" th:data-index-being-created="${model.isIndexBeingCreated}">
 <h1 th:if="${!#strings.isEmpty(model.welcomeTitle)}">
     <img th:src="${themes?.get('homeImage') ?: 'icons/default_light/home.svg'}" alt="">
     <span style="vertical-align: middle" th:text="${model.welcomeTitle}">Welcome</span>
@@ -52,7 +46,7 @@
 <table th:replace="~{homePager::table}"></table>
 
 <div th:if="${!#strings.isEmpty(model.welcomeMessage)}"
-    th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid #${themes?.get('detailColor')}|"
+    th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid var(--fg-detail)|"
     th:text="${model.welcomeMessage}"
 ></div>
 <th:block th:each="album, loopStatus : ${model.albums}">

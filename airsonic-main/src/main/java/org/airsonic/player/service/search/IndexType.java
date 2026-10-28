@@ -45,7 +45,6 @@ public enum IndexType {
         fieldNames(
             FieldNames.ALBUM,
             FieldNames.ARTIST),
-            // FieldNames.FOLDER), // XXX 3.x -> 8.x : Remove folder from multi-field search condition
         boosts(
             entry(FieldNames.ALBUM, 1.1F))),
 
@@ -53,14 +52,12 @@ public enum IndexType {
         fieldNames(
             FieldNames.ALBUM,
             FieldNames.ARTIST),
-            // FieldNames.FOLDER_ID), // XXX 3.x -> 8.x : Remove folder from multi-field search condition
         boosts(
             entry(FieldNames.ALBUM, 1.1F))),
 
     ARTIST(
         fieldNames(
             FieldNames.ARTIST),
-            // FieldNames.FOLDER), // XXX 3.x -> 8.x : Remove folder from multi-field search condition
         boosts()),
 
     ARTIST_ID3(

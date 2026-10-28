@@ -62,7 +62,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CoverArtCreateService {
@@ -254,11 +253,11 @@ public class CoverArtCreateService {
     @Nonnull
     public BufferedImage createPlaylistImage(PlaylistCoverArtRequest request, int size) {
         List<MediaFile> albums = playlistService.getFilesInPlaylist(request.getPlaylist().getId())
-                .parallelStream()
+                .stream()
                 .map(mediaFileService::getParentOf)
                 .filter(album -> album != null && !mediaFileService.isRoot(album))
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
 
         if (albums.isEmpty()) {
             return createAutoCover(request, size, size);

@@ -20,11 +20,11 @@
  */
 package org.airsonic.player.command;
 
-import com.google.re2j.Pattern;
 import org.airsonic.player.controller.MusicFolderSettingsController;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.MusicFolder.Type;
-import org.apache.commons.lang.StringUtils;
+import org.airsonic.player.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -277,8 +277,7 @@ public class MusicFolderSettingsCommand {
             if (path == null) {
                 return null;
             }
-            Pattern pattern = Pattern.compile("\\.+/");
-            Path file = Paths.get(pattern.matcher(path).replaceAll(""));
+            Path file = Paths.get(StringUtil.removeDotSlash(path));
             String name = StringUtils.trimToNull(this.name);
             if (name == null) {
                 name = file.getFileName().toString();

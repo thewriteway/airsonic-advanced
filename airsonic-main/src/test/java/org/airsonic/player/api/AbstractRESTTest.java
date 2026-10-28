@@ -18,9 +18,6 @@
  */
 package org.airsonic.player.api;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.airsonic.player.TestCaseUtils;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.service.JaxbContentService;
@@ -37,6 +34,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,7 +54,7 @@ public abstract class AbstractRESTTest {
 
     protected MusicFolder testFolder = new MusicFolder(1, Paths.get("/test/folder"), "Test Folder", MusicFolder.Type.MEDIA, true, Instant.now());
 
-    protected ObjectMapper objectMapper = JsonMapper.builder()
+    protected ObjectMapper objectMapper = JsonMapper.builderWithJackson2Defaults()
         .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
         .build();
 

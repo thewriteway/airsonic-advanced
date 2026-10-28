@@ -1,0 +1,1057 @@
+/*
+ * Layout of the application shell (index.html). Colors and fonts come from the selected theme;
+ * this file only places the regions.
+ */
+
+body.shell {
+    margin: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "upper upper upper"
+        "left main side"
+        "player player player";
+
+    --side-border: color-mix(in srgb, var(--fg, black) 14%, transparent);
+    --side-hover: color-mix(in srgb, var(--fg, black) 7%, transparent);
+    --side-accent: var(--shell-link-color, var(--link, #006699));
+}
+
+/* Each region scrolls on its own, like the frames did. */
+.shell-upper {
+    grid-area: upper;
+    /* contains the visually hidden labels, which would otherwise widen the page */
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.shell-left {
+    grid-area: left;
+    width: clamp(200px, 16vw, 320px);
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+@media (min-width: 761px) {
+    .shell-sidebar-hidden .shell-left {
+        display: none;
+    }
+}
+
+.shell-main {
+    grid-area: main;
+    min-width: 0;
+    overflow: auto;
+}
+
+/* The play queue (playQueue.html) has no box of its own: its side panel and player bar are grid items. */
+.playqueue-container {
+    display: contents;
+}
+
+/* Covers the page while the navigation drawer or the overlaid side panel is open. */
+.shell-backdrop {
+    display: none;
+}
+
+/* Stands in for the body margin each page had in its frame. */
+.shell-content {
+    margin: 0.75em;
+}
+
+.shell-upper > .shell-content {
+    margin: 0.4em 1em 0 1em;
+}
+
+/* Dim the page being replaced while the next one loads. */
+.shell-main[aria-busy="true"] > .shell-content {
+    opacity: 0.6;
+    transition: opacity 0.2s 0.15s;
+}
+
+/* Top bar */
+.shell-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.25em 1em;
+    padding: 5px 0;
+}
+
+.shell-nav-item {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    min-width: 3em;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.shell-nav-item img {
+    max-width: 24px;
+    max-height: 30px;
+}
+
+.shell-search {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.25em;
+    margin: 0 0 0 1em;
+}
+
+.shell-topbar-end {
+    display: flex;
+    align-items: center;
+    gap: 1.5em;
+    margin-left: auto;
+    padding-left: 1em;
+}
+
+.shell-icon-button {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin-right: 3.5em;
+    cursor: pointer;
+}
+
+.shell-search .shell-icon-button {
+    margin-right: 0;
+}
+
+/* Buttons that look like the links and nav items around them. */
+.shell-link-button, .shell-nav-button {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.shell-link-button {
+    text-align: left;
+    color: var(--shell-link-color, inherit);
+}
+
+/* Labels for screen readers only. */
+.shell-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Index letters stay reachable at the bottom of the left region. */
+.shell-left-index {
+    position: sticky;
+    bottom: 0;
+    margin: 1.5em -0.75em -0.75em -0.75em;
+    padding: 0.25em 0.75em;
+    border-top: 1px solid black;
+}
+
+/*
+ * Side panel: the play queue and, when shown, the activity (right.html) as a second tab. Docked
+ * to the right of the main page; the user can resize it (its left edge) or close it.
+ */
+.shell-side {
+    grid-area: side;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: var(--side-width, clamp(300px, 24vw, 440px));
+    min-height: 0;
+    border-left: 1px solid var(--side-border);
+    box-sizing: border-box;
+}
+
+.shell-side-closed:not(.shell-side-overlay) .shell-side {
+    display: none;
+}
+
+.side-resizer {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    bottom: 0;
+    left: -4px;
+    width: 8px;
+    cursor: col-resize;
+    touch-action: none;
+}
+
+.side-resizer:hover, .side-resizer:focus-visible, .shell-side-resizing .side-resizer {
+    background: linear-gradient(to right, transparent 3px, var(--side-accent) 3px, var(--side-accent) 5px, transparent 5px);
+    outline: none;
+}
+
+.shell-side-resizing {
+    cursor: col-resize;
+    user-select: none;
+}
+
+.shell-side-overlay .side-resizer {
+    display: none;
+}
+
+.side-header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0 0.5em 0 0.75em;
+    border-bottom: 1px solid var(--side-border);
+}
+
+.side-tabs {
+    display: flex;
+    flex: 1;
+    gap: 0.25em;
+    min-width: 0;
+}
+
+.side-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.75em 0.5em 0.6em;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: none;
+    color: var(--fg-detail, inherit);
+    font: inherit;
+    font-weight: bold;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.side-tab[aria-selected="true"] {
+    color: var(--fg, inherit);
+    border-bottom-color: var(--accent, darkorange);
+}
+
+.side-tab:hover {
+    color: var(--fg, inherit);
+}
+
+.side-tab-count:not(:empty) {
+    padding: 0 0.5em;
+    border-radius: 1em;
+    font-size: 0.8em;
+    font-weight: normal;
+    background-color: var(--side-hover);
+}
+
+.side-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.side-panel[hidden] {
+    display: none;
+}
+
+.shell-right {
+    display: block;
+    overflow: auto;
+}
+
+/* Round buttons of the queue and the player bar */
+.queue-tool, .player-button, .side-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--fg-detail, inherit);
+}
+
+.queue-tool:hover:not(:disabled), .player-button:hover:not(:disabled), .side-close:hover {
+    color: var(--fg, inherit);
+    background-color: var(--side-hover);
+}
+
+.icon-button:focus-visible, .side-tab:focus-visible, .player-play:focus-visible, .menu-item:focus-visible {
+    outline: 2px solid var(--side-accent);
+    outline-offset: 1px;
+}
+
+/* Queue: summary and tools, filter, selection bar and the list */
+.queue-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.4em 0.5em 0.2em 0.75em;
+}
+
+.queue-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.9em;
+    color: var(--fg-detail, inherit);
+}
+
+.queue-tools {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+}
+
+.queue-filter {
+    flex: none;
+    padding: 0.2em 0.75em 0.5em;
+}
+
+.queue-filter input {
+    width: 100%;
+    padding: 0.35em 0.6em;
+    border: 1px solid var(--side-border);
+    border-radius: 6px;
+    color: inherit;
+    background-color: var(--bg1, white);
+    font: inherit;
+}
+
+.queue-selectionbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin: 0 0.5em 0.4em;
+    padding: 0.1em 0.25em 0.1em 0.6em;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, var(--side-accent) 14%, transparent);
+}
+
+.queue-selectionbar[hidden] {
+    display: none;
+}
+
+.queue-selectionbar input {
+    margin: 0;
+}
+
+.queue-selectionbar label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.queue-list {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0 0 1em;
+    overflow-y: auto;
+    list-style: none;
+    overscroll-behavior: contain;
+}
+
+.queue-list:empty {
+    display: none;
+}
+
+.queue-empty {
+    margin: 2em 1em;
+    text-align: center;
+    color: var(--fg-detail, inherit);
+}
+
+.queue-empty[hidden] {
+    display: none;
+}
+
+.queue-row {
+    display: grid;
+    grid-template-columns: 14px 1.75em 40px minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    column-gap: 0.5em;
+    margin: 0 0.25em;
+    padding: 4px 0.25em;
+    border-radius: 6px;
+    /* long queues: rows off screen are not laid out */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 48px;
+}
+
+.queue-row[hidden] {
+    display: none;
+}
+
+.queue-row:hover, .queue-row:focus-within {
+    background-color: var(--side-hover);
+}
+
+.queue-row.selected {
+    background-color: color-mix(in srgb, var(--side-accent) 16%, transparent);
+}
+
+.queue-row.currently-playing {
+    background-color: var(--row-playing, #98aacd);
+}
+
+.queue-row.currently-playing .queue-title {
+    font-weight: bold;
+}
+
+.queue-row.flash {
+    animation: queue-flash 1.2s ease-out;
+}
+
+@keyframes queue-flash {
+    0%, 50% { box-shadow: inset 0 0 0 2px var(--side-accent); }
+    100% { box-shadow: inset 0 0 0 2px transparent; }
+}
+
+.queue-handle {
+    display: flex;
+    justify-content: center;
+    color: var(--fg-detail, inherit);
+    cursor: grab;
+    opacity: 0;
+    touch-action: none;
+}
+
+.queue-row:hover .queue-handle, .queue-row:focus-within .queue-handle {
+    opacity: 0.7;
+}
+
+.queue-list.is-radio .queue-handle, .queue-list.is-filtered .queue-handle {
+    visibility: hidden;
+}
+
+.queue-list.is-reordering, .queue-list.is-reordering * {
+    cursor: grabbing;
+    user-select: none;
+}
+
+.queue-row.is-moving {
+    opacity: 0.5;
+}
+
+/* The position; a checkbox on hover and while songs are selected, an icon for the current song. */
+.queue-pos {
+    display: grid;
+    place-items: center;
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-detail, inherit);
+}
+
+.queue-pos > * {
+    grid-area: 1 / 1;
+}
+
+.queue-check, .queue-now, .queue-row.currently-playing .queue-num {
+    display: none;
+}
+
+.queue-row.currently-playing .queue-now {
+    display: inline-flex;
+    color: var(--fg, inherit);
+}
+
+.queue-row:hover .queue-check, .queue-row:focus-within .queue-check, .queue-list.is-selecting .queue-check {
+    display: inline-block;
+    margin: 0;
+}
+
+.queue-row:hover .queue-num, .queue-row:hover .queue-now,
+.queue-row:focus-within .queue-num, .queue-row:focus-within .queue-now,
+.queue-list.is-selecting .queue-num, .queue-list.is-selecting .queue-now {
+    display: none;
+}
+
+.queue-list.is-radio .queue-check, .queue-list.is-radio .queue-star, .queue-list.is-radio .queue-remove {
+    display: none !important;
+}
+
+.queue-cover {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    border-radius: 4px;
+    color: var(--fg-detail, inherit);
+    background-color: var(--side-hover);
+}
+
+.queue-cover > *, .player-cover > * {
+    grid-area: 1 / 1;
+}
+
+.queue-cover img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.queue-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.queue-title, .queue-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.queue-title {
+    color: var(--fg, inherit);
+    text-decoration: none;
+}
+
+.queue-title[href]:hover {
+    text-decoration: underline;
+}
+
+.queue-meta {
+    font-size: 0.85em;
+    color: var(--fg-detail, inherit);
+}
+
+.queue-meta a {
+    color: inherit;
+}
+
+.queue-duration {
+    font-size: 0.85em;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-detail, inherit);
+}
+
+.queue-star, .queue-remove {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 50%;
+    color: var(--fg-detail, inherit);
+    visibility: hidden;
+}
+
+.queue-star:hover, .queue-remove:hover {
+    color: var(--fg, inherit);
+    background-color: var(--side-hover);
+}
+
+.queue-row:hover .queue-star, .queue-row:hover .queue-remove,
+.queue-row:focus-within .queue-star, .queue-row:focus-within .queue-remove,
+.queue-star[aria-pressed="true"] {
+    visibility: visible;
+}
+
+.queue-star[aria-pressed="true"] svg, .player-star[aria-pressed="true"] svg {
+    fill: currentColor;
+    color: var(--accent, darkorange);
+}
+
+/* Menus: popovers placed next to the button that opens them (see playQueue.html) */
+.menu-popover {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    min-width: 14em;
+    padding: 0.35em;
+    overflow-y: auto;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    border-radius: 8px;
+    color: var(--fg);
+    background-color: var(--surface, white);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.menu-heading {
+    padding: 0.5em 0.75em 0.25em;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--fg-detail, inherit);
+}
+
+.menu-heading ~ .menu-heading {
+    margin-top: 0.25em;
+    padding-top: 0.6em;
+    border-top: 1px solid var(--side-border);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    width: 100%;
+    padding: 0.45em 0.75em;
+    border: 0;
+    border-radius: 6px;
+    color: inherit;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.menu-item:hover:not(:disabled) {
+    background-color: var(--side-hover);
+}
+
+.menu-item:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.menu-item svg {
+    flex: none;
+    color: var(--fg-detail, inherit);
+}
+
+/*
+ * Player bar: the song playing, the transport controls around the big play button, the web
+ * player's time, progress, volume and speed, and the player and play queue buttons.
+ */
+.player-bar {
+    grid-area: player;
+    position: relative;
+    z-index: 21;
+    display: flex;
+    align-items: center;
+    gap: 0.5em 1.25em;
+    padding: 6px 1em;
+    border-top: 1px solid var(--side-border);
+}
+
+.player-now {
+    display: flex;
+    flex: 0 1 300px;
+    align-items: center;
+    gap: 0.75em;
+    min-width: 0;
+}
+
+.player-cover {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    overflow: hidden;
+    border-radius: 6px;
+    color: var(--fg-detail, inherit);
+    background-color: var(--side-hover);
+}
+
+.player-cover img {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+}
+
+.player-cover img[hidden] {
+    display: none;
+}
+
+.player-now-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.player-title, .player-artist {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-title {
+    font-weight: bold;
+    color: var(--fg, inherit);
+    text-decoration: none;
+}
+
+.player-title[href]:hover {
+    text-decoration: underline;
+}
+
+.player-artist {
+    font-size: 0.9em;
+    color: var(--fg-detail, inherit);
+}
+
+.player-star[hidden] {
+    display: none;
+}
+
+.player-transport {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.player-button {
+    position: relative;
+}
+
+.player-transport .player-button {
+    width: 36px;
+    height: 36px;
+}
+
+.player-transport .player-button .icon:not(.icon-sm) {
+    width: 20px;
+    height: 20px;
+}
+
+.player-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 0.15em;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: var(--bg1, white);
+    background-color: var(--fg, black);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.player-play:hover {
+    transform: scale(1.06);
+}
+
+.player-play .icon {
+    width: 20px;
+    height: 20px;
+}
+
+.player-play .player-icon-play {
+    margin-left: 2px;
+}
+
+.player-play .player-icon-pause, .player-play.is-playing .player-icon-play {
+    display: none;
+}
+
+.player-play.is-playing .player-icon-pause {
+    display: inline;
+}
+
+.player-repeat .player-icon-repeat-one, .player-repeat[data-repeat="TRACK"] .player-icon-repeat {
+    display: none;
+}
+
+.player-repeat[data-repeat="TRACK"] .player-icon-repeat-one {
+    display: inline;
+}
+
+.player-repeat[aria-pressed="true"] {
+    color: var(--side-accent);
+}
+
+/* a dot under the active repeat button */
+.player-repeat[aria-pressed="true"]::after {
+    content: "";
+    position: absolute;
+    bottom: 1px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+.player-progress {
+    display: flex;
+    flex: 1 1 300px;
+    align-items: center;
+    min-width: 0;
+}
+
+.playqueue-audio {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.player-jukebox {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.player-jukebox img {
+    height: 18px;
+}
+
+#jukeboxVolume {
+    width: 120px;
+    cursor: pointer;
+}
+
+.player-extras {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.player-select select {
+    max-width: 12em;
+}
+
+.player-queue-toggle {
+    width: 40px;
+    height: 40px;
+}
+
+.player-queue-toggle[aria-expanded="true"] {
+    color: var(--side-accent);
+}
+
+.player-badge {
+    position: absolute;
+    top: 0;
+    right: -4px;
+    min-width: 1.5em;
+    padding: 0 0.35em;
+    border-radius: 1em;
+    box-sizing: border-box;
+    font-size: 0.7em;
+    line-height: 1.5em;
+    text-align: center;
+    color: var(--bg1, white);
+    background-color: var(--side-accent);
+}
+
+.player-badge:empty {
+    display: none;
+}
+
+@media (max-width: 1100px) {
+    .shell-topbar .topHeader {
+        display: none;
+    }
+    .shell-icon-button {
+        margin-right: 0;
+    }
+}
+
+/*
+ * Smaller screens: the side panel slides in over the page, above the player bar, instead of
+ * taking room from the page.
+ */
+@media (max-width: 1200px) {
+    .shell-side {
+        position: fixed;
+        z-index: 20;
+        top: 0;
+        right: 0;
+        bottom: var(--player-bar-height, 64px);
+        width: min(var(--side-width, 400px), 92vw);
+        border-left: 0;
+        box-shadow: 0 0 24px rgba(0, 0, 0, 0.35);
+        transition: transform 0.2s ease-out, visibility 0.2s;
+    }
+
+    .shell-side-closed .shell-side {
+        transform: translateX(105%);
+        visibility: hidden;
+    }
+
+    .shell-side-overlay:not(.shell-side-closed) .shell-backdrop {
+        display: block;
+        position: fixed;
+        z-index: 19;
+        inset: 0 0 var(--player-bar-height, 64px) 0;
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+@media (max-width: 1000px) {
+    .player-now {
+        flex-basis: 200px;
+    }
+
+    .player-select {
+        display: none;
+    }
+}
+
+/*
+ * Narrow screens (phones, small windows): the left region becomes a drawer that the sidebar
+ * button slides in over the page, the top bar keeps only its icons, the side panel takes the
+ * whole width, and the player bar puts the progress above the song and the controls.
+ */
+@media (max-width: 760px) {
+    .shell-upper > .shell-content {
+        margin: 0.25em 0.5em 0 0.5em;
+    }
+
+    .shell-topbar {
+        gap: 0.25em 0.6em;
+    }
+
+    .shell-nav-item {
+        min-width: 2.25em;
+    }
+
+    .shell-topbar-end {
+        gap: 0.6em;
+        padding-left: 0.5em;
+    }
+
+    .shell-topbar-end .detail {
+        display: none;
+    }
+
+    .shell-search {
+        margin-left: 0.25em;
+    }
+
+    .shell-search input {
+        width: 7em;
+    }
+
+    .shell-left {
+        position: fixed;
+        z-index: 22;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(85vw, 320px);
+        padding-top: 0.5em;
+        box-shadow: 0 0 24px rgba(0, 0, 0, 0.4);
+        transform: translateX(-105%);
+        transition: transform 0.2s ease-out;
+        visibility: hidden;
+    }
+
+    .shell-drawer-open .shell-left {
+        transform: none;
+        visibility: visible;
+    }
+
+    .shell-drawer-open .shell-backdrop {
+        display: block;
+        position: fixed;
+        z-index: 21;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .shell-content {
+        margin: 0.5em;
+    }
+
+    .shell-main .dataTables_wrapper {
+        overflow-x: auto;
+    }
+
+    .shell-side {
+        width: 100vw;
+    }
+
+    .player-bar {
+        flex-wrap: wrap;
+        gap: 0.25em 0.5em;
+        padding: 4px 0.5em 6px;
+    }
+
+    .player-progress {
+        flex: 1 1 100%;
+        order: -1;
+    }
+
+    .player-now {
+        flex: 1 1 0;
+        gap: 0.5em;
+    }
+
+    .player-cover, .player-cover img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .player-star, #shuffleQueue, .player-extras > .player-button:not(.player-queue-toggle) {
+        display: none;
+    }
+
+    .player-transport {
+        gap: 0;
+    }
+
+    .player-play {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .shell-left, .shell-side, .player-play {
+        transition: none;
+    }
+}
+
+/* Touch screens: no hovering, so the row controls stay visible. */
+@media (pointer: coarse) {
+    .queue-handle {
+        opacity: 0.7;
+    }
+
+    .queue-star, .queue-remove {
+        visibility: visible;
+    }
+}
+
+/* Drag and drop of media (mediadrag.js): where a drop is possible, and where it would go. */
+[data-media-ids][draggable="true"],
+table[data-drag-media] > tbody > tr[draggable="true"] {
+    cursor: grab;
+}
+.media-dragging .shell-side,
+.media-dragging .player-bar,
+.media-dragging .playlist.drop-allowed {
+    outline: 2px dashed color-mix(in srgb, var(--shell-link-color, currentColor) 50%, transparent);
+    outline-offset: -2px;
+}
+.queue-drop-hover .shell-side,
+.queue-drop-hover .player-bar,
+.playlist.drop-hover {
+    outline-style: solid;
+    outline-color: var(--shell-link-color, currentColor);
+}
+.queue-drop-hover .shell-side,
+.playlist.drop-hover {
+    background-color: color-mix(in srgb, var(--shell-link-color, currentColor) 12%, transparent);
+}
+.queue-row.drop-before {
+    box-shadow: inset 0 2px 0 var(--shell-link-color, currentColor);
+}
+.queue-row.drop-after {
+    box-shadow: inset 0 -2px 0 var(--shell-link-color, currentColor);
+}

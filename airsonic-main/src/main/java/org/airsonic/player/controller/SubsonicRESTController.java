@@ -20,7 +20,6 @@
  */
 package org.airsonic.player.controller;
 
-import com.google.common.primitives.Ints;
 import org.airsonic.player.command.UserSettingsCommand;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.domain.Bookmark;
@@ -29,20 +28,23 @@ import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.User;
 import org.airsonic.player.i18n.LocaleResolver;
 import org.airsonic.player.service.*;
+import org.airsonic.player.service.metadata.MetaData;
+import org.airsonic.player.service.metadata.Track;
 import org.airsonic.player.service.podcast.PodcastDownloadClient;
 import org.airsonic.player.service.search.IndexType;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
 import org.airsonic.player.util.Util;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpStatus;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.acls.model.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -67,7 +69,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.airsonic.player.security.RESTRequestParameterProcessingFilter.decrypt;
@@ -114,6 +115,8 @@ public class SubsonicRESTController {
     private StreamController streamController;
     @Autowired
     private HLSController hlsController;
+    @Autowired
+    private CaptionsController captionsController;
     @Autowired
     private ShareService shareService;
     @Autowired
@@ -847,9 +850,8 @@ public class SubsonicRESTController {
     public void jukeboxControl(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request, true);
 
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isJukeboxRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to use jukebox.");
+        org.airsonic.player.domain.User user = requireRole(request, response, org.airsonic.player.domain.User::isJukeboxRole, "use jukebox");
+        if (user == null) {
             return;
         }
 
@@ -872,11 +874,11 @@ public class SubsonicRESTController {
                 break;
             case "add":
                 int[] ids = getIntParameters(request, "id");
-                playQueueService.add(player, Ints.asList(ids), null, true, true);
+                playQueueService.add(player, Arrays.stream(ids).boxed().toList(), null, true, true);
                 break;
             case "set":
                 ids = getIntParameters(request, "id");
-                playQueueService.reset(player, Ints.asList(ids), true);
+                playQueueService.reset(player, Arrays.stream(ids).boxed().toList(), true);
                 break;
             case "clear":
                 playQueueService.clear(player);
@@ -966,7 +968,7 @@ public class SubsonicRESTController {
             playlistService.broadcast(playlist);
         }
 
-        List<MediaFile> songs = new ArrayList<MediaFile>();
+        List<MediaFile> songs = new ArrayList<>();
         for (int id : getIntParameters(request, "songId")) {
             MediaFile song = mediaFileService.getMediaFile(id);
             if (song != null) {
@@ -1001,25 +1003,14 @@ public class SubsonicRESTController {
         Boolean shared = getBooleanParameter(request, "public");
         playlistService.updatePlaylist(id, name, comment, shared);
 
-        // TODO: Add later
-//            for (String usernameToAdd : ServletRequestUtils.getStringParameters(request, "usernameToAdd")) {
-//                if (securityService.getUserByName(usernameToAdd) != null) {
-//                    playlistService.addPlaylistUser(id, usernameToAdd);
-//                }
-//            }
-//            for (String usernameToRemove : ServletRequestUtils.getStringParameters(request, "usernameToRemove")) {
-//                if (securityService.getUserByName(usernameToRemove) != null) {
-//                    playlistService.deletePlaylistUser(id, usernameToRemove);
-//                }
-//            }
         List<MediaFile> songs = playlistService.getFilesInPlaylist(id);
         boolean songsChanged = false;
 
-        SortedSet<Integer> tmp = new TreeSet<Integer>();
+        SortedSet<Integer> tmp = new TreeSet<>();
         for (int songIndexToRemove : getIntParameters(request, "songIndexToRemove")) {
             tmp.add(songIndexToRemove);
         }
-        List<Integer> songIndexesToRemove = new ArrayList<Integer>(tmp);
+        List<Integer> songIndexesToRemove = new ArrayList<>(tmp);
         Collections.reverse(songIndexesToRemove);
         for (Integer songIndexToRemove : songIndexesToRemove) {
             songs.remove(songIndexToRemove.intValue());
@@ -1229,7 +1220,7 @@ public class SubsonicRESTController {
             ServletWebRequest swr) throws Exception {
         HttpServletRequest request = wrapRequest(swr.getRequest());
         final Integer playerId = Optional.ofNullable(request.getParameter("player")).map(Integer::valueOf).orElse(null);
-        Optional<Integer> idInt = Optional.ofNullable(id).map(this::mapId).filter(StringUtils::isNumeric).map(Integer::valueOf);
+        Optional<Integer> idInt = Optional.ofNullable(id).map(this::mapId).filter(SubsonicRESTController::isNumericOrEmpty).map(Integer::valueOf);
 
         User user = securityService.getUserByName(p.getName());
         if (!user.isDownloadRole()) {
@@ -1294,9 +1285,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/hls", "/hls.view"})
     public void hls(Authentication authentication, @RequestParam Integer id, HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isStreamRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to play files.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isStreamRole, "play files") == null) {
             return;
         }
 
@@ -1499,9 +1488,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/refreshPodcasts", "/refreshPodcasts.view"})
     public void refreshPodcasts(HttpServletRequest request, HttpServletResponse response) {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
         podcastManagementService.refreshAllChannels(true);
@@ -1511,9 +1498,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/createPodcastChannel", "/createPodcastChannel.view"})
     public void createPodcastChannel(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1525,9 +1510,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/deletePodcastChannel", "/deletePodcastChannel.view"})
     public void deletePodcastChannel(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1539,9 +1522,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/deletePodcastEpisode", "/deletePodcastEpisode.view"})
     public void deletePodcastEpisode(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1553,9 +1534,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/downloadPodcastEpisode", "/downloadPodcastEpisode.view"})
     public void downloadPodcastEpisode(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return;
         }
 
@@ -1574,10 +1553,7 @@ public class SubsonicRESTController {
     public ResponseEntity<PodcastExportOPML> exportPodcastOPML(HttpServletRequest request, HttpServletResponse response)
             throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isPodcastRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED,
-                    user.getUsername() + " is not authorized to administrate podcasts.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isPodcastRole, "administrate podcasts") == null) {
             return null;
         }
 
@@ -1689,7 +1665,7 @@ public class SubsonicRESTController {
     public void savePlayQueue(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
         String username = securityService.getCurrentUsername(request);
-        List<Integer> mediaFileIds = Arrays.stream(getIntParameters(request, "id")).boxed().collect(Collectors.toList());
+        List<Integer> mediaFileIds = Arrays.stream(getIntParameters(request, "id")).boxed().toList();
         Integer current = getIntParameter(request, "current");
         Long position = getLongParameter(request, "position");
         String changedBy = getRequiredStringParameter(request, "c");
@@ -1732,13 +1708,11 @@ public class SubsonicRESTController {
         String username = securityService.getCurrentUsername(request);
         Player player = playerService.getPlayer(request, response, username);
 
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isShareRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to share media.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isShareRole, "share media") == null) {
             return;
         }
 
-        List<MediaFile> files = new ArrayList<MediaFile>();
+        List<MediaFile> files = new ArrayList<>();
         for (int id : getRequiredIntParameters(request, "id")) {
             files.add(mediaFileService.getMediaFile(id));
         }
@@ -1893,9 +1867,7 @@ public class SubsonicRESTController {
     public void getUsers(HttpServletRequest request, HttpServletResponse response) {
         request = wrapRequest(request);
 
-        org.airsonic.player.domain.User currentUser = securityService.getCurrentUser(request);
-        if (!currentUser.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, currentUser.getUsername() + " is not authorized to get details for other users.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "get details for other users") == null) {
             return;
         }
 
@@ -1947,9 +1919,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/createUser", "/createUser.view"})
     public void createUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to create new users.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "create new users") == null) {
             return;
         }
 
@@ -1983,9 +1953,8 @@ public class SubsonicRESTController {
     @RequestMapping({"/updateUser", "/updateUser.view"})
     public void updateUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to update users.");
+        org.airsonic.player.domain.User user = requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "update users");
+        if (user == null) {
             return;
         }
 
@@ -2041,9 +2010,7 @@ public class SubsonicRESTController {
     @RequestMapping({"/deleteUser", "/deleteUser.view"})
     public void deleteUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
-        if (!user.isAdminRole()) {
-            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to delete users.");
+        if (requireRole(request, response, org.airsonic.player.domain.User::isAdminRole, "delete users") == null) {
             return;
         }
 
@@ -2061,12 +2028,12 @@ public class SubsonicRESTController {
 
     @RequestMapping({"/getChatMessages", "/getChatMessages.view"})
     public ResponseEntity<String> getChatMessages(HttpServletRequest request, HttpServletResponse response) {
-        return ResponseEntity.status(HttpStatus.SC_GONE).body(NO_LONGER_SUPPORTED);
+        return ResponseEntity.status(HttpStatus.GONE).body(NO_LONGER_SUPPORTED);
     }
 
     @RequestMapping({"/addChatMessage", "/addChatMessage.view"})
     public ResponseEntity<String> addChatMessage(HttpServletRequest request, HttpServletResponse response) {
-        return ResponseEntity.status(HttpStatus.SC_GONE).body(NO_LONGER_SUPPORTED);
+        return ResponseEntity.status(HttpStatus.GONE).body(NO_LONGER_SUPPORTED);
     }
 
     @RequestMapping({"/getLyrics", "/getLyrics.view"})
@@ -2165,15 +2132,62 @@ public class SubsonicRESTController {
     }
 
     @RequestMapping({"/getVideoInfo", "/getVideoInfo.view"})
-    public void getVideoInfo(HttpServletRequest request, HttpServletResponse response) {
+    public void getVideoInfo(Authentication authentication, HttpServletRequest request, HttpServletResponse response) throws Exception {
         request = wrapRequest(request);
-        error(request, response, ErrorCode.GENERIC, "getVideoInfo is not yet implemented");
+        int id = getRequiredIntParameter(request, "id");
+        MediaFile video = getAccessibleVideo(authentication, id);
+
+        VideoInfo result = new VideoInfo();
+        result.setId(String.valueOf(id));
+
+        // Caption ids are list positions so external caption file paths aren't exposed
+        List<CaptionsController.CaptionInfo> captionInfos = captionsController.listCaptions(video, NetworkUtil.getBaseUrl(request));
+        for (int i = 0; i < captionInfos.size(); i++) {
+            Captions captions = new Captions();
+            captions.setId(String.valueOf(i));
+            captions.setName(captionInfos.get(i).getLanguage());
+            result.getCaptions().add(captions);
+        }
+
+        MetaData metaData = captionsController.getVideoMetaData(video);
+        if (metaData != null) {
+            for (Track track : metaData.getAudioTracks()) {
+                AudioTrack audioTrack = new AudioTrack();
+                audioTrack.setId(String.valueOf(track.getId()));
+                audioTrack.setName(track.getLanguageName());
+                audioTrack.setLanguageCode(track.getLanguage());
+                result.getAudioTrack().add(audioTrack);
+            }
+        }
+
+        Response res = createResponse();
+        res.setVideoInfo(result);
+        jaxbWriter.writeResponse(request, response, res);
     }
 
     @RequestMapping({"/getCaptions", "/getCaptions.view"})
-    public void getCaptions(HttpServletRequest request, HttpServletResponse response) {
-        request = wrapRequest(request);
-        error(request, response, ErrorCode.GENERIC, "getCaptions is not yet implemented");
+    public ResponseEntity<Resource> getCaptions(Authentication authentication,
+            @RequestParam("id") int id,
+            @RequestParam(required = false, name = "format") String format,
+            HttpServletRequest request) throws Exception {
+        HttpServletRequest wrappedRequest = wrapRequest(request);
+        getAccessibleVideo(authentication, id);
+        try {
+            return captionsController.handleRequest(authentication, id, null, format, wrappedRequest);
+        } catch (NotFoundException | IllegalArgumentException e) {
+            throw new APIException(ErrorCode.NOT_FOUND, e.getMessage());
+        }
+    }
+
+    private MediaFile getAccessibleVideo(Authentication authentication, int id) throws APIException {
+        MediaFile video = mediaFileService.getMediaFile(id);
+        if (video == null || !video.isVideo()) {
+            throw new APIException(ErrorCode.NOT_FOUND, "Video not found: " + id);
+        }
+        if (!securityService.isFolderAccessAllowed(video, authentication.getName())) {
+            throw new APIException(ErrorCode.NOT_AUTHORIZED, "Access denied to video " + id);
+        }
+        return video;
     }
 
     @RequestMapping({"/startScan", "/startScan.view"})
@@ -2219,9 +2233,16 @@ public class SubsonicRESTController {
         };
     }
 
+    /**
+     * Keeps the commons-lang 2 meaning of {@code isNumeric}, which accepted the empty string.
+     */
+    private static boolean isNumericOrEmpty(String s) {
+        return s != null && (s.isEmpty() || StringUtils.isNumeric(s));
+    }
+
     private String mapId(String id) {
         if (id == null || id.startsWith(CoverArtController.ALBUM_COVERART_PREFIX) ||
-                id.startsWith(CoverArtController.ARTIST_COVERART_PREFIX) || StringUtils.isNumeric(id)) {
+                id.startsWith(CoverArtController.ARTIST_COVERART_PREFIX) || isNumericOrEmpty(id)) {
             return id;
         }
 
@@ -2240,6 +2261,20 @@ public class SubsonicRESTController {
 
     private void writeEmptyResponse(HttpServletRequest request, HttpServletResponse response) {
         jaxbWriter.writeResponse(request, response, createResponse());
+    }
+
+    /**
+     * Returns the current user if they have the given role. Otherwise writes a
+     * NOT_AUTHORIZED error to the response and returns {@code null}.
+     */
+    private org.airsonic.player.domain.User requireRole(HttpServletRequest request, HttpServletResponse response,
+            java.util.function.Predicate<org.airsonic.player.domain.User> role, String action) {
+        org.airsonic.player.domain.User user = securityService.getCurrentUser(request);
+        if (!role.test(user)) {
+            error(request, response, ErrorCode.NOT_AUTHORIZED, user.getUsername() + " is not authorized to " + action + ".");
+            return null;
+        }
+        return user;
     }
 
     public void error(HttpServletRequest request, HttpServletResponse response, ErrorCode code, String message) {

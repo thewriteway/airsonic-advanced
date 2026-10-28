@@ -44,6 +44,7 @@ import jakarta.validation.ConstraintViolationException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -233,6 +234,44 @@ public class UserRatingRepositoryTest {
     public void testAverageRatingNoRatings() {
         assertEquals(0, userRatingRepository.count());
         assertNull(userRatingRepository.getAverageRatingByMediaFileId(mediaFile.getId()));
+    }
+
+    @Test
+    public void testFindAverageRatingsOrdersAndPagesAlbums() {
+        MediaFile low = saveAlbum("albumLow", true);
+        MediaFile high = saveAlbum("albumHigh", true);
+        MediaFile missing = saveAlbum("albumMissing", false);
+        userRatingRepository.saveAndFlush(new UserRating(TEST_USER_NAME, low.getId(), 2));
+        userRatingRepository.saveAndFlush(new UserRating(TEST_USER_NAME_2, low.getId(), 3));
+        userRatingRepository.saveAndFlush(new UserRating(TEST_USER_NAME, high.getId(), 5));
+        userRatingRepository.saveAndFlush(new UserRating(TEST_USER_NAME, missing.getId(), 5));
+        // ratings of songs are not album ratings
+        userRatingRepository.saveAndFlush(new UserRating(TEST_USER_NAME, mediaFile.getId(), 5));
+
+        List<Object[]> all = userRatingRepository.findAverageRatings(List.of(testFolder), MediaType.ALBUM, new OffsetBasedPageRequest(0, 10));
+        assertEquals(List.of(high.getId(), low.getId()), all.stream().map(row -> row[0]).toList());
+        assertEquals(5.0, ((Number) all.get(0)[1]).doubleValue());
+        assertEquals(2.5, ((Number) all.get(1)[1]).doubleValue());
+
+        List<Object[]> secondPage = userRatingRepository.findAverageRatings(List.of(testFolder), MediaType.ALBUM, new OffsetBasedPageRequest(1, 1));
+        assertEquals(List.of(low.getId()), secondPage.stream().map(row -> row[0]).toList());
+
+        assertEquals(2, userRatingRepository.countRatedByUsername(TEST_USER_NAME, List.of(testFolder), MediaType.ALBUM));
+        assertEquals(1, userRatingRepository.countRatedByUsername(TEST_USER_NAME_2, List.of(testFolder), MediaType.ALBUM));
+    }
+
+    private MediaFile saveAlbum(String path, boolean present) {
+        MediaFile album = new MediaFile();
+        album.setFolder(testFolder);
+        album.setPath(path);
+        album.setMediaType(MediaType.ALBUM);
+        album.setStartPosition(MediaFile.NOT_INDEXED);
+        album.setPresent(present);
+        album.setCreated(Instant.now());
+        album.setChanged(Instant.now());
+        album.setLastScanned(Instant.now());
+        album.setChildrenLastUpdated(Instant.now());
+        return mediaFileRepository.saveAndFlush(album);
     }
 
 }

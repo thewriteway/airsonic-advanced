@@ -25,7 +25,8 @@ import de.umass.lastfm.Artist;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.*;
 import org.airsonic.player.repository.ArtistRepository;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Provides services from the Last.fm REST API.
@@ -48,6 +48,7 @@ public class LastFmService {
     private static final String LAST_FM_KEY = "ece4499898a9440896dfdce5dab26bbf";
     private static final long CACHE_TIME_TO_LIVE_MILLIS = 6 * 30 * 24 * 3600 * 1000L; // 6 months
     private static final Logger LOG = LoggerFactory.getLogger(LastFmService.class);
+    private static final Pattern MISTAGGED_ARTIST_PATTERN = Pattern.compile("(?:This is mistagged for|Fix your tags to)[^>]*class=\"bbcode_artist\">([^<]*)</a>");
 
     private final MediaFileService mediaFileService;
     private final ArtistRepository artistRepository;
@@ -81,7 +82,7 @@ public class LastFmService {
      * @return Similar artists, ordered by presence then similarity.
      */
     public List<MediaFile> getSimilarArtistsByMediaFile(MediaFile mediaFile, int count, boolean includeNotPresent, List<MusicFolder> musicFolders) {
-        List<MediaFile> result = new ArrayList<MediaFile>();
+        List<MediaFile> result = new ArrayList<>();
         if (mediaFile == null) {
             return result;
         }
@@ -117,7 +118,7 @@ public class LastFmService {
                 }
             }
 
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find similar artists for {}", artistName, x);
         }
         return result;
@@ -165,7 +166,7 @@ public class LastFmService {
                 }
             }
 
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find similar artists for {}", artist.getName(), x);
         }
         return result;
@@ -182,7 +183,7 @@ public class LastFmService {
     public List<MediaFile> getSimilarSongs(org.airsonic.player.domain.Artist artist, int count,
                                            List<MusicFolder> musicFolders) {
 
-        List<MediaFile> similarSongs = new ArrayList<MediaFile>(mediaFileService.getSongsByArtist(0, 1000, artist.getName()));
+        List<MediaFile> similarSongs = new ArrayList<>(mediaFileService.getSongsByArtist(0, 1000, artist.getName()));
         for (org.airsonic.player.domain.Artist similarArtist : getSimilarArtists(artist, 100, false, musicFolders)) {
             similarSongs.addAll(mediaFileService.getSongsByArtist(0, 1000, similarArtist.getName()));
         }
@@ -199,7 +200,7 @@ public class LastFmService {
      * @return Songs from similar artists;
      */
     public List<MediaFile> getSimilarSongsByMediaFile(MediaFile mediaFile, int count, List<MusicFolder> musicFolders) {
-        List<MediaFile> similarSongs = new ArrayList<MediaFile>();
+        List<MediaFile> similarSongs = new ArrayList<>();
 
         String artistName = getArtistName(mediaFile);
         MediaFile artist = mediaFileService.getArtistByName(artistName, musicFolders);
@@ -252,7 +253,7 @@ public class LastFmService {
                                  "",
                                  "",
                                  "");
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find artist bio for {}", artistName, x);
             return null;
         }
@@ -289,7 +290,7 @@ public class LastFmService {
                 return Collections.emptyList();
             }
 
-            List<MediaFile> result = new ArrayList<MediaFile>();
+            List<MediaFile> result = new ArrayList<>();
             for (Track topTrack : Artist.getTopTracks(canonicalArtistName, LAST_FM_KEY)) {
                 MediaFile song = mediaFileService.getSongByArtistAndTitle(artistName, topTrack.getName(), musicFolders);
 
@@ -301,7 +302,7 @@ public class LastFmService {
                 }
             }
             return result;
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find top songs for {}", artistName, x);
             return Collections.emptyList();
         }
@@ -349,7 +350,7 @@ public class LastFmService {
                                  info.getImageURL(ImageSize.MEDIUM),
                                  info.getImageURL(ImageSize.LARGE),
                                  info.getImageURL(ImageSize.MEGA));
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find album notes for {} - {}", artist, album, x);
             return null;
         }
@@ -379,8 +380,8 @@ public class LastFmService {
             return matches.stream()
                     .map(this::convert)
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        } catch (Throwable x) {
+                    .toList();
+        } catch (Exception x) {
             LOG.warn("Failed to search for cover art for {} - {}", artist, album, x);
             return Collections.emptyList();
         }
@@ -410,7 +411,7 @@ public class LastFmService {
             String biography = processWikiText(info.getWikiSummary());
             String redirectedArtistName = getRedirectedArtist(biography);
             return redirectedArtistName != null ? redirectedArtistName : artistName;
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to find artist bio for {}", artistName, x);
             return null;
         }
@@ -431,10 +432,9 @@ public class LastFmService {
         if (biography == null) {
             return null;
         }
-        Pattern pattern = Pattern.compile("((This is mistagged for)|(Fix your tags to)).*class=\"bbcode_artist\">(.*?)</a>");
-        Matcher matcher = pattern.matcher(biography);
+        Matcher matcher = MISTAGGED_ARTIST_PATTERN.matcher(biography);
         if (matcher.find()) {
-            return matcher.group(4);
+            return matcher.group(1);
         }
         return null;
     }
@@ -450,9 +450,9 @@ public class LastFmService {
          User-contributed text is available under the Creative Commons By-SA License and may also be available under the GNU FDL.
          */
 
-        text = StringUtils.replace(text, "User-contributed text.*", "");
-        text = StringUtils.replace(text, "<a ", "<a target='_blank' ");
-        text = StringUtils.replace(text, "\n", " ");
+        text = Strings.CS.replace(text, "User-contributed text.*", "");
+        text = Strings.CS.replace(text, "<a ", "<a target='_blank' ");
+        text = Strings.CS.replace(text, "\n", " ");
         text = StringUtils.trimToNull(text);
 
         if (text != null && text.startsWith("This is an incorrect tag")) {

@@ -23,6 +23,7 @@ package org.airsonic.player.controller;
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
 import org.airsonic.player.domain.*;
+import org.airsonic.player.io.PipeStreams;
 import org.airsonic.player.io.PipeStreams.MonitoredInputStream;
 import org.airsonic.player.io.PipeStreams.PipedInputStream;
 import org.airsonic.player.io.PipeStreams.PipedOutputStream;
@@ -49,12 +50,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
-import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -84,6 +83,7 @@ public class StreamController {
     private static final Logger LOG = LoggerFactory.getLogger(StreamController.class);
 
     private static final Set<String> ICY_IGNORED_CLIENT = Set.of("Tempo");
+    private static final Pattern VIDEO_SIZE_PATTERN = Pattern.compile("^(\\d+)x(\\d+)$");
 
     @Autowired
     private StatusService statusService;
@@ -145,10 +145,7 @@ public class StreamController {
         // Is this a request for a single file (typically from the embedded Flash player)?
         // In that case, create a separate playlist (in order to support multiple parallel streams).
         // Also, enable partial download (HTTP byte range).
-        MediaFile file = path.map(p -> {
-            Pattern pattern = Pattern.compile("\\.+/");
-            return mediaFileService.getMediaFile(pattern.matcher(p).replaceAll(""));
-        }).orElseGet(() -> id.map(mediaFileService::getMediaFile).orElse(null));
+        MediaFile file = path.map(p -> mediaFileService.getMediaFile(StringUtil.removeDotSlash(p))).orElseGet(() -> id.map(mediaFileService::getMediaFile).orElse(null));
         boolean isSingleFile = Objects.nonNull(file);
 
         // Caller specified `id` but the lookup returned null — return 404 instead of falling
@@ -164,10 +161,7 @@ public class StreamController {
 
         if (isSingleFile) {
 
-            if (!(authentication instanceof JWTAuthenticationToken)
-                    && !securityService.isFolderAccessAllowed(file, username)) {
-                throw new AccessDeniedException("Access to file " + file.getId() + " is forbidden for user " + username);
-            }
+            securityService.checkFolderAccess(file, username, authentication);
 
             // Update the index of the currently playing media file. At
             // this point we haven't yet modified the play queue to support
@@ -221,6 +215,8 @@ public class StreamController {
 
         VideoTranscodingSettings videoTranscodingSettingsF = videoTranscodingSettings;
         TransferStatus status = statusService.createStreamStatus(player);
+        // Lets LoggingExceptionResolver tell a replaced stream from a dropped client
+        swr.getRequest().setAttribute(TransferStatus.REQUEST_ATTRIBUTE, status);
 
         Consumer<MediaFile> fileStartListener = mediaFile -> {
             LOG.info("{}: {} listening to {} in folder {}", player.getIpAddress(), player.getUsername(), FileUtil.getShortPath(mediaFile.getRelativePath()), mediaFile.getFolder().getId());
@@ -276,8 +272,11 @@ public class StreamController {
 
         Supplier<TransferStatus> statusSupplier = () -> status;
         Consumer<TransferStatus> statusCloser = s -> {
-            securityService.incrementBytesStreamed(user.getUsername(), s.getBytesTransferred());
             statusService.removeStreamStatus(s);
+            // JWT streams signed for the anonymous subject (DLNA/UPnP, shares) have no backing user
+            if (user != null) {
+                securityService.incrementBytesStreamed(user.getUsername(), s.getBytesTransferred());
+            }
         };
 
         InputStream monitoredStream = new MonitoredInputStream(
@@ -294,11 +293,6 @@ public class StreamController {
         headers.setContentType(MediaType.parseMediaType(StringUtil.getMimeType(suffix, sonos)));
 
         return ResponseEntity.ok().headers(headers).body(resource);
-    }
-
-    @ExceptionHandler(AsyncRequestNotUsableException.class)
-    public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {
-        LOG.info("Client Aborted");
     }
 
     private void scrobble(MediaFile mediaFile, Player player, boolean submission) {
@@ -319,11 +313,13 @@ public class StreamController {
 
         return new ShoutcastDetails(new PipedInputStream(), (i, s) -> {
             PipedInputStream pin = (PipedInputStream) i;
+            // connect before the feeder thread starts, so the reader never sees an unconnected pipe
+            PipedOutputStream pipeOut = PipeStreams.connectedOutput(pin);
 
             // start a new thread to feed data in
             new Thread(() -> {
                 try (InputStream in = input;
-                        PipedOutputStream pout = new PipedOutputStream(pin);
+                        PipedOutputStream pout = pipeOut;
                         ShoutCastOutputStream shout = new ShoutCastOutputStream(pout,
                             () -> Optional.ofNullable(s)
                                     .map(TransferStatus::getMediaFile)
@@ -334,19 +330,6 @@ public class StreamController {
                     LOG.debug("Error with output to Shoutcast stream", e);
                 }
             }, "ShoutcastStreamDatafeed").start();
-
-            // wait for src data thread to connect
-            while (pin.source == null) {
-                // sit and wait and ponder life
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    LOG.debug("Interrupted while waiting for PipedInputStream to connect", e);
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                LOG.debug("Waiting for a source {}", pin.source == null);
-            }
         }, responseHeaders);
     }
 
@@ -455,8 +438,7 @@ public class StreamController {
             return null;
         }
 
-        Pattern pattern = Pattern.compile("^(\\d+)x(\\d+)$");
-        Matcher matcher = pattern.matcher(sizeSpec);
+        Matcher matcher = VIDEO_SIZE_PATTERN.matcher(sizeSpec);
         if (matcher.find()) {
             int w = Integer.parseInt(matcher.group(1));
             int h = Integer.parseInt(matcher.group(2));

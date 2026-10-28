@@ -35,6 +35,9 @@ public class TransferStatus {
     private static final int HISTORY_LENGTH = 200;
     private static final long SAMPLE_INTERVAL_MILLIS = 5000;
 
+    /** Request attribute under which a streaming request exposes its status. */
+    public static final String REQUEST_ATTRIBUTE = TransferStatus.class.getName();
+
     private final UUID id = UUID.randomUUID();
     private final Player player;
     private Path externalFile;
@@ -45,6 +48,7 @@ public class TransferStatus {
     private final SampleHistory history = new SampleHistory();
     private volatile boolean terminated;
     private volatile boolean active = true;
+    private volatile long started = System.currentTimeMillis();
 
     public TransferStatus(Player player) {
         this.player = player;
@@ -94,6 +98,15 @@ public class TransferStatus {
                 history.add(new Sample(bytesTransferred.get(), now));
             }
         }
+    }
+
+    /**
+     * Returns when the current transfer started.
+     *
+     * @return Milliseconds since the epoch.
+     */
+    public long getStarted() {
+        return started;
     }
 
     /**
@@ -235,6 +248,7 @@ public class TransferStatus {
         this.active = active;
 
         if (active) {
+            started = System.currentTimeMillis();
             setBytesSkipped(0L);
             setBytesTotal(0L);
             setBytesTransferred(0L);

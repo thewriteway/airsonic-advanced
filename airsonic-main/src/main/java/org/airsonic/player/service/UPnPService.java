@@ -23,6 +23,7 @@ package org.airsonic.player.service;
 import org.airsonic.player.service.upnp.ApacheUpnpServiceConfiguration;
 import org.airsonic.player.service.upnp.CustomContentDirectory;
 import org.airsonic.player.service.upnp.MSMediaReceiverRegistrarService;
+import org.apache.commons.lang3.StringUtils;
 import org.jupnp.UpnpService;
 import org.jupnp.UpnpServiceImpl;
 import org.jupnp.binding.annotations.AnnotationLocalServiceBinder;
@@ -101,6 +102,13 @@ public class UPnPService {
         });
     }
 
+    /**
+     * Returns whether the UPnP service (used by DLNA and Sonos) is running.
+     */
+    public boolean isRunning() {
+        return running.get();
+    }
+
     public void ensureServiceStopped() {
         running.getAndUpdate(bo -> {
             if (upnpService != null && bo) {
@@ -150,7 +158,27 @@ public class UPnPService {
         }
     }
 
-    private LocalDevice createMediaServerDevice() throws Exception {
+    /**
+     * Returns the presentation URI advertised in the device description, or null if the DLNA base LAN URL is
+     * unset or malformed. The device is still published without it, but clients cannot stream until the URL is
+     * set, because {@link org.airsonic.player.service.upnp.UpnpUtil#getBaseUrl()} needs it for resource URLs.
+     */
+    static URI resolvePresentationURI(String dlnaBaseLANURL) {
+        if (StringUtils.isBlank(dlnaBaseLANURL)) {
+            LOG.warn("DLNA base LAN URL is not set; the media server is advertised without a presentation URL and "
+                    + "clients cannot stream until it is set in the DLNA settings (e.g. http://192.168.1.10:4040)");
+            return null;
+        }
+        try {
+            return URI.create(dlnaBaseLANURL.trim());
+        } catch (IllegalArgumentException e) {
+            LOG.warn("DLNA base LAN URL '{}' is not a valid URI ({}); the media server is advertised without a "
+                    + "presentation URL", dlnaBaseLANURL, e.getMessage());
+            return null;
+        }
+    }
+
+    LocalDevice createMediaServerDevice() throws Exception {
 
         @SuppressWarnings("unchecked")
         LocalService<CustomContentDirectory> contentDirectoryservice = new AnnotationLocalServiceBinder()
@@ -207,16 +235,15 @@ public class UPnPService {
             settingsService.setDlnaServerId(serverId);
         }
 
-        // TODO: DLNACaps
         DLNADoc[] dlnaDocs = new DLNADoc[] { new DLNADoc("DMS", DLNADoc.Version.V1_5) };
         URI modelURI = URI.create("https://airsonic.github.io/");
         URI manufacturerURI = URI.create("https://github.com/thewriteway/airsonic-advanced");
-        URI presentaionURI = URI.create(settingsService.getDlnaBaseLANURL());
+        URI presentationURI = resolvePresentationURI(settingsService.getDlnaBaseLANURL());
         ManufacturerDetails manufacturerDetails = new ManufacturerDetails(serverName, modelURI);
         ModelDetails modelDetails = new ModelDetails(serverName, null, versionService.getLocalVersion().toString(),
                 manufacturerURI);
         DeviceDetails details = new DeviceDetails(serverName, manufacturerDetails, modelDetails, serialNumber, null,
-                presentaionURI, dlnaDocs, null);
+                presentationURI, dlnaDocs, null);
         DeviceIdentity identity = new DeviceIdentity(UDN.uniqueSystemIdentifier(serverName),
                 MIN_ADVERTISEMENT_AGE_SECONDS);
         DeviceType type = new UDADeviceType("MediaServer", 1);
@@ -227,11 +254,11 @@ public class UPnPService {
 
     public List<String> getSonosControllerHosts() {
         ensureServiceStarted();
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         for (Device<?, ?, ?> device : upnpService.getRegistry()
                 .getDevices(new DeviceType("schemas-upnp-org", "ZonePlayer"))) {
-            if (device instanceof RemoteDevice) {
-                URL descriptorURL = ((RemoteDevice) device).getIdentity().getDescriptorURL();
+            if (device instanceof RemoteDevice remoteDevice) {
+                URL descriptorURL = remoteDevice.getIdentity().getDescriptorURL();
                 if (descriptorURL != null) {
                     result.add(descriptorURL.getHost());
                 }

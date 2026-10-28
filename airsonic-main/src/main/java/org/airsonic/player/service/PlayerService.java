@@ -19,7 +19,7 @@
  */
 package org.airsonic.player.service;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Striped;
 import org.airsonic.player.command.PlayerSettingsCommand;
 import org.airsonic.player.domain.PlayQueue;
 import org.airsonic.player.domain.Player;
@@ -43,20 +43,22 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Provides services for maintaining the set of players.
@@ -70,6 +72,7 @@ public class PlayerService {
 
     private static final String COOKIE_NAME = "player";
     private static final int COOKIE_EXPIRY = 365 * 24 * 3600; // One year
+    private static final Duration LAST_SEEN_RESOLUTION = Duration.ofMinutes(1);
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerService.class);
 
@@ -88,19 +91,16 @@ public class PlayerService {
         deleteOldPlayers(60);
     }
 
-    private Map<Integer, PlayQueue> playlists = Collections.synchronizedMap(new HashMap<Integer, PlayQueue>());
+    private final Map<Integer, PlayQueue> playlists = new ConcurrentHashMap<>();
+
+    private final Striped<Lock> playerLocks = Striped.lock(64);
 
     /**
      * Adds a playlist to the given player.
      * @param player The player to add the playlist to.
      */
     private void addPlaylist(Player player) {
-        PlayQueue playQueue = playlists.get(player.getId());
-        if (playQueue == null) {
-            playQueue = new PlayQueue();
-            playlists.put(player.getId(), playQueue);
-        }
-        player.setPlayQueue(playQueue);
+        player.setPlayQueue(playlists.computeIfAbsent(player.getId(), k -> new PlayQueue()));
     }
 
     /**
@@ -125,7 +125,7 @@ public class PlayerService {
         return getPlayer(request, response, null, username, remoteControlEnabled, isStreamRequest);
     }
 
-    public synchronized Player getPlayer(HttpServletRequest request, HttpServletResponse response,
+    public Player getPlayer(HttpServletRequest request, HttpServletResponse response,
             Integer playerId, String username, boolean remoteControlEnabled, boolean isStreamRequest) throws Exception {
         return getPlayer(request, response, playerId, username, request.getHeader("user-agent"), remoteControlEnabled, isStreamRequest, false);
     }
@@ -144,50 +144,77 @@ public class PlayerService {
      * @param isWebSocketRequest   Whether the HTTP request is a request for a WebSocket.
      * @return The player associated with the given HTTP request. Never <code>null</code>.
      */
-    public synchronized Player getPlayer(HttpServletRequest request, HttpServletResponse response,
+    public Player getPlayer(HttpServletRequest request, HttpServletResponse response,
             Integer playerId, String username, String userAgent, boolean remoteControlEnabled, boolean isStreamRequest, boolean isWebSocketRequest) throws Exception {
+        // players are looked up and created per user and address, so only requests of the same client wait for each other
+        Lock lock = playerLocks.get(username + "@" + request.getRemoteAddr());
+        lock.lock();
+        try {
+            Player player = findRequestedPlayer(request, playerId, username, remoteControlEnabled, isWebSocketRequest);
 
+            // Look for player with same IP address and user name.
+            if (player == null) {
+                player = getNonRestPlayerByIpAddressAndUsername(request.getRemoteAddr(), username);
+            }
+
+            player = saveSeenPlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest);
+            rememberPlayer(request, response, player, username, remoteControlEnabled && !isWebSocketRequest);
+            return player;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns the player the request names by ID, 'player' parameter, session or cookie, unless it belongs to another user.
+     */
+    private Player findRequestedPlayer(HttpServletRequest request, Integer playerId, String username,
+            boolean remoteControlEnabled, boolean isWebSocketRequest) throws ServletRequestBindingException {
         Player player = getPlayerById(playerId);
 
-        // Find by 'player' request parameter.
-        if (!isWebSocketRequest && player == null) {
-            player = getPlayerById(ServletRequestUtils.getIntParameter(request, "player"));
-        }
-
-        // Find in session context.
-        if (!isWebSocketRequest && player == null && remoteControlEnabled) {
-            playerId = (Integer) request.getSession().getAttribute("player");
-            if (playerId != null) {
-                player = getPlayerById(playerId);
+        if (!isWebSocketRequest) {
+            // Find by 'player' request parameter.
+            if (player == null) {
+                player = getPlayerById(ServletRequestUtils.getIntParameter(request, "player"));
             }
-        }
-
-        // Find by cookie.
-        if (!isWebSocketRequest && player == null && remoteControlEnabled) {
-            player = getPlayerById(getPlayerIdFromCookie(request, username));
+            // Find in session context.
+            if (player == null && remoteControlEnabled) {
+                player = getPlayerById((Integer) request.getSession().getAttribute("player"));
+            }
+            // Find by cookie.
+            if (player == null && remoteControlEnabled) {
+                player = getPlayerById(getPlayerIdFromCookie(request, username));
+            }
         }
 
         // Make sure we're not hijacking the player of another user.
         if (player != null && player.getUsername() != null && username != null && !player.getUsername().equals(username)) {
-            player = null;
+            return null;
         }
+        return player;
+    }
 
-        // Look for player with same IP address and user name.
+    /**
+     * Creates the player if none was found, otherwise stores what changed about it.
+     */
+    private Player saveSeenPlayer(Player player, String username, String remoteAddress, String userAgent, boolean isStreamRequest) {
         if (player == null) {
-            player = getNonRestPlayerByIpAddressAndUsername(request.getRemoteAddr(), username);
+            Player newPlayer = new Player();
+            newPlayer.setLastSeen(Instant.now());
+            populatePlayer(newPlayer, username, remoteAddress, userAgent, isStreamRequest);
+            return createPlayer(newPlayer);
         }
-
-        // If no player was found, create it.
-        if (player == null) {
-            player = new Player();
-            player.setLastSeen(Instant.now());
-            populatePlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest);
-            player = createPlayer(player);
-        } else if (populatePlayer(player, username, request.getRemoteAddr(), userAgent, isStreamRequest)) {
+        if (populatePlayer(player, username, remoteAddress, userAgent, isStreamRequest)) {
             updatePlayer(player);
         }
+        return player;
+    }
 
-        // Set cookie in response.
+    /**
+     * Remembers the player in a cookie and, for remote-controlled players, in the session.
+     */
+    private void rememberPlayer(HttpServletRequest request, HttpServletResponse response, Player player, String username,
+            boolean rememberInSession) {
         if (response != null) {
             String cookieName = COOKIE_NAME + "-" + StringUtil.utf8HexEncode(username);
             String path = request.getContextPath();
@@ -200,12 +227,9 @@ public class PlayerService {
             response.addHeader("Set-Cookie", cookie.toString());
         }
 
-        // Save player in session context.
-        if (!isWebSocketRequest && remoteControlEnabled && request.getSession() != null) {
+        if (rememberInSession && request.getSession() != null) {
             request.getSession().setAttribute("player", player.getId());
         }
-
-        return player;
     }
 
     private boolean populatePlayer(Player player, String username, String remoteAddress, String userAgent, boolean isStreamRequest) {
@@ -221,9 +245,14 @@ public class PlayerService {
             isUpdate = true;
         }
         if (isStreamRequest) {
-            player.setType(userAgent);
-            player.setLastSeen(Instant.now());
-            isUpdate = true;
+            // every stream request would otherwise be a database write; lastSeen only needs to be roughly current
+            Instant now = Instant.now();
+            if (!Strings.CS.equals(userAgent, player.getType()) || player.getLastSeen() == null
+                    || player.getLastSeen().isBefore(now.minus(LAST_SEEN_RESOLUTION))) {
+                player.setType(userAgent);
+                player.setLastSeen(now);
+                isUpdate = true;
+            }
         }
 
         return isUpdate;
@@ -239,7 +268,7 @@ public class PlayerService {
         playerRepository.save(player);
         if (player.getUsername() != null) {
             asyncWebSocketClient.sendToUser(player.getUsername(), "/queue/players/updated",
-                    ImmutableMap.of("id", player.getId(), "description", player.getShortDescription(), "tech", player.getTechnology()));
+                    Map.of("id", player.getId(), "description", player.getShortDescription(), "tech", player.getTechnology()));
         }
     }
 
@@ -450,7 +479,7 @@ public class PlayerService {
 
         if (saved != null && saved.getUsername() != null) {
             asyncWebSocketClient.sendToUser(saved.getUsername(), "/queue/players/created",
-                    ImmutableMap.of("id", saved.getId(), "description", saved.getShortDescription(), "tech", saved.getTechnology()));
+                    Map.of("id", saved.getId(), "description", saved.getShortDescription(), "tech", saved.getTechnology()));
         }
         return saved;
     }

@@ -13,19 +13,104 @@
  */
 package org.airsonic.player.controller;
 
+import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.domain.MediaFile.MediaType;
+import org.airsonic.player.domain.PlayQueue;
+import org.airsonic.player.domain.Player;
+import org.airsonic.player.domain.TransferStatus;
+import org.airsonic.player.domain.User;
+import org.airsonic.player.security.JWTAuthenticationToken;
+import org.airsonic.player.service.MediaFileService;
+import org.airsonic.player.service.PlayerService;
+import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.service.SettingsService;
+import org.airsonic.player.service.StatusService;
 import org.airsonic.player.service.TranscodingService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.context.request.ServletWebRequest;
 
 import java.awt.Dimension;
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Sindre Mehus
  * @version $Id$
  */
+@ExtendWith(MockitoExtension.class)
 public class StreamControllerTestCase {
+
+    @Mock
+    private StatusService statusService;
+    @Mock
+    private PlayerService playerService;
+    @Mock
+    private SecurityService securityService;
+    @Mock
+    private SettingsService settingsService;
+    @Mock
+    private TranscodingService transcodingService;
+    @Mock
+    private MediaFileService mediaFileService;
+
+    @InjectMocks
+    private StreamController streamController;
+
+    /**
+     * DLNA/UPnP res URLs carry a JWT for the "anonymous" subject, which has no user row.
+     * Closing such a stream must still release its stream status.
+     */
+    @Test
+    public void testCloseAnonymousJwtStreamRemovesStatus() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/ext/stream");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MediaFile file = new MediaFile();
+        file.setId(1);
+        file.setMediaType(MediaType.MUSIC);
+        file.setChanged(Instant.now());
+
+        Player player = new Player();
+        player.setUsername(User.USERNAME_ANONYMOUS);
+        player.setPlayQueue(new PlayQueue());
+        TransferStatus status = new TransferStatus(player);
+
+        when(securityService.getCurrentUsername(request)).thenReturn(User.USERNAME_ANONYMOUS);
+        when(securityService.getUserByName(User.USERNAME_ANONYMOUS)).thenReturn(null);
+        when(playerService.getPlayer(request, response, User.USERNAME_ANONYMOUS, false, true)).thenReturn(player);
+        when(mediaFileService.getMediaFile(1)).thenReturn(file);
+        when(transcodingService.getParameters(file, player, null, null, null))
+                .thenReturn(new TranscodingService.Parameters(file, null));
+        when(transcodingService.getSuffix(player, file, null)).thenReturn("mp3");
+        when(statusService.createStreamStatus(player)).thenReturn(status);
+
+        JWTAuthenticationToken authentication = new JWTAuthenticationToken(User.USERNAME_ANONYMOUS, "jwt", "ext/stream?id=1");
+        ResponseEntity<Resource> result = streamController.handleRequest(authentication, null, null, null,
+                Optional.empty(), Optional.of(1), Optional.empty(), null, new ServletWebRequest(request, response));
+
+        InputStream stream = result.getBody().getInputStream();
+        stream.close();
+
+        verify(statusService).removeStreamStatus(status);
+        verify(securityService, never()).incrementBytesStreamed(anyString(), anyLong());
+    }
 
     @Test
     public void testGetRequestedVideoSize() {

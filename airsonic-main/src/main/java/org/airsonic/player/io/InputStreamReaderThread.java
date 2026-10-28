@@ -19,7 +19,6 @@
  */
 package org.airsonic.player.io;
 
-import org.airsonic.player.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,25 +29,37 @@ import java.io.InputStreamReader;
 
 /**
  * Utility class which reads everything from an input stream and optionally logs it.
+ * <p>
+ * Runs on a virtual thread: the work is pure blocking I/O, so it doesn't need a platform thread
+ * per transcoder process.
  *
  * @see TranscodeInputStream
  * @author Sindre Mehus
  */
-public class InputStreamReaderThread extends Thread {
+public class InputStreamReaderThread implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(InputStreamReaderThread.class);
 
-    private InputStream input;
-    private String name;
-    private boolean log;
+    private final InputStream input;
+    private final String name;
+    private final boolean log;
 
     public InputStreamReaderThread(InputStream input, String name, boolean log) {
-        super(name + " InputStreamLogger");
         this.input = input;
         this.name = name;
         this.log = log;
     }
 
+    /**
+     * Starts draining the stream on a new virtual thread.
+     *
+     * @return The started thread.
+     */
+    public Thread start() {
+        return Thread.ofVirtual().name(name + " InputStreamLogger").start(this);
+    }
+
+    @Override
     public void run() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(input))) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
@@ -57,8 +68,7 @@ public class InputStreamReaderThread extends Thread {
                 }
             }
         } catch (IOException ignored) {
-        } finally {
-            FileUtil.closeQuietly(input);
+            // Stream closed or process ended; nothing more to read.
         }
     }
 }

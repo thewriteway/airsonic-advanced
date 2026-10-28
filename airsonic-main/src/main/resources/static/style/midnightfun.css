@@ -6,52 +6,33 @@
 
 @import "default.css";
 
+:root {
+    --bg1: #AAAAAA;
+    --bg2: #C0C0C0;
+    --fg-detail: #333333;
+    --fg-heading: #000000;
+    --fg-strong: #000000;
+    --table-text: #000000;
+    --paginate: #656569;
+    --paginate-hover: #000000;
+    --paginate-current: #000000;
+    --row-hover: #999999;
+    --link: #656569;
+    --link-hover: #000000;
+    --warning: #990099;
+}
+
 /* The primary background colour. */
 .bgcolor1, table.music tr:nth-of-type(even) {
-    background-image:url('../icons/midnightfun/midnightfun_text_back.jpg');
-    background-repeat:repeat;
-    background-color: #AAAAAA;
+    background-image: url('../icons/midnightfun/midnightfun_text_back.jpg');
+    background-repeat: repeat;
 }
 
 /* The secondary background colour. */
 .bgcolor2, .ruleTableHeader, .log, table.music tr:nth-of-type(odd) {
-    background-image:url('../icons/midnightfun/midnightfun_background.gif');
-    background-repeat:repeat;
-    background-attachment:fixed;
-    background-color: #C0C0C0;
-}
-
-/* The secondary foreground colour used for h1, details etc. */
-h1, .detail, .albumComment {
-    color: #333333;
-}
-
-/* Foreground colour used for h2, bold and tr. */
-h2, b, tr {
-    color: #000000;
-}
-
-.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
-    color: #000000;
-}
-
-/* a:link color */
-.dataTables_wrapper .dataTables_paginate .paginate_button, button.dt-button, div.dt-button, a.dt-button {
-    color: #656569 !important;
-}
-
-/* a:hover color + .border1 border-color */
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover, button.dt-button:hover:not(.disabled), div.dt-button:hover:not(.disabled), a.dt-button:hover:not(.disabled) {
-    color: #000000 !important;
-}
-
-/* regular color + .border1 border-color */
-.dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-    color: #000000 !important;
-}
-
-table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover {
-    background-color: #999999;
+    background-image: url('../icons/midnightfun/midnightfun_background.gif');
+    background-repeat: repeat;
+    background-attachment: fixed;
 }
 
 /* Table sizing */
@@ -61,44 +42,29 @@ table {
 
 /* Main frame image & colour */
 .mainframe, .rightframe {
-    background-image:url('../icons/midnightfun/midnightfun_background.gif');
-    background-repeat:repeat;
-    background-attachment:fixed;
+    background-image: url('../icons/midnightfun/midnightfun_background.gif');
+    background-repeat: repeat;
+    background-attachment: fixed;
     background-color: #C0C0C0;
 }
 
 /* Back image */
 .back {
-    background-image:url("../icons/midnightfun/midnightfun_back.png");
-}
-
-/* Link colour */
-a:link, a:active, a:visited, a:link *, a:active *, a:visited * {
-    color: #656569;
-}
-
-/* Link hover colour */
-a:hover, a:hover * {
-    color: #000000;
-}
-
-/* Colour for warning messages. */
-.warning {
-    color: #990099;
+    background-image: url("../icons/midnightfun/midnightfun_back.png");
 }
 
 /* Background colour for form controls. */
 input, select {
-    background-image:url('../icons/midnightfun/midnightfun_form_controls.jpg');
-    background-repeat:repeat;
+    background-image: url('../icons/midnightfun/midnightfun_form_controls.jpg');
+    background-repeat: repeat;
     color: #FFFFFF;
     background-color: #AAAAAA;
 }
 
 /* Hover colour for form controls. */
 input:hover, select:hover {
-    background-image:url('../icons/midnightfun/midnightfun_form_controls_hover.jpg');
-    background-repeat:repeat;
+    background-image: url('../icons/midnightfun/midnightfun_form_controls_hover.jpg');
+    background-repeat: repeat;
     color: #000000;
     background-color: #C0C0C0;
 }
@@ -112,8 +78,8 @@ option {
 
 /* Background colour for option comments. */
 textarea {
-    background-image:url('../icons/midnightfun/midnightfun_form_controls.jpg');
-    background-repeat:repeat;
+    background-image: url('../icons/midnightfun/midnightfun_form_controls.jpg');
+    background-repeat: repeat;
     background-color: #AAAAAA;
     color: #FFFFFF;
 }
@@ -121,13 +87,6 @@ textarea {
 /* The primary foreground colour. */
 body {
     background-color: #C0C0C0;
-    scrollbar-face-color: #CCCCCC;
-    scrollbar-highlight-color: #FFFFFF;
-    scrollbar-shadow-color: #CCCCCC;
-    scrollbar-3dlight-color: #D1D7DC;
-    scrollbar-arrow-color: #000000;
-    scrollbar-track-color: #C0C0C0;
-    scrollbar-darkshadow-color: #98AAB1;
 }
 
 /* The album comments. */
@@ -145,8 +104,8 @@ body {
     white-space: nowrap;
     font-size: 8pt;
     line-height: 1em;
-    background-image:url('../icons/midnightfun/midnightfun_table.jpg');
-    background-repeat:repeat;
+    background-image: url('../icons/midnightfun/midnightfun_table.jpg');
+    background-repeat: repeat;
     color: #000000;
     background-color: #C0C0C0;
 }
@@ -155,12 +114,9 @@ body {
 .ruleTableHeader, .ruleTableCell {
     margin: 5px;
     padding: 5px;
-    background-image:url('../icons/midnightfun/midnightfun_table.jpg');
-    background-repeat:repeat;
-    background-attachment:fixed;
+    background-image: url('../icons/midnightfun/midnightfun_table.jpg');
+    background-repeat: repeat;
+    background-attachment: fixed;
     color: #FFFFFF;
     background-color: #C0C0C0;
 }
-
-
-/* MidnightFun http://www.midnightfun.co.uk */

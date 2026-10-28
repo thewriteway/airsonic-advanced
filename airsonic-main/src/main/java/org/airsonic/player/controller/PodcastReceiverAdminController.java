@@ -24,7 +24,7 @@ import org.airsonic.player.domain.PodcastStatus;
 import org.airsonic.player.service.PodcastManagementService;
 import org.airsonic.player.service.PodcastPersistenceService;
 import org.airsonic.player.service.podcast.PodcastDownloadClient;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -68,7 +68,7 @@ public class PodcastReceiverAdminController {
             return new ModelAndView(new RedirectView("podcastChannels.view"));
         }
         if (downloadEpisode != null && channelId != null) {
-            downloadEpisode.parallelStream()
+            downloadEpisode.stream()
                     .map(e -> podcastPersistenceService.getEpisode(e, false))
                     .filter(episode -> episode != null && episode.getUrl() != null
                             && (episode.getStatus() == PodcastStatus.NEW || episode.getStatus() == PodcastStatus.ERROR

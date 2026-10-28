@@ -23,10 +23,7 @@ package org.airsonic.player.controller;
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.RateLimiter;
-import com.google.re2j.Pattern;
 import org.airsonic.player.ajax.UploadInfo;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.domain.TransferStatus;
@@ -39,6 +36,7 @@ import org.airsonic.player.upload.MonitoredMultipartFile;
 import org.airsonic.player.upload.UploadListener;
 import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.LambdaUtils;
+import org.airsonic.player.util.StringUtil;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -100,7 +98,7 @@ public class UploadController {
     @Autowired
     private AirsonicHomeConfig homeConfig;
 
-    private static final Set<String> SUPPORTED_ZIP_FORMATS = ImmutableSet.of("zip", "7z", "rar", "cpio", "jar", "tar");
+    private static final Set<String> SUPPORTED_ZIP_FORMATS = Set.of("zip", "7z", "rar", "cpio", "jar", "tar");
     public static final Map<UUID, Consumer<Path>> registeredCallbacks = new ConcurrentHashMap<>();
 
     private void checkUploadAllowed(User user, Path p, boolean checkExistence) throws Exception {
@@ -139,9 +137,7 @@ public class UploadController {
             brokerTemplate.convertAndSendToUser(status.getPlayer().getUsername(), "/queue/uploads/status",
                     new UploadInfo(status.getId(), 0L, status.getBytesTotal()));
 
-            Pattern pattern = Pattern.compile("\\.+/");
-
-            dir = Paths.get(pattern.matcher(dirString).replaceAll(""));
+            dir = Paths.get(StringUtil.removeDotSlash(dirString));
 
             UploadListener listener = new UploadListenerImpl(status, settingsService.getUploadBitrateLimiter(), brokerTemplate);
 
@@ -174,7 +170,7 @@ public class UploadController {
                         uploadedFiles.add(targetFile);
                         LOG.info("Uploaded {} ", targetFile);
 
-                        if (unzip && SUPPORTED_ZIP_FORMATS.contains(MoreFiles.getFileExtension(targetFile).toLowerCase())) {
+                        if (unzip && SUPPORTED_ZIP_FORMATS.contains(FilenameUtils.getExtension(targetFile.toString()).toLowerCase())) {
                             unzip(targetFile, unzippedFiles, exceptions);
                         }
                     }

@@ -20,9 +20,9 @@
  */
 package org.airsonic.player.controller;
 
-import com.google.re2j.Pattern;
 import org.airsonic.player.service.PersonalSettingsService;
 import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,12 +58,11 @@ public class AvatarUploadController {
     protected ModelAndView handleRequestInternal(@RequestParam("file") MultipartFile file, HttpServletRequest request) throws Exception {
 
         String username = securityService.getCurrentUsername(request);
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
 
         if (!file.isEmpty()) {
             String filename = file.getOriginalFilename();
-            Pattern pattern = Pattern.compile("\\.+/");
-            map = personalSettingsService.createCustomAvatar(pattern.matcher(filename).replaceAll(""), file.getBytes(), username);
+            map = personalSettingsService.createCustomAvatar(StringUtil.removeDotSlash(filename), file.getBytes(), username);
         } else {
             map.put("error", new Exception("Missing file."));
             LOG.warn("Failed to upload personal image. No file specified.");

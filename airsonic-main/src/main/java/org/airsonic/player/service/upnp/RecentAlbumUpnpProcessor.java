@@ -60,12 +60,6 @@ public class RecentAlbumUpnpProcessor extends AlbumUpnpProcessor {
         // this restores the default behavior for the subclass.
         DIDLContent didl = new DIDLContent();
         List<Album> allItems = getAllItems();
-        if (filter != null) {
-            // filter items (not implemented yet)
-        }
-        if (orderBy != null) {
-            // sort items (not implemented yet)
-        }
         List<Album> selectedItems = Util.subList(allItems, firstResult, maxResults);
         for (Album item : selectedItems) {
             addItem(didl, item);

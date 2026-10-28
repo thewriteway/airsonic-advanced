@@ -17,10 +17,9 @@
         <chameleon.version>2.0.0-RELEASE</chameleon.version>
         <tomcat.server.scope>provided</tomcat.server.scope>
         <!-- For fixing import/export due to https://github.com/liquibase/liquibase/issues/1598 -->
-        <liquibase.version>5.0.3</liquibase.version>
-        <mockito.version>5.12.0</mockito.version>
+        <liquibase.version>5.0.4</liquibase.version>
         <mariadb.version>3.3.2</mariadb.version>
-        <aspectj.version>1.9.25.1</aspectj.version>
+        <aspectj.version>1.9.26</aspectj.version>
     </properties>
 
     <dependencies>
@@ -64,6 +63,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -114,9 +117,16 @@
             <artifactId>cache-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-            <classifier>jakarta</classifier>
+            <!-- JCache provider; ServerMetricsService reads its JMX statistics (puts, removals) -->
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>jcache</artifactId>
+            <exclusions>
+                <exclusion>
+                    <!-- OSGi DS annotations, not needed at runtime -->
+                    <groupId>org.osgi</groupId>
+                    <artifactId>org.osgi.service.component.annotations</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -131,6 +141,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <!-- the status page reads cache and session metrics -->
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -161,7 +176,7 @@
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
-            <version>4.6.1</version>
+            <version>4.6.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.ldap</groupId>
@@ -169,12 +184,12 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-taglibs</artifactId>
+            <artifactId>spring-security-acl</artifactId>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.85.2</version>
+            <version>1.86</version>
             <scope>runtime</scope>
         </dependency>
         <!-- END Spring -->
@@ -237,13 +252,7 @@
         <dependency>
             <groupId>com.github.junrar</groupId>
             <artifactId>junrar</artifactId>
-            <version>8.1.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
+            <version>8.1.2</version>
         </dependency>
 
         <dependency>
@@ -276,7 +285,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.6.4</version>
+            <version>5.6.5</version>
         </dependency>
 
         <dependency>
@@ -290,12 +299,6 @@
             <version>2.7.4</version>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>com.vdurmont</groupId>
-            <artifactId>semver4j</artifactId>
-            <version>3.1.0</version>
-        </dependency>
-
         <dependency>
             <groupId>net.jthink</groupId>
             <artifactId>jaudiotagger</artifactId>
@@ -325,13 +328,6 @@
         </dependency>
 
         <dependency>
-
-            <groupId>com.hoodcomputing</groupId>
-            <artifactId>natpmp</artifactId>
-            <version>0.1</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
             <scope>test</scope>
@@ -340,12 +336,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-inline</artifactId>
-            <version>5.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -440,10 +430,12 @@
             <version>5.1.0</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Needed at runtime by commons-configuration2's FileBasedConfigurationBuilder -->
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
             <version>1.11.0</version>
+            <scope>runtime</scope>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
@@ -473,7 +465,7 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.9.16</version>
+            <version>3.10.0</version>
         </dependency>
 
         <dependency>
@@ -558,15 +550,11 @@
         </dependency>
         <dependency>
             <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jaxb-annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
         <dependency>
             <groupId>com.ibm.icu</groupId>
@@ -620,7 +608,7 @@
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-webp</artifactId>
-            <version>3.15.2</version>
+            <version>3.15.3</version>
         </dependency>
 
     </dependencies>
@@ -709,10 +697,9 @@
                   </dependency>
                 </dependencies>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <!-- release (not source/target) so ajc on a newer JDK compiles against the java.version API -->
+                    <release>${java.version}</release>
                     <proc>none</proc>
-                    <complianceLevel>${java.version}</complianceLevel>
                     <showWeaveInfo>true</showWeaveInfo>
                      <aspectLibraries>
                          <aspectLibrary>

@@ -33,7 +33,6 @@ public class StreamServerConfigurationImpl implements StreamServerConfiguration 
     private int listenPort = 0;
     private int dataWaitTimeoutSeconds = 5;
     private int bufferSizeKilobytes = 8;
-    // TODO: This seems to be only relevant for HTTP clients, no?
     private boolean staleConnectionCheck = true;
     private boolean tcpNoDelay = true;
     private int tcpConnectionBacklog = 0;
@@ -85,6 +84,10 @@ public class StreamServerConfigurationImpl implements StreamServerConfiguration 
      * check may result in slight performance improvement at the risk of getting an I/O
      * error when executing a request over a connection that has been closed at the server
      * side. Defaults to <code>true</code>.
+     * <p>
+     * Only meaningful for client connections: HttpCore never read this setting for server-side
+     * connections, so {@link StreamServerImpl} does not apply it.
+     * </p>
      */
     public boolean isStaleConnectionCheck() {
         return staleConnectionCheck;

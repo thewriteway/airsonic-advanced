@@ -19,20 +19,19 @@
  */
 package org.airsonic.player.ajax;
 
+import org.airsonic.player.config.HttpClientConfig;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.LyricsService;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.util.Timeout;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
@@ -68,13 +67,17 @@ public class LyricsWSController {
 
     private final MediaFileService mediaFileService;
 
+    private final CloseableHttpClient httpClient;
+
     public LyricsWSController(
         LyricsService lyricsService,
         SecurityService securityService,
-        MediaFileService mediaFileService) {
+        MediaFileService mediaFileService,
+        CloseableHttpClient httpClient) {
         this.lyricsService = lyricsService;
         this.securityService = securityService;
         this.mediaFileService = mediaFileService;
+        this.httpClient = httpClient;
     }
 
 
@@ -137,16 +140,9 @@ public class LyricsWSController {
     }
 
     private String executeGetRequest(String url) throws IOException {
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(15000)
-                .setSocketTimeout(15000)
-                .build();
         HttpGet method = new HttpGet(url);
-        method.setConfig(requestConfig);
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            ResponseHandler<String> responseHandler = new BasicResponseHandler();
-            return client.execute(method, responseHandler);
-        }
+        method.setConfig(HttpClientConfig.responseTimeout(Timeout.ofSeconds(15)));
+        return httpClient.execute(method, new BasicHttpClientResponseHandler());
     }
 
     public static class LyricsGetRequest {

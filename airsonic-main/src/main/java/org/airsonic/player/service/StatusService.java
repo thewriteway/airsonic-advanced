@@ -35,11 +35,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,9 +78,9 @@ public class StatusService {
                 Instant.now().plus(3, ChronoUnit.HOURS), Duration.ofHours(3), true);
     }
 
-    private final List<TransferStatus> streamStatuses = Collections.synchronizedList(new ArrayList<>());
-    private final List<TransferStatus> downloadStatuses = Collections.synchronizedList(new ArrayList<>());
-    private final List<TransferStatus> uploadStatuses = Collections.synchronizedList(new ArrayList<>());
+    private final List<TransferStatus> streamStatuses = new CopyOnWriteArrayList<>();
+    private final List<TransferStatus> downloadStatuses = new CopyOnWriteArrayList<>();
+    private final List<TransferStatus> uploadStatuses = new CopyOnWriteArrayList<>();
     private final Set<PlayStatus> activeLocalPlays = ConcurrentHashMap.newKeySet();
 
     // Maps from player ID to latest inactive stream status.
@@ -108,26 +109,41 @@ public class StatusService {
 
     public List<TransferStatus> getAllStreamStatuses() {
         List<TransferStatus> snapshot = new ArrayList<>(streamStatuses);
-        Set<Integer> playerIds = snapshot.parallelStream()
+        Set<Integer> playerIds = snapshot.stream()
                 .map(x -> x.getPlayer().getId())
-                .collect(Collectors.toCollection(() -> ConcurrentHashMap.newKeySet()));
+                .collect(Collectors.toSet());
         // Add inactive status for those players that have no active status.
         return Stream.concat(
-                snapshot.parallelStream(),
-                inactiveStreamStatuses.values().parallelStream()
+                snapshot.stream(),
+                inactiveStreamStatuses.values().stream()
                         .filter(s -> !playerIds.contains(s.getPlayer().getId())))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public List<TransferStatus> getStreamStatusesForPlayer(Player player) {
-        // unsynchronized stream access, but should be okay, we'll just be a bit behind
-        return streamStatuses.parallelStream()
+        return streamStatuses.stream()
                 .filter(s -> s.getPlayer().getId().equals(player.getId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public TransferStatus getInactiveStreamStatusForPlayer(Player player) {
         return inactiveStreamStatuses.get(player.getId());
+    }
+
+    /**
+     * Returns whether the same player started another stream at or after the given one,
+     * meaning the client replaced it (track change, seek) rather than going away.
+     *
+     * @param status the stream status to check
+     * @return true if a newer stream exists for the same player
+     */
+    public boolean isStreamSuperseded(TransferStatus status) {
+        Integer playerId = status.getPlayer().getId();
+        // A short replacement may already have finished and moved to the inactive map
+        return Stream.concat(streamStatuses.stream(), Stream.ofNullable(inactiveStreamStatuses.get(playerId)))
+                .anyMatch(s -> s != status
+                        && Objects.equals(s.getPlayer().getId(), playerId)
+                        && s.getStarted() >= status.getStarted());
     }
 
     public TransferStatus createDownloadStatus(Player player) {
@@ -155,7 +171,7 @@ public class StatusService {
     }
 
     public void cleanupRemotePlays() {
-        Set<PlayStatus> expired = remotePlays.values().parallelStream().filter(PlayStatus::isExpired)
+        Set<PlayStatus> expired = remotePlays.values().stream().filter(PlayStatus::isExpired)
                 .collect(Collectors.toSet());
         expired.forEach(e -> {
             remotePlays.remove(e.getPlayer().getId());
@@ -242,7 +258,7 @@ public class StatusService {
     public List<PlayStatus> getActivePlayStatuses() {
         return activeLocalPlays.stream()
                 .filter(this::isAvailable)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -251,14 +267,14 @@ public class StatusService {
      * @return a list of inactive play statuses
      */
     public List<PlayStatus> getInactivePlayStatuses() {
-        Map<Integer, PlayStatus> inactivePlayStatuses = inactiveStreamStatuses.values().parallelStream()
+        Map<Integer, PlayStatus> inactivePlayStatuses = inactiveStreamStatuses.values().stream()
                 .map(ts -> getPlayStatus(ts))
                 .collect(Collectors.toMap(s -> s.getPlayer().getId(), s -> s));
         inactivePlayStatuses.putAll(remotePlays);
 
         return inactivePlayStatuses.values().stream()
                 .filter(s -> isAvailable(s))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

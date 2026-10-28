@@ -3,6 +3,7 @@ package org.airsonic.player.spring;
 import org.airsonic.player.config.AirsonicHomeConfig;
 import org.airsonic.player.controller.PodcastController;
 import org.airsonic.player.filter.BootstrapVerificationFilter;
+import org.airsonic.player.filter.ContentSecurityPolicyFilter;
 import org.airsonic.player.filter.MetricsFilter;
 import org.airsonic.player.filter.ParameterDecodingFilter;
 import org.airsonic.player.filter.RESTFilter;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 
@@ -96,7 +98,7 @@ public class ServletConfiguration implements WebMvcConfigurer {
     @Bean
     public FilterRegistrationBean<Filter> cacheFilterRegistration() {
         FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(cacheFilter());
-        registration.addUrlPatterns("/icons/*", "/style/*", "/script/*", "/icons/*", "/coverArt.view", "/avatar.view");
+        registration.addUrlPatterns("/icons/*", "/style/*", "/script/*", "/coverArt", "/coverArt.view", "/avatar", "/avatar.view");
         registration.addInitParameter("Cache-Control", "max-age=36000");
         registration.setName("CacheFilter");
         registration.setOrder(5);
@@ -111,7 +113,8 @@ public class ServletConfiguration implements WebMvcConfigurer {
     @Bean
     public FilterRegistrationBean<Filter> noCacheFilterRegistration() {
         FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(noCacheFilter());
-        registration.addUrlPatterns("/statusChart.view", "/userChart.view", "/playQueue.view", "/podcastChannels.view", "/podcastChannel.view", "/help.view", "/top.view", "/home.view");
+        registration.addUrlPatterns("/playQueue", "/playQueue.view", "/podcastChannels", "/podcastChannels.view",
+                "/podcastChannel", "/podcastChannel.view", "/help", "/help.view", "/home", "/home.view");
         registration.addInitParameter("Cache-Control", "no-cache, post-check=0, pre-check=0");
         registration.addInitParameter("Pragma", "no-cache");
         registration.addInitParameter("Expires", "Thu, 01 Dec 1994 16:00:00 GMT");
@@ -123,6 +126,20 @@ public class ServletConfiguration implements WebMvcConfigurer {
     @Bean
     public ResponseHeaderFilter noCacheFilter() {
         return new ResponseHeaderFilter();
+    }
+
+    @Bean
+    public FilterRegistrationBean<Filter> contentSecurityPolicyFilterRegistration() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(new ContentSecurityPolicyFilter());
+        registration.addUrlPatterns("/*");
+        registration.setName("ContentSecurityPolicyFilter");
+        registration.setOrder(2);
+        return registration;
+    }
+
+    @Bean
+    public CspNonceDialect cspNonceDialect() {
+        return new CspNonceDialect();
     }
 
     @Bean
@@ -146,6 +163,11 @@ public class ServletConfiguration implements WebMvcConfigurer {
         mapping.setMappings(properties);
 
         return mapping;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new ShellNavigationInterceptor());
     }
 
     @Autowired

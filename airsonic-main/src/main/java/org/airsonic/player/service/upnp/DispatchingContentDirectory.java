@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.regex.Pattern;
 
 /**
  * @author Allen Petersen
@@ -40,6 +41,9 @@ public class DispatchingContentDirectory extends CustomContentDirectory {
     private static final Logger LOG = LoggerFactory.getLogger(DispatchingContentDirectory.class);
 
     protected static final String SEPARATOR = "-";
+
+    private static final Pattern UPNP_CLASS_CRITERION = Pattern.compile("^.*upnp:class\\s+[\\S]+\\s+\"([\\S]*)\".*$");
+    private static final Pattern TITLE_CRITERION = Pattern.compile("^.*dc:title\\s+[\\S]+\\s+\"([\\S]*)\".*$");
 
     @Autowired
     private UpnpProcessorRouter router;
@@ -83,7 +87,7 @@ public class DispatchingContentDirectory extends CustomContentDirectory {
                         : processor.browseObject(itemId, filter, firstResult, maxResults, orderBy);
             }
             return returnValue;
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.error("UPnP error", x);
             throw new ContentDirectoryException(ContentDirectoryErrorCode.CANNOT_PROCESS, x.toString());
         }
@@ -96,8 +100,8 @@ public class DispatchingContentDirectory extends CustomContentDirectory {
             SortCriterion[] orderBy) throws ContentDirectoryException {
         // i don't see a parser for upnp search criteria anywhere, so this will
         // have to do
-        String upnpClass = searchCriteria.replaceAll("^.*upnp:class\\s+[\\S]+\\s+\"([\\S]*)\".*$", "$1");
-        String titleSearch = searchCriteria.replaceAll("^.*dc:title\\s+[\\S]+\\s+\"([\\S]*)\".*$", "$1");
+        String upnpClass = UPNP_CLASS_CRITERION.matcher(searchCriteria).replaceAll("$1");
+        String titleSearch = TITLE_CRITERION.matcher(searchCriteria).replaceAll("$1");
         BrowseResult returnValue = null;
         if ("object.container.person.musicArtist".equalsIgnoreCase(upnpClass)) {
             returnValue = router.getArtistProcessor().searchByName(titleSearch, firstResult, maxResults, orderBy);

@@ -37,8 +37,8 @@ import org.airsonic.player.util.FileUtil;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.PodcastUtil;
 import org.airsonic.player.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
 import org.slf4j.Logger;
@@ -59,9 +59,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 /**
  * Provides services for Podcast reception.
@@ -139,7 +136,7 @@ public class PodcastPersistenceService {
                 podcastChannelRepository.save(c);
                 LOG.info("Reset channel status '{}' since refresh was interrupted.", c.getTitle());
                 return c.getId();
-            }).collect(Collectors.toList());
+            }).toList();
     }
 
     /**
@@ -227,8 +224,7 @@ public class PodcastPersistenceService {
      * @return channels without rule
      */
     public List<PodcastChannel> getChannelsWithoutRule() {
-        Set<Integer> ruleIds = podcastRuleRepository.findAll().parallelStream().map(r -> r.getId()).collect(toSet());
-        return podcastChannelRepository.findAll().parallelStream().filter(c -> !ruleIds.contains(c.getId())).collect(toList());
+        return podcastChannelRepository.findWithoutRule();
     }
 
     /**
@@ -496,7 +492,7 @@ public class PodcastPersistenceService {
             podcastEpisodeRepository.save(episode);
             return episode;
         }).orElseGet(() -> {
-            LOG.info("Podcast episode with id {} not found", episodeId);
+            LOG.info("Podcast episode to download not found");
             return null;
         });
     }
@@ -565,7 +561,7 @@ public class PodcastPersistenceService {
     public boolean deleteChannel(int channelId) {
         // Delete all associated episodes (in case they have files that need to be deleted).
         return podcastChannelRepository.findById(channelId).map(channel -> {
-            podcastEpisodeRepository.findByChannel(channel).parallelStream()
+            podcastEpisodeRepository.findByChannel(channel).stream()
                 .filter(filterAllowed)
                 .forEach(episode -> {
                     MediaFile mediaFile = episode.getMediaFile();
@@ -667,7 +663,7 @@ public class PodcastPersistenceService {
 
         // Don't do anything if other episodes of the same channel is currently
         // downloading.
-        if (episodes.parallelStream().anyMatch(episode -> episode.getStatus() == PodcastStatus.DOWNLOADING)) {
+        if (episodes.stream().anyMatch(episode -> episode.getStatus() == PodcastStatus.DOWNLOADING)) {
             return;
         }
 
@@ -693,7 +689,7 @@ public class PodcastPersistenceService {
         return podcastEpisodeRepository.findByChannelAndLockedFalse(channel).stream()
             .filter(filterAllowed)
             .sorted(Comparator.comparing(PodcastEpisode::getPublishDate, Comparator.nullsLast(Comparator.reverseOrder())))
-            .collect(Collectors.toList());
+            .toList();
     }
 
     /**
@@ -703,12 +699,13 @@ public class PodcastPersistenceService {
      */
     @Transactional
     public void lockEpisode(int episodeId) {
-        LOG.info("Locking episode with id {}", episodeId);
+        // ids come from requests, so only the stored episode's id is logged
         podcastEpisodeRepository.findById(episodeId).ifPresentOrElse(episode -> {
+            LOG.info("Locking episode with id {}", episode.getId());
             episode.setLocked(true);
             podcastEpisodeRepository.save(episode);
         }, () -> {
-            LOG.warn("Podcast episode with id {} not found", episodeId);
+            LOG.warn("Podcast episode to lock not found");
         });
     }
 
@@ -719,12 +716,12 @@ public class PodcastPersistenceService {
      */
     @Transactional
     public void unlockEpisode(int episodeId) {
-        LOG.info("Unlocking episode with id {}", episodeId);
         podcastEpisodeRepository.findById(episodeId).ifPresentOrElse(episode -> {
+            LOG.info("Unlocking episode with id {}", episode.getId());
             episode.setLocked(false);
             podcastEpisodeRepository.save(episode);
         }, () -> {
-            LOG.warn("Podcast episode with id {} not found", episodeId);
+            LOG.warn("Podcast episode to unlock not found");
         });
     }
 

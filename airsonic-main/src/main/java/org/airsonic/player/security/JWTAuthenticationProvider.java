@@ -3,8 +3,6 @@ package org.airsonic.player.security;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
 import org.airsonic.player.service.JWTSecurityService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -41,11 +39,10 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication auth) throws AuthenticationException {
         JWTAuthenticationToken authentication = (JWTAuthenticationToken) auth;
-        if (authentication.getCredentials() == null || !(authentication.getCredentials() instanceof String)) {
+        if (!(authentication.getCredentials() instanceof String rawToken)) {
             LOG.error("Credentials not present");
             return null;
         }
-        String rawToken = (String) auth.getCredentials();
         DecodedJWT token = null;
 
         try {
@@ -63,7 +60,7 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
                     .getRequestedPath() + ". They are valid for " + path.asString());
         }
 
-        List<VerificationCheck> moreChecks = additionalChecks.get(UriComponentsBuilder.fromUriString(authentication.getRequestedPath()).build().getPath());
+        List<VerificationCheck> moreChecks = additionalChecks.get(checkKey(UriComponentsBuilder.fromUriString(authentication.getRequestedPath()).build().getPath()));
         if (moreChecks != null) {
             for (VerificationCheck check : moreChecks) {
                 check.check(token);
@@ -105,10 +102,16 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
             left.remove("size");
             right.remove("size");
 
-            MapDifference<String, List<String>> difference = Maps.difference(left, right);
+            // The token itself travels as an extra jwt param on the requested URL; it is not part of the signed path
+            if (!left.containsKey(JWTSecurityService.JWT_PARAM_NAME)) {
+                List<String> jwt = right.remove(JWTSecurityService.JWT_PARAM_NAME);
+                if (jwt != null && jwt.size() != 1) {
+                    LOG.debug("False: requested path has {} jwt params", jwt.size());
+                    return false;
+                }
+            }
 
-            if (difference.entriesDiffering().isEmpty() || difference.entriesOnlyOnLeft().isEmpty()
-                    || (difference.entriesOnlyOnRight().size() == 1 && difference.entriesOnlyOnRight().get(JWTSecurityService.JWT_PARAM_NAME) != null)) {
+            if (left.equals(right)) {
                 return true;
             }
 
@@ -122,7 +125,15 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
     }
 
     public void addAdditionalCheck(String path, VerificationCheck check) {
-        additionalChecks.computeIfAbsent(path, k -> new ArrayList<>()).add(check);
+        additionalChecks.computeIfAbsent(checkKey(path), k -> new ArrayList<>()).add(check);
+    }
+
+    /**
+     * Requested paths are relative to the context path ("ws/Sonos"), while checks may be registered
+     * as servlet paths ("/ws/Sonos"), so key both without the leading slash.
+     */
+    private static String checkKey(String path) {
+        return StringUtils.removeStart(path, "/");
     }
 
     @Override

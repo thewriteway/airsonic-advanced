@@ -72,7 +72,7 @@ public class ShareManagementController {
 
         User user = securityService.getCurrentUser(request);
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("dir", dir);
         map.put("user", user);
 

@@ -1,6 +1,5 @@
 package org.airsonic.player.security;
 
-import com.google.common.collect.ImmutableMap;
 import org.airsonic.player.service.JWTSecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.apache.commons.codec.binary.Base16;
@@ -33,18 +32,16 @@ public class PasswordEncoderConfig {
     @Autowired
     private SettingsService settingsService;
 
-    public static final Map<String, PasswordEncoder> ENCODERS = new HashMap<>(ImmutableMap
-            .<String, PasswordEncoder>builderWithExpectedSize(9)
-            .put("bcrypt", new BCryptPasswordEncoder())
-            .put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8())
-            .put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8())
-            .put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8())
+    public static final Map<String, PasswordEncoder> ENCODERS = new HashMap<>(Map.of(
+            "bcrypt", new BCryptPasswordEncoder(),
+            "pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8(),
+            "scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8(),
+            "argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8(),
 
             // AES-GCM encrypted encoder (secure two-way encryption when needed)
-            .put("encrypted-AES-GCM", new AesGcmPasswordEncoder()) // placeholder (real instance created below)
-            .put("encrypted-AES-GCM" + SALT_TOKEN_MECHANISM_SPECIALIZATION,
-                    new SaltedTokenPasswordEncoder(new AesGcmPasswordEncoder())) // placeholder (real instance created below)
-            .build());
+            "encrypted-AES-GCM", new AesGcmPasswordEncoder(), // placeholder (real instance created below)
+            "encrypted-AES-GCM" + SALT_TOKEN_MECHANISM_SPECIALIZATION,
+                    new SaltedTokenPasswordEncoder(new AesGcmPasswordEncoder()))); // placeholder (real instance created below)
 
     public static final Set<String> NONLEGACY_ENCODERS = ENCODERS.keySet().stream()
             .filter(e -> !Strings.CS.containsAny(e, "legacy", SALT_TOKEN_MECHANISM_SPECIALIZATION))

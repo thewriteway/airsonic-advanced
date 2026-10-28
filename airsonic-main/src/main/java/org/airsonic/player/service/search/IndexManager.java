@@ -298,12 +298,12 @@ public class IndexManager {
                 return null;
             }
             IndexReader indexReader = searcher.getIndexReader();
-            if (!(indexReader instanceof DirectoryReader)) {
+            if (!(indexReader instanceof DirectoryReader directoryReader)) {
                 LOG.warn("Unexpected index type {} for {}", indexReader.getClass(), t);
                 return null;
             }
             try {
-                Map<String, String> userData = ((DirectoryReader) indexReader).getIndexCommit().getUserData();
+                Map<String, String> userData = directoryReader.getIndexCommit().getUserData();
                 return Util.stringMapToValidObject(MediaLibraryStatistics.class, userData);
             } catch (IOException | IllegalArgumentException e) {
                 LOG.debug("Exception encountered while fetching index commit data for {}", t, e);

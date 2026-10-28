@@ -8,7 +8,9 @@ import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.function.BiConsumer;
@@ -25,6 +27,29 @@ import java.util.function.Supplier;
  *
  */
 public class PipeStreams {
+
+    /**
+     * Restores the thread's interrupt flag and wraps the cause in an {@link InterruptedIOException}.
+     */
+    private static InterruptedIOException interrupted(InterruptedException e) {
+        Thread.currentThread().interrupt();
+        InterruptedIOException ioe = new InterruptedIOException(e.getMessage());
+        ioe.initCause(e);
+        return ioe;
+    }
+
+    /**
+     * Creates an output stream connected to {@code sink}. Connect on the reading thread before handing the
+     * output stream to a writer thread, so the reader never sees an unconnected pipe.
+     */
+    public static PipedOutputStream connectedOutput(PipedInputStream sink) {
+        try {
+            return new PipedOutputStream(sink);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     /**
      * This class is equivalent to <code>java.io.PipedInputStream</code>. In the
      * interface it only adds a constructor which allows for specifying the buffer
@@ -46,7 +71,7 @@ public class PipeStreams {
         boolean closed = false;
         int readLaps = 0;
         int readPosition = 0;
-        public PipedOutputStream source;
+        PipedOutputStream source;
         int writeLaps = 0;
         int writePosition = 0;
 
@@ -164,7 +189,7 @@ public class PipeStreams {
                         buffer.notifyAll();
                         buffer.wait();
                     } catch (InterruptedException e) {
-                        throw new IOException(e.getMessage());
+                        throw interrupted(e);
                     }
 
                     // Try again.
@@ -312,7 +337,7 @@ public class PipeStreams {
                         sink.buffer.notifyAll();
                         sink.buffer.wait();
                     } catch (InterruptedException e) {
-                        throw new IOException(e.getMessage());
+                        throw interrupted(e);
                     }
 
                     // Try again.

@@ -502,20 +502,17 @@ public class WebsocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
         @Override
         public String getProtocolRequestId() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'getProtocolRequestId'");
+            return getOriginalRequest().getServletRequest().getProtocolRequestId();
         }
 
         @Override
         public String getRequestId() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'getRequestId'");
+            return getOriginalRequest().getServletRequest().getRequestId();
         }
 
         @Override
         public ServletConnection getServletConnection() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'getServletConnection'");
+            return getOriginalRequest().getServletRequest().getServletConnection();
         }
 
     }

@@ -20,11 +20,11 @@
  */
 package org.airsonic.player.service.metadata;
 
-import com.google.common.collect.ImmutableSet;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.MediaFolderService;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.AudioHeader;
@@ -124,7 +124,7 @@ public class JaudiotaggerParser extends MetaDataParser {
 
     private static String getTagField(Tag tag, FieldKey fieldKey) {
         try {
-            return StringUtils.replace(StringUtils.trimToNull(tag.getFirst(fieldKey)), "\0", " ");
+            return Strings.CS.replace(StringUtils.trimToNull(tag.getFirst(fieldKey)), "\0", " ");
         } catch (Exception x) {
             // Ignored.
             return null;
@@ -170,7 +170,7 @@ public class JaudiotaggerParser extends MetaDataParser {
 
             audioFile.commit();
 
-        } catch (Throwable x) {
+        } catch (Exception x) {
             LOG.warn("Failed to update tags for file {}", file, x);
             throw new RuntimeException("Failed to update tags for file " + file + ". " + x.getMessage(), x);
         }
@@ -186,8 +186,8 @@ public class JaudiotaggerParser extends MetaDataParser {
         return true;
     }
 
-    private static Set<String> imageAvailableFormats = ImmutableSet.of("mp3", "m4a", "m4b", "m4p", "aac", "ogg", "flac", "wav", "aif", "dsf", "aiff", "wma");
-    private static Set<String> applicableFormats = ImmutableSet.of("mp3","flac");
+    private static final Set<String> imageAvailableFormats = Set.of("mp3", "m4a", "m4b", "m4p", "aac", "ogg", "flac", "wav", "aif", "dsf", "aiff", "wma");
+    private static final Set<String> applicableFormats = Set.of("mp3","flac");
 
 
     /**
