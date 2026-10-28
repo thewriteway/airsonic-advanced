@@ -19,7 +19,7 @@
         <!-- For fixing import/export due to https://github.com/liquibase/liquibase/issues/1598 -->
         <liquibase.version>5.0.4</liquibase.version>
         <mariadb.version>3.3.2</mariadb.version>
-        <aspectj.version>1.9.25.1</aspectj.version>
+        <aspectj.version>1.9.26</aspectj.version>
     </properties>
 
     <dependencies>
