@@ -19,41 +19,23 @@
  */
 package org.airsonic.player.ajax;
 
-import org.airsonic.player.config.HttpClientConfig;
+import org.airsonic.player.domain.Lyrics;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.service.LyricsService;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.SecurityService;
-import org.airsonic.player.util.StringUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hc.client5.http.ConnectTimeoutException;
-import org.apache.hc.client5.http.HttpResponseException;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.core5.util.Timeout;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jdom2.Namespace;
-import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.SocketException;
 import java.security.Principal;
 
-import static org.airsonic.player.util.XMLUtil.createSAXBuilder;
-
 /**
- * Provides services for retrieving song lyrics from chartlyrics.com.
+ * Looks up song lyrics from local sources (database, LRC sidecar, embedded tag).
  * <p/>
- * See http://www.chartlyrics.com/api.aspx for details.
- *
+ * This used to query chartlyrics.com, which has been offline for years.
  */
 @Controller
 @MessageMapping("/lyrics")
@@ -67,82 +49,41 @@ public class LyricsWSController {
 
     private final MediaFileService mediaFileService;
 
-    private final CloseableHttpClient httpClient;
-
     public LyricsWSController(
         LyricsService lyricsService,
         SecurityService securityService,
-        MediaFileService mediaFileService,
-        CloseableHttpClient httpClient) {
+        MediaFileService mediaFileService) {
         this.lyricsService = lyricsService;
         this.securityService = securityService;
         this.mediaFileService = mediaFileService;
-        this.httpClient = httpClient;
     }
 
 
     /**
-     * Returns lyrics for the given song and artist.
+     * Looks up lyrics for the given song. When any are found, {@link LyricsStatus#isPersisted()}
+     * is set so the client reloads the page to show them.
      *
-     * @return The lyrics, never <code>null</code> .
+     * @return The lookup status, never <code>null</code>.
      */
     @MessageMapping("/get")
     @SendToUser(broadcast = false)
     public LyricsStatus getLyrics(Principal user, LyricsGetRequest req) {
 
-        String artist = req.getArtist();
-        String song = req.getSong();
-
         LyricsStatus status = new LyricsStatus();
+        if (req.getId() == null) {
+            return status;
+        }
+        MediaFile mediaFile = mediaFileService.getMediaFile(req.getId());
+        if (mediaFile == null || !securityService.isFolderAccessAllowed(mediaFile, user.getName())) {
+            return status;
+        }
         try {
-
-            artist = StringUtil.urlEncode(artist);
-            song = StringUtil.urlEncode(song);
-
-            String url = "http://api.chartlyrics.com/apiv1.asmx/SearchLyricDirect?artist=" + artist + "&song=" + song;
-            String xml = executeGetRequest(url);
-            String lyrics = parseSearchResult(xml);
-
-            if (lyrics != null && req.getId() != null) {
-                MediaFile mediaFile = mediaFileService.getMediaFile(req.getId());
-                if (mediaFile != null && securityService.isFolderAccessAllowed(mediaFile, user.getName())) {
-                    boolean persisted = lyricsService.saveLyricsForMediaFile(mediaFile, lyrics, "chartlyrics.com");
-                    LOG.info("Persisted lyrics for song '{}' by '{}': {}", song, artist, persisted);
-                    status.setPersisted(persisted);
-                }
-            }
-        } catch (HttpResponseException x) {
-            LOG.warn("Failed to get lyrics for song '{}'. Request failed: {}", song, x.toString());
-            if (x.getStatusCode() == 503) {
-                status.setTryLater(true);
-            }
-        } catch (SocketException | ConnectTimeoutException x) {
-            LOG.warn("Failed to get lyrics for song '{}': {}", song, x.toString());
-            status.setTryLater(true);
+            Lyrics lyrics = lyricsService.getLyricsFromMediaFile(mediaFile);
+            status.setPersisted(lyrics != null);
         } catch (Exception x) {
-            LOG.warn("Failed to get lyrics for song '{}'", song, x);
+            LOG.warn("Failed to get lyrics for media file {}", req.getId(), x);
         }
         return status;
-    }
-
-
-
-    private String parseSearchResult(String xml) throws Exception {
-        SAXBuilder builder = createSAXBuilder();
-        Document document = builder.build(new StringReader(xml));
-
-        Element root = document.getRootElement();
-        Namespace ns = root.getNamespace();
-
-        String lyric = StringUtils.trimToNull(root.getChildText("Lyric", ns));
-
-        return lyric;
-    }
-
-    private String executeGetRequest(String url) throws IOException {
-        HttpGet method = new HttpGet(url);
-        method.setConfig(HttpClientConfig.responseTimeout(Timeout.ofSeconds(15)));
-        return httpClient.execute(method, new BasicHttpClientResponseHandler());
     }
 
     public static class LyricsGetRequest {
