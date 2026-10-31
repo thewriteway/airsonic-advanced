@@ -37,32 +37,30 @@ public class Genres {
 
     private final Map<String, Genre> genres = new ConcurrentHashMap<>();
 
-    // genre names can be ([genre] --> [split to])
+    // genre names can be ([genre] --> [counted as])
     // - abc --> ['abc']
-    // - abc; --> ['abc', '']
+    // - abc; --> ['abc;']
     // - abc;xyz --> ['abc', 'xyz']
-    // - abc; xyz --> ['abc', ' xyz']
+    // - abc; xyz --> ['abc', 'xyz']
+    // A tag holding several genres only counts towards its parts, not as a genre of its own.
 
     public void incrementAlbumCount(String genreName, String separators) {
-        String[] splitGenres = StringUtils.split(genreName, separators);
-        if (splitGenres.length > 1) { // otherwise it's the same genre as the original
-            Stream.of(splitGenres)
-                    .map(StringUtils::trim)
-                    .filter(StringUtils::isNotBlank)
-                    .forEach(s -> genres.computeIfAbsent(s, k -> new Genre(k)).incrementAlbumCount());
-        }
-        genres.computeIfAbsent(genreName, k -> new Genre(k)).incrementAlbumCount();
+        split(genreName, separators).forEach(s -> genres.computeIfAbsent(s, k -> new Genre(k)).incrementAlbumCount());
     }
 
     public void incrementSongCount(String genreName, String separators) {
+        split(genreName, separators).forEach(s -> genres.computeIfAbsent(s, k -> new Genre(k)).incrementSongCount());
+    }
+
+    private static Stream<String> split(String genreName, String separators) {
         String[] splitGenres = StringUtils.split(genreName, separators);
-        if (splitGenres.length > 1) { // otherwise it's the same genre as the original
-            Stream.of(splitGenres)
-                    .map(StringUtils::trim)
-                    .filter(StringUtils::isNotBlank)
-                    .forEach(s -> genres.computeIfAbsent(s, k -> new Genre(k)).incrementSongCount());
+        if (splitGenres.length <= 1) { // otherwise it's the same genre as the original
+            return Stream.of(genreName);
         }
-        genres.computeIfAbsent(genreName, k -> new Genre(k)).incrementSongCount();
+        return Stream.of(splitGenres)
+                .map(StringUtils::trim)
+                .filter(StringUtils::isNotBlank)
+                .distinct();
     }
 
     public List<Genre> getGenres() {

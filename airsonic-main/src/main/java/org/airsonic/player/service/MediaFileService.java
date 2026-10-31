@@ -588,7 +588,10 @@ public class MediaFileService {
      * @return The updated genres.
      */
     @Transactional
-    public List<Genre> updateGenres(List <Genre> genres) {
+    public List<Genre> updateGenres(List<Genre> genres) {
+        // replace the whole table, so genres that no longer occur (e.g. combined tags from before the
+        // separators were set) do not linger with stale counts
+        genreRepository.deleteAllInBatch();
         return genreRepository.saveAll(genres);
     }
 
