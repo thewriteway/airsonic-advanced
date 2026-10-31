@@ -43,7 +43,9 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -201,5 +203,16 @@ public class StreamControllerTestCase {
         Dimension dimension = TranscodingService.getSuitableVideoSize(existingWidth, existingHeight, maxBitRate);
         assertEquals(expectedWidth, dimension.width, "Wrong Width");
         assertEquals(expectedHeight, dimension.height, "Wrong Height");
+    }
+
+    @Test
+    public void testIsPlayed() {
+        // a tenth of the expected stream length counts as a play
+        assertTrue(StreamController.isPlayed(400_000, 4_000_000L));
+        assertFalse(StreamController.isPlayed(399_999, 4_000_000L));
+        // a metadata probe of a file with unknown length does not
+        assertFalse(StreamController.isPlayed(64 * 1024, null));
+        assertTrue(StreamController.isPlayed(256 * 1024, null));
+        assertFalse(StreamController.isPlayed(0, 0L));
     }
 }

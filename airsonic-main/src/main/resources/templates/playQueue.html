@@ -539,12 +539,15 @@
                         // Inform MEJS that we need to load a new media source. The
                         // 'canplay' event will be fired once playback is possible.
                         player.load();
-                        // The 'skip' function takes a 'position' argument. We don't
-                        // usually send it, and in this case it's better to do nothing.
-                        // Otherwise, the 'canplay' event will also be fired after
-                        // setting 'currentTime'.
+                        // Resuming at a position (e.g. a bookmark): seeking right after
+                        // load() is ignored because the media isn't seekable yet, so wait
+                        // for its metadata. Skip it if another song was loaded meanwhile.
                         if (position && position > 0) {
-                            player.currentTime = position;
+                            player.node.addEventListener('loadedmetadata', () => {
+                                if (player.src && player.src.endsWith(song.streamUrl)) {
+                                    player.currentTime = position;
+                                }
+                            }, {once: true});
                         }
 
                     // Are we seeking on an already-playing song?

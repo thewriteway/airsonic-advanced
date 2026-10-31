@@ -14,7 +14,7 @@ import java.util.List;
 
 public class MediaFileSpecifications {
 
-    public static Specification<MediaFile> matchCriteria(RandomSearchCriteria criteria, String username, String databaseType) {
+    public static Specification<MediaFile> matchCriteria(RandomSearchCriteria criteria, String username, String databaseType, String genreSeparators) {
         return (Root<MediaFile> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -73,7 +73,7 @@ public class MediaFileSpecifications {
 
             // genre conditions
             if (criteria.getGenre() != null) {
-                predicates.add(cb.equal(root.get("genre"), criteria.getGenre()));
+                predicates.add(GenreSpecifications.matches(cb, root.get("genre"), criteria.getGenre(), genreSeparators));
             }
             // year conditions
             if (criteria.getFromYear() != null) {

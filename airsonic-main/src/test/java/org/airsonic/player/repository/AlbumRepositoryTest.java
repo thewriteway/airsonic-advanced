@@ -272,4 +272,35 @@ public class AlbumRepositoryTest {
         }
     }
 
+    @Test
+    public void testFindAllByGenreMatchesSplitGenres() {
+        String[] genres = {"House", "Dance;House", "Dance; House; Edm", "House ;Pop", "Deep House", "Housework;Dance", "Dance", null};
+        List<Album> albums = new ArrayList<>();
+        for (int i = 0; i < genres.length; i++) {
+            Album album = new Album("genrePath" + i, "genreName" + i, "genreArtist", Instant.now(), Instant.now(), true, testFolders.get(0));
+            album.setGenre(genres[i]);
+            albums.add(albumRepository.saveAndFlush(album));
+        }
+
+        List<Album> house = albumRepository.findAll((root, query, cb) -> cb.and(
+                root.get("folder").in(testFolders),
+                GenreSpecifications.matches(cb, root.get("genre"), "House", ";")),
+                new OffsetBasedPageRequest(0, 100, Sort.by("id")));
+        assertEquals(albums.subList(0, 4), house);
+
+        // without separators only the exact genre matches
+        List<Album> exact = albumRepository.findAll((root, query, cb) -> cb.and(
+                root.get("folder").in(testFolders),
+                GenreSpecifications.matches(cb, root.get("genre"), "House", "")),
+                new OffsetBasedPageRequest(0, 100, Sort.by("id")));
+        assertEquals(albums.subList(0, 1), exact);
+
+        // LIKE wildcards in the genre are matched literally
+        List<Album> wildcard = albumRepository.findAll((root, query, cb) -> cb.and(
+                root.get("folder").in(testFolders),
+                GenreSpecifications.matches(cb, root.get("genre"), "Hous_", ";")),
+                new OffsetBasedPageRequest(0, 100, Sort.by("id")));
+        assertTrue(wildcard.isEmpty());
+    }
+
 }

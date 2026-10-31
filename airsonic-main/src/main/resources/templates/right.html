@@ -58,14 +58,32 @@
                     updateTableVisibility(table);
                 }
 
+                // External players often open a stream only for a moment to probe it. Show a new stream as
+                // "now playing" only once it has lasted a couple of seconds, so probes don't flash up.
+                var pendingNowPlaying = new Map();
+
+                function addNowPlaying(status) {
+                    page.clearTimer(pendingNowPlaying.get(status.transferId));
+                    pendingNowPlaying.set(status.transferId, page.setTimeout(() => {
+                        pendingNowPlaying.delete(status.transferId);
+                        enqueue(() => addStatus(status, 'NowPlaying'));
+                    }, 2000));
+                }
+
+                function removeNowPlaying(status) {
+                    page.clearTimer(pendingNowPlaying.get(status.transferId));
+                    pendingNowPlaying.delete(status.transferId);
+                    enqueue(() => removeStatus(status, 'NowPlaying'));
+                }
+
                 var sub = {
                     // no need to populate initial because the updates will occur frequently enough and are self-sufficient
                     '/topic/scanStatus': msg => scanningStatus(JSON.parse(msg.body))
                 };
                 if (showNowPlaying) {
                     Object.assign(sub, {
-                        '/topic/nowPlaying/current/add': msg => enqueue(() => addStatus(JSON.parse(msg.body), 'NowPlaying')),
-                        '/topic/nowPlaying/current/remove': msg => enqueue(() => removeStatus(JSON.parse(msg.body), 'NowPlaying')),
+                        '/topic/nowPlaying/current/add': msg => addNowPlaying(JSON.parse(msg.body)),
+                        '/topic/nowPlaying/current/remove': msg => removeNowPlaying(JSON.parse(msg.body)),
                         '/topic/nowPlaying/recent/add': msg => enqueue(() => addStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
                         '/topic/nowPlaying/recent/remove': msg => enqueue(() => removeStatus(JSON.parse(msg.body), 'RecentlyPlayed')),
                         // Add existing (initial population, one time)

@@ -33,6 +33,8 @@ import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +43,11 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,6 +57,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Provides services for transcoding media. Transcoding is the process of
@@ -68,6 +74,11 @@ public class TranscodingService {
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]");
     public static final String FORMAT_RAW = "raw";
 
+    private static final String TMP_FILE_PREFIX = "airsonic-transcode-";
+    // temp copies made for transcoding, including the "airsonic<digits>.<ext>" names used before the prefix existed
+    private static final Pattern TMP_FILE_NAME = Pattern.compile("airsonic(-transcode-)?\\d+\\.[A-Za-z0-9]*");
+    private static final Duration TMP_FILE_MAX_AGE = Duration.ofHours(6);
+
     @Autowired
     private SettingsService settingsService;
     @Autowired
@@ -76,6 +87,44 @@ public class TranscodingService {
     private TranscodingRepository transcodingRepository;
     @Autowired
     private PersonalSettingsService personalSettingsService;
+    @Autowired
+    private TaskSchedulingService taskService;
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void scheduleTmpFileCleanup() {
+        // temp copies are deleted when their stream is closed, but not when a connection is dropped before that
+        taskService.scheduleFixedDelayTask("transcode-tmp-file-cleanup",
+                () -> deleteStaleTmpFiles(Path.of(System.getProperty("java.io.tmpdir")), Instant.now().minus(TMP_FILE_MAX_AGE)),
+                Instant.now(), Duration.ofHours(1), true);
+    }
+
+    /**
+     * Deletes temp copies made for transcoding that were last modified before the given time.
+     *
+     * @return the number of deleted files
+     */
+    int deleteStaleTmpFiles(Path tmpDir, Instant olderThan) {
+        int deleted = 0;
+        try (Stream<Path> files = Files.list(tmpDir)) {
+            for (Path file : (Iterable<Path>) files::iterator) {
+                if (!TMP_FILE_NAME.matcher(file.getFileName().toString()).matches() || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) {
+                    continue;
+                }
+                try {
+                    if (Files.getLastModifiedTime(file).toInstant().isBefore(olderThan) && Files.deleteIfExists(file)) {
+                        LOG.info("Deleted stale transcode tmp file: {}", file);
+                        deleted++;
+                    }
+                } catch (IOException e) {
+                    // most likely still in use by a transcoder
+                    LOG.debug("Could not delete transcode tmp file: {}", file, e);
+                }
+            }
+        } catch (IOException e) {
+            LOG.warn("Could not list the temp directory {}", tmpDir, e);
+        }
+        return deleted;
+    }
 
     /**
      * Returns all transcodings.
@@ -391,7 +440,7 @@ public class TranscodingService {
             // the extension stems from a scanned file name; restrict it to alphanumerics so no
             // path-relevant characters can flow into the temp file name (javasecurity:S2083)
             String extension = NON_ALPHANUMERIC.matcher(FilenameUtils.getExtension(path.toString())).replaceAll("");
-            tmpFile = Files.createTempFile("airsonic", "." + extension);
+            tmpFile = Files.createTempFile(TMP_FILE_PREFIX, "." + extension);
             tmpFile.toFile().deleteOnExit();
             Files.copy(path, tmpFile, StandardCopyOption.REPLACE_EXISTING);
             LOG.info("Created tmp file: {}", tmpFile);
