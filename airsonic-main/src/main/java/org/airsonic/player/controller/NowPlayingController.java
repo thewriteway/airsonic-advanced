@@ -122,9 +122,10 @@ public class NowPlayingController {
         boolean hasCustomAvatar = userSettings.getAvatarScheme() == AvatarScheme.CUSTOM
                 && personalSettingsService.getCustomAvatar(username) != null;
 
-        // generate display name
+        // generate display name; the avatar is still looked up by the plain username
+        String displayName = username;
         if (StringUtils.isNotBlank(player.getName())) {
-            username += "@" + player.getName();
+            displayName += "@" + player.getName();
         }
 
         // generate abbreviated artist/title
@@ -135,6 +136,7 @@ public class NowPlayingController {
             status.getTransferId(),
             player.getId(),
             mediaFile.getId(),
+            displayName,
             username,
             artist,
             title,

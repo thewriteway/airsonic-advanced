@@ -116,6 +116,8 @@ public class NowPlayingControllerTest {
         assertEquals(5L, view.getMinutesAgo());
         assertEquals(AvatarScheme.NONE.name(), view.getAvatarScheme());
         assertEquals(TEST_USER + "@" + player.getName(), view.getUsername());
+        // the avatar is looked up by the plain username, without the "@player" suffix
+        assertEquals(TEST_USER, view.getAvatarUsername());
         // Since mediaFile is not a video, lyrics should be shown.
         assertTrue(view.isShowLyrics());
         // Since AvatarScheme.NONE is set in userSettings, no custom avatar should be present.
