@@ -25,6 +25,7 @@ import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.PodcastChannel;
 import org.airsonic.player.domain.PodcastChannelRule;
 import org.airsonic.player.domain.PodcastEpisode;
+import org.airsonic.player.service.podcast.PodcastRefresher;
 import org.airsonic.player.service.websocket.AsyncWebSocketClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,8 +41,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -59,6 +63,8 @@ public class PodcastManagementServiceTestCase {
     private AsyncWebSocketClient asyncWebSocketClient;
     @Mock
     private PodcastPersistenceService podcastPersistenceService;
+    @Mock
+    private PodcastRefresher podcastRefresher;
 
     @InjectMocks
     @Spy
@@ -185,6 +191,55 @@ public class PodcastManagementServiceTestCase {
             verify(taskService).scheduleAtFixedRate(eq("podcast-channel-refresh--1"), any(), eq(expectedFirstTime), eq(Duration.ofHours(1)), eq(true));
             verify(taskService, never()).unscheduleTask(anyString());
         }
+    }
+
+    @Test
+    void testCreateChannelDeletesChannelWhenFeedCannotBeLoaded() {
+        when(mockedChannel.getId()).thenReturn(5);
+        when(podcastPersistenceService.createChannel("http://example.com/feed")).thenReturn(mockedChannel);
+        when(podcastRefresher.refresh(5, true)).thenReturn(CompletableFuture.completedFuture(false));
+        when(podcastPersistenceService.deleteChannel(5)).thenReturn(true);
+
+        podcastManagementService.createChannel("http://example.com/feed");
+
+        verify(podcastPersistenceService).deleteChannel(5);
+        verify(asyncWebSocketClient).send("/topic/podcasts/deleted", 5);
+        verify(podcastPersistenceService, never()).setChannelCompleted(any());
+    }
+
+    @Test
+    void testCreateChannelKeepsChannelWhenFeedLoads() {
+        when(mockedChannel.getId()).thenReturn(5);
+        when(podcastPersistenceService.createChannel("http://example.com/feed")).thenReturn(mockedChannel);
+        when(podcastRefresher.refresh(5, true)).thenReturn(CompletableFuture.completedFuture(true));
+        when(podcastPersistenceService.getEpisodes(5)).thenReturn(List.of());
+
+        podcastManagementService.createChannel("http://example.com/feed");
+
+        verify(podcastPersistenceService, never()).deleteChannel(anyInt());
+        verify(podcastPersistenceService).setChannelCompleted(mockedChannel);
+    }
+
+    @Test
+    void testFailedRefreshDoesNotMarkChannelCompleted() {
+        when(mockedChannel.getId()).thenReturn(5);
+        when(podcastRefresher.refresh(5, true)).thenReturn(CompletableFuture.completedFuture(false));
+
+        podcastManagementService.refreshChannels(List.of(mockedChannel), true);
+
+        verify(podcastPersistenceService, never()).setChannelCompleted(any());
+        verify(podcastPersistenceService, never()).deleteChannel(anyInt());
+    }
+
+    @Test
+    void testRefreshExceptionMarksChannelAsError() {
+        when(mockedChannel.getId()).thenReturn(5);
+        when(podcastRefresher.refresh(5, false)).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("boom")));
+
+        podcastManagementService.refreshChannels(List.of(mockedChannel), false);
+
+        verify(podcastPersistenceService).setChannelError(mockedChannel, "boom");
+        verify(podcastPersistenceService, never()).setChannelCompleted(any());
     }
 
 }
