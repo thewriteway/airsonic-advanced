@@ -65,6 +65,7 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -84,6 +85,8 @@ public class StreamController {
 
     private static final Set<String> ICY_IGNORED_CLIENT = Set.of("Tempo");
     private static final Pattern VIDEO_SIZE_PATTERN = Pattern.compile("^(\\d+)x(\\d+)$");
+    // counts as a play when the stream length is unknown; more than a metadata probe reads
+    private static final long MIN_PLAYED_BYTES = 256 * 1024;
 
     @Autowired
     private StatusService statusService;
@@ -225,19 +228,22 @@ public class StreamController {
             statusService.addActiveLocalPlay(
                     new PlayStatus(status.getId(), mediaFile, player, status.getMillisSinceLastUpdate()));
         };
-        BiConsumer<Integer, MediaFile> fileEndListener = (readCount, mediaFile) -> {
-            if (readCount != null && readCount > 0 && player.getTechnology() != PlayerTechnology.WEB) {
-                // Increment play count if the file was actually played
-                // WEB player increments play count on the client side
+        // expected stream length of the file being streamed, after transcoding; files are streamed one at a time
+        AtomicReference<Long> expectedLength = new AtomicReference<>();
+        BiConsumer<Long, MediaFile> fileEndListener = (bytesStreamed, mediaFile) -> {
+            // WEB player increments play count on the client side
+            if (player.getTechnology() != PlayerTechnology.WEB && isPlayed(bytesStreamed, expectedLength.get())) {
                 mediaFileService.incrementPlayCount(player, mediaFile);
             }
             scrobble(mediaFile, player, true);
             statusService.removeActiveLocalPlay(
                     new PlayStatus(status.getId(), mediaFile, player, status.getMillisSinceLastUpdate()));
         };
-        Function<MediaFile, InputStream> streamGenerator = LambdaUtils.uncheckFunction(
-            mediaFile -> transcodingService.getTranscodedInputStream(
-                    transcodingService.getParameters(mediaFile, player, bitRate, targetFormat, videoTranscodingSettingsF)));
+        Function<MediaFile, InputStream> streamGenerator = LambdaUtils.uncheckFunction(mediaFile -> {
+            TranscodingService.Parameters parameters = transcodingService.getParameters(mediaFile, player, bitRate, targetFormat, videoTranscodingSettingsF);
+            expectedLength.set(parameters.getExpectedLength());
+            return transcodingService.getTranscodedInputStream(parameters);
+        });
 
         HttpHeaders headers = new HttpHeaders();
         InputStream playStream = new PlayQueueInputStream(player.getPlayQueue(), fileStartListener, fileEndListener, streamGenerator);
@@ -293,6 +299,20 @@ public class StreamController {
         headers.setContentType(MediaType.parseMediaType(StringUtil.getMimeType(suffix, sonos)));
 
         return ResponseEntity.ok().headers(headers).body(resource);
+    }
+
+    /**
+     * Whether enough of a file was streamed to count as a play. External players often open a stream only to read
+     * its metadata, which must not count.
+     *
+     * @param bytesStreamed  bytes actually streamed (skipped bytes excluded)
+     * @param expectedLength the expected stream length, or {@code null} if unknown
+     */
+    static boolean isPlayed(long bytesStreamed, Long expectedLength) {
+        if (expectedLength != null && expectedLength > 0) {
+            return bytesStreamed >= expectedLength / 10;
+        }
+        return bytesStreamed >= MIN_PLAYED_BYTES;
     }
 
     private void scrobble(MediaFile mediaFile, Player player, boolean submission) {
