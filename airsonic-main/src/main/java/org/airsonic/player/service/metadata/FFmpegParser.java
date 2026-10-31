@@ -133,6 +133,11 @@ public class FFmpegParser extends MetaDataParser {
             // Find the first (if any) stream that has dimensions and use those.
             // 'width' and 'height' are display dimensions; compare to 'coded_width', 'coded_height'.
             for (JsonNode stream : result.at("/streams")) {
+                // ffprobe omits these for some streams (seen in .m4v files); skip those rather than failing the whole file
+                if (!stream.hasNonNull("index") || !stream.hasNonNull("codec_type") || !stream.hasNonNull("codec_name")) {
+                    LOG.debug("Skipping stream without index, codec_type or codec_name in {}", file);
+                    continue;
+                }
                 Track track = new Track(stream.get("index").asInt(0), stream.get("codec_type").asString(), stream.at("/tags/language").asString(), stream.get("codec_name").asString());
                 metaData.addTrack(track);
 
