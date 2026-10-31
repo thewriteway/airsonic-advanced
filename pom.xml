@@ -24,7 +24,7 @@
     <properties>
         <!-- minimum supported Java (bytecode target and API level); enforced by maven-enforcer requireJavaVersion -->
         <java.version>21</java.version>
-        <docker.java.version>21</docker.java.version>
+        <docker.java.version>25</docker.java.version>
         <failOnDependencyWarning>true</failOnDependencyWarning>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cxf.version>4.2.4</cxf.version>

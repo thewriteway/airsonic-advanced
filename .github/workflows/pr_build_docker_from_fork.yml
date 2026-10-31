@@ -39,12 +39,12 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-        - jdk: 21
+        - jdk: 25
           platform: linux/amd64
-          docker_version: 21
-        - jdk: 21
+          docker_version: 25
+        - jdk: 25
           platform: linux/arm64
-          docker_version: 21
+          docker_version: 25
     runs-on: ubuntu-latest
     if: github.repository != github.event.pull_request.head.repo.full_name && contains(github.event.pull_request.labels.*.name, 'safe to test')
     steps:

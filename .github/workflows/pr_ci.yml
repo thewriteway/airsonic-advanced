@@ -45,6 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
+          # minimum supported JDK (java.version): build and test on 21
           - jdk: 21
             services: {}
             env: {}
@@ -52,8 +53,8 @@ jobs:
           - jdk: 25
             services: {}
             env: {}
-          # external dbs
-          - jdk: 21
+          # external dbs (on JDK 25)
+          - jdk: 25
             services:
               postgres:
                 image: 'postgres:15.13-alpine'
@@ -66,7 +67,7 @@ jobs:
               spring_datasource_username: postgres
               spring_datasource_password: pass
               EXCLUDED_TEST_GROUPS: org.airsonic.player.util.EmbeddedTestCategory
-          - jdk: 21
+          - jdk: 25
             services:
               postgres:
                 image: 'postgres:14.1-alpine'
@@ -80,7 +81,7 @@ jobs:
               spring_datasource_password: pass
               EXCLUDED_TEST_GROUPS: org.airsonic.player.util.EmbeddedTestCategory
  
-          - jdk: 21
+          - jdk: 25
             db: 'mysql:8.0'
             executeManualCommand: true
             run: >
@@ -102,7 +103,7 @@ jobs:
               spring_datasource_username: root
               spring_datasource_password: pass
               EXCLUDED_TEST_GROUPS: org.airsonic.player.util.EmbeddedTestCategory
-          - jdk: 21
+          - jdk: 25
             db: 'mariadb:10.5'
             executeManualCommand: true
             run: >

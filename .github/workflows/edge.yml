@@ -49,12 +49,12 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-        - jdk: 21
+        - jdk: 25
           platform: linux/amd64
-          docker_version: 21
-        - jdk: 21
+          docker_version: 25
+        - jdk: 25
           platform: linux/arm64
-          docker_version: 21
+          docker_version: 25
     outputs:
       tag: ${{ steps.tagcalc.outputs.tag }}
     steps:
@@ -154,7 +154,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
       - name: Upload war
-        if: ${{matrix.cfg.jdk == 21 && matrix.cfg.platform == 'linux/amd64'}}
+        if: ${{matrix.cfg.jdk == 25 && matrix.cfg.platform == 'linux/amd64'}}
         uses: actions/upload-artifact@v7
         with:
           name: airsonic.war
@@ -163,7 +163,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
       - name: Upload checksums
-        if: ${{matrix.cfg.jdk == 21 && matrix.cfg.platform == 'linux/amd64'}}
+        if: ${{matrix.cfg.jdk == 25 && matrix.cfg.platform == 'linux/amd64'}}
         uses: actions/upload-artifact@v7
         with:
           name: artifacts-checksums.sha

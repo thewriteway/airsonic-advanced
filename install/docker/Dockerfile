@@ -1,4 +1,4 @@
-ARG IMAGE_JAVA_VERSION=21
+ARG IMAGE_JAVA_VERSION=25
 FROM eclipse-temurin:${IMAGE_JAVA_VERSION}-jdk-resolute AS builder
 WORKDIR /target
 COPY run.sh /usr/local/bin/run.sh

@@ -610,7 +610,7 @@ javax.sound.sampled.SourceDataLine=#PCH [plughw:1,0]
 javax.sound.sampled.TargetDataLine=#PCH [plughw:1,0]
 ```
 
-Copy it to `/etc/java-17-openjdk/sound.properties`, changing `java-17-openjdk` to match your Java installation.
+Copy it to `/etc/java-25-openjdk/sound.properties`, changing `java-25-openjdk` to match your Java installation.
 
 ### Using Java parameters
 
