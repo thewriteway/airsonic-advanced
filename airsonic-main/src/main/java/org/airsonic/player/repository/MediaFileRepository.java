@@ -63,10 +63,6 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Integer> {
 
     public List<MediaFile> findByFolderInAndMediaTypeAndPresentTrue(List<MusicFolder> folders, MediaType mediaType, Pageable page);
 
-    public List<MediaFile> findByFolderInAndMediaTypeAndGenreAndPresentTrue(List<MusicFolder> folders, MediaType mediaType, String genre, Pageable page);
-
-    public List<MediaFile> findByFolderInAndMediaTypeInAndGenreAndPresentTrue(List<MusicFolder> folders, Iterable<MediaType> mediaType, String genre, Pageable page);
-
     public List<MediaFile> findByFolderInAndMediaTypeAndYearBetweenAndPresentTrue(List<MusicFolder> folders, MediaType mediaType, Integer startYear,
             Integer endYear, Pageable page);
 

@@ -32,6 +32,7 @@ import org.airsonic.player.domain.entity.StarredMediaFile;
 import org.airsonic.player.i18n.LocaleResolver;
 import org.airsonic.player.repository.AlbumRepository;
 import org.airsonic.player.repository.GenreRepository;
+import org.airsonic.player.repository.GenreSpecifications;
 import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.repository.MediaFileSpecifications;
 import org.airsonic.player.repository.MusicFileInfoRepository;
@@ -61,6 +62,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -431,13 +433,19 @@ public class MediaFileService {
      * @param count      Maximum number of songs to return.
      * @param genre      The genre name.
      * @param musicFolders Only return songs in these folders.
-     * @return Songs in the genre.
+     * @return Songs in the genre, including songs whose genre tag holds several genres.
      */
     public List<MediaFile> getSongsByGenre(int offset, int count, String genre, List<MusicFolder> musicFolders) {
         if (CollectionUtils.isEmpty(musicFolders)) {
             return Collections.emptyList();
         }
-        return mediaFileRepository.findByFolderInAndMediaTypeInAndGenreAndPresentTrue(musicFolders, MediaType.audioTypes(), genre, new OffsetBasedPageRequest(offset, count, Sort.by("id")));
+        String separators = settingsService.getGenreSeparators();
+        Specification<MediaFile> spec = (root, query, cb) -> cb.and(
+                root.get("folder").in(musicFolders),
+                root.get("mediaType").in(MediaType.audioTypes()),
+                cb.isTrue(root.get("present")),
+                GenreSpecifications.matches(cb, root.get("genre"), genre, separators));
+        return mediaFileRepository.findAll(spec, new OffsetBasedPageRequest(offset, count, Sort.by("id")));
     }
 
     /**
@@ -702,14 +710,20 @@ public class MediaFileService {
      * @param count        Maximum number of albums to return.
      * @param genre        The genre name.
      * @param musicFolders Only return albums in these folders.
-     * @return Albums in the genre.
+     * @return Albums in the genre, including albums whose genre tag holds several genres.
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public List<MediaFile> getAlbumsByGenre(int offset, int count, String genre, List<MusicFolder> musicFolders) {
         if (CollectionUtils.isEmpty(musicFolders)) {
             return Collections.emptyList();
         }
-        return mediaFileRepository.findByFolderInAndMediaTypeAndGenreAndPresentTrue(musicFolders, MediaType.ALBUM, genre, new OffsetBasedPageRequest(offset, count, Sort.by("id")));
+        String separators = settingsService.getGenreSeparators();
+        Specification<MediaFile> spec = (root, query, cb) -> cb.and(
+                root.get("folder").in(musicFolders),
+                cb.equal(root.get("mediaType"), MediaType.ALBUM),
+                cb.isTrue(root.get("present")),
+                GenreSpecifications.matches(cb, root.get("genre"), genre, separators));
+        return mediaFileRepository.findAll(spec, new OffsetBasedPageRequest(offset, count, Sort.by("id")));
     }
 
 
@@ -741,7 +755,7 @@ public class MediaFileService {
         if (criteria == null || CollectionUtils.isEmpty(criteria.getMusicFolders())) {
             return Collections.emptyList();
         }
-        return mediaFileRepository.findAll(MediaFileSpecifications.matchCriteria(criteria, username, settingsService.getDatabaseType()), Pageable.ofSize(criteria.getCount()));
+        return mediaFileRepository.findAll(MediaFileSpecifications.matchCriteria(criteria, username, settingsService.getDatabaseType(), settingsService.getGenreSeparators()), Pageable.ofSize(criteria.getCount()));
     }
 
     /**

@@ -4,6 +4,7 @@ import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.MusicFolder;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,7 +34,7 @@ public interface AlbumRepository extends JpaRepository<Album, Integer> {
 
     public List<Album> findByFolderInAndPresentTrue(Iterable<MusicFolder> musicFolders, Pageable pageable);
 
-    public List<Album> findByGenreAndFolderInAndPresentTrue(String genre, Iterable<MusicFolder> musicFolders, Pageable pageable);
+    public List<Album> findAll(Specification<Album> spec, Pageable pageable);
 
     public List<Album> findByFolderInAndPlayCountGreaterThanAndPresentTrue(Iterable<MusicFolder> musicFolders, AtomicInteger playCount, Pageable pageable);
 

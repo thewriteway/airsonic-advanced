@@ -5,10 +5,12 @@ import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.entity.StarredAlbum;
 import org.airsonic.player.repository.AlbumRepository;
+import org.airsonic.player.repository.GenreSpecifications;
 import org.airsonic.player.repository.OffsetBasedPageRequest;
 import org.airsonic.player.repository.StarredAlbumRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -25,10 +27,12 @@ public class AlbumService {
 
     private final AlbumRepository albumRepository;
     private final StarredAlbumRepository starredAlbumRepository;
+    private final SettingsService settingsService;
 
-    public AlbumService(AlbumRepository albumRepository, StarredAlbumRepository starredAlbumRepository) {
+    public AlbumService(AlbumRepository albumRepository, StarredAlbumRepository starredAlbumRepository, SettingsService settingsService) {
         this.albumRepository = albumRepository;
         this.starredAlbumRepository = starredAlbumRepository;
+        this.settingsService = settingsService;
     }
 
     /**
@@ -206,16 +210,19 @@ public class AlbumService {
      * @param count        Maximum number of albums to return.
      * @param genre        The genre name.
      * @param musicFolders Only return albums from these folders.
-     * @return Albums in the genre.
+     * @return Albums in the genre, including albums whose genre tag holds several genres.
      */
     public List<Album> getAlbumsByGenre(int offset, int count, String genre, List<MusicFolder> musicFolders) {
         if (genre == null || CollectionUtils.isEmpty(musicFolders)) {
             return Collections.emptyList();
         }
         OffsetBasedPageRequest pageRequest = new OffsetBasedPageRequest(offset, count, Sort.by(Order.asc("id")));
-
-        return albumRepository.findByGenreAndFolderInAndPresentTrue(genre, musicFolders,
-                pageRequest);
+        String separators = settingsService.getGenreSeparators();
+        Specification<Album> spec = (root, query, cb) -> cb.and(
+                root.get("folder").in(musicFolders),
+                cb.isTrue(root.get("present")),
+                GenreSpecifications.matches(cb, root.get("genre"), genre, separators));
+        return albumRepository.findAll(spec, pageRequest);
     }
 
     /**
