@@ -266,6 +266,7 @@ public class MediaFileService {
                 && (mediaFile.getVersion() < MediaFile.VERSION
                     || settingsService.getFullScan()
                     || mediaFile.isChanged()
+                    || !mediaFile.isPresent() // recheck absent files so remounted paths recover
                     || (mediaFile.hasIndex() && mediaFile.getChanged().truncatedTo(ChronoUnit.MICROS).compareTo(FileUtil.lastModified(mediaFile.getFullIndexPath()).truncatedTo(ChronoUnit.MICROS)) < 0)
                 );
     }
@@ -288,9 +289,12 @@ public class MediaFileService {
         }
         LOG.debug("Updating database file from disk (id {}, path {} in folder {} ({}))", mediaFile.getId(), mediaFile.getPath(), folder.getId(), folder.getName());
         if (!Files.exists(mediaFile.getFullPath())) {
-            mediaFile.setPresent(false);
-            mediaFile.setChildrenLastUpdated(Instant.ofEpochMilli(1));
-            updateMediaFile(mediaFile);
+            // absent files are always rechecked, so only write when the state actually changes
+            if (mediaFile.isPresent()) {
+                mediaFile.setPresent(false);
+                mediaFile.setChildrenLastUpdated(Instant.ofEpochMilli(1));
+                updateMediaFile(mediaFile);
+            }
         } else {
             if (mediaFile.hasIndex()) {
                 if (!Files.exists(mediaFile.getFullIndexPath())) {
@@ -307,6 +311,7 @@ public class MediaFileService {
                     try {
                         createIndexedTracks(mediaFile);
                         // update media file
+                        mediaFile.setPresent(true);
                         mediaFile.setChanged(mediaChanged.compareTo(cueChanged) >= 0 ? mediaChanged : cueChanged);
                         updateMediaFile(mediaFile);
                     } catch (Exception e) {
@@ -830,6 +835,7 @@ public class MediaFileService {
 
                 if (Objects.nonNull(base)) {
                     base.setIndexPath(indexPath); // update indexPath in mediaFile
+                    base.setPresent(true); // indexed base files skip checkLastModified, so restore remounted ones here
                     Instant mediaChanged = FileUtil.lastModified(base.getFullPath());
                     Instant cueChanged = FileUtil.lastModified(base.getFullIndexPath());
                     base.setChanged(mediaChanged.compareTo(cueChanged) >= 0 ? mediaChanged : cueChanged);

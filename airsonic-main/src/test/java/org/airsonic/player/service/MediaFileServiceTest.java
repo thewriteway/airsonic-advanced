@@ -24,6 +24,7 @@ import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.service.cache.MediaFileCache;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;
+import org.airsonic.player.util.FileUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,9 +37,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,6 +59,8 @@ public class MediaFileServiceTest {
     private MediaFileCache mediaFileCache;
     @Mock
     private MediaFolderService mediaFolderService;
+    @Mock
+    private SettingsService settingsService;
 
     @InjectMocks
     private MediaFileService mediaFileService;
@@ -70,7 +76,7 @@ public class MediaFileServiceTest {
 
     @BeforeEach
     public void setUp() {
-        when(mockedFolder.getPath()).thenReturn(CLASS_PATH.resolve("MEDIAS"));
+        lenient().when(mockedFolder.getPath()).thenReturn(CLASS_PATH.resolve("MEDIAS"));
     }
 
     @Test
@@ -97,5 +103,39 @@ public class MediaFileServiceTest {
         verify(mediaFileRepository).findByFolderAndPath(any(), eq("valid/airsonic-test.wav"));
         verify(mediaFileRepository).save(base);
         verify(coverArtService).persistIfNeeded(eq(base));
+    }
+
+    @Test
+    public void checkLastModifiedRestoresRemountedFile() {
+        // a file that was marked non-present (e.g. its mount dropped) and is back with the same mtime
+        MediaFile file = new MediaFile();
+        file.setId(20);
+        file.setPath("piano.mp3");
+        file.setFolder(mockedFolder);
+        file.setMediaType(MediaType.MUSIC);
+        file.setChanged(FileUtil.lastModified(file.getFullPath()));
+        file.setPresent(false);
+
+        when(mediaFileRepository.existsById(20)).thenReturn(true);
+
+        MediaFile actual = mediaFileService.checkLastModified(file);
+
+        assertTrue(actual.isPresent());
+        verify(mediaFileRepository).save(file);
+    }
+
+    @Test
+    public void checkLastModifiedDoesNotRewriteMissingFile() {
+        MediaFile file = new MediaFile();
+        file.setId(21);
+        file.setPath("missing.mp3");
+        file.setFolder(mockedFolder);
+        file.setMediaType(MediaType.MUSIC);
+        file.setPresent(false);
+
+        MediaFile actual = mediaFileService.checkLastModified(file);
+
+        assertFalse(actual.isPresent());
+        verify(mediaFileRepository, never()).save(any());
     }
 }
