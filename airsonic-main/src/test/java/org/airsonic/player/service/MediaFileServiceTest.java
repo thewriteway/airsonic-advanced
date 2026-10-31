@@ -31,12 +31,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -137,5 +139,28 @@ public class MediaFileServiceTest {
 
         assertFalse(actual.isPresent());
         verify(mediaFileRepository, never()).save(any());
+    }
+
+    @Test
+    public void getSongsForAlbumHidesCueSourceFile() {
+        MediaFile source = new MediaFile();
+        source.setPath("album/disc.flac");
+        source.setIndexPath("album/disc.cue");
+        source.setMediaType(MediaType.MUSIC);
+
+        MediaFile track = new MediaFile();
+        track.setPath("album/disc.flac");
+        track.setStartPosition(0.0);
+        track.setMediaType(MediaType.MUSIC);
+
+        when(mediaFileRepository.findByAlbumArtistAndAlbumNameAndMediaTypeInAndPresentTrue(eq("Artist"), eq("Album"), any(), any(Sort.class)))
+                .thenReturn(List.of(source, track));
+        when(settingsService.getHideVirtualTracks()).thenReturn(false);
+
+        assertEquals(List.of(track), mediaFileService.getSongsForAlbum("Artist", "Album"));
+
+        when(settingsService.getHideVirtualTracks()).thenReturn(true);
+
+        assertEquals(List.of(source), mediaFileService.getSongsForAlbum("Artist", "Album"));
     }
 }
