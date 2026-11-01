@@ -2,10 +2,10 @@
 # docs/ADVANCED.md
 # thewriteway/airsonic-advanced
 -->
-Airsonic-Advanced — Advanced Topics
+Airsonic-Neo — Advanced Topics
 ===================================
 
-This is the full manual for Airsonic-Advanced — everything past "the server is running and can see my music". The [README](../README.md) gets you that far: downloads, Docker, the admin account, adding media folders. From here on, this single page is the documentation.
+This is the full manual for Airsonic-Neo — everything past "the server is running and can see my music". The [README](../README.md) gets you that far: downloads, Docker, the admin account, adding media folders. From here on, this single page is the documentation.
 
 It is deliberately one file rather than a folder of small ones, so that `Ctrl+F` finds anything in the manual in one go and links to it never go stale. Use the table of contents below, or GitHub's outline button at the top of the page, to jump around.
 
@@ -24,7 +24,7 @@ It is deliberately one file rather than a folder of small ones, so that `Ctrl+F`
 
 The sections build on each other loosely — reverse proxy setup, third-party clients and the HTTPS troubleshooting entry are really one story told from three angles — so cross-references point at the section that owns each topic rather than repeating it.
 
-For general Airsonic usage that Airsonic-Advanced inherits unchanged, the [upstream Airsonic documentation](https://airsonic.github.io/docs/) still applies. Where the two disagree, this document is authoritative.
+For general Airsonic usage that Airsonic-Neo inherits unchanged, the [upstream Airsonic documentation](https://airsonic.github.io/docs/) still applies. Where the two disagree, this document is authoritative.
 
 Contents
 --------
@@ -103,7 +103,7 @@ How media is organized
 
 ### Categorization rules
 
-Airsonic-Advanced classifies directories and files into Artist, Album, Song and Video with the following logic:
+Airsonic-Neo classifies directories and files into Artist, Album, Song and Video with the following logic:
 
 | Type | Description |
 | --- | --- |
@@ -219,7 +219,7 @@ Click the edit artist button again to cancel. To update search results afterward
 
 ### Lyrics
 
-Airsonic-Advanced supports three lyrics sources: `chartlyrics.com` (legacy support), LRC files, and manual user input.
+Airsonic-Neo supports three lyrics sources: `chartlyrics.com` (legacy support), LRC files, and manual user input.
 
 When you open the lyrics window, this search runs:
 
@@ -303,7 +303,7 @@ Configuration
 
 ### Where settings live
 
-Airsonic-Advanced can be configured in four places, in increasing order of convenience:
+Airsonic-Neo can be configured in four places, in increasing order of convenience:
 
 | Mechanism | Applies to | Notes |
 | --- | --- | --- |
@@ -360,7 +360,7 @@ If enabled, virtual tracks are hidden from the media file list. Only used when t
 
 #### `airsonic.cue.enabled`
 
-If enabled, Airsonic-Advanced looks for cue sheets in the same directory as the audio file and automatically splits the audio file into tracks.
+If enabled, Airsonic-Neo looks for cue sheets in the same directory as the audio file and automatically splits the audio file into tracks.
 
 > **Note:** after changing this value you must re-scan the music folder with the `FullScan` option.
 
@@ -409,9 +409,9 @@ Whether to clear the `FullScan` setting after the next successful scan — usefu
 
 ### Compatibility notes
 
-These property names differ between Airsonic and Airsonic-Advanced:
+These property names differ between Airsonic and Airsonic-Neo:
 
-| Airsonic | Airsonic-Advanced |
+| Airsonic | Airsonic-Neo |
 | --- | --- |
 | `UPNP_PORT` | `UPnpPort` |
 | `server.context-path` | `server.servlet.context-path` |
@@ -422,11 +422,11 @@ These property names differ between Airsonic and Airsonic-Advanced:
 Reverse proxy
 -------------
 
-A reverse proxy is a public-facing web server sitting in front of an internal server such as Airsonic-Advanced. Airsonic never communicates with the outside directly; the proxy handles all HTTP(S) requests and forwards them on. This keeps all web configuration in one place and handles TLS far better than the bundled server or a servlet container.
+A reverse proxy is a public-facing web server sitting in front of an internal server such as Airsonic-Neo. Airsonic never communicates with the outside directly; the proxy handles all HTTP(S) requests and forwards them on. This keeps all web configuration in one place and handles TLS far better than the bundled server or a servlet container.
 
 ### Prerequisites
 
-This section assumes a working Airsonic-Advanced installation (see the [installation guide](https://airsonic.github.io/docs/install/prerequisites/)) and a TLS certificate — [Let's Encrypt](https://letsencrypt.org/getting-started/) provides these for free via [certbot](https://certbot.eff.org/).
+This section assumes a working Airsonic-Neo installation (see the [installation guide](https://airsonic.github.io/docs/install/prerequisites/)) and a TLS certificate — [Let's Encrypt](https://letsencrypt.org/getting-started/) provides these for free via [certbot](https://certbot.eff.org/).
 
 A few Airsonic settings should be tweaked first, via Spring Boot or Tomcat configuration:
 
@@ -436,7 +436,7 @@ A few Airsonic settings should be tweaked first, via Spring Boot or Tomcat confi
 
 Use the [Tomcat](https://airsonic.github.io/docs/configure/tomcat/) or [standalone](https://airsonic.github.io/docs/configure/standalone/) guide to change these depending on your installation.
 
-Airsonic-Advanced also communicates with its web UI over **websockets**. Your proxy must allow websockets and let `UPGRADE` HTTP requests through. A sample nginx configuration is posted in [airsonic-advanced#145](https://github.com/airsonic-advanced/airsonic-advanced/issues/145).
+Airsonic-Neo also communicates with its web UI over **websockets**. Your proxy must allow websockets and let `UPGRADE` HTTP requests through. A sample nginx configuration is posted in [airsonic-advanced#145](https://github.com/airsonic-advanced/airsonic-advanced/issues/145).
 
 ### Forward headers
 
@@ -732,7 +732,7 @@ The goal here is to force PulseAudio to use the mixed ALSA output `alsa_output.d
 Clients and third-party apps
 ----------------------------
 
-Airsonic-Advanced serves the Subsonic API, so most Subsonic-compatible apps — DSub, Substreamer, play:Sub, Ultrasonic and others — work against it. Whichever one you use, put the server behind a [reverse proxy](#reverse-proxy) with TLS before exposing it: every Subsonic authentication mode puts credentials on the wire in a form that plain HTTP leaks.
+Airsonic-Neo serves the Subsonic API, so most Subsonic-compatible apps — DSub, Substreamer, play:Sub, Ultrasonic and others — work against it. Whichever one you use, put the server behind a [reverse proxy](#reverse-proxy) with TLS before exposing it: every Subsonic authentication mode puts credentials on the wire in a form that plain HTTP leaks.
 
 Dedicated setup guides exist for two non-Subsonic clients: [Sonos](SONOS.md) and [Chromecast](CHROMECAST.md).
 
@@ -742,7 +742,7 @@ Subsonic clients can log in two ways. In **password authentication** the app sen
 
 Token auth is the better-looking option, and most apps default to it — but it constrains how the server may store your password. To verify the token, Airsonic has to compute the same MD5, which means it must be able to recover your actual password. A one-way hash such as bcrypt or argon2 makes that impossible by design: there is nothing to recover.
 
-Airsonic-Advanced stores new credentials with a **non-decodable** (one-way hashed) encoder by default, and the old plaintext and hex storage formats have been removed for security reasons. The consequence:
+Airsonic-Neo stores new credentials with a **non-decodable** (one-way hashed) encoder by default, and the old plaintext and hex storage formats have been removed for security reasons. The consequence:
 
 > A newly created account cannot use token authentication until you explicitly give it a decodable credential.
 

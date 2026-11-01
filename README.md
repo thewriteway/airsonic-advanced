@@ -2,7 +2,7 @@
 # README.md
 # thewriteway/airsonic-advanced
 -->
-Airsonic-Advanced
+Airsonic-Neo
 =================
 ![Release](https://shieldcn.dev/github/release/thewriteway/airsonic-advanced)
 ![Downloads](https://shieldcn.dev/github/downloads/thewriteway/airsonic-advanced.svg)
@@ -13,9 +13,9 @@ Airsonic-Advanced
 
 Airsonic is a free, web-based media streamer providing ubiquitous access to your music. Use it to share your music with friends, or to listen to your own music while at work. You can stream to multiple players simultaneously, for instance to one player in your kitchen and another in your living room.
 
-**Airsonic-Advanced** is a more modern implementation of the Airsonic fork with several key performance and feature enhancements. It adds and supersedes several features in Airsonic.
+**Airsonic-Neo** continues [Airsonic-Advanced](https://github.com/airsonic-advanced/airsonic-advanced), a more modern implementation of the Airsonic fork with several key performance and feature enhancements. It adds and supersedes several features in Airsonic.
 
-**This repository (thewriteway/airsonic-advanced)** focuses on keeping Airsonic-Advanced safe for use: adding tests to prevent regressions and upgrading dependent libraries. PRs for additional features are welcome!
+**This repository (thewriteway/airsonic-advanced)** is the home of Airsonic-Neo. It modernizes Airsonic-Advanced from the platform up: a current Spring Boot and Java baseline, security hardening, a rebuilt responsive web interface and broader Subsonic/OpenSubsonic API support. Tests on every supported database keep regressions out, and dependencies are kept up to date. The repository and Docker image keep their original `airsonic-advanced` names, so existing links and deployments keep working. PRs for additional features are welcome!
 
 Highlights of this fork
 -----------------------
@@ -72,7 +72,7 @@ Installation
 
 Download from the [GitHub releases page](https://github.com/thewriteway/airsonic-advanced/releases). You need a _minimum_ Java Runtime Environment (JRE) of **21**.
 
-Please use the [Airsonic documentation](https://airsonic.github.io/docs/) for instructions on running Airsonic. For the most part Airsonic-Advanced shares similar running instructions unless stated otherwise. Notable exceptions are available as comments or resolutions in the Issues page (please search).
+Please use the [Airsonic documentation](https://airsonic.github.io/docs/) for instructions on running Airsonic. For the most part Airsonic-Neo shares similar running instructions unless stated otherwise. Notable exceptions are available as comments or resolutions in the Issues page (please search).
 
 ### Docker
 
@@ -169,7 +169,7 @@ Airsonic organizes your music according to how it is organized on disk (not by e
 
 ### Third-party apps and token authentication
 
-Most Subsonic-compatible apps (DSub, Substreamer, play:Sub, Ultrasonic, ...) log in with **token authentication**, which requires the server to store your password in a reversible format. Airsonic-Advanced hashes new passwords by default, so a freshly created account cannot use token auth until you give it a decodable credential — the app reports *"Wrong username or password"* even though the same credentials work in the web UI.
+Most Subsonic-compatible apps (DSub, Substreamer, play:Sub, Ultrasonic, ...) log in with **token authentication**, which requires the server to store your password in a reversible format. Airsonic-Neo hashes new passwords by default, so a freshly created account cannot use token auth until you give it a decodable credential — the app reports *"Wrong username or password"* even though the same credentials work in the web UI.
 
 The fix is either to switch the app to password authentication (over HTTPS) or to add a decodable credential under `Settings` > `Credentials`. See [Token authentication](docs/ADVANCED.md#token-authentication) for the full explanation and both procedures.
 
@@ -192,7 +192,7 @@ Planning to send a patch? See **[Contributing](docs/CONTRIBUTING.md)** — groun
 Reverse proxy notes
 -------------------
 
-Airsonic-Advanced communicates with its Web UI via websockets. If you're behind a proxy, you need to enable websockets and allow UPGRADE http requests through the proxy. A sample configuration is posted here: [nginx sample](https://github.com/airsonic-advanced/airsonic-advanced/issues/145).
+Airsonic-Neo communicates with its Web UI via websockets. If you're behind a proxy, you need to enable websockets and allow UPGRADE http requests through the proxy. A sample configuration is posted here: [nginx sample](https://github.com/airsonic-advanced/airsonic-advanced/issues/145).
 
 Additionally, the server needs to forward headers, for which the following property is necessary (in `/path/to/airsonic-data/airsonic.properties`, as a JVM argument, or via `JAVA_OPTS` in Docker):
 
@@ -205,11 +205,11 @@ server.forward-headers-strategy=native
 Compatibility notes
 -------------------
 
-The following properties are new in Airsonic-Advanced:
+The following properties are new in Airsonic-Neo:
 - `AIRSONIC_SCAN_PARALLELISM`: (default: number of available processors + 1) The parallelism to use when scanning media (replaces the deprecated `MediaScannerParallelism` from versions <= 11.1.2)
 - `ClearFullScanSettingAfterScan`: (default: false) Whether to clear the FullScan setting after the next SUCCESSFUL scan (useful for doing a full scan once and then reverting to the default scan)
 
-The following property names are different between Airsonic and Airsonic-Advanced:
+The following property names are different between Airsonic and Airsonic-Neo:
 - `UPNP_PORT` -> `UPnpPort`
 - `server.context-path` -> `server.servlet.context-path`
 - `IgnoreFileTimestamps` -> `FullScan`
@@ -217,7 +217,7 @@ The following property names are different between Airsonic and Airsonic-Advance
 License
 -------
 
-Airsonic-Advanced and Airsonic are free software and licensed under the [GNU General Public License version 3](http://www.gnu.org/copyleft/gpl.html). The code in this repository (and associated binaries) are free of any "license key" or other restrictions. If you wish to thank the maintainer of this repository, please consider a donation to the [Electronic Frontier Foundation](https://supporters.eff.org/donate).
+Airsonic-Neo and Airsonic are free software and licensed under the [GNU General Public License version 3](http://www.gnu.org/copyleft/gpl.html). The code in this repository (and associated binaries) are free of any "license key" or other restrictions. If you wish to thank the maintainer of this repository, please consider a donation to the [Electronic Frontier Foundation](https://supporters.eff.org/donate).
 
 The [Subsonic source code](https://github.com/airsonic/subsonic-svn) was released under the GPLv3 through version 6.0-beta1. Beginning with 6.0-beta2, source is no longer provided. Binaries of Subsonic are only available under a commercial license. There is a [Subsonic Premium](http://www.subsonic.org/pages/premium.jsp) service which adds functionality not available in Airsonic. Subsonic also offers RPM, Deb, Exe, and other pre-built packages that Airsonic [currently does not](https://github.com/airsonic/airsonic/issues/65).
 

@@ -41,7 +41,7 @@ The main binary will be in `airsonic-main/target`.
 
 # Suggesting modifications
 
-Airsonic-Advanced's source code is hosted on
+Airsonic-Neo's source code is hosted on
 [GitHub](https://github.com/thewriteway/airsonic-advanced), which provides a
 [lot of documentation](https://docs.github.com/en) on how to contribute to
 projects hosted there.
