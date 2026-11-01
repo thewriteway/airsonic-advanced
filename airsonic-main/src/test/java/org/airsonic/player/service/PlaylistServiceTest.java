@@ -14,10 +14,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -117,6 +119,28 @@ public class PlaylistServiceTest {
         verify(playlistCache).getPlaylistById(anyInt());
         verify(playlistRepository).findById(anyInt());
         verify(playlistCache).putPlaylistById(anyInt(), any(Playlist.class));
+    }
+
+    @Test
+    public void testGetReadablePlaylist() {
+        when(playlistCache.getPlaylistById(1)).thenReturn(playlist);
+        when(playlistCache.getUsersForPlaylist(1)).thenReturn(List.of("shareduser"));
+
+        assertEquals(playlist, playlistService.getReadablePlaylist(1, "testuser"));
+        assertEquals(playlist, playlistService.getReadablePlaylist(1, "shareduser"));
+        assertThrows(AccessDeniedException.class, () -> playlistService.getReadablePlaylist(1, "otheruser"));
+        assertThrows(AccessDeniedException.class, () -> playlistService.getReadablePlaylist(1, null));
+
+        playlist.setShared(true);
+        assertEquals(playlist, playlistService.getReadablePlaylist(1, "otheruser"));
+    }
+
+    @Test
+    public void testGetReadablePlaylistNotFound() {
+        when(playlistCache.getPlaylistById(2)).thenReturn(null);
+        when(playlistRepository.findById(2)).thenReturn(Optional.empty());
+
+        assertThrows(AccessDeniedException.class, () -> playlistService.getReadablePlaylist(2, "testuser"));
     }
 
     @Test

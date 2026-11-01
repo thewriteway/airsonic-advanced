@@ -1598,7 +1598,7 @@ public class MediaFileService {
         Instant now = Instant.now();
 
         Pair<Integer, Instant> lastPlayedInfo = lastPlayed.computeIfAbsent(player.getId(), k -> Pair.of(file.getId(), now));
-        if (lastPlayedInfo.getLeft() == file.getId()) {
+        if (Objects.equals(lastPlayedInfo.getLeft(), file.getId())) {
             // duration is nullable; an unknown-length file gets the 1.0s minimum
             // replay-debounce window instead of NPE-ing the whole play-count increment
             Double duration = file.getDuration();

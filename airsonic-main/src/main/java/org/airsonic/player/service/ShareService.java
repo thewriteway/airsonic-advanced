@@ -94,7 +94,7 @@ public class ShareService {
         }
         List<ShareFile> files = shareRepository.findById(id).map(Share::getFiles).orElse(Collections.emptyList());
         return files.stream().map(sf -> mediaFileService.getMediaFile(sf.getMediaFileId()))
-            .filter(mediaFile -> Objects.nonNull(mediaFile) && mediaFile.isPresent() && musicFolders.stream().anyMatch(folder -> folder.getId() == mediaFile.getFolder().getId()))
+            .filter(mediaFile -> Objects.nonNull(mediaFile) && mediaFile.isPresent() && musicFolders.stream().anyMatch(folder -> Objects.equals(folder.getId(), mediaFile.getFolder().getId())))
             .collect(toList());
     }
 

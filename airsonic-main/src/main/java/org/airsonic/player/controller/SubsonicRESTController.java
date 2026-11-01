@@ -1042,7 +1042,6 @@ public class SubsonicRESTController {
         String name = request.getParameter("name");
         String comment = request.getParameter("comment");
         Boolean shared = getBooleanParameter(request, "public");
-        playlistService.updatePlaylist(id, name, comment, shared);
 
         List<MediaFile> songs = playlistService.getFilesInPlaylist(id);
         boolean songsChanged = false;
@@ -1051,6 +1050,13 @@ public class SubsonicRESTController {
         for (int songIndexToRemove : getIntParameters(request, "songIndexToRemove")) {
             tmp.add(songIndexToRemove);
         }
+        // validate before changing anything
+        if (!tmp.isEmpty() && (tmp.first() < 0 || tmp.last() >= songs.size())) {
+            error(request, response, ErrorCode.GENERIC, "Song index out of range for playlist " + id);
+            return;
+        }
+        playlistService.updatePlaylist(id, name, comment, shared);
+
         List<Integer> songIndexesToRemove = new ArrayList<>(tmp);
         Collections.reverse(songIndexesToRemove);
         for (Integer songIndexToRemove : songIndexesToRemove) {
@@ -1713,7 +1719,8 @@ public class SubsonicRESTController {
         Long position = getLongParameter(request, "position");
         String changedBy = getRequiredStringParameter(request, "c");
 
-        if (!mediaFileIds.contains(current)) {
+        // current is optional, and a queue without ids clears the saved queue
+        if (current != null && !mediaFileIds.contains(current)) {
             error(request, response, ErrorCode.GENERIC, "Current track is not included in play queue");
             return;
         }
@@ -1755,9 +1762,19 @@ public class SubsonicRESTController {
             return;
         }
 
+        // shares play as the guest user, who can access every music folder, so check the sharing user's access here
         List<MediaFile> files = new ArrayList<>();
         for (int id : getRequiredIntParameters(request, "id")) {
-            files.add(mediaFileService.getMediaFile(id));
+            MediaFile file = mediaFileService.getMediaFile(id);
+            if (file == null) {
+                error(request, response, ErrorCode.NOT_FOUND, "Media file not found: " + id);
+                return;
+            }
+            if (!securityService.isFolderAccessAllowed(file, username)) {
+                error(request, response, ErrorCode.NOT_AUTHORIZED, "Access denied to media file " + id);
+                return;
+            }
+            files.add(file);
         }
 
         org.airsonic.player.domain.entity.Share share = shareService.createShare(username, files);

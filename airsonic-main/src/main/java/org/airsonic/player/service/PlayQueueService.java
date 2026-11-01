@@ -68,6 +68,8 @@ public class PlayQueueService {
     private AsyncWebSocketClient webSocketClient;
     @Autowired
     private PersonalSettingsService personalSettingsService;
+    @Autowired
+    private SecurityService securityService;
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayQueueService.class);
 
@@ -248,18 +250,23 @@ public class PlayQueueService {
      */
     public void playPlaylist(Player player, int id, Integer index, String sessionId) {
         boolean queueFollowingSongs = personalSettingsService.getUserSettings(player.getUsername()).getQueueFollowingSongs();
+        playlistService.getReadablePlaylist(id, player.getUsername());
 
+        // index counts every entry of the playlist, as listed on the playlist page
         List<MediaFile> files = playlistService.getFilesInPlaylist(id, true);
         if (!files.isEmpty() && index != null) {
             if (queueFollowingSongs) {
                 files = files.subList(index, files.size());
             } else {
-                files = Arrays.asList(files.get(index));
+                files = List.of(files.get(index));
             }
         }
 
-        // Remove non-present files
-        files.removeIf(file -> !file.isPresent());
+        // Remove non-present files and files from folders the user may not access; doPlay may remove more
+        files = files.stream()
+                .filter(MediaFile::isPresent)
+                .filter(file -> securityService.isFolderAccessAllowed(file, player.getUsername()))
+                .collect(Collectors.toCollection(ArrayList::new));
         doPlay(player, files, null, sessionId);
     }
 
@@ -417,8 +424,11 @@ public class PlayQueueService {
 
     public void addPlaylist(Player player, int id, boolean removeVideoFiles) {
         PlayQueue playQueue = player.getPlayQueue();
+        playlistService.getReadablePlaylist(id, player.getUsername());
 
-        List<MediaFile> files = playlistService.getFilesInPlaylist(id);
+        List<MediaFile> files = playlistService.getFilesInPlaylist(id).stream()
+                .filter(file -> securityService.isFolderAccessAllowed(file, player.getUsername()))
+                .collect(Collectors.toCollection(ArrayList::new));
         if (removeVideoFiles) {
             mediaFileService.removeVideoFiles(files);
         }

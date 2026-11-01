@@ -177,7 +177,13 @@ public class PlayQueue {
      */
     public synchronized void addFilesAt(Collection<MediaFile> mediaFiles, int index) {
         makeBackup();
+        index = Math.max(0, Math.min(index, size()));
+        boolean hasCurrent = this.index >= 0 && this.index < size();
         files.addAll(index, mediaFiles);
+        // keep pointing at the same song when inserting before it
+        if (hasCurrent && this.index >= index) {
+            this.index += mediaFiles.size();
+        }
         setStatus(Status.PLAYING);
     }
 

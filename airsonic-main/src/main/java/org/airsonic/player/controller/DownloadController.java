@@ -63,6 +63,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -125,11 +126,13 @@ public class DownloadController {
 
         MediaFile mediaFile = id.map(mediaFileService::getMediaFile).orElse(null);
         Collection<Pair<Path, MusicFolder>> additionalFiles = Collections.emptyList();
+        // playlists and play queues can hold files from folders the user may not access
+        Predicate<MediaFile> accessible = f -> securityService.isFolderAccessAllowed(f, user.getUsername());
 
         if (mediaFile != null) {
             securityService.checkFolderAccess(mediaFile, user.getUsername());
             if (mediaFile.isFile()) {
-                response = prepareResponse(Collections.singletonList(mediaFile), null, statusSupplier, statusCloser, additionalFiles);
+                response = prepareResponse(Collections.singletonList(mediaFile), null, accessible, statusSupplier, statusCloser, additionalFiles);
                 defaultDownloadName = FilenameUtils.getName(mediaFile.getPath());
             } else {
                 if (indices == null) {
@@ -138,14 +141,15 @@ public class DownloadController {
                         additionalFiles = Collections.singletonList(Pair.of(art.getRelativePath(), art.getFolder()));
                     }
                 }
-                response = prepareResponse(mediaFileService.getChildrenOf(mediaFile, true, false, true), indices, statusSupplier, statusCloser, additionalFiles);
+                response = prepareResponse(mediaFileService.getChildrenOf(mediaFile, true, false, true), indices, accessible, statusSupplier, statusCloser, additionalFiles);
                 defaultDownloadName = FilenameUtils.getBaseName(mediaFile.getPath()) + ".zip";
             }
         } else if (playlist != null) {
-            response = prepareResponse(playlistService.getFilesInPlaylist(playlist), indices, statusSupplier, statusCloser, additionalFiles);
-            defaultDownloadName = playlistService.getPlaylist(playlist).getName() + ".zip";
+            Playlist readablePlaylist = playlistService.getReadablePlaylist(playlist, user.getUsername());
+            response = prepareResponse(playlistService.getFilesInPlaylist(playlist), indices, accessible, statusSupplier, statusCloser, additionalFiles);
+            defaultDownloadName = readablePlaylist.getName() + ".zip";
         } else if (player != null) {
-            response = prepareResponse(transferPlayer.getPlayQueue().getFiles(), indices, statusSupplier, statusCloser, additionalFiles);
+            response = prepareResponse(transferPlayer.getPlayQueue().getFiles(), indices, accessible, statusSupplier, statusCloser, additionalFiles);
             defaultDownloadName = "player-" + transferPlayer.getId() + "-" + transferPlayer.getName() + "-" + "playqueue.zip";
         }
 
@@ -181,27 +185,45 @@ public class DownloadController {
         }
     }
 
-    private static long zipSize(Stream<Entry<String, Long>> paths) {
-        return paths.mapToLong(e -> 30 + 46 + (2L * e.getKey().length()) + e.getValue()).sum() + 22;
+    /**
+     * Size of an uncompressed zip holding the given entries (name, data size), as written by {@link ZipOutputStream}
+     * without zip64 records: a local header and a central directory header per entry, plus the end record. Names
+     * are stored as UTF-8.
+     */
+    static long zipSize(Stream<Entry<String, Long>> paths) {
+        return paths.mapToLong(e -> 30 + 46 + (2L * e.getKey().getBytes(StandardCharsets.UTF_8).length) + e.getValue()).sum() + 22;
     }
 
-    private ResponseDTO prepareResponse(List<MediaFile> files, List<Integer> indices,
+    /**
+     * Whether {@link #zipSize(Stream)} is exact: ZipOutputStream adds zip64 records once the archive reaches 4 GiB
+     * or 65535 entries.
+     */
+    static boolean isZipSizeExact(long zipSize, int entryCount) {
+        return zipSize < 0xFFFFFFFFL && entryCount < 0xFFFF;
+    }
+
+    private ResponseDTO prepareResponse(List<MediaFile> files, List<Integer> indices, Predicate<MediaFile> accessible,
             Supplier<TransferStatus> statusSupplier, Consumer<TransferStatus> statusCloser, Collection<Pair<Path, MusicFolder>> additionalFiles)
             throws IOException {
         if (indices == null) {
             indices = IntStream.range(0, files.size()).boxed().toList();
-        } else if (indices.stream().anyMatch(i -> i >= files.size())) {
-            throw new IllegalArgumentException("Can't have index > number of files");
+        } else if (indices.stream().anyMatch(i -> i != null && (i < 0 || i >= files.size()))) {
+            throw new IllegalArgumentException("Index out of range for " + files.size() + " files");
         }
+        List<MediaFile> selected = indices.stream()
+                .filter(Objects::nonNull)
+                .map(files::get)
+                .filter(accessible)
+                .toList();
 
-        if (indices.size() == 0) {
+        if (selected.isEmpty()) {
             // nothing, just return empty
             return new ResponseDTO(null, "emptyfile.download", 0, -1);
         }
 
-        if (indices.size() == 1 && (additionalFiles == null || additionalFiles.size() == 0)) {
+        if (selected.size() == 1 && (additionalFiles == null || additionalFiles.size() == 0)) {
             // single file
-            MediaFile file = files.get(indices.get(0));
+            MediaFile file = selected.get(0);
             Path path = file.getFullPath();
             long changed = file.getChanged() == null ? -1 : file.getChanged().toEpochMilli();
             return new ResponseDTO(
@@ -218,9 +240,7 @@ public class DownloadController {
             // get a list of all paths under the tree, plus their zip names and sizes
             Collection<Pair<Path, Pair<String, Long>>> pathsToZip = Stream
                     .concat(
-                            indices.stream()
-                                .map(index -> Objects.isNull(index) ? null : files.get(index))
-                                .filter(Objects::nonNull)
+                            selected.stream()
                                 .map(x -> Pair.of(x.getRelativePath(), x.getFolder())),
                             additionalFiles.stream().filter(Objects::nonNull))
                     .flatMap(pf -> {
@@ -286,12 +306,14 @@ public class DownloadController {
             };
 
             long size = zipSize(pathsToZip.stream().map(e -> e.getRight()));
+            // a wrong Content-Length truncates the zip, so send it chunked when the size can't be predicted
+            long contentLength = isZipSizeExact(size, pathsToZip.size()) ? size : -1;
 
             PipedInputStream pin = new PipedInputStream(null, 16 * 1024); // 16 Kb buffer
 
             return new ResponseDTO(
                     new MonitoredResource(
-                            new KnownLengthInputStreamResource(pin, size),
+                            new KnownLengthInputStreamResource(pin, contentLength),
                             settingsService.getDownloadBitrateLimiter(),
                             statusSupplier,
                             statusCloser,

@@ -356,6 +356,19 @@ public class PlaylistService {
     }
 
     /**
+     * Returns the playlist if it exists and the user may read it.
+     *
+     * @throws org.springframework.security.access.AccessDeniedException If the playlist doesn't exist or the user may not read it.
+     */
+    public Playlist getReadablePlaylist(int id, String username) {
+        Playlist playlist = getPlaylist(id);
+        if (playlist == null || !isReadAllowed(playlist, username)) {
+            throw new org.springframework.security.access.AccessDeniedException("Playlist " + id + " is not readable by " + username);
+        }
+        return playlist;
+    }
+
+    /**
      * Returns true if the playlist exists.
      *
      * @param id the playlist id

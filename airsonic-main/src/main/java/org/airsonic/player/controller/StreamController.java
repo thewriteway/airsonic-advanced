@@ -132,8 +132,11 @@ public class StreamController {
         // play queue (in order to support multiple parallel Podcast streams).
         boolean isPodcast = Objects.nonNull(playlist);
         if (isPodcast) {
+            playlistService.getReadablePlaylist(playlist, username);
             PlayQueue playQueue = new PlayQueue();
-            playQueue.addFiles(false, playlistService.getFilesInPlaylist(playlist));
+            playQueue.addFiles(false, playlistService.getFilesInPlaylist(playlist).stream()
+                    .filter(f -> securityService.isFolderAccessAllowed(f, username))
+                    .toList());
             player.setPlayQueue(playQueue);
             // Note: does not take transcoding into account
             expectedSize = playQueue.length();

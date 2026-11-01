@@ -334,16 +334,25 @@ public class HLSController {
     }
 
     private HlsSession getOrCreateSession(HlsSession.Key sessionKey, MediaFile mediaFile) {
-        return this.sessions.computeIfAbsent(sessionKey, k -> {
-            for (HlsSession.Key k1 : sessions.keySet()) {
-                if (k1.getMediaFileId() == k.getMediaFileId()
-                        && Strings.CS.equals(k1.getPlayerId(), k.getPlayerId())) {
-                    sessions.remove(k1).destroySession();
+        HlsSession existing = this.sessions.get(sessionKey);
+        if (existing != null) {
+            return existing;
+        }
+
+        // Drop the player's older sessions for this file (other bitrate, size...). This must happen outside
+        // computeIfAbsent: changing the map inside the mapping function can lose the new mapping.
+        for (HlsSession.Key k1 : sessions.keySet()) {
+            if (!k1.equals(sessionKey) && k1.getMediaFileId() == sessionKey.getMediaFileId()
+                    && Strings.CS.equals(k1.getPlayerId(), sessionKey.getPlayerId())) {
+                HlsSession stale = sessions.remove(k1);
+                if (stale != null) {
+                    stale.destroySession();
                 }
             }
+        }
 
-            return new HlsSession(k, mediaFile, transcodingService, homeConfig.getAirsonicHome().resolve("hls"));
-        });
+        return this.sessions.computeIfAbsent(sessionKey,
+            k -> new HlsSession(k, mediaFile, transcodingService, homeConfig.getAirsonicHome().resolve("hls")));
     }
 
 }

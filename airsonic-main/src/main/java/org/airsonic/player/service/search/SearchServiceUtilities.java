@@ -35,6 +35,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -109,7 +110,7 @@ public class SearchServiceUtilities {
     };
 
     public final BiConsumer<List<Album>, Integer> addAlbumId3IfAnyMatch = (dist, subjectId) -> {
-        if (!dist.stream().anyMatch(a -> subjectId == a.getId())) {
+        if (!dist.stream().anyMatch(a -> Objects.equals(subjectId, a.getId()))) {
             albumRepository.findById(subjectId).ifPresent(dist::add);
         }
     };

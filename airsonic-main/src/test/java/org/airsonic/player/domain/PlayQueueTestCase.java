@@ -201,6 +201,7 @@ public class PlayQueueTestCase {
         assertPlaylistEquals(playQueue, 0, "E");
     }
 
+    @Test
     public void testAddFilesAt() {
         PlayQueue playQueue = createPlaylist(0);
 
@@ -210,9 +211,25 @@ public class PlayQueueTestCase {
         playQueue.addFilesAt(Arrays.<MediaFile>asList(new TestMediaFile("D"), new TestMediaFile("E")), 1);
         assertPlaylistEquals(playQueue, 0, "A", "D", "E", "B", "C");
 
+        // inserting before the current song keeps it current
         playQueue.addFilesAt(Arrays.<MediaFile>asList(new TestMediaFile("F")), 0);
-        assertPlaylistEquals(playQueue, 0, "F", "A", "D", "E", "B", "C");
+        assertPlaylistEquals(playQueue, 1, "F", "A", "D", "E", "B", "C");
+    }
 
+    @Test
+    public void testAddFilesAtBeforeCurrentSong() {
+        PlayQueue playQueue = createPlaylist(2, "A", "B", "C");
+
+        playQueue.addFilesAt(Arrays.<MediaFile>asList(new TestMediaFile("D"), new TestMediaFile("E")), 2);
+        assertPlaylistEquals(playQueue, 4, "A", "B", "D", "E", "C");
+        assertEquals("C", playQueue.getCurrentFile().getName());
+
+        playQueue.addFilesAt(Arrays.<MediaFile>asList(new TestMediaFile("F")), 5);
+        assertPlaylistEquals(playQueue, 4, "A", "B", "D", "E", "C", "F");
+
+        // out-of-range positions append instead of throwing
+        playQueue.addFilesAt(Arrays.<MediaFile>asList(new TestMediaFile("A")), 99);
+        assertPlaylistEquals(playQueue, 4, "A", "B", "D", "E", "C", "F", "A");
     }
 
     @Test

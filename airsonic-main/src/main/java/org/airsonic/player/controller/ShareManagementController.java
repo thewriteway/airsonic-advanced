@@ -26,6 +26,7 @@ import org.airsonic.player.domain.User;
 import org.airsonic.player.domain.entity.Share;
 import org.airsonic.player.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
@@ -61,7 +62,8 @@ public class ShareManagementController {
     @GetMapping
     public ModelAndView createShare(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-        List<MediaFile> files = getMediaFiles(request);
+        User user = securityService.getCurrentUser(request);
+        List<MediaFile> files = getMediaFiles(request, user.getUsername());
         MediaFile dir = null;
         if (!files.isEmpty()) {
             dir = files.get(0);
@@ -70,14 +72,12 @@ public class ShareManagementController {
             }
         }
 
-        User user = securityService.getCurrentUser(request);
-
         Map<String, Object> map = new HashMap<>();
         map.put("dir", dir);
         map.put("user", user);
 
         Share share = shareService.createShare(user.getUsername(), files);
-        String description = getDescription(request);
+        String description = getDescription(request, user.getUsername());
         if (description != null) {
             share.setDescription(description);
             shareService.updateShare(share);
@@ -88,12 +88,16 @@ public class ShareManagementController {
         return new ModelAndView("createShare", "model", map);
     }
 
-    private String getDescription(HttpServletRequest request) throws ServletRequestBindingException {
+    private String getDescription(HttpServletRequest request, String username) throws ServletRequestBindingException {
         Integer playlistId = ServletRequestUtils.getIntParameter(request, "playlist");
-        return playlistId == null ? null : playlistService.getPlaylist(playlistId).getName();
+        return playlistId == null ? null : playlistService.getReadablePlaylist(playlistId, username).getName();
     }
 
-    private List<MediaFile> getMediaFiles(HttpServletRequest request) throws Exception {
+    /**
+     * The files to share. Shares play as the guest user, who can access every music folder, so only files the
+     * sharing user may access are shared.
+     */
+    private List<MediaFile> getMediaFiles(HttpServletRequest request, String username) throws Exception {
         Integer id = ServletRequestUtils.getIntParameter(request, "id");
         Integer playerId = ServletRequestUtils.getIntParameter(request, "player");
         Integer playlistId = ServletRequestUtils.getIntParameter(request, "playlist");
@@ -102,23 +106,35 @@ public class ShareManagementController {
 
         if (id != null) {
             MediaFile album = mediaFileService.getMediaFile(id);
+            if (album == null) {
+                throw new IllegalArgumentException("Media file not found: " + id);
+            }
+            securityService.checkFolderAccess(album, username);
             int[] indexes = ServletRequestUtils.getIntParameters(request, "i");
             if (indexes.length == 0) {
                 return Arrays.asList(album);
             }
             List<MediaFile> children = mediaFileService.getVisibleChildrenOf(album, false, true);
             for (int index : indexes) {
+                if (index < 0 || index >= children.size()) {
+                    throw new IllegalArgumentException("Index out of range: " + index);
+                }
                 result.add(children.get(index));
             }
+            return result;
         } else if (playerId != null) {
             Player player = playerService.getPlayerById(playerId);
+            if (player == null || !username.equals(player.getUsername())) {
+                throw new AccessDeniedException("Player " + playerId + " does not belong to " + username);
+            }
             PlayQueue playQueue = player.getPlayQueue();
             result = playQueue.getFiles();
         } else if (playlistId != null) {
+            playlistService.getReadablePlaylist(playlistId, username);
             result = playlistService.getFilesInPlaylist(playlistId);
         }
 
-        return result;
+        return result.stream().filter(f -> securityService.isFolderAccessAllowed(f, username)).toList();
     }
 
 }
