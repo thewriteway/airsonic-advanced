@@ -38,10 +38,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Path;
@@ -63,6 +66,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -448,5 +452,68 @@ public class MediaFileServiceTest {
         // no getFullScan stub: version < VERSION short-circuits the OR before the setting is read
         Boolean result = ReflectionTestUtils.invokeMethod(mediaFileService, "needsUpdate", mediaFile, false);
         assertEquals(Boolean.TRUE, result);
+    }
+
+    @Test
+    public void getRandomSongsForParentRunsSingleBoundedQueryWithoutChildWalk() {
+        // one subtree-scoped query bounded to count rows: no walk of the directory tree loading
+        // every descendant, and no checkLastModified-driven refresh write
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.DIRECTORY);
+        parent.setPath("Artist");
+        parent.setFolder(mockedFolder);
+
+        MediaFile song = new MediaFile();
+        song.setMediaType(MediaType.MUSIC);
+
+        when(settingsService.getHideVirtualTracks()).thenReturn(false);
+        when(settingsService.getDatabaseType()).thenReturn("HSQLDB");
+        // unmodifiable, like the real paged repository result
+        when(mediaFileRepository.findAll(ArgumentMatchers.<Specification<MediaFile>>any(), any(Pageable.class))).thenReturn(List.copyOf(List.of(song)));
+
+        List<MediaFile> songs = mediaFileService.getRandomSongsForParent(parent, 10);
+
+        verify(mediaFileRepository, never()).findByFolderAndParentPathAndPresentTrue(any(), any());
+        verify(mediaFileRepository, never()).findByFolderAndParentPathAndPresentTrue(any(), any(), any());
+        verify(mediaFileRepository, never()).save(any());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(mediaFileRepository).findAll(ArgumentMatchers.<Specification<MediaFile>>any(), pageableCaptor.capture());
+        assertEquals(10, pageableCaptor.getValue().getPageSize());
+        // callers mutate the result (PlayQueueService.doPlay runs removeVideoFiles on it), so the
+        // unmodifiable paged result must come back as a mutable copy
+        assertDoesNotThrow(() -> songs.removeIf(MediaFile::isVideo));
+        assertDoesNotThrow(() -> songs.add(song));
+    }
+
+    @Test
+    public void getRandomSongsForParentWithZeroOrNegativeCountReturnsEmptyWithoutQuery() {
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.DIRECTORY);
+
+        assertTrue(mediaFileService.getRandomSongsForParent(parent, 0).isEmpty());
+        assertTrue(mediaFileService.getRandomSongsForParent(parent, -1).isEmpty());
+
+        verifyNoInteractions(mediaFileRepository);
+    }
+
+    @Test
+    public void getRandomSongsForParentWithFileParentReturnsTheFileItself() {
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.MUSIC);
+
+        List<MediaFile> result = mediaFileService.getRandomSongsForParent(parent, 10);
+
+        assertEquals(List.of(parent), result);
+        verifyNoInteractions(mediaFileRepository);
+    }
+
+    @Test
+    public void getRandomSongsForParentWithVideoFileParentReturnsEmpty() {
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.VIDEO);
+
+        assertTrue(mediaFileService.getRandomSongsForParent(parent, 10).isEmpty());
+
+        verifyNoInteractions(mediaFileRepository);
     }
 }
