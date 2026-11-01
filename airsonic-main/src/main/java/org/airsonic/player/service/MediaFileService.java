@@ -316,6 +316,10 @@ public class MediaFileService {
                         // update media file
                         mediaFile.setPresent(true);
                         mediaFile.setChanged(mediaChanged.compareTo(cueChanged) >= 0 ? mediaChanged : cueChanged);
+                        // stamp the base row so a VERSION bump doesn't re-materialise the
+                        // indexed tracks on every scan; this branch bypasses
+                        // updateMediaFileByFile, which stamps the plain-file path
+                        mediaFile.markCurrentVersion();
                         updateMediaFile(mediaFile);
                     } catch (Exception e) {
                         LOG.error("create indexed tracks error: {}", mediaFile.getFullPath(), e);
@@ -1107,6 +1111,11 @@ public class MediaFileService {
                 mediaFile.setTitle(folder.getName());
             }
         }
+
+        // Stamp the freshly reflected row with the current schema version. This mutates the
+        // loaded entity in place, so without the stamp an upgraded row keeps its old stored
+        // version and needsUpdate re-parses it on every scan.
+        mediaFile.markCurrentVersion();
 
         return mediaFile;
 
