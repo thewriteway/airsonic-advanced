@@ -120,6 +120,13 @@ public class CoverArtController {
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
 
+        // size feeds BufferedImage allocations of size x size pixels; bound it to a sane artwork
+        // dimension. The ceiling is 2048 rather than the 500 used for counts because this is a
+        // pixel dimension whose unscaled default is already 600.
+        if (size != null) {
+            size = Math.max(1, Math.min(size, 2048));
+        }
+
         CoverArtRequest coverArtRequest = createCoverArtRequest(id, offset);
         LOG.trace("handleRequest - {}", coverArtRequest);
 

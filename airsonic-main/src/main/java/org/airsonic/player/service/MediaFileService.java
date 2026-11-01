@@ -316,6 +316,10 @@ public class MediaFileService {
                         // update media file
                         mediaFile.setPresent(true);
                         mediaFile.setChanged(mediaChanged.compareTo(cueChanged) >= 0 ? mediaChanged : cueChanged);
+                        // stamp the base row so a VERSION bump doesn't re-materialise the
+                        // indexed tracks on every scan; this branch bypasses
+                        // updateMediaFileByFile, which stamps the plain-file path
+                        mediaFile.markCurrentVersion();
                         updateMediaFile(mediaFile);
                     } catch (Exception e) {
                         LOG.error("create indexed tracks error: {}", mediaFile.getFullPath(), e);
@@ -732,21 +736,29 @@ public class MediaFileService {
 
     /**
      * Returns random songs for the given parent.
+     * <p>
+     * The pick is a single subtree-scoped query ordered by the database's random function and
+     * bounded to {@code count} rows: the subtree is never loaded into memory and no
+     * per-descendant last-modified check runs, so the result reflects the state of the last scan.
      *
      * @param parent The parent.
      * @param count  Max number of songs to return.
-     * @return Random songs.
+     * @return Random songs, as a mutable list.
      */
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional(readOnly = true)
     public List<MediaFile> getRandomSongsForParent(MediaFile parent, int count) {
-        List<MediaFile> children = getDescendantsOf(parent, false);
-        removeVideoFiles(children);
-
-        if (children.isEmpty()) {
-            return children;
+        if (count <= 0) {
+            return new ArrayList<>();
         }
-        Collections.shuffle(children);
-        return children.subList(0, Math.min(count, children.size()));
+        if (parent.isFile()) {
+            // a file parent is its own single candidate, videos excluded as before
+            return parent.isVideo() ? new ArrayList<>() : new ArrayList<>(List.of(parent));
+        }
+        // copy: the paged result is unmodifiable and callers (PlayQueueService.doPlay) mutate it
+        return new ArrayList<>(mediaFileRepository.findAll(
+                MediaFileSpecifications.randomSongsUnderParent(parent.getFolder(), parent.getPath(),
+                        settingsService.getHideVirtualTracks(), settingsService.getDatabaseType()),
+                Pageable.ofSize(count)));
     }
 
     /**
@@ -1108,6 +1120,11 @@ public class MediaFileService {
             }
         }
 
+        // Stamp the freshly reflected row with the current schema version. This mutates the
+        // loaded entity in place, so without the stamp an upgraded row keeps its old stored
+        // version and needsUpdate re-parses it on every scan.
+        mediaFile.markCurrentVersion();
+
         return mediaFile;
 
     }
@@ -1182,7 +1199,9 @@ public class MediaFileService {
                     track.setFormat(base.getFormat());
                     track.setMusicBrainzRecordingId(base.getMusicBrainzRecordingId());
                     track.setMusicBrainzReleaseId(base.getMusicBrainzReleaseId());
-                    long estimatedSize = (long) (duration / base.getDuration() * Files.size(audioFile));
+                    Double baseDuration = base.getDuration();
+                    double wholeFileLength = baseDuration != null ? baseDuration : 0.0;
+                    long estimatedSize = (long) (duration / wholeFileLength * Files.size(audioFile));
                     if (estimatedSize > 0 && estimatedSize < Files.size(audioFile)) {
                         track.setFileSize(estimatedSize);
                     } else {
@@ -1236,7 +1255,8 @@ public class MediaFileService {
 
             Path audioFile = base.getFullPath();
             long wholeFileSize = Files.size(audioFile);
-            double wholeFileLength = base.getDuration();
+            Double baseDuration = base.getDuration();
+            double wholeFileLength = baseDuration != null ? baseDuration : 0.0;
 
             String basePath = base.getPath();
             String parentPath = base.getParentPath();
@@ -1579,7 +1599,10 @@ public class MediaFileService {
 
         Pair<Integer, Instant> lastPlayedInfo = lastPlayed.computeIfAbsent(player.getId(), k -> Pair.of(file.getId(), now));
         if (lastPlayedInfo.getLeft() == file.getId()) {
-            Double threshold = Math.max(1.0, file.getDuration() / 2);
+            // duration is nullable; an unknown-length file gets the 1.0s minimum
+            // replay-debounce window instead of NPE-ing the whole play-count increment
+            Double duration = file.getDuration();
+            double threshold = Math.max(1.0, (duration == null ? 0 : duration) / 2);
             if (Duration.between(lastPlayedInfo.getRight(), now).getSeconds() < threshold) {
                 return;
             }

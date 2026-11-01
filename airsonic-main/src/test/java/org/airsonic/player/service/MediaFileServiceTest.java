@@ -21,11 +21,14 @@ package org.airsonic.player.service;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MediaFile.MediaType;
 import org.airsonic.player.domain.MusicFolder;
+import org.airsonic.player.domain.Player;
+import org.airsonic.player.repository.AlbumRepository;
 import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.repository.MusicFileInfoRepository;
 import org.airsonic.player.service.cache.MediaFileCache;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;
 import org.airsonic.player.util.FileUtil;
+import org.apache.commons.lang3.tuple.Pair;
 import org.digitalmediaserver.cuelib.CueSheet;
 import org.digitalmediaserver.cuelib.FileData;
 import org.digitalmediaserver.cuelib.Index;
@@ -34,25 +37,36 @@ import org.digitalmediaserver.cuelib.TrackData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,6 +86,8 @@ public class MediaFileServiceTest {
     private SettingsService settingsService;
     @Mock
     private MusicFileInfoRepository musicFileInfoRepository;
+    @Mock
+    private AlbumRepository albumRepository;
 
     @InjectMocks
     private MediaFileService mediaFileService;
@@ -274,6 +290,59 @@ public class MediaFileServiceTest {
         assertFalse(base.hasIndex());
     }
 
+    @Test
+    public void createIndexedTracksNullBaseDurationSkipsBlockWithoutNpe() {
+        // The eager unbox of base.getDuration() aborted the whole FILE block with an NPE when the
+        // base file's duration was null (unparsed). The 0.0-sentinel guard removes the NPE; the
+        // existing guard (lastTrackStart >= wholeFileLength) then fires against the 0.0
+        // length and the block is skipped gracefully — empty result, index path cleared — rather than
+        // crashing the scan. The tracks reappear on a later scan once the base duration parses.
+        CueSheet cueSheet = new CueSheet();
+        cueSheet.setTitle("Album");
+        cueSheet.setPerformer("Album Artist");
+
+        FileData fileData = new FileData(cueSheet, "piano.mp3", "MP3");
+        fileData.getTrackData().add(createTrack(fileData, 1, "Sole Track", 0, 5, 0));
+        cueSheet.getFileData().add(fileData);
+
+        MediaFile base = createCueBase();
+        base.setDuration(null);
+        when(mediaFileRepository.findByFolderAndPath(any(), eq("piano.mp3"))).thenReturn(List.of());
+
+        List<MediaFile> actual = assertDoesNotThrow(
+                () -> ReflectionTestUtils.<List<MediaFile>>invokeMethod(mediaFileService, "createIndexedTracks", base, cueSheet));
+
+        // block skipped gracefully: no tracks, and the base's index path is cleared by that guard
+        assertTrue(actual.isEmpty());
+        assertNull(base.getIndexPath());
+    }
+
+    @Test
+    public void createIndexedTracksNonNullBaseDurationStillMaterialises() {
+        // Sanity counterpart to the null-base case: with a known base duration the lastTrackStart guard does
+        // NOT fire, so the block materialises normally with a non-null computed duration. Proves the
+        // 0.0-sentinel guard only degrades the degenerate null case and leaves the happy path intact.
+        CueSheet cueSheet = new CueSheet();
+        cueSheet.setTitle("Album");
+        cueSheet.setPerformer("Album Artist");
+
+        FileData fileData = new FileData(cueSheet, "piano.mp3", "MP3");
+        fileData.getTrackData().add(createTrack(fileData, 1, "Sole Track", 0, 5, 0));
+        cueSheet.getFileData().add(fileData);
+
+        MediaFile base = createCueBase();
+        when(mediaFileRepository.findByFolderAndPath(any(), eq("piano.mp3"))).thenReturn(List.of());
+        when(mediaFileRepository.findByPathAndFolderAndStartPosition(any(), any(), any())).thenReturn(Optional.empty());
+        when(musicFileInfoRepository.findByPath(any())).thenReturn(Optional.empty());
+
+        List<MediaFile> actual = ReflectionTestUtils.invokeMethod(mediaFileService, "createIndexedTracks", base, cueSheet);
+
+        assertEquals(1, actual.size());
+        assertNotNull(actual.get(0).getDuration());
+        // file length (30.0) - start (5.0) = 25.0
+        assertEquals(25.0d, actual.get(0).getDuration(), 0.001d);
+    }
+
     private MediaFile createCueBase() {
         MediaFile base = new MediaFile();
         base.setIndexPath("cue/airsonic-test.cue");
@@ -303,5 +372,148 @@ public class MediaFileServiceTest {
         trackData.setTitle(title);
         trackData.getIndices().add(new Index(1, new Position(minutes, seconds, frames)));
         return trackData;
+    }
+
+    @Test
+    public void incrementPlayCountNullDurationFallsBackToMinimumReplayWindow() {
+        // The replay-debounce threshold is max(1.0, duration / 2); an unknown-length file must
+        // fall back to the 1-second floor instead of NPE-ing the whole increment.
+        MediaFile file = new MediaFile();
+        file.setId(30);
+
+        Player player = new Player();
+        player.setId(1);
+
+        // simulate an earlier counted play of the same file, outside any debounce window
+        @SuppressWarnings("unchecked")
+        Map<Integer, Pair<Integer, Instant>> lastPlayed =
+                (Map<Integer, Pair<Integer, Instant>>) ReflectionTestUtils.getField(mediaFileService, "lastPlayed");
+        lastPlayed.put(player.getId(), Pair.of(file.getId(), Instant.now().minusSeconds(10)));
+
+        when(mediaFileRepository.existsById(30)).thenReturn(true);
+
+        assertDoesNotThrow(() -> mediaFileService.incrementPlayCount(player, file));
+        assertEquals(1, file.getPlayCount());
+        assertNotNull(file.getLastPlayed());
+
+        // a repeat play inside the 1-second floor is still debounced
+        mediaFileService.incrementPlayCount(player, file);
+        assertEquals(1, file.getPlayCount());
+    }
+
+    @Test
+    public void refreshMediaFileStampsCurrentVersionOnReparsedRow() {
+        // A VERSION bump flags every older row for one re-parse, and the re-parse must stamp the
+        // new version onto the row it saves; otherwise every scan is a full re-parse.
+        MediaFile mediaFile = new MediaFile();
+        mediaFile.setId(7);
+        mediaFile.setPath("piano.mp3");
+        mediaFile.setFolder(mockedFolder);
+        // a row written by an older release: stored version below current
+        ReflectionTestUtils.setField(mediaFile, "version", MediaFile.VERSION - 1);
+
+        when(mockedFolder.getId()).thenReturn(1);
+        when(mockedFolder.getType()).thenReturn(MusicFolder.Type.MEDIA);
+        when(mediaFolderService.getMusicFolderForFile(any(), eq(true), eq(true))).thenReturn(Optional.empty());
+        when(metaDataParserFactory.getParser(any())).thenReturn(null);
+        when(settingsService.getVideoFileTypesSet()).thenReturn(Set.of());
+        when(mediaFileRepository.existsById(any())).thenReturn(true);
+
+        mediaFileService.refreshMediaFile(mediaFile);
+
+        ArgumentCaptor<MediaFile> saved = ArgumentCaptor.forClass(MediaFile.class);
+        verify(mediaFileRepository).save(saved.capture());
+        assertEquals(MediaFile.VERSION, saved.getValue().getVersion());
+    }
+
+    @Test
+    public void needsUpdateSkipsRowAtCurrentVersionWithUnchangedFile() {
+        MediaFile mediaFile = new MediaFile(); // entity default: version == MediaFile.VERSION
+        mediaFile.setPath("piano.mp3");
+        mediaFile.setFolder(mockedFolder);
+        mediaFile.setPresent(true);
+        mediaFile.setChanged(FileUtil.lastModified(mediaFile.getFullPath()));
+
+        when(settingsService.getFullScan()).thenReturn(false);
+
+        Boolean result = ReflectionTestUtils.invokeMethod(mediaFileService, "needsUpdate", mediaFile, false);
+        assertEquals(Boolean.FALSE, result);
+    }
+
+    @Test
+    public void needsUpdateReparsesRowBelowCurrentVersion() {
+        MediaFile mediaFile = new MediaFile();
+        mediaFile.setPath("piano.mp3");
+        mediaFile.setFolder(mockedFolder);
+        mediaFile.setPresent(true);
+        mediaFile.setChanged(FileUtil.lastModified(mediaFile.getFullPath()));
+        ReflectionTestUtils.setField(mediaFile, "version", MediaFile.VERSION - 1);
+
+        // no getFullScan stub: version < VERSION short-circuits the OR before the setting is read
+        Boolean result = ReflectionTestUtils.invokeMethod(mediaFileService, "needsUpdate", mediaFile, false);
+        assertEquals(Boolean.TRUE, result);
+    }
+
+    @Test
+    public void getRandomSongsForParentRunsSingleBoundedQueryWithoutChildWalk() {
+        // one subtree-scoped query bounded to count rows: no walk of the directory tree loading
+        // every descendant, and no checkLastModified-driven refresh write
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.DIRECTORY);
+        parent.setPath("Artist");
+        parent.setFolder(mockedFolder);
+
+        MediaFile song = new MediaFile();
+        song.setMediaType(MediaType.MUSIC);
+
+        when(settingsService.getHideVirtualTracks()).thenReturn(false);
+        when(settingsService.getDatabaseType()).thenReturn("HSQLDB");
+        // unmodifiable, like the real paged repository result
+        when(mediaFileRepository.findAll(ArgumentMatchers.<Specification<MediaFile>>any(), any(Pageable.class))).thenReturn(List.copyOf(List.of(song)));
+
+        List<MediaFile> songs = mediaFileService.getRandomSongsForParent(parent, 10);
+
+        verify(mediaFileRepository, never()).findByFolderAndParentPathAndPresentTrue(any(), any());
+        verify(mediaFileRepository, never()).findByFolderAndParentPathAndPresentTrue(any(), any(), any());
+        verify(mediaFileRepository, never()).save(any());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(mediaFileRepository).findAll(ArgumentMatchers.<Specification<MediaFile>>any(), pageableCaptor.capture());
+        assertEquals(10, pageableCaptor.getValue().getPageSize());
+        // callers mutate the result (PlayQueueService.doPlay runs removeVideoFiles on it), so the
+        // unmodifiable paged result must come back as a mutable copy
+        assertDoesNotThrow(() -> songs.removeIf(MediaFile::isVideo));
+        assertDoesNotThrow(() -> songs.add(song));
+    }
+
+    @Test
+    public void getRandomSongsForParentWithZeroOrNegativeCountReturnsEmptyWithoutQuery() {
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.DIRECTORY);
+
+        assertTrue(mediaFileService.getRandomSongsForParent(parent, 0).isEmpty());
+        assertTrue(mediaFileService.getRandomSongsForParent(parent, -1).isEmpty());
+
+        verifyNoInteractions(mediaFileRepository);
+    }
+
+    @Test
+    public void getRandomSongsForParentWithFileParentReturnsTheFileItself() {
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.MUSIC);
+
+        List<MediaFile> result = mediaFileService.getRandomSongsForParent(parent, 10);
+
+        assertEquals(List.of(parent), result);
+        verifyNoInteractions(mediaFileRepository);
+    }
+
+    @Test
+    public void getRandomSongsForParentWithVideoFileParentReturnsEmpty() {
+        MediaFile parent = new MediaFile();
+        parent.setMediaType(MediaType.VIDEO);
+
+        assertTrue(mediaFileService.getRandomSongsForParent(parent, 10).isEmpty());
+
+        verifyNoInteractions(mediaFileRepository);
     }
 }

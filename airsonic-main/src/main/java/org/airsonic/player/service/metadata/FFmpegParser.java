@@ -98,7 +98,11 @@ public class FFmpegParser extends MetaDataParser {
             // Bitrate is in Kb/s
             metaData.setBitRate(result.at("/format/bit_rate").asInt(0) / 1000);
 
-            metaData.setAlbumArtist(getData(result, "album_artist"));
+            // Vorbis comments (FLAC/OGG/Opus) use the no-separator canonical key ALBUMARTIST;
+            // ID3v2 TPE2 and MP4 aART are normalized to album_artist by ffprobe. getData's
+            // case variations cover one base key but can't bridge the separator difference,
+            // so both aliases are listed explicitly.
+            metaData.setAlbumArtist(getDataAny(result, "album_artist", "ALBUMARTIST"));
             metaData.setArtist(getData(result, "artist"));
             metaData.setAlbumName(getData(result, "album"));
             metaData.setGenre(getData(result, "genre"));
@@ -156,6 +160,21 @@ public class FFmpegParser extends MetaDataParser {
         }
 
         return metaData;
+    }
+
+    /**
+     * Walks {@code keys} in order, returning the first non-null value from {@link #getData}.
+     * Used where a single field has several common tag names, since {@code getData}'s case
+     * variations handle only one base key at a time.
+     */
+    static String getDataAny(JsonNode node, String... keys) {
+        for (String key : keys) {
+            String value = getData(node, key);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private static String getData(JsonNode node, String keyName) {
