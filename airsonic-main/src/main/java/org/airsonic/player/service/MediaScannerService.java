@@ -295,6 +295,8 @@ public class MediaScannerService {
                     .allOf(artists.values().stream()
                             .distinct()
                             .map(a -> CompletableFuture.supplyAsync(() -> {
+                                // files are scanned in parallel, so an artist's last file may be seen before its last album
+                                a.setAlbumCount(Optional.ofNullable(albumCount.get(a.getName())).map(AtomicInteger::get).orElse(0));
                                 return artistService.save(a);
                             }, pool).thenAcceptAsync(coverArtService::persistIfNeeded))
                             .toArray(CompletableFuture[]::new))
@@ -532,11 +534,12 @@ public class MediaScannerService {
                 }
             }
 
-            int n = Math.max(Optional.ofNullable(albumCount.get(a.getName())).map(x -> x.get()).orElse(0),
-                    Optional.ofNullable(a.getAlbumCount()).orElse(0));
-            a.setAlbumCount(n);
-
             firstEncounter.set(!lastScanned.equals(a.getLastScanned()));
+
+            // count only this scan's albums: the stored count includes albums that may since have been removed
+            int scanned = Optional.ofNullable(albumCount.get(a.getName())).map(x -> x.get()).orElse(0);
+            int n = firstEncounter.get() ? scanned : Math.max(scanned, Optional.ofNullable(a.getAlbumCount()).orElse(0));
+            a.setAlbumCount(n);
 
             a.setLastScanned(lastScanned);
             a.setPresent(true);

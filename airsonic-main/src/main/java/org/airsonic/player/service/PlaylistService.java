@@ -181,18 +181,6 @@ public class PlaylistService {
                 .collect(Collectors.toList());
     }
 
-    private List<MediaFile> filterNoDurationFiles(List<MediaFile> files) {
-        List<MediaFile> result = new ArrayList<>();
-        for (MediaFile file : files) {
-            if (file.getDuration() == null) {
-                LOG.warn("File {} has no duration", file.getId());
-            } else {
-                result.add(file);
-            }
-        }
-        return result;
-    }
-
     @Transactional
     public Playlist setFilesInPlaylist(int id, List<MediaFile> files) {
         playlistCache.removePlaylistById(id);
@@ -209,7 +197,8 @@ public class PlaylistService {
 
     private Playlist setFilesInPlaylist(Playlist playlist, List<MediaFile> files) {
 
-        List<MediaFile> filteredFiles = filterNoDurationFiles(files);
+        // files with an unknown duration are kept; they just add nothing to the playlist's duration
+        List<MediaFile> filteredFiles = files.stream().filter(Objects::nonNull).toList();
         int fileCount = filteredFiles.size();
         List<PlaylistMediaFile> playlistMediaFiles =
             playlist.getPlaylistMediaFiles().stream()
@@ -229,9 +218,21 @@ public class PlaylistService {
         }
         playlist.setPlaylistMediaFiles(playlistMediaFiles);
         playlist.setFileCount(filteredFiles.size());
-        playlist.setDuration(filteredFiles.stream().mapToDouble(MediaFile::getDuration).sum());
+        playlist.setDuration(filteredFiles.stream().map(MediaFile::getDuration).filter(Objects::nonNull).mapToDouble(Double::doubleValue).sum());
         playlist.setChanged(Instant.now());
         return playlist;
+    }
+
+    /**
+     * Records the file an auto-imported playlist comes from.
+     */
+    @Transactional
+    public void setImportedFrom(int id, String importedFrom) {
+        playlistCache.removePlaylistById(id);
+        playlistRepository.findById(id).ifPresent(p -> {
+            p.setImportedFrom(importedFrom);
+            playlistRepository.save(p);
+        });
     }
 
     @Transactional

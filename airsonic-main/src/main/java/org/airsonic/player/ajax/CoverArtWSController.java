@@ -1,8 +1,12 @@
 package org.airsonic.player.ajax;
 
 import org.airsonic.player.domain.LastFmCoverArt;
+import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.domain.User;
 import org.airsonic.player.service.CoverArtService;
 import org.airsonic.player.service.LastFmService;
+import org.airsonic.player.service.MediaFileService;
+import org.airsonic.player.service.SecurityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +14,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -21,6 +26,10 @@ public class CoverArtWSController {
     private LastFmService lastFmService;
     @Autowired
     private CoverArtService coverArtService;
+    @Autowired
+    private MediaFileService mediaFileService;
+    @Autowired
+    private SecurityService securityService;
 
     @MessageMapping("/search")
     @SendToUser(broadcast = false)
@@ -35,7 +44,16 @@ public class CoverArtWSController {
      */
     @MessageMapping("/set")
     @SendToUser(broadcast = false)
-    public String setCoverArtImage(CoverArtSetRequest req) {
+    public String setCoverArtImage(Principal principal, CoverArtSetRequest req) {
+        // WebSocket messages bypass the URL rules that limit the cover art page to the cover art role
+        User user = securityService.getUserByName(principal.getName());
+        if (user == null || !user.isCoverArtRole()) {
+            return "Permission denied: changing cover art requires the cover art role.";
+        }
+        MediaFile dir = mediaFileService.getMediaFile(req.getId());
+        if (dir == null || !securityService.isFolderAccessAllowed(dir, user.getUsername())) {
+            return "Media file not found: " + req.getId();
+        }
         try {
             coverArtService.setCoverArtImageFromUrl(req.getId(), req.getUrl());
             return "OK";

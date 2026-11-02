@@ -36,6 +36,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 
@@ -87,6 +89,38 @@ public class InternetRadioServiceTest {
         assertEquals(2, radioSources.size());
         assertEquals(TEST_STREAM_URL_1, radioSources.get(0).getStreamUrl());
         assertEquals(TEST_STREAM_URL_2, radioSources.get(1).getStreamUrl());
+    }
+
+    @Test
+    public void testDirectStreamIsPlayedAsIs() throws Exception {
+        InternetRadio radio = new InternetRadio(TEST_RADIO_NAME, TEST_STREAM_URL_1, TEST_RADIO_HOMEPAGE, true,
+                Instant.now().truncatedTo(ChronoUnit.MICROS));
+        radio.setId(5);
+        HttpURLConnection connection = Mockito.mock(HttpURLConnection.class);
+        doReturn(new ByteArrayInputStream(new byte[] {'O', 'g', 'g', 'S'})).when(connection).getInputStream();
+        doReturn(HttpURLConnection.HTTP_OK).when(connection).getResponseCode();
+        doReturn("audio/ogg").when(connection).getContentType();
+        doReturn(connection).when(internetRadioService).connectToURL(eq(URI.create(TEST_STREAM_URL_1).toURL()));
+
+        List<InternetRadioSource> radioSources = internetRadioService.getInternetRadioSources(radio);
+
+        assertEquals(1, radioSources.size());
+        assertEquals(TEST_STREAM_URL_1, radioSources.get(0).getStreamUrl());
+    }
+
+    @Test
+    public void testIsDirectlyPlayable() {
+        assertTrue(InternetRadioService.isDirectlyPlayable("audio/mpeg"));
+        assertTrue(InternetRadioService.isDirectlyPlayable("audio/mpeg; charset=UTF-8"));
+        assertTrue(InternetRadioService.isDirectlyPlayable("Audio/AACP"));
+        assertTrue(InternetRadioService.isDirectlyPlayable("audio/ogg"));
+        assertTrue(InternetRadioService.isDirectlyPlayable("application/ogg"));
+        assertTrue(InternetRadioService.isDirectlyPlayable("audio/flac"));
+        assertFalse(InternetRadioService.isDirectlyPlayable(null));
+        assertFalse(InternetRadioService.isDirectlyPlayable("audio/x-mpegurl"));
+        assertFalse(InternetRadioService.isDirectlyPlayable("audio/x-scpls"));
+        assertFalse(InternetRadioService.isDirectlyPlayable("application/vnd.apple.mpegurl"));
+        assertFalse(InternetRadioService.isDirectlyPlayable("text/html"));
     }
 
     @Test

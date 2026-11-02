@@ -49,6 +49,24 @@ public class BookmarkService {
             deleteBookmark(username, mediaFileId);
             return false;
         }
+        return saveBookmark(username, mediaFileId, positionMillis, comment);
+    }
+
+    /**
+     * Saves the bookmark at exactly the given position, unlike {@link #setBookmark}, which skips or removes
+     * bookmarks near the start or end of the file. For explicit requests, such as the REST API's createBookmark.
+     *
+     * @return false if the media file doesn't exist or the bookmark couldn't be saved
+     */
+    @Transactional
+    public boolean createBookmark(String username, int mediaFileId, long positionMillis, String comment) {
+        if (this.mediaFileService.getMediaFile(mediaFileId) == null) {
+            return false;
+        }
+        return saveBookmark(username, mediaFileId, positionMillis, comment);
+    }
+
+    private boolean saveBookmark(String username, int mediaFileId, long positionMillis, String comment) {
         LOG.debug("Setting bookmark for {}: {}", mediaFileId, positionMillis);
         Instant now = Instant.now();
         Bookmark bookmark = this.getBookmark(username, mediaFileId).orElse(

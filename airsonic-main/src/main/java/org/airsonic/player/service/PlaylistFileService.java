@@ -89,7 +89,7 @@ public class PlaylistFileService {
         // acquired, so a 35,000-event rsync becomes at most one DB-fetch + one import
         // per distinct file.
         importThrottle.submit(fullPath,
-                () -> importPlaylist(fullPath, playlistService.getAllPlaylists()));
+                () -> autoImportPlaylist(fullPath, playlistService.getAllPlaylists()));
     }
 
     public void importPlaylists() {
@@ -114,23 +114,48 @@ public class PlaylistFileService {
 
         List<Playlist> allPlaylists = playlistService.getAllPlaylists();
         try (Stream<Path> children = Files.walk(playlistFolder)) {
-            children.forEach(f -> importPlaylist(f, allPlaylists));
+            children.forEach(f -> autoImportPlaylist(f, allPlaylists));
         } catch (IOException ex) {
             LOG.warn("Error while reading directory {} when importing playlists", playlistFolder, ex);
         }
     }
 
-    private void importPlaylist(Path f, List<Playlist> allPlaylists) {
+    private void autoImportPlaylist(Path f, List<Playlist> allPlaylists) {
         if (Files.isRegularFile(f) && Files.isReadable(f)) {
             try {
-                Playlist playlist = allPlaylists.stream()
-                        .filter(p -> f.getFileName().toString().equals(p.getImportedFrom()))
-                        .findAny().orElse(null);
-                importPlaylistIfUpdated(f, playlist);
+                Path playlistFolder = Paths.get(settingsService.getPlaylistFolder());
+                String importKey = getImportKey(playlistFolder, f);
+                Playlist playlist = findImportedFrom(allPlaylists, importKey);
+                String fileName = f.getFileName().toString();
+                if (playlist == null && !importKey.equals(fileName) && !Files.exists(playlistFolder.resolve(fileName))) {
+                    // imported before playlists were keyed by their path: claim it, so a same-named file elsewhere gets its own
+                    playlist = findImportedFrom(allPlaylists, fileName);
+                    if (playlist != null) {
+                        playlist.setImportedFrom(importKey);
+                        playlistService.setImportedFrom(playlist.getId(), importKey);
+                    }
+                }
+                importPlaylistIfUpdated(f, importKey, playlist);
             } catch (Exception x) {
                 LOG.warn("Failed to auto-import playlist {}", f, x);
             }
         }
+    }
+
+    private static Playlist findImportedFrom(List<Playlist> playlists, String importKey) {
+        return playlists.stream().filter(p -> importKey.equals(p.getImportedFrom())).findAny().orElse(null);
+    }
+
+    /**
+     * Identifies an auto-imported playlist by its path in the playlist folder, as subfolders may hold files of the same name.
+     */
+    static String getImportKey(Path playlistFolder, Path file) {
+        Path absoluteFile = file.toAbsolutePath().normalize();
+        Path absoluteFolder = playlistFolder.toAbsolutePath().normalize();
+        if (!absoluteFile.startsWith(absoluteFolder)) {
+            return file.getFileName().toString();
+        }
+        return FilenameUtils.separatorsToUnix(absoluteFolder.relativize(absoluteFile).toString());
     }
 
     /**
@@ -146,6 +171,11 @@ public class PlaylistFileService {
      * @throws Exception
      */
     public Playlist importPlaylist(User user, String playlistName, String fileName, Path file, InputStream inputStream, Playlist existingPlaylist) throws Exception {
+        return importPlaylist(user, playlistName, fileName, fileName, file, inputStream, existingPlaylist);
+    }
+
+    private Playlist importPlaylist(User user, String playlistName, String fileName, String importKey, Path file, InputStream inputStream,
+            Playlist existingPlaylist) throws Exception {
 
         // .m3u files are often Latin-1/Windows-1252 rather than UTF-8, so detect the encoding
         BufferedInputStream bufferedInput = new BufferedInputStream(inputStream);
@@ -172,7 +202,7 @@ public class PlaylistFileService {
             playlist.setShared(true);
             playlist.setName(playlistName);
             playlist.setComment("Auto-imported from " + fileName);
-            playlist.setImportedFrom(fileName);
+            playlist.setImportedFrom(importKey);
             Playlist savedPlaylist = playlistService.createPlaylist(playlist);
             playlistService.broadcast(savedPlaylist);
             savedPlaylist = playlistService.setFilesInPlaylist(savedPlaylist.getId(), result.getLeft());
@@ -185,7 +215,7 @@ public class PlaylistFileService {
         }
     }
 
-    private void importPlaylistIfUpdated(Path file, Playlist existingPlaylist) throws Exception {
+    private void importPlaylistIfUpdated(Path file, String importKey, Playlist existingPlaylist) throws Exception {
         String fileName = file.getFileName().toString();
         if (existingPlaylist != null && Files.getLastModifiedTime(file).toMillis() <= existingPlaylist.getChanged().toEpochMilli()) {
             // Already imported and not changed since.
@@ -199,7 +229,7 @@ public class PlaylistFileService {
         }
 
         try (InputStream in = Files.newInputStream(file)) {
-            importPlaylist(sysAdmin, FilenameUtils.getBaseName(fileName), fileName, null, in, existingPlaylist);
+            importPlaylist(sysAdmin, FilenameUtils.getBaseName(fileName), fileName, importKey, null, in, existingPlaylist);
             LOG.info("Auto-imported playlist {}", file);
         }
     }

@@ -1364,7 +1364,10 @@ public class SubsonicRESTController {
             Instant time = times.length == 0 ? null : Instant.ofEpochMilli(times[i]);
 
             statusService.addRemotePlay(new PlayStatus(UUID.randomUUID(), file, player, time == null ? Instant.now() : time));
-            mediaFileService.incrementPlayCount(player, file);
+            // a "now playing" notification (submission=false) comes at the start of the song, so only a submission is a play
+            if (submission) {
+                mediaFileService.incrementPlayCount(player, file);
+            }
             audioScrobblerService.register(file, player.getUsername(), submission, time);
         }
 
@@ -1664,7 +1667,16 @@ public class SubsonicRESTController {
         long position = getRequiredLongParameter(request, "position");
         String comment = request.getParameter("comment");
 
-        bookmarkService.setBookmark(username, mediaFileId, position, comment);
+        MediaFile file = mediaFileService.getMediaFile(mediaFileId);
+        if (file == null || !securityService.isFolderAccessAllowed(file, username)) {
+            error(request, response, ErrorCode.NOT_FOUND, "Media file not found: " + mediaFileId);
+            return;
+        }
+        // an explicit request, so save the position as given (setBookmark skips positions near the start or end)
+        if (!bookmarkService.createBookmark(username, mediaFileId, position, comment)) {
+            error(request, response, ErrorCode.GENERIC, "Failed to save bookmark for " + mediaFileId);
+            return;
+        }
 
         writeEmptyResponse(request, response);
     }
