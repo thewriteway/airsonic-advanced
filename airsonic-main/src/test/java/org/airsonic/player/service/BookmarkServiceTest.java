@@ -83,6 +83,30 @@ public class BookmarkServiceTest {
     }
 
     @Test
+    public void testCreateBookmarkSavesPositionsSetBookmarkSkips() {
+        MediaFile mediaFile = new MediaFile();
+        mediaFile.setDuration((double) 100);
+        when(mediaFileService.getMediaFile(2)).thenReturn(mediaFile);
+        when(bookmarkRepository.findOptByUsernameAndMediaFileId("testUser", 2)).thenReturn(Optional.empty());
+        when(bookmarkRepository.save(any(Bookmark.class))).thenReturn(bookmark);
+
+        // near the start and near the end, which setBookmark ignores or deletes
+        assertTrue(bookmarkService.createBookmark("testUser", 2, 0L, null));
+        assertTrue(bookmarkService.createBookmark("testUser", 2, 95000L, null));
+
+        verify(bookmarkRepository, times(2)).save(any(Bookmark.class));
+        verify(bookmarkRepository, never()).deleteByUsernameAndMediaFileId(anyString(), anyInt());
+    }
+
+    @Test
+    public void testCreateBookmarkReturnsFalseIfMediaFileIsNull() {
+        when(mediaFileService.getMediaFile(2)).thenReturn(null);
+
+        assertFalse(bookmarkService.createBookmark("testUser", 2, 0L, null));
+        verify(bookmarkRepository, never()).save(any(Bookmark.class));
+    }
+
+    @Test
     public void testSetBookmarkReturnsFalseIfMediaFileIsNull() {
         // Arrange
         int mediaFileId = 123;

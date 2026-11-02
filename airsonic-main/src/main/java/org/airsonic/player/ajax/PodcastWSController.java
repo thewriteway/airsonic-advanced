@@ -3,8 +3,10 @@ package org.airsonic.player.ajax;
 import org.airsonic.player.domain.PodcastChannel;
 import org.airsonic.player.domain.PodcastEpisode;
 import org.airsonic.player.domain.PodcastStatus;
+import org.airsonic.player.domain.User;
 import org.airsonic.player.service.PodcastManagementService;
 import org.airsonic.player.service.PodcastPersistenceService;
+import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.podcast.PodcastIndexService;
 import org.airsonic.player.service.podcast.PodcastIndexService.PodcastIndexResponse.PodcastIndexResult;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -31,6 +34,9 @@ public class PodcastWSController {
     @Autowired
     PodcastIndexService podcastIndexService;
 
+    @Autowired
+    SecurityService securityService;
+
     @SubscribeMapping("all")
     public List<PodcastChannelInfo> getAllPodcastChannels() {
         return podcastPersistenceService.getAllChannels().stream().map(this::wrap).collect(toList());
@@ -49,20 +55,33 @@ public class PodcastWSController {
     }
 
     @MessageMapping("create")
-    public void createChannel(String url) {
+    public void createChannel(Principal principal, String url) {
+        checkPodcastRole(principal);
         podcastManagementService.createChannel(StringUtils.trimToNull(url));
     }
 
     @MessageMapping("delete")
-    public void deleteChannels(List<Integer> ids) {
+    public void deleteChannels(Principal principal, List<Integer> ids) {
+        checkPodcastRole(principal);
         ids.forEach(id -> {
             podcastManagementService.deleteChannel(id);
         });
     }
 
     @MessageMapping("refresh")
-    public void refreshChannels(List<Integer> ids) {
+    public void refreshChannels(Principal principal, List<Integer> ids) {
+        checkPodcastRole(principal);
         podcastManagementService.refreshChannelIds(ids, true);
+    }
+
+    /**
+     * WebSocket messages bypass the URL rules that limit podcast administration to the podcast role, as the REST API does.
+     */
+    private void checkPodcastRole(Principal principal) {
+        User user = principal == null ? null : securityService.getUserByName(principal.getName());
+        if (user == null || !user.isPodcastRole()) {
+            throw new AccessDeniedException("Administrating podcasts requires the podcast role");
+        }
     }
 
     @SubscribeMapping("episodes/newest")

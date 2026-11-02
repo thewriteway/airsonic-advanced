@@ -5,6 +5,7 @@ import org.airsonic.player.domain.InternetRadio;
 import org.airsonic.player.domain.InternetRadioSource;
 import org.airsonic.player.repository.InternetRadioRepository;
 import org.apache.commons.io.input.BoundedInputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import java.net.URI;
 import java.net.URL;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class InternetRadioService {
@@ -84,7 +86,8 @@ public class InternetRadioService {
     }
 
     public InternetRadioService() {
-        this.cachedSources = new HashMap<>();
+        // read and filled by concurrent requests
+        this.cachedSources = new ConcurrentHashMap<>();
     }
 
     /**
@@ -136,7 +139,20 @@ public class InternetRadioService {
         return sources;
     }
 
-    private static final Set<String> DIRECT_PLAYABLE_TYPES = Set.of("audio/mpeg", "audio/aac", "audio/aacp");
+    /** Audio content types that are playlists rather than a stream. */
+    private static final Set<String> PLAYLIST_AUDIO_TYPES = Set.of("audio/x-mpegurl", "audio/mpegurl", "audio/x-scpls", "audio/scpls");
+
+    /**
+     * Whether the content type is a stream to play as is (MP3, AAC, Ogg, Opus, FLAC...) rather than a playlist.
+     * Parameters such as "; charset=UTF-8" are ignored.
+     */
+    static boolean isDirectlyPlayable(String contentType) {
+        if (contentType == null) {
+            return false;
+        }
+        String type = StringUtils.substringBefore(contentType, ";").trim().toLowerCase(Locale.ROOT);
+        return "application/ogg".equals(type) || (type.startsWith("audio/") && !PLAYLIST_AUDIO_TYPES.contains(type));
+    }
 
     /**
      * Retrieve a list of sources from the given internet radio
@@ -174,7 +190,7 @@ public class InternetRadioService {
         try (InputStream in = urlConnection.getInputStream();
                 BoundedInputStream bin = BoundedInputStream.builder().setInputStream(in).setMaxCount(maxByteSize).get();) {
             String contentType = urlConnection.getContentType();
-            if (contentType != null && DIRECT_PLAYABLE_TYPES.contains(contentType)) {
+            if (isDirectlyPlayable(contentType)) {
                 //for direct binary streams, just return a collection with a single internet radio source
                 LOG.debug("Got direct source media at {}", streamUrl);
                 return Collections.singletonList(new InternetRadioSource(streamUrl));

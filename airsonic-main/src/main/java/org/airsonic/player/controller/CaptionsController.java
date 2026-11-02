@@ -248,23 +248,39 @@ public class CaptionsController {
         }
     }
 
+    /**
+     * Subtitle files for the video: those named after it ("movie.srt", "movie.en.srt") in its folder or a subfolder
+     * such as "Subs". When the video is alone in its folder, every subtitle file there belongs to it.
+     */
     public List<Path> findExternalCaptionsForVideo(MediaFile video) {
         MediaFile parent = mediaFileService.getParentOf(video);
         if (parent == null) {
             return Collections.emptyList();
         }
         Path parentPath = parent.getFullPath();
+        String videoName = FilenameUtils.getBaseName(video.getPath());
+        boolean onlyVideo = mediaFileService.getChildrenOf(parent, true, false, false).stream()
+                .filter(MediaFile::isVideo)
+                .count() <= 1;
 
-        try (Stream<Path> children = Files.walk(parentPath)) {
+        // only the folder and its direct subfolders: a video at the top of a music folder would otherwise walk the library
+        try (Stream<Path> children = Files.walk(parentPath, 2)) {
             return children
                     .filter(c -> Files.isRegularFile(c))
                     .filter(c -> CAPTIONS_FORMATS.contains(FilenameUtils.getExtension(c.toString())))
+                    .filter(c -> onlyVideo || isNamedAfter(c, videoName))
                     .toList();
         } catch (IOException e) {
             LOG.warn("Could not retrieve directory list for {} to find subtitle files for {}", parentPath, video, e);
 
             return Collections.emptyList();
         }
+    }
+
+    /** Whether the subtitle file is named after the video: "movie.srt" or "movie.&lt;language&gt;.srt" for "movie.mkv". */
+    static boolean isNamedAfter(Path caption, String videoName) {
+        String captionName = FilenameUtils.getBaseName(caption.getFileName().toString());
+        return Strings.CI.equals(captionName, videoName) || Strings.CI.startsWith(captionName, videoName + ".");
     }
 
     public static class CaptionInfo {

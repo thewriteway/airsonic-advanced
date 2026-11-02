@@ -183,6 +183,23 @@ public class PlaylistServiceTest {
     }
 
     @Test
+    public void testSetFilesInPlaylistKeepsFilesWithUnknownDuration() {
+        MediaFile known = new MediaFile();
+        known.setId(1);
+        known.setDuration(60.0);
+        MediaFile unknown = new MediaFile();
+        unknown.setId(2);
+        when(playlistRepository.findById(anyInt())).thenReturn(Optional.of(playlist));
+        when(playlistRepository.saveAndFlush(any(Playlist.class))).thenReturn(playlist);
+
+        Playlist result = playlistService.setFilesInPlaylist(1, List.of(known, unknown));
+
+        assertEquals(2, result.getFileCount());
+        assertEquals(60.0, result.getDuration());
+        assertEquals(2, result.getPlaylistMediaFiles().get(1).getMediaFile().getId());
+    }
+
+    @Test
     public void testSetFilesInPlaylist() {
         List<MediaFile> files = new ArrayList<>();
         for (int i = 0; i < 5; i++) {

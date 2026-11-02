@@ -1,7 +1,9 @@
 package org.airsonic.player.ajax;
 
 import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.domain.User;
 import org.airsonic.player.service.MediaFileService;
+import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.service.metadata.MetaDataParser;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;
@@ -18,6 +20,7 @@ import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.constraints.NotNull;
 
+import java.security.Principal;
 import java.util.Objects;
 
 @Controller
@@ -29,6 +32,8 @@ public class TagWSController {
     private MetaDataParserFactory metaDataParserFactory;
     @Autowired
     private MediaFileService mediaFileService;
+    @Autowired
+    private SecurityService securityService;
 
     /**
      * Updated tags for a given music file.
@@ -38,9 +43,17 @@ public class TagWSController {
      */
     @MessageMapping("/edit")
     @SendToUser(broadcast = false)
-    public String setTags(@Validated TagData data) {
+    public String setTags(Principal principal, @Validated TagData data) {
         try {
+            // WebSocket messages bypass the URL rules that limit the tag editor page to the cover art role
+            User user = securityService.getUserByName(principal.getName());
+            if (user == null || !user.isCoverArtRole()) {
+                return "Permission denied: editing tags requires the cover art role.";
+            }
             MediaFile file = mediaFileService.getMediaFile(data.getMediaFileId());
+            if (file == null || !securityService.isFolderAccessAllowed(file, user.getUsername())) {
+                return "Media file not found: " + data.getMediaFileId();
+            }
 
             MetaDataParser parser = metaDataParserFactory.getParser(file.getFullPath());
 
@@ -80,6 +93,10 @@ public class TagWSController {
 
     public void setMediaFileService(MediaFileService mediaFileService) {
         this.mediaFileService = mediaFileService;
+    }
+
+    public void setSecurityService(SecurityService securityService) {
+        this.securityService = securityService;
     }
 
     public void setMetaDataParserFactory(MetaDataParserFactory metaDataParserFactory) {
