@@ -701,6 +701,9 @@
                     <release>${java.version}</release>
                     <proc>none</proc>
                     <showWeaveInfo>true</showWeaveInfo>
+                    <!-- javac recompiles the module on every build, overwriting the woven classes; without this
+                         ajc sees no source changes, skips, and the war ships without @Transactional/@Async/@Cacheable -->
+                    <forceAjcCompile>true</forceAjcCompile>
                      <aspectLibraries>
                          <aspectLibrary>
                              <groupId>org.springframework</groupId>
