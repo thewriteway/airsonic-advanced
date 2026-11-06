@@ -266,7 +266,7 @@ public class UserCredential {
     }
 
     public enum App {
-        AIRSONIC("Airsonic", false, true),
+        AIRSONIC("Airsonic-Neo", false, true),
         LASTFM("Last.fm", true, false),
         LISTENBRAINZ("Listenbrainz", false, false),
         PODCASTINDEX("Podcast Index", true, false);

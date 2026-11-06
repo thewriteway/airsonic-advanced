@@ -6,7 +6,7 @@
 # Author: Sindre Mehus
 
 # The original Airsonic theme.
-default "Airsonic Default" default_light
+default "Airsonic-Neo Default" default_light
 
 # The default theme, dark when the device prefers dark colors.
 auto "Automatic (follows the system)" default_light

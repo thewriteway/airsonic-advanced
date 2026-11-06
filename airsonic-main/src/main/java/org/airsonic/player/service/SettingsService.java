@@ -173,11 +173,11 @@ public class SettingsService {
     private static final String DEFAULT_COVER_ART_SOURCE = CoverArtSource.FILETAG.name();
     private static final int DEFAULT_COVER_ART_CONCURRENCY = 4;
     private static final int DEFAULT_COVER_ART_QUALITY = 90;
-    private static final String DEFAULT_WELCOME_TITLE = "Welcome to Airsonic!";
+    private static final String DEFAULT_WELCOME_TITLE = "Welcome to Airsonic-Neo!";
     private static final String DEFAULT_WELCOME_SUBTITLE = null;
-    private static final String DEFAULT_WELCOME_MESSAGE = "__Welcome to Airsonic!__\n" +
+    private static final String DEFAULT_WELCOME_MESSAGE = "__Welcome to Airsonic-Neo!__\n" +
             "\\\\ \\\\\n" +
-            "Airsonic is a free, web-based media streamer, providing ubiquitous access to your music. \n" +
+            "Airsonic-Neo is a free, web-based media streamer, providing ubiquitous access to your music. \n" +
             "\\\\ \\\\\n" +
             "Use it to share your music with friends, or to listen to your own music while at work. You can stream to multiple " +
             "players simultaneously, for instance to one player in your kitchen and another in your living room.\n" +
@@ -221,12 +221,13 @@ public class SettingsService {
     private static final boolean DEFAULT_ORGANIZE_BY_FOLDER_STRUCTURE = true;
     private static final boolean DEFAULT_SORT_ALBUMS_BY_YEAR = true;
     private static final boolean DEFAULT_DLNA_ENABLED = false;
+    // Not rebranded: the device's UDN is derived from this name, so changing it would make DLNA clients see a new device
     private static final String DEFAULT_DLNA_SERVER_NAME = "Airsonic";
     private static final String DEFAULT_DLNA_SERVER_ID = null;
     private static final String DEFAULT_DLNA_BASE_LAN_URL = null;
     private static final int DEFAULT_UPNP_PORT = 4041;
     private static final boolean DEFAULT_SONOS_ENABLED = false;
-    private static final String DEFAULT_SONOS_SERVICE_NAME = "Airsonic";
+    private static final String DEFAULT_SONOS_SERVICE_NAME = "Airsonic-Neo";
     private static final int DEFAULT_SONOS_SERVICE_ID = 242;
     private static final String DEFAULT_SONOS_LINK_METHOD = SonosServiceRegistration.AuthenticationType.APPLICATION_LINK.name();
     private static final String DEFAULT_EXPORT_PLAYLIST_FORMAT = "m3u";
@@ -1188,7 +1189,7 @@ public class SettingsService {
                 }
             } catch (IOException x) {
                 LOG.error("Failed to resolve list of themes.", x);
-                themes.add(new Theme("default", "Airsonic default"));
+                themes.add(new Theme("default", "Airsonic-Neo default"));
             }
         }
         return themes.toArray(new Theme[themes.size()]);
@@ -1219,12 +1220,12 @@ public class SettingsService {
     }
 
     /**
-     * Returns the "brand" name. Normally, this is just "Airsonic".
+     * Returns the "brand" name. Normally, this is just "Airsonic-Neo".
      *
      * @return The brand name.
      */
     public String getBrand() {
-        return "Airsonic";
+        return "Airsonic-Neo";
     }
 
     public boolean isDlnaEnabled() {

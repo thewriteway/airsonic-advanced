@@ -10,6 +10,6 @@ PARAMETERS
     <img th:src="@{|/${themes?.get('helpPopupImage') ?: 'icons/default_light/help.svg'}|}" th:alt="#{common.help}"/>
 </button>
 <div th:id="|help-${topic}|" class="help-popover" popover>
-    <div style="font-weight:bold;" th:text="#{helppopup.__${topic}__.title(${'Airsonic'})}"></div>
-    <div th:utext="#{helppopup.__${topic}__.text(${'Airsonic'})}"></div>
+    <div style="font-weight:bold;" th:text="#{helppopup.__${topic}__.title(${'Airsonic-Neo'})}"></div>
+    <div th:utext="#{helppopup.__${topic}__.text(${'Airsonic-Neo'})}"></div>
 </div>

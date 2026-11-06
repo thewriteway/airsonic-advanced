@@ -63,7 +63,7 @@ public class SonosSettingsController {
         boolean sonosEnabled = ServletRequestUtils.getBooleanParameter(request, "sonosEnabled", false);
         String sonosServiceName = StringUtils.trimToNull(request.getParameter("sonosServiceName"));
         if (StringUtils.isBlank(sonosServiceName)) {
-            sonosServiceName = "Airsonic";
+            sonosServiceName = "Airsonic-Neo";
         }
 
         settingsService.setSonosLinkMethod(request.getParameter("sonosLinkMethod"));

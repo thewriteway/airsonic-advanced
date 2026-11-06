@@ -107,9 +107,9 @@ public class BootstrapVerificationFilter implements Filter {
     private void error(ServletResponse res, String error) throws IOException {
         ServletOutputStream out = res.getOutputStream();
         out.println("<html>" +
-                    "<head><title>Airsonic Error</title></head>" +
+                    "<head><title>Airsonic-Neo Error</title></head>" +
                     "<body>" +
-                    "<h2>Airsonic Error</h2>" +
+                    "<h2>Airsonic-Neo Error</h2>" +
                     error +
                     "</body>" +
                     "</html>");

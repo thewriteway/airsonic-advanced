@@ -383,10 +383,32 @@
         });
     }
 
+    /**
+     * Makes the browser's toolbar (theme-color) match the page background of the active theme. A theme
+     * whose body has no background color of its own keeps the color in the markup.
+     */
+    function syncThemeColor() {
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta || !document.body) {
+            return;
+        }
+        var color = window.getComputedStyle(document.body).backgroundColor;
+        if (color && color !== "transparent" && color !== "rgba(0, 0, 0, 0)") {
+            meta.setAttribute("content", color);
+        }
+    }
+
+    function ready() {
+        mountAll();
+        syncThemeColor();
+        // the Automatic theme follows the device's color scheme without a page load
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncThemeColor);
+    }
+
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", mountAll);
+        document.addEventListener("DOMContentLoaded", ready);
     } else {
         // loaded at the end of a document: mount once the current script is done
-        window.setTimeout(mountAll);
+        window.setTimeout(ready);
     }
 })();
