@@ -28,7 +28,10 @@ import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.ExpressionException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,6 +55,8 @@ import java.util.function.Supplier;
 @Controller
 @RequestMapping({"/more", "/more.view"})
 public class MoreController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MoreController.class);
 
     @Autowired
     private SettingsService settingsService;
@@ -79,7 +84,7 @@ public class MoreController {
             }
             return context;
         };
-        String uploadDirectory = settingsService.resolveContextualString(settingsService.getUploadsFolder(), contextSupplier);
+        String uploadDirectory = resolveUploadDirectory(user, contextSupplier);
 
         Player player = playerService.getPlayer(request, response, user.getUsername());
         ModelAndView result = new ModelAndView();
@@ -92,5 +97,19 @@ public class MoreController {
         map.put("clientSidePlaylist", player.isExternalWithPlaylist() || player.isWeb());
         map.put("brand", settingsService.getBrand());
         return result;
+    }
+
+    /**
+     * The folder the upload form suggests. A pattern that can't be resolved for this user, such as the
+     * default one for a user without music folders, leaves the field empty for the user to fill in.
+     */
+    private String resolveUploadDirectory(User user, Supplier<Map<String, Object>> contextSupplier) {
+        String pattern = settingsService.getUploadsFolder();
+        try {
+            return settingsService.resolveContextualString(pattern, contextSupplier);
+        } catch (ExpressionException e) {
+            LOG.warn("Could not resolve uploads folder pattern {} for user {}: {}", pattern, user.getUsername(), e.getMessage());
+            return "";
+        }
     }
 }
