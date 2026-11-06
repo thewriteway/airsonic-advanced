@@ -6,7 +6,7 @@ on:
     paths-ignore:
       - "**.md"
       - "*.txt"
-      - ".github/**" 
+      - ".github/**"
   workflow_dispatch:
 
 permissions:
@@ -19,8 +19,10 @@ env:
   REGISTRY_IMAGE: ghcr.io/thewriteway/airsonic-advanced
 
 jobs:
-  version:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tagcalc.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -29,61 +31,8 @@ jobs:
         with:
           java-version: 25
           distribution: 'temurin'
-      - name: Cache Maven packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-m2-
-      - name: Build with Maven
-        run: mvn verify -B -DskipTests=true -P docker
-      - uses: actions/upload-artifact@v7
-        with:
-          name: build-metadata
-          path: airsonic-main/target/generated/build-metadata/build.properties 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: version
-    strategy:
-      fail-fast: false
-      matrix:
-        cfg:
-        - jdk: 25
-          platform: linux/amd64
-          docker_version: 25
-        - jdk: 25
-          platform: linux/arm64
-          docker_version: 25
-    outputs:
-      tag: ${{ steps.tagcalc.outputs.tag }}
-    steps:
-      - name: Prepare
-        id: prep
-        run: |
-          platform="${{ matrix.cfg.platform }}"
-          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_OUTPUT
-      - uses: actions/checkout@v7
-      - run: |
-          mkdir -p airsonic-main/target/classes
-          mkdir -p airsonic-main/target/generated/build-metadata
-      - uses: actions/download-artifact@v8
-        with:
-          name: build-metadata
-          path: airsonic-main/target/classes/  
-      - run: |
-          cp airsonic-main/target/classes/build.properties airsonic-main/target/generated/build-metadata/build.properties
-      - name: Set up JDK
-        uses: actions/setup-java@v6
-        with:
-          java-version: ${{ matrix.cfg.jdk }}
-          distribution: 'temurin'
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: ${{ matrix.cfg.platform }}
       - name: Setup ffmpeg
-        id: setup-ffmpeg 
+        id: setup-ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Cache Maven packages
         uses: actions/cache@v6
@@ -94,7 +43,7 @@ jobs:
             ${{ runner.os }}-m2-
       - run: mkdir -p ${DEFAULT_MUSIC_FOLDER}
       - name: Build with Maven
-        run: mvn -DexcludedGroups=${EXCLUDED_TEST_GROUPS} -Ddocker.testing.default-music-folder=${DEFAULT_MUSIC_FOLDER} -Dmaven.buildNumber.skip=true verify -B -P integration-test
+        run: mvn -DexcludedGroups=${EXCLUDED_TEST_GROUPS} -Ddocker.testing.default-music-folder=${DEFAULT_MUSIC_FOLDER} verify -B -P integration-test
       - name: Calculate tags
         if: success()
         id: tagcalc
@@ -106,6 +55,51 @@ jobs:
           tag=$ver\.$ts;
           echo $tag;
           echo "tag=$tag" >> $GITHUB_OUTPUT
+      - name: Upload war
+        uses: actions/upload-artifact@v7
+        with:
+          name: airsonic.war
+          path: |
+            airsonic-main/target/airsonic.war
+          if-no-files-found: error
+          retention-days: 1
+      - name: Upload checksums
+        uses: actions/upload-artifact@v7
+        with:
+          name: artifacts-checksums.sha
+          path: |
+            airsonic-main/target/artifacts-checksums.sha
+          if-no-files-found: error
+          retention-days: 1
+
+  docker:
+    runs-on: ${{ matrix.cfg.runner }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+        - platform: linux/amd64
+          runner: ubuntu-latest
+          docker_version: 25
+        - platform: linux/arm64
+          runner: ubuntu-24.04-arm
+          docker_version: 25
+    steps:
+      - name: Prepare
+        id: prep
+        run: |
+          platform="${{ matrix.cfg.platform }}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v7
+      - name: Download war
+        uses: actions/download-artifact@v8
+        with:
+          name: airsonic.war
+          path: install/docker/target/dependency
+      - name: Place war in Docker build context
+        # The Dockerfile copies the war under the name Maven's copy-dependencies gives it
+        run: mv install/docker/target/dependency/airsonic.war install/docker/target/dependency/airsonic-main.war
       - name: Docker meta
         id: docker-meta
         uses: docker/metadata-action@v6
@@ -114,7 +108,7 @@ jobs:
           tags: |
             latest
             edge-latest
-            edge-${{ steps.tagcalc.outputs.tag }}
+            edge-${{ needs.build.outputs.tag }}
             gitcommit-${{ github.sha }}
       - name: Set up Docker Buildx
         id: buildx
@@ -153,28 +147,10 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
-      - name: Upload war
-        if: ${{matrix.cfg.jdk == 25 && matrix.cfg.platform == 'linux/amd64'}}
-        uses: actions/upload-artifact@v7
-        with:
-          name: airsonic.war
-          path: |
-            airsonic-main/target/airsonic.war
-          if-no-files-found: error
-          retention-days: 1
-      - name: Upload checksums
-        if: ${{matrix.cfg.jdk == 25 && matrix.cfg.platform == 'linux/amd64'}}
-        uses: actions/upload-artifact@v7
-        with:
-          name: artifacts-checksums.sha
-          path: |
-            airsonic-main/target/artifacts-checksums.sha
-          if-no-files-found: error
-          retention-days: 1
 
   release:
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: [build, docker]
     steps:
       - name: checkout
         uses: actions/checkout@v7
@@ -200,7 +176,7 @@ jobs:
         id: docker-meta
         uses: docker/metadata-action@v6
         env:
-          RELEASE_TAG: ${{ needs.deploy.outputs.tag }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
@@ -221,7 +197,7 @@ jobs:
             $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
       - name: Inspect Image
         env:
-          RELEASE_TAG: ${{ needs.deploy.outputs.tag }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:edge-${{ env.RELEASE_TAG }}
 
@@ -230,7 +206,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ needs.deploy.outputs.tag }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Edge Release ${{ env.RELEASE_TAG }}

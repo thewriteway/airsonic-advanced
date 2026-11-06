@@ -13,7 +13,7 @@ env:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.cfg.runner }}
     env:
       HAS_GPG_KEY: ${{ secrets.GPG_SIGNING_PRIVATE_KEY != '' }}
     strategy:
@@ -22,9 +22,11 @@ jobs:
         cfg:
         - jdk: 25
           platform: linux/amd64
+          runner: ubuntu-latest
           docker_version: 25
         - jdk: 25
           platform: linux/arm64
+          runner: ubuntu-24.04-arm
           docker_version: 25
     if: startsWith(github.ref, 'refs/heads/stable/')
     outputs:
@@ -43,10 +45,6 @@ jobs:
         with:
           java-version: ${{matrix.cfg.jdk}}
           distribution: 'temurin'
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: ${{matrix.cfg.platform}}
       - name: Cache Maven packages
         uses: actions/cache@v6
         with:
