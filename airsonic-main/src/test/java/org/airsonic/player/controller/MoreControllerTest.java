@@ -26,8 +26,11 @@ import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -76,6 +79,20 @@ class MoreControllerTest {
 
     @MockitoBean
     private MediaFolderService mediaFolderService;
+
+    // starting the context reads airsonic.home, whose default folder does not exist on build machines
+    @TempDir
+    private static Path tempDir;
+
+    @BeforeAll
+    static void setHome() {
+        System.setProperty("airsonic.home", tempDir.toString());
+    }
+
+    @AfterAll
+    static void clearHome() {
+        System.clearProperty("airsonic.home");
+    }
 
     @BeforeEach
     void setUp() throws Exception {
