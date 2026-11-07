@@ -62,7 +62,7 @@ public class UserSettings {
     private AvatarScheme avatarScheme = AvatarScheme.NONE;
     private Integer systemAvatarId;
     private Instant changed = Instant.now();
-    private int paginationSizeFiles = 10;
+    private int paginationSizeFiles = 20;
     private int paginationSizeFolders = 7;
     private int paginationSizePlaylist = 10;
     private int paginationSizePlayqueue = 10;

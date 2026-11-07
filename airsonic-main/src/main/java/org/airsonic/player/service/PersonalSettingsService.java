@@ -284,6 +284,8 @@ public class PersonalSettingsService {
         main.setTrackNumberVisible(true);
         main.setArtistVisible(true);
         main.setDurationVisible(true);
+        main.setBitRateVisible(true);
+        main.setFormatVisible(true);
 
         return detail;
     }

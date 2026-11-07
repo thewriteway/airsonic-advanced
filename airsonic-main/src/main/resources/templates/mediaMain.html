@@ -420,6 +420,7 @@
                 var ratingOffImage = /*[[${themes?.get('ratingOffImage') ?: 'icons/default_light/ratingOff.svg'}]]*/ "icons\/default_light\/ratingOff.svg";
 
                 /** FILES **/
+                var filesPageLength = /*[[${model.initialPaginationSizeFiles}]]*/ 20;
                 filesTable = $("#filesTable").DataTable( {
                     deferRender: true,
                     createdRow(row, data, dataIndex, cells) {
@@ -431,11 +432,25 @@
                     colReorder: true,
                     stateSave: true,
                     stateDuration: 60 * 60 * 24 * 365,
+                    // Column visibility and the default page size come from personal settings, so the
+                    // browser's saved state must not override them. A page size picked in the table is
+                    // kept until the configured default changes.
+                    stateSaveParams: function(settings, data) {
+                        data.defaultLength = filesPageLength;
+                    },
+                    stateLoadParams: function(settings, data) {
+                        if (data.defaultLength !== filesPageLength) {
+                            delete data.length;
+                        }
+                        (data.columns || []).forEach(function(column) {
+                            delete column.visible;
+                        });
+                    },
                     ordering: true,
                     order: [],
                     //orderFixed: [ 0, 'asc' ],
                     orderMulti: true,
-                    pageLength: /*[[${model.initialPaginationSizeFiles}]]*/ 10,
+                    pageLength: filesPageLength,
                     /*[+
                     lengthMenu: [ 
                         [10, 20, 50, 100, -1 [(${paginationaddition})] ], 
