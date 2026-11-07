@@ -32,7 +32,10 @@ import org.subsonic.restapi.ArtistID3;
 import org.subsonic.restapi.Child;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 
 @Service
 public class JaxbContentService {
@@ -64,14 +67,8 @@ public class JaxbContentService {
     }
 
     public <T extends ArtistID3> T createJaxbArtist(T jaxbArtist, org.airsonic.player.domain.Artist artist, String username) {
-        jaxbArtist.setId(String.valueOf(artist.getId()));
-        jaxbArtist.setName(artist.getName());
-        jaxbArtist.setStarred(jaxbWriter.convertDate(artistService.getStarredDate(artist.getId(), username)));
-        jaxbArtist.setAlbumCount(artist.getAlbumCount());
-        if (!CoverArt.NULL_ART.equals(coverArtService.getArtistArt(artist.getId()))) {
-            jaxbArtist.setCoverArt(CoverArtController.ARTIST_COVERART_PREFIX + artist.getId());
-        }
-        return jaxbArtist;
+        return fillJaxbArtist(jaxbArtist, artist, artistService.getStarredDate(artist.getId(), username),
+                !CoverArt.NULL_ART.equals(coverArtService.getArtistArt(artist.getId())));
     }
 
     public org.subsonic.restapi.Artist createJaxbArtist(MediaFile artist, String username) {
@@ -83,6 +80,29 @@ public class JaxbContentService {
         result.setUserRating(ratingService.getRatingForUser(username, artist));
         result.setAverageRating(ratingService.getAverageRating(artist));
         return result;
+    }
+
+    /**
+     * Returns a converter for building many artists at once. The user's starred artists and the ids of artists with
+     * cover art are loaded once up front, instead of the two queries per artist that {@link #createJaxbArtist} makes.
+     */
+    public Function<org.airsonic.player.domain.Artist, ArtistID3> createJaxbArtistConverter(String username) {
+        Map<Integer, Instant> starredDates = artistService.getStarredDates(username);
+        Set<Integer> artistIdsWithArt = coverArtService.getEntityIdsWithArt(CoverArt.EntityType.ARTIST);
+        return artist -> fillJaxbArtist(new ArtistID3(), artist, starredDates.get(artist.getId()),
+                artistIdsWithArt.contains(artist.getId()));
+    }
+
+    private <T extends ArtistID3> T fillJaxbArtist(T jaxbArtist, org.airsonic.player.domain.Artist artist,
+            Instant starred, boolean hasArt) {
+        jaxbArtist.setId(String.valueOf(artist.getId()));
+        jaxbArtist.setName(artist.getName());
+        jaxbArtist.setStarred(jaxbWriter.convertDate(starred));
+        jaxbArtist.setAlbumCount(artist.getAlbumCount());
+        if (hasArt) {
+            jaxbArtist.setCoverArt(CoverArtController.ARTIST_COVERART_PREFIX + artist.getId());
+        }
+        return jaxbArtist;
     }
 
     public <T extends AlbumID3> T createJaxbAlbum(T jaxbAlbum, Album album, String username) {

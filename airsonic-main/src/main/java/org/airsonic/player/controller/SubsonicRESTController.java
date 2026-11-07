@@ -385,12 +385,14 @@ public class SubsonicRESTController {
 
         List<org.airsonic.player.domain.Artist> artists = artistService.getAlphabeticalArtists(musicFolders);
         SortedMap<MusicIndex, List<MusicIndex.SortableArtistWithArtist>> indexedArtists = musicIndexService.getIndexedArtists(artists);
+        java.util.function.Function<org.airsonic.player.domain.Artist, ArtistID3> toJaxbArtist = indexedArtists.isEmpty()
+                ? null : jaxbContentService.createJaxbArtistConverter(username);
         for (Map.Entry<MusicIndex, List<MusicIndex.SortableArtistWithArtist>> entry : indexedArtists.entrySet()) {
             IndexID3 index = new IndexID3();
             result.getIndex().add(index);
             index.setName(entry.getKey().getIndex());
             for (MusicIndex.SortableArtistWithArtist sortableArtist : entry.getValue()) {
-                index.getArtist().add(jaxbContentService.createJaxbArtist(new ArtistID3(), sortableArtist.getArtist(), username));
+                index.getArtist().add(toJaxbArtist.apply(sortableArtist.getArtist()));
             }
         }
 

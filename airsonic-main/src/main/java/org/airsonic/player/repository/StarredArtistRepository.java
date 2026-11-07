@@ -22,6 +22,8 @@ import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.entity.StarredArtist;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,12 @@ public interface StarredArtistRepository extends JpaRepository<StarredArtist, In
     public Optional<StarredArtist> findByArtistIdAndUsername(Integer artistId, String username);
 
     public List<StarredArtist> findByUsername(String username);
+
+    /**
+     * Returns {@code [artistId, created]} pairs for every artist starred by the user, without loading the artists.
+     */
+    @Query("SELECT s.artist.id, s.created FROM StarredArtist s WHERE s.username = :username")
+    public List<Object[]> findArtistIdAndCreatedByUsername(@Param("username") String username);
 
     public List<StarredArtist> findByUsernameAndArtistFolderInAndArtistPresentTrue(String username, Iterable<MusicFolder> folders, Sort sort);
 

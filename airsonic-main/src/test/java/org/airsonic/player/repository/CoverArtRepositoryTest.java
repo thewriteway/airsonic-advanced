@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -82,5 +83,19 @@ public class CoverArtRepositoryTest {
         assertFalse(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ALBUM, gone.getId()).isPresent());
         assertFalse(coverArtRepository.findByEntityTypeAndEntityId(EntityType.ARTIST, missingId).isPresent());
         assertFalse(coverArtRepository.findByEntityTypeAndEntityId(EntityType.MEDIA_FILE, missingId).isPresent());
+    }
+
+    @Test
+    void testFindEntityIdsByEntityTypeReturnsOnlyThatType() {
+        MusicFolder folder = musicFolderRepository.save(new MusicFolder(Paths.get("coverArtIdsTest"), "coverArtIdsTest", Type.MEDIA, true,
+                Instant.now().truncatedTo(ChronoUnit.MICROS)));
+        coverArtRepository.save(new CoverArt(900001, EntityType.ARTIST, "artist.jpg", folder, false));
+        coverArtRepository.save(new CoverArt(900002, EntityType.ALBUM, "album.jpg", folder, false));
+        coverArtRepository.flush();
+
+        List<Integer> artistIds = coverArtRepository.findEntityIdsByEntityType(EntityType.ARTIST);
+
+        assertTrue(artistIds.contains(900001));
+        assertFalse(artistIds.contains(900002));
     }
 }

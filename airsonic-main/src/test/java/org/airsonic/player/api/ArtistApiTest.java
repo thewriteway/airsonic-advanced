@@ -439,10 +439,10 @@ public class ArtistApiTest {
                 .thenReturn(List.of(testFolder));
         when(musicIndexService.getIndexedArtists(artists))
                 .thenReturn(indexedArtists);
-        when(jaxbContentService.createJaxbArtist(any(ArtistID3.class), eq(artist1), eq(AIRSONIC_USER)))
-                .thenReturn(TestApiUtil.createTestArtistID3Full(artist1.getName()));
-        when(jaxbContentService.createJaxbArtist(any(ArtistID3.class), eq(artist2), eq(AIRSONIC_USER)))
-                .thenReturn(TestApiUtil.createTestArtistID3Minimum(artist2.getName()));
+        when(jaxbContentService.createJaxbArtistConverter(AIRSONIC_USER))
+                .thenReturn(artist -> artist1.equals(artist)
+                        ? TestApiUtil.createTestArtistID3Full(artist1.getName())
+                        : TestApiUtil.createTestArtistID3Minimum(artist2.getName()));
 
         String responseBody = mvc.perform(get(endpoint)
                 .param("v", AIRSONIC_API_VERSION)
@@ -514,10 +514,10 @@ public class ArtistApiTest {
                 .thenReturn(List.of(testFolder));
         when(musicIndexService.getIndexedArtists(artists))
                 .thenReturn(indexedArtists);
-        when(jaxbContentService.createJaxbArtist(any(ArtistID3.class), eq(artist1), eq(AIRSONIC_USER)))
-                .thenReturn(TestApiUtil.createTestArtistID3Full(artist1.getName()));
-        when(jaxbContentService.createJaxbArtist(any(ArtistID3.class), eq(artist2), eq(AIRSONIC_USER)))
-                .thenReturn(TestApiUtil.createTestArtistID3Minimum(artist2.getName()));
+        when(jaxbContentService.createJaxbArtistConverter(AIRSONIC_USER))
+                .thenReturn(artist -> artist1.equals(artist)
+                        ? TestApiUtil.createTestArtistID3Full(artist1.getName())
+                        : TestApiUtil.createTestArtistID3Minimum(artist2.getName()));
 
         String responseBody = mvc.perform(get(endpoint)
                 .param("v", AIRSONIC_API_VERSION)

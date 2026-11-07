@@ -21,6 +21,12 @@ public interface CoverArtRepository extends JpaRepository<CoverArt, CoverArtKey>
 
     public List<CoverArt> findByFolder(MusicFolder folder);
 
+    /**
+     * Returns the ids of all entities of the given type that have cover art, without loading the cover art.
+     */
+    @Query("SELECT c.entityId FROM CoverArt c WHERE c.entityType = :entityType")
+    public List<Integer> findEntityIdsByEntityType(@Param("entityType") EntityType entityType);
+
     public List<CoverArt> findByFolderAndPathStartsWith(MusicFolder folder, String path);
 
     @Transactional

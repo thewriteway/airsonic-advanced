@@ -38,6 +38,9 @@ import org.subsonic.restapi.MediaType;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -108,6 +111,37 @@ class JaxbContentServiceTest {
             assertEquals("1", result.getId());
             assertEquals("NoArt", result.getName());
             assertEquals(0, result.getAlbumCount());
+        }
+
+        @Test
+        void createJaxbArtistConverter_loadsStarredAndArtOnce() {
+            Artist starredWithArt = mock(Artist.class);
+            when(starredWithArt.getId()).thenReturn(42);
+            when(starredWithArt.getName()).thenReturn("Starred");
+            when(starredWithArt.getAlbumCount()).thenReturn(3);
+            Artist plain = mock(Artist.class);
+            when(plain.getId()).thenReturn(7);
+            when(plain.getName()).thenReturn("Plain");
+            when(plain.getAlbumCount()).thenReturn(1);
+            when(artistService.getStarredDates("user")).thenReturn(Map.of(42, Instant.now()));
+            when(coverArtService.getEntityIdsWithArt(CoverArt.EntityType.ARTIST)).thenReturn(Set.of(42));
+
+            Function<Artist, ArtistID3> converter = service.createJaxbArtistConverter("user");
+            ArtistID3 first = converter.apply(starredWithArt);
+            ArtistID3 second = converter.apply(plain);
+
+            assertEquals("42", first.getId());
+            assertEquals("Starred", first.getName());
+            assertEquals(3, first.getAlbumCount());
+            assertNotNull(first.getStarred());
+            assertEquals(CoverArtController.ARTIST_COVERART_PREFIX + "42", first.getCoverArt());
+            assertEquals("7", second.getId());
+            assertNull(second.getStarred());
+            assertNull(second.getCoverArt());
+            verify(artistService, times(1)).getStarredDates("user");
+            verify(coverArtService, times(1)).getEntityIdsWithArt(CoverArt.EntityType.ARTIST);
+            verify(artistService, never()).getStarredDate(anyInt(), anyString());
+            verify(coverArtService, never()).getArtistArt(anyInt());
         }
     }
 

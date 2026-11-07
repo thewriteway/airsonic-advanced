@@ -31,6 +31,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class CoverArtService {
@@ -138,6 +140,15 @@ public class CoverArtService {
         art = coverArtRepository.findByEntityTypeAndEntityId(EntityType.ARTIST, id).orElse(CoverArt.NULL_ART);
         coverArtCache.putCoverArt(art);
         return art;
+    }
+
+    /**
+     * Returns the ids of all entities of the given type that have cover art, in one query. Use this instead of one
+     * {@link #getArtistArt(Integer)} call per entity when building long lists: the cover art cache is small.
+     */
+    @Transactional(readOnly = true)
+    public Set<Integer> getEntityIdsWithArt(EntityType entityType) {
+        return new HashSet<>(coverArtRepository.findEntityIdsByEntityType(entityType));
     }
 
     public CoverArt getMediaFileArt(@Param("id") int id) {

@@ -39,7 +39,9 @@ import jakarta.annotation.Nullable;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -187,6 +189,24 @@ public class ArtistService {
         }
         return starredArtistRepository.findByArtistIdAndUsername(artistId, username).map(StarredArtist::getCreated)
                 .orElse(null);
+    }
+
+    /**
+     * Get the starred dates of all artists starred by the user, in one query.
+     *
+     * @param username username to check. If null or empty, return empty map
+     * @return starred date by artist id
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Instant> getStarredDates(String username) {
+        if (!StringUtils.hasLength(username)) {
+            return Collections.emptyMap();
+        }
+        Map<Integer, Instant> result = new HashMap<>();
+        for (Object[] row : starredArtistRepository.findArtistIdAndCreatedByUsername(username)) {
+            result.put((Integer) row[0], (Instant) row[1]);
+        }
+        return result;
     }
 
     /**
