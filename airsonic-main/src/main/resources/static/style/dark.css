@@ -1,0 +1,12 @@
+/*
+ * CSS stylesheet for the "Airsonic-Neo Dark" theme: the default theme with dark colors, whatever the
+ * device prefers.
+ */
+
+@import "default-without-mediaelement.css";
+@import "mediaelement-dark.css";
+@import "dark-palette.css";
+
+:root {
+    color-scheme: dark;
+}

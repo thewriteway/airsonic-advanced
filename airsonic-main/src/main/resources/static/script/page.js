@@ -372,7 +372,8 @@
         alert: alertDialog,
         setLabels: function (values) {
             Object.assign(labels, values);
-        }
+        },
+        syncThemeColor: syncThemeColor
     };
 
     function mountAll() {

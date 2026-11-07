@@ -47,7 +47,7 @@
 
 <div th:if="${!#strings.isEmpty(model.welcomeMessage)}"
     th:style="|width:15em;float:right;padding:0 1em 0 1em;border-left:1px solid var(--fg-detail)|"
-    th:text="${model.welcomeMessage}"
+    th:utext="${model.welcomeMessage}"
 ></div>
 <th:block th:each="album, loopStatus : ${model.albums}">
     <div class="albumThumb">

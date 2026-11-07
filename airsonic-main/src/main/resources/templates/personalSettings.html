@@ -57,7 +57,7 @@
             <td>
                 <select th:field="*{themeIndex}" style="width:15em">
                     <option th:value="-1" th:text="#{common.default}"></option>
-                    <option th:each="theme,loopStatus: *{themes}" th:value="${loopStatus.count - 1}" th:text="${theme.name}"></option>
+                    <option th:each="theme,loopStatus: *{themes}" th:value="${loopStatus.count - 1}" th:data-theme-id="${theme.id}" th:text="${theme.name}"></option>
                 </select>
                 <th:block th:replace="~{helpToolTip((topic=theme))}" />
             </td>

@@ -60,6 +60,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Service
@@ -406,6 +407,25 @@ public class PersonalSettingsService {
         settingDetail.setShowSideBar(showSideBar);
         // Note: setChanged() is intentionally not called. This would break browser caching
         // of the left frame.
+        userSettingRepository.save(userSetting);
+        userSettingsCache.removeUserSettings(username);
+    }
+
+    /**
+     * Updates the theme of the given user.
+     * @param username The username.
+     * @param themeId The ID of the theme.
+     */
+    @Transactional
+    public void updateTheme(String username, String themeId) {
+
+        UserSetting userSetting = getUserSetting(username);
+        UserSettingDetail settingDetail = userSetting.getSettings();
+        if (Objects.equals(settingDetail.getThemeId(), themeId)) {
+            return;
+        }
+        settingDetail.setThemeId(themeId);
+        settingDetail.setChanged(Instant.now());
         userSettingRepository.save(userSetting);
         userSettingsCache.removeUserSettings(username);
     }

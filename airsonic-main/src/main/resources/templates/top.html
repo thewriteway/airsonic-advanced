@@ -104,6 +104,71 @@
 
             // used by the keyboard shortcuts
             window.TopNav = {toggleSideBar: toggleSideBar};
+
+            var themeToggle = document.getElementById("themeToggle");
+            var themeTexts = {
+                light: /*[[#{top.lightmode}]]*/ "Light mode",
+                dark: /*[[#{top.darkmode}]]*/ "Dark mode"
+            };
+            // these themes share their icons, so only the stylesheet has to change and playback goes on
+            var themeSwapsLive = ["style/default.css", "style/dark.css", "style/auto.css"].includes(/*[[${themes?.get('styleSheet') ?: 'style/default.css'}]]*/ "style/default.css");
+
+            function isDarkTheme() {
+                var channels = (getComputedStyle(document.body).backgroundColor.match(/[\d.]+/g) || []).map(Number);
+                return channels.length === 3 && (channels[0] * 299 + channels[1] * 587 + channels[2] * 114) / 1000 < 128;
+            }
+
+            function updateThemeToggle() {
+                var dark = isDarkTheme();
+                themeToggle.classList.toggle("theme-toggle-dark", dark);
+                themeToggle.querySelector("div").textContent = dark ? themeTexts.light : themeTexts.dark;
+            }
+
+            function applyTheme(dark) {
+                var url = dark ? themeToggle.dataset.darkSheet : themeToggle.dataset.lightSheet;
+                // the document can have it twice (table.html); each keeps its place among the other stylesheets
+                document.querySelectorAll("link[data-theme-stylesheet]").forEach(current => {
+                    if (current.getAttribute("href") === url) {
+                        return;
+                    }
+                    // the current stylesheet stays until the new one is there, so the page never goes unstyled
+                    var next = current.cloneNode();
+                    next.addEventListener("load", () => {
+                        current.remove();
+                        Page.syncThemeColor();
+                        updateThemeToggle();
+                    });
+                    next.setAttribute("href", url);
+                    current.after(next);
+                });
+            }
+
+            page.actions({
+                toggleTheme() {
+                    var dark = !isDarkTheme();
+                    if (themeSwapsLive) {
+                        applyTheme(dark);
+                    }
+                    StompClient.send("/app/settings/theme", dark ? "dark" : "default");
+                }
+            });
+            page.subscribe({
+                // also tells the other windows of this user
+                "/user/queue/settings/theme": msg => {
+                    if (themeSwapsLive) {
+                        applyTheme(msg.body === "dark");
+                    } else {
+                        window.location.reload();
+                    }
+                    // an open personal settings form must not put the previous theme back when saved
+                    var option = document.querySelector('option[data-theme-id="' + CSS.escape(msg.body) + '"]');
+                    if (option) {
+                        option.selected = true;
+                    }
+                }
+            });
+            page.listen(window.matchMedia("(prefers-color-scheme: dark)"), "change", updateThemeToggle);
+            updateThemeToggle();
         });
     </script>
 
@@ -169,6 +234,12 @@
                 <img th:unless="${model.showAvatar}" th:src="${themes?.get('userImage') ?: 'icons/default_light/user.svg'}" th:alt="#{status.user}">
                 <span class="topHeader" th:text="${model.user.username}"></span>
             </a>
+            <button type="button" id="themeToggle" class="shell-nav-item shell-nav-button" data-on-click="toggleTheme"
+                    th:data-light-sheet="@{/style/default.css}" th:data-dark-sheet="@{/style/dark.css}">
+                <i data-icon="moon"></i>
+                <i data-icon="sun"></i>
+                <div class="detail"></div>
+            </button>
             <button type="button" id="connectionStatus" class="shell-nav-item shell-nav-button" data-on-click="toggleConnection">
                 <img th:src="${themes?.get('disconnectedImage') ?: 'icons/default_light/disconnected.svg'}" alt="">
                 <div class="detail" th:utext="#{top.disconnected}">Disconnected</div>

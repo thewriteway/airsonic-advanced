@@ -29,6 +29,7 @@ import org.airsonic.player.service.RatingService;
 import org.airsonic.player.service.SearchService;
 import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
+import org.airsonic.player.util.MessageMarkup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -137,7 +138,7 @@ public class HomeController {
         command.setAlbums(albums);
         command.setWelcomeTitle(settingsService.getWelcomeTitle());
         command.setWelcomeSubtitle(settingsService.getWelcomeSubtitle());
-        command.setWelcomeMessage(settingsService.getWelcomeMessage());
+        command.setWelcomeMessage(MessageMarkup.toSafeHtml(settingsService.getWelcomeMessage()));
         command.setIndexBeingCreated(mediaScannerService.isScanning());
         command.setMusicFoldersExist(!mediaFolderService.getAllMusicFolders().isEmpty());
         command.setListType(listType.getId());

@@ -97,6 +97,11 @@ body.shell {
     max-height: 30px;
 }
 
+/* The button offers the other mode: a moon in light mode, a sun in dark mode. */
+#themeToggle:not(.theme-toggle-dark) .icon-sun, #themeToggle.theme-toggle-dark .icon-moon {
+    display: none;
+}
+
 .shell-search {
     display: flex;
     flex: none;
