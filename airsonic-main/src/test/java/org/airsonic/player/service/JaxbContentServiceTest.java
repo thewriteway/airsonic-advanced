@@ -23,8 +23,10 @@ import org.airsonic.player.domain.Album;
 import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.CoverArt;
 import org.airsonic.player.domain.MediaFile;
+import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.Player;
 import org.airsonic.player.domain.Playlist;
+import org.airsonic.player.domain.Transcoding;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +40,7 @@ import org.subsonic.restapi.MediaType;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -143,6 +146,38 @@ class JaxbContentServiceTest {
             verify(artistService, never()).getStarredDate(anyInt(), anyString());
             verify(coverArtService, never()).getArtistArt(anyInt());
         }
+
+        @Test
+        void createJaxbArtistsID3_loadsStarredAndArtForThePageOnly() {
+            Artist starredWithArt = mock(Artist.class);
+            when(starredWithArt.getId()).thenReturn(42);
+            when(starredWithArt.getName()).thenReturn("Starred");
+            Artist plain = mock(Artist.class);
+            when(plain.getId()).thenReturn(7);
+            when(plain.getName()).thenReturn("Plain");
+            when(artistService.getStarredDates(List.of(42, 7), "user")).thenReturn(Map.of(42, Instant.now()));
+            when(coverArtService.getEntityIdsWithArt(CoverArt.EntityType.ARTIST, List.of(42, 7))).thenReturn(Set.of(42));
+
+            List<ArtistID3> artists = service.createJaxbArtistsID3(List.of(starredWithArt, plain), "user");
+
+            assertEquals(2, artists.size());
+            assertEquals("Starred", artists.get(0).getName());
+            assertNotNull(artists.get(0).getStarred());
+            assertEquals(CoverArtController.ARTIST_COVERART_PREFIX + "42", artists.get(0).getCoverArt());
+            assertEquals("Plain", artists.get(1).getName());
+            assertNull(artists.get(1).getStarred());
+            assertNull(artists.get(1).getCoverArt());
+            verify(artistService, never()).getStarredDates(anyString());
+            verify(coverArtService, never()).getEntityIdsWithArt(CoverArt.EntityType.ARTIST);
+            verify(artistService, never()).getStarredDate(anyInt(), anyString());
+            verify(coverArtService, never()).getArtistArt(anyInt());
+        }
+
+        @Test
+        void createJaxbArtistsID3_emptyListQueriesNothing() {
+            assertTrue(service.createJaxbArtistsID3(List.of(), "user").isEmpty());
+            verifyNoInteractions(artistService, coverArtService);
+        }
     }
 
     @Nested
@@ -206,6 +241,52 @@ class JaxbContentServiceTest {
 
             assertNull(result.getArtistId());
             assertNull(result.getCoverArt());
+        }
+
+        @Test
+        void createJaxbAlbums_loadsArtistsArtAndStarredOncePerList() {
+            Album starredWithArt = new Album();
+            starredWithArt.setId(1);
+            starredWithArt.setName("First");
+            starredWithArt.setArtist("Known Artist");
+            Album plain = new Album();
+            plain.setId(2);
+            plain.setName("Second");
+            plain.setArtist("Unknown Artist");
+            Album noArtist = new Album();
+            noArtist.setId(3);
+            noArtist.setName("Third");
+
+            when(artistService.getArtistIdsByName(List.of("Known Artist", "Unknown Artist")))
+                    .thenReturn(Map.of("Known Artist", 99));
+            when(coverArtService.getEntityIdsWithArt(CoverArt.EntityType.ALBUM, List.of(1, 2, 3))).thenReturn(Set.of(1));
+            when(albumService.getAlbumStarredDates(List.of(1, 2, 3), "user")).thenReturn(Map.of(1, starredDate));
+
+            List<AlbumID3> result = service.createJaxbAlbums(List.of(starredWithArt, plain, noArtist), "user");
+
+            assertEquals(3, result.size());
+            assertEquals("1", result.get(0).getId());
+            assertEquals("99", result.get(0).getArtistId());
+            assertEquals(CoverArtController.ALBUM_COVERART_PREFIX + "1", result.get(0).getCoverArt());
+            assertNotNull(result.get(0).getStarred());
+
+            assertEquals("Unknown Artist", result.get(1).getArtist());
+            assertNull(result.get(1).getArtistId());
+            assertNull(result.get(1).getCoverArt());
+            assertNull(result.get(1).getStarred());
+
+            assertNull(result.get(2).getArtist());
+            assertNull(result.get(2).getArtistId());
+
+            verify(artistService, never()).getArtist(anyString());
+            verify(coverArtService, never()).getAlbumArt(anyInt());
+            verify(albumService, never()).getAlbumStarredDate(anyInt(), anyString());
+        }
+
+        @Test
+        void createJaxbAlbums_emptyListQueriesNothing() {
+            assertTrue(service.createJaxbAlbums(List.of(), "user").isEmpty());
+            verifyNoInteractions(artistService, coverArtService, albumService);
         }
     }
 
@@ -289,8 +370,9 @@ class JaxbContentServiceTest {
             when(artistService.getArtist("Artist")).thenReturn(artist);
             when(artist.getId()).thenReturn(88);
             when(coverArtService.getMediaFileArt(99)).thenReturn(coverArt);
-            when(transcodingService.isTranscodingRequired(mediaFile, player)).thenReturn(true);
-            when(transcodingService.getSuffix(player, mediaFile, null)).thenReturn("ogg");
+            List<Transcoding> transcodings = List.of(mock(Transcoding.class));
+            when(transcodingService.getTranscodingsForPlayer(player)).thenReturn(transcodings);
+            when(transcodingService.getTranscodedSuffix(mediaFile, transcodings)).thenReturn("ogg");
 
             Child child = service.createJaxbChild(player, mediaFile, "user");
             assertEquals("100", child.getId());
@@ -354,6 +436,80 @@ class JaxbContentServiceTest {
 
             assertNull(child.getCoverArt());
         }
+
+        @Test
+        void createJaxbChildren_loadsLookupsOncePerList() {
+            Player player = mock(Player.class);
+            MusicFolder folder = mock(MusicFolder.class);
+            when(folder.getId()).thenReturn(1);
+            MediaFile song1 = song(101, "Artist A", folder);
+            MediaFile song2 = song(102, "Artist B", folder);
+            when(parent.getId()).thenReturn(99);
+            when(mediaFileService.getParentOf(song1)).thenReturn(parent);
+            when(mediaFileService.isRoot(parent)).thenReturn(false);
+            when(coverArtService.getEntityIdsWithArt(CoverArt.EntityType.MEDIA_FILE, List.of(99, 99))).thenReturn(Set.of(99));
+            when(mediaFileService.getMediaFileStarredDates(List.of(101, 102), "user"))
+                    .thenReturn(Map.of(102, Instant.ofEpochMilli(66666666L)));
+            when(ratingService.getRatingsForUser("user", List.of(101, 102))).thenReturn(Map.of(101, 5));
+            when(ratingService.getAverageRatings(List.of(101, 102))).thenReturn(Map.of(101, 4.5));
+            when(albumService.getAlbumIdsByMediaFile(List.of(song1, song2))).thenReturn(Map.of(101, 77, 102, 78));
+            when(artistService.getArtistIdsByName(List.of("Artist A", "Artist B"))).thenReturn(Map.of("Artist A", 88));
+            List<Transcoding> transcodings = List.of(mock(Transcoding.class));
+            when(transcodingService.getTranscodingsForPlayer(player)).thenReturn(transcodings);
+            when(transcodingService.getTranscodedSuffix(song1, transcodings)).thenReturn("ogg");
+            when(transcodingService.getTranscodedSuffix(song2, transcodings)).thenReturn(null);
+
+            List<Child> children = service.createJaxbChildren(player, List.of(song1, song2), "user");
+
+            assertEquals(2, children.size());
+            Child first = children.get(0);
+            assertEquals("101", first.getId());
+            assertEquals("99", first.getParent());
+            assertEquals("99", first.getCoverArt());
+            assertNull(first.getStarred());
+            assertEquals(5, first.getUserRating());
+            assertEquals(4.5, first.getAverageRating());
+            assertEquals("77", first.getAlbumId());
+            assertEquals("88", first.getArtistId());
+            assertEquals("ogg", first.getTranscodedSuffix());
+            Child second = children.get(1);
+            assertEquals("99", second.getParent());
+            assertNotNull(second.getStarred());
+            assertNull(second.getUserRating());
+            assertNull(second.getAverageRating());
+            assertEquals("78", second.getAlbumId());
+            assertNull(second.getArtistId());
+            assertNull(second.getTranscodedSuffix());
+
+            // songs in the same directory share one parent lookup, and nothing is looked up per song
+            verify(mediaFileService, times(1)).getParentOf(any());
+            verify(coverArtService, never()).getMediaFileArt(anyInt());
+            verify(mediaFileService, never()).getMediaFileStarredDate(any(), any());
+            verify(ratingService, never()).getRatingForUser(any(), any());
+            verify(ratingService, never()).getAverageRating(any());
+            verify(albumService, never()).getAlbumByMediaFile(any());
+            verify(artistService, never()).getArtist(anyString());
+            verify(transcodingService, times(1)).getTranscodingsForPlayer(player);
+        }
+
+        @Test
+        void createJaxbChildren_emptyListQueriesNothing() {
+            assertTrue(service.createJaxbChildren(mock(Player.class), List.of(), "user").isEmpty());
+            verifyNoInteractions(mediaFileService, coverArtService, ratingService, albumService, artistService, transcodingService);
+        }
+
+        private MediaFile song(int id, String artist, MusicFolder folder) {
+            MediaFile song = mock(MediaFile.class);
+            when(song.getId()).thenReturn(id);
+            when(song.getParentPath()).thenReturn("Artist/Album");
+            when(song.getFolder()).thenReturn(folder);
+            when(song.isDirectory()).thenReturn(false);
+            when(song.isFile()).thenReturn(true);
+            when(song.getArtist()).thenReturn(artist);
+            when(song.getMediaType()).thenReturn(MediaFile.MediaType.MUSIC);
+            when(song.getFormat()).thenReturn("mp3");
+            return song;
+        }
     }
 
     @Nested
@@ -386,6 +542,40 @@ class JaxbContentServiceTest {
             assertEquals("124", result.getId());
             assertEquals("Artist Name", result.getName());
             assertNull(result.getStarred());
+        }
+
+        @Test
+        void createJaxbArtists_loadsStarredAndRatingsOncePerList() {
+            MediaFile rated = mock(MediaFile.class);
+            when(rated.getId()).thenReturn(11);
+            when(rated.getTitle()).thenReturn("Rated");
+            MediaFile starred = mock(MediaFile.class);
+            when(starred.getId()).thenReturn(12);
+            when(starred.getArtist()).thenReturn("Starred");
+            when(mediaFileService.getMediaFileStarredDates(List.of(11, 12), "user")).thenReturn(Map.of(12, Instant.now()));
+            when(ratingService.getRatingsForUser("user", List.of(11, 12))).thenReturn(Map.of(11, 5));
+            when(ratingService.getAverageRatings(List.of(11, 12))).thenReturn(Map.of(11, 4.5));
+
+            List<org.subsonic.restapi.Artist> artists = service.createJaxbArtists(List.of(rated, starred), "user");
+
+            assertEquals("11", artists.get(0).getId());
+            assertEquals("Rated", artists.get(0).getName());
+            assertNull(artists.get(0).getStarred());
+            assertEquals(5, artists.get(0).getUserRating());
+            assertEquals(4.5, artists.get(0).getAverageRating());
+            assertEquals("Starred", artists.get(1).getName());
+            assertNotNull(artists.get(1).getStarred());
+            assertNull(artists.get(1).getUserRating());
+            assertNull(artists.get(1).getAverageRating());
+            verify(mediaFileService, never()).getMediaFileStarredDate(any(), any());
+            verify(ratingService, never()).getRatingForUser(any(), any());
+            verify(ratingService, never()).getAverageRating(any());
+        }
+
+        @Test
+        void createJaxbArtists_emptyListQueriesNothing() {
+            assertTrue(service.createJaxbArtists(List.of(), "user").isEmpty());
+            verifyNoInteractions(mediaFileService, ratingService);
         }
     }
 

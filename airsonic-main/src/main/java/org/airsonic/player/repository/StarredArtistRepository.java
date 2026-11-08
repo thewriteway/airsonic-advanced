@@ -27,6 +27,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +43,10 @@ public interface StarredArtistRepository extends JpaRepository<StarredArtist, In
      */
     @Query("SELECT s.artist.id, s.created FROM StarredArtist s WHERE s.username = :username")
     public List<Object[]> findArtistIdAndCreatedByUsername(@Param("username") String username);
+
+    @Query("SELECT s.artist.id, s.created FROM StarredArtist s WHERE s.username = :username AND s.artist.id IN :artistIds")
+    public List<Object[]> findArtistIdAndCreatedByUsernameAndArtistIdIn(@Param("username") String username,
+            @Param("artistIds") Collection<Integer> artistIds);
 
     public List<StarredArtist> findByUsernameAndArtistFolderInAndArtistPresentTrue(String username, Iterable<MusicFolder> folders, Sort sort);
 

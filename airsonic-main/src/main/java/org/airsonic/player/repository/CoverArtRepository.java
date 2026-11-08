@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +27,13 @@ public interface CoverArtRepository extends JpaRepository<CoverArt, CoverArtKey>
      */
     @Query("SELECT c.entityId FROM CoverArt c WHERE c.entityType = :entityType")
     public List<Integer> findEntityIdsByEntityType(@Param("entityType") EntityType entityType);
+
+    /**
+     * Returns those of the given entity ids that have cover art of the given type, without loading the cover art.
+     */
+    @Query("SELECT c.entityId FROM CoverArt c WHERE c.entityType = :entityType AND c.entityId IN :entityIds")
+    public List<Integer> findEntityIdsByEntityTypeAndEntityIdIn(@Param("entityType") EntityType entityType,
+            @Param("entityIds") Collection<Integer> entityIds);
 
     public List<CoverArt> findByFolderAndPathStartsWith(MusicFolder folder, String path);
 

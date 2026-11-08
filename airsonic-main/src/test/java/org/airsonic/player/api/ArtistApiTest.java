@@ -77,7 +77,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -193,8 +195,8 @@ public class ArtistApiTest {
                 .thenReturn(List.of(testAlbum));
         when(jaxbContentService.createJaxbArtist(any(ArtistID3.class), eq(artist), eq(AIRSONIC_USER)))
                 .thenReturn(TestApiUtil.createTestArtistWithAlbumsID3Full(artist.getName()));
-        when(jaxbContentService.createJaxbAlbum(any(AlbumID3.class), eq(testAlbum), eq(AIRSONIC_USER)))
-                .thenReturn(TestApiUtil.createTestAlbumID3());
+        when(jaxbContentService.createJaxbAlbums(eq(List.of(testAlbum)), eq(AIRSONIC_USER)))
+                .thenReturn(List.of(TestApiUtil.createTestAlbumID3()));
 
         String responseBody = mvc.perform(get(endpoint)
                 .param("v", AIRSONIC_API_VERSION)
@@ -692,8 +694,8 @@ public class ArtistApiTest {
         when(lastFmService.getSimilarArtistsByMediaFile(eq(mediaFile), eq(count), eq(includeNotPresent),
                 eq(List.of(testFolder))))
                 .thenReturn(List.of(similarFile));
-        when(jaxbContentService.createJaxbArtist(eq(similarFile), eq(AIRSONIC_USER)))
-                .thenReturn(TestApiUtil.createTestArtist("Similar Artist A"));
+        when(jaxbContentService.createJaxbArtists(eq(List.of(similarFile)), eq(AIRSONIC_USER)))
+                .thenReturn(List.of(TestApiUtil.createTestArtist("Similar Artist A")));
 
         // Build request
         var requestBuilder = get(endpoint)
@@ -835,8 +837,8 @@ public class ArtistApiTest {
                 .thenReturn("http://localhost/img/large-jaxb.jpg");
 
         // jaxbContentService mock for similar artist
-        when(jaxbContentService.createJaxbArtist(any(ArtistID3.class), eq(similarArtist), eq(AIRSONIC_USER)))
-                .thenReturn(TestApiUtil.createTestArtistID3Full("Similar Artist JAXB"));
+        when(jaxbContentService.createJaxbArtistsID3(eq(List.of(similarArtist)), eq(AIRSONIC_USER)))
+                .thenReturn(List.of(TestApiUtil.createTestArtistID3Full("Similar Artist JAXB")));
 
         var requestBuilder = get(endpoint)
                 .param("v", AIRSONIC_API_VERSION)
@@ -979,7 +981,9 @@ public class ArtistApiTest {
 
         assertArtistInfo2(expectedArtistInfo2, artistInfo2);
 
-        verifyNoInteractions(jaxbContentService); // No JAXB conversion for similar artists
+        // no similar artists, so the bulk conversion gets an empty list and builds nothing
+        verify(jaxbContentService).createJaxbArtistsID3(eq(List.of()), eq(AIRSONIC_USER));
+        verifyNoMoreInteractions(jaxbContentService);
 
         // Verify that the player is created with the expected properties
         List<Player> players = playerService.getPlayersForUserAndClientId(AIRSONIC_USER, clientName);

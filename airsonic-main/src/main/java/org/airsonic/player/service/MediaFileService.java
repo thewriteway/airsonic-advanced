@@ -46,6 +46,7 @@ import org.airsonic.player.service.metadata.MetaData;
 import org.airsonic.player.service.metadata.MetaDataParser;
 import org.airsonic.player.service.metadata.MetaDataParserFactory;
 import org.airsonic.player.util.FileUtil;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -782,6 +783,40 @@ public class MediaFileService {
 
     public Instant getMediaFileStarredDate(MediaFile mediaFile, String username) {
         return starredMediaFileRepository.findByUsernameAndMediaFile(username, mediaFile).map(StarredMediaFile::getCreated).orElse(null);
+    }
+
+    /**
+     * Returns the dates the user starred those of the given media files that are starred, keyed by media file id, in
+     * one query per 500 ids. Use this instead of one {@link #getMediaFileStarredDate} call per file for long lists.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Instant> getMediaFileStarredDates(Collection<Integer> mediaFileIds, String username) {
+        Map<Integer, Instant> result = new HashMap<>();
+        if (StringUtils.isEmpty(username) || mediaFileIds.isEmpty()) {
+            return result;
+        }
+        for (List<Integer> chunk : ListUtils.partition(new ArrayList<>(new LinkedHashSet<>(mediaFileIds)), 500)) {
+            for (Object[] row : starredMediaFileRepository.findMediaFileIdAndCreatedByUsernameAndMediaFileIdIn(username, chunk)) {
+                result.put((Integer) row[0], (Instant) row[1]);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the dates the user starred each of their starred media files, keyed by media file id, in one query.
+     * Suits lists that span the whole library, where looking the ids up in chunks would take many queries.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Instant> getMediaFileStarredDates(String username) {
+        Map<Integer, Instant> result = new HashMap<>();
+        if (StringUtils.isEmpty(username)) {
+            return result;
+        }
+        for (Object[] row : starredMediaFileRepository.findMediaFileIdAndCreatedByUsername(username)) {
+            result.put((Integer) row[0], (Instant) row[1]);
+        }
+        return result;
     }
 
     public void populateStarredDate(List<MediaFile> mediaFiles, String username) {

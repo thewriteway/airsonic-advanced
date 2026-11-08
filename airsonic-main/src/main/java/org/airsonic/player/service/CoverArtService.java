@@ -12,6 +12,7 @@ import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.service.cache.CoverArtCache;
 import org.airsonic.player.util.NetworkUtil;
 import org.airsonic.player.util.StringUtil;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.http.HttpStatus;
@@ -31,7 +32,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -149,6 +153,19 @@ public class CoverArtService {
     @Transactional(readOnly = true)
     public Set<Integer> getEntityIdsWithArt(EntityType entityType) {
         return new HashSet<>(coverArtRepository.findEntityIdsByEntityType(entityType));
+    }
+
+    /**
+     * Returns those of the given entity ids that have cover art, in one query per 500 ids. Unlike
+     * {@link #getEntityIdsWithArt(EntityType)} this only loads the ids asked for, so it suits one page of a list.
+     */
+    @Transactional(readOnly = true)
+    public Set<Integer> getEntityIdsWithArt(EntityType entityType, Collection<Integer> entityIds) {
+        Set<Integer> result = new HashSet<>();
+        for (List<Integer> chunk : ListUtils.partition(new ArrayList<>(entityIds), 500)) {
+            result.addAll(coverArtRepository.findEntityIdsByEntityTypeAndEntityIdIn(entityType, chunk));
+        }
+        return result;
     }
 
     public CoverArt getMediaFileArt(@Param("id") int id) {

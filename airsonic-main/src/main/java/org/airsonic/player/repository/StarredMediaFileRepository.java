@@ -26,9 +26,12 @@ import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.entity.StarredMediaFile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +44,13 @@ public interface StarredMediaFileRepository extends JpaRepository<StarredMediaFi
     public Optional<StarredMediaFile> findByUsernameAndMediaFile(String username, MediaFile mediaFile);
 
     public List<StarredMediaFile> findByUsername(String username);
+
+    @Query("SELECT s.mediaFile.id, s.created FROM StarredMediaFile s WHERE s.username = :username AND s.mediaFile.id IN :mediaFileIds")
+    public List<Object[]> findMediaFileIdAndCreatedByUsernameAndMediaFileIdIn(@Param("username") String username,
+            @Param("mediaFileIds") Collection<Integer> mediaFileIds);
+
+    @Query("SELECT s.mediaFile.id, s.created FROM StarredMediaFile s WHERE s.username = :username")
+    public List<Object[]> findMediaFileIdAndCreatedByUsername(@Param("username") String username);
 
     public List<StarredMediaFile> findByUsernameAndMediaFileMediaTypeAndMediaFileFolderInAndMediaFilePresentTrue(
             String username, MediaType mediaType, Iterable<MusicFolder> folders, Pageable page);

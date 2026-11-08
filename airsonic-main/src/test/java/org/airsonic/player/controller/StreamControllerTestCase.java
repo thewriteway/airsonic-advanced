@@ -26,6 +26,7 @@ import org.airsonic.player.service.SecurityService;
 import org.airsonic.player.service.SettingsService;
 import org.airsonic.player.service.StatusService;
 import org.airsonic.player.service.TranscodingService;
+import org.airsonic.player.spring.KnownLengthInputStreamResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -112,6 +115,68 @@ public class StreamControllerTestCase {
 
         verify(statusService).removeStreamStatus(status);
         verify(securityService, never()).incrementBytesStreamed(anyString(), anyLong());
+    }
+
+    /**
+     * iOS players send "Icy-MetaData: 1" with every request. A single file must still be served with its length,
+     * or byte range requests (seeking) get the whole file from the start again.
+     */
+    @Test
+    public void testSingleFileIgnoresShoutcastRequest() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/rest/stream");
+        request.addHeader("icy-metadata", "1");
+        request.addParameter("c", "playSub_iPhone");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MediaFile file = new MediaFile();
+        file.setId(1);
+        file.setMediaType(MediaType.MUSIC);
+        file.setChanged(Instant.now());
+        Player player = new Player();
+        player.setUsername(User.USERNAME_ANONYMOUS);
+        player.setPlayQueue(new PlayQueue());
+        TranscodingService.Parameters parameters = new TranscodingService.Parameters(file, null);
+        parameters.setExpectedLength(1234L);
+        parameters.setRangeAllowed(true);
+
+        when(securityService.getCurrentUsername(request)).thenReturn(User.USERNAME_ANONYMOUS);
+        when(playerService.getPlayer(request, response, User.USERNAME_ANONYMOUS, false, true)).thenReturn(player);
+        when(mediaFileService.getMediaFile(1)).thenReturn(file);
+        when(transcodingService.getParameters(file, player, null, "raw", null)).thenReturn(parameters);
+        when(transcodingService.getSuffix(player, file, "raw")).thenReturn("flac");
+        when(statusService.createStreamStatus(player)).thenReturn(new TransferStatus(player));
+
+        ResponseEntity<Resource> result = streamController.handleRequest(jwt(), null, "raw", null,
+                Optional.empty(), Optional.of(1), Optional.empty(), null, new ServletWebRequest(request, response));
+
+        assertNull(result.getHeaders().getFirst("icy-metaint"));
+        assertInstanceOf(KnownLengthInputStreamResource.class, result.getBody());
+        assertEquals(1234L, result.getBody().contentLength());
+    }
+
+    /** The continuous play queue stream (internet radio style players) still gets SHOUTcast titles. */
+    @Test
+    public void testPlayQueueStreamHonoursShoutcastRequest() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/stream");
+        request.addHeader("icy-metadata", "1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        Player player = new Player();
+        player.setUsername(User.USERNAME_ANONYMOUS);
+        player.setPlayQueue(new PlayQueue());
+
+        when(securityService.getCurrentUsername(request)).thenReturn(User.USERNAME_ANONYMOUS);
+        when(playerService.getPlayer(request, response, User.USERNAME_ANONYMOUS, false, true)).thenReturn(player);
+        when(statusService.createStreamStatus(player)).thenReturn(new TransferStatus(player));
+
+        ResponseEntity<Resource> result = streamController.handleRequest(jwt(), null, null, "mp3",
+                Optional.empty(), Optional.empty(), Optional.empty(), null, new ServletWebRequest(request, response));
+
+        assertNotNull(result.getHeaders().getFirst("icy-metaint"));
+    }
+
+    private static JWTAuthenticationToken jwt() {
+        return new JWTAuthenticationToken(User.USERNAME_ANONYMOUS, "jwt", "rest/stream?id=1");
     }
 
     @Test

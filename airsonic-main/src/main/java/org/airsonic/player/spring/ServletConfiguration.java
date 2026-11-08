@@ -7,6 +7,7 @@ import org.airsonic.player.filter.ContentSecurityPolicyFilter;
 import org.airsonic.player.filter.MetricsFilter;
 import org.airsonic.player.filter.ParameterDecodingFilter;
 import org.airsonic.player.filter.RESTFilter;
+import org.airsonic.player.filter.RESTRequestLoggingFilter;
 import org.airsonic.player.filter.RequestEncodingFilter;
 import org.airsonic.player.filter.ResponseHeaderFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +73,19 @@ public class ServletConfiguration implements WebMvcConfigurer {
         registration.addUrlPatterns("/rest/*");
         registration.setName("RESTFilter");
         registration.setOrder(3);
+        return registration;
+    }
+
+    /**
+     * Logs REST API calls. Ordered just after Spring Security's filter chain (order -100), so it only sees requests
+     * that passed authentication and can name the authenticated user.
+     */
+    @Bean
+    public FilterRegistrationBean<Filter> restRequestLoggingFilterRegistration() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(new RESTRequestLoggingFilter());
+        registration.addUrlPatterns("/rest/*");
+        registration.setName("RESTRequestLoggingFilter");
+        registration.setOrder(-99);
         return registration;
     }
 

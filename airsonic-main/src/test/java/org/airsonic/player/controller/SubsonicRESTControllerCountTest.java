@@ -20,6 +20,7 @@ import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.Player;
 import org.airsonic.player.service.ArtistService;
+import org.airsonic.player.service.JaxbContentService;
 import org.airsonic.player.service.LastFmService;
 import org.airsonic.player.service.MediaFileService;
 import org.airsonic.player.service.MediaFolderService;
@@ -65,6 +66,8 @@ public class SubsonicRESTControllerCountTest {
     private ArtistService artistService;
     @Mock
     private LastFmService lastFmService;
+    @Mock
+    private JaxbContentService jaxbContentService;
     @Mock
     private PodcastPersistenceService podcastPersistenceService;
 

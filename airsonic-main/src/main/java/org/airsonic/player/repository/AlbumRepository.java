@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,6 +22,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface AlbumRepository extends JpaRepository<Album, Integer> {
 
     public Optional<Album> findByArtistAndName(String artist, String name);
+
+    /**
+     * Returns triples of album id, artist and name for albums whose artist is one of the given artists and whose name is
+     * one of the given names. The caller picks the exact artist and name pairs it wants from the result.
+     */
+    @Query("SELECT a.id, a.artist, a.name FROM Album a WHERE a.artist IN :artists AND a.name IN :names")
+    public List<Object[]> findIdArtistAndNameByArtistInAndNameIn(@Param("artists") Collection<String> artists,
+            @Param("names") Collection<String> names);
 
     public List<Album> findByName(String artist);
 

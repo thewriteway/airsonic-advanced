@@ -30,6 +30,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +38,12 @@ import java.util.Optional;
 public interface ArtistRepository extends JpaRepository<Artist, Integer> {
 
     public Optional<Artist> findByName(String name);
+
+    /**
+     * Returns the ids and names of the artists with the given names, without loading the artists.
+     */
+    @Query("SELECT a.id, a.name FROM Artist a WHERE a.name IN :names")
+    public List<Object[]> findIdAndNameByNameIn(@Param("names") Collection<String> names);
 
     public Optional<Artist> findByNameAndFolderIn(String name, Iterable<MusicFolder> folders);
 

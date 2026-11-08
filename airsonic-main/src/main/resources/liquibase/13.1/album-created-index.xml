@@ -1,0 +1,22 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="album-created-index" author="anon">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="album" indexName="idx_album_created"/>
+            </not>
+        </preConditions>
+        <comment>
+            The "newest" album list (getAlbumList2 type=newest and the DLNA recent albums) sorts by
+            album.created. Without an index every page sorts the whole album table, which is slow in large libraries.
+        </comment>
+        <createIndex tableName="album" indexName="idx_album_created">
+            <column name="created"/>
+        </createIndex>
+        <rollback>
+            <dropIndex tableName="album" indexName="idx_album_created"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -26,6 +26,7 @@ import org.airsonic.player.domain.entity.UserRating;
 import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.repository.OffsetBasedPageRequest;
 import org.airsonic.player.repository.UserRatingRepository;
+import org.apache.commons.collections4.ListUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -142,6 +146,72 @@ public class RatingService {
             return null;
         }
         return userRatingRepository.findOptByUsernameAndMediaFileId(username, mediaFile.getId()).map(UserRating::getRating).orElse(null);
+    }
+
+    /**
+     * Returns the user's ratings for those of the given media files the user rated, keyed by media file id, in one
+     * query per 500 ids. Use this instead of one {@link #getRatingForUser} call per file for long lists.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Integer> getRatingsForUser(String username, Collection<Integer> mediaFileIds) {
+        Map<Integer, Integer> result = new HashMap<>();
+        if (username == null) {
+            return result;
+        }
+        for (List<Integer> chunk : partition(mediaFileIds)) {
+            for (Object[] row : userRatingRepository.findMediaFileIdAndRatingByUsernameAndMediaFileIdIn(username, chunk)) {
+                result.put((Integer) row[0], (Integer) row[1]);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns all of the user's ratings, keyed by media file id, in one query. Suits lists that span the whole
+     * library, where looking the ids up in chunks would take many queries.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Integer> getRatingsForUser(String username) {
+        Map<Integer, Integer> result = new HashMap<>();
+        if (username == null) {
+            return result;
+        }
+        for (Object[] row : userRatingRepository.findMediaFileIdAndRatingByUsername(username)) {
+            result.put((Integer) row[0], (Integer) row[1]);
+        }
+        return result;
+    }
+
+    /**
+     * Returns the average ratings of those of the given media files that have ratings, keyed by media file id, in one
+     * query per 500 ids. Use this instead of one {@link #getAverageRating} call per file for long lists.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Double> getAverageRatings(Collection<Integer> mediaFileIds) {
+        Map<Integer, Double> result = new HashMap<>();
+        for (List<Integer> chunk : partition(mediaFileIds)) {
+            for (Object[] row : userRatingRepository.findAverageRatingsByMediaFileIdIn(chunk)) {
+                result.put((Integer) row[0], ((Number) row[1]).doubleValue());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the average rating of every rated media file, keyed by media file id, in one query. Suits lists that
+     * span the whole library, where looking the ids up in chunks would take many queries.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Double> getAverageRatings() {
+        Map<Integer, Double> result = new HashMap<>();
+        for (Object[] row : userRatingRepository.findAllAverageRatings()) {
+            result.put((Integer) row[0], ((Number) row[1]).doubleValue());
+        }
+        return result;
+    }
+
+    private static List<List<Integer>> partition(Collection<Integer> ids) {
+        return ListUtils.partition(new ArrayList<>(new LinkedHashSet<>(ids)), 500);
     }
 
     /**

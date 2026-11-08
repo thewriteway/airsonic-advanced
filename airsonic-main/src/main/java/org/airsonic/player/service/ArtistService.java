@@ -26,6 +26,7 @@ import org.airsonic.player.repository.ArtistRepository;
 import org.airsonic.player.repository.OffsetBasedPageRequest;
 import org.airsonic.player.repository.StarredArtistRepository;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
@@ -38,8 +39,11 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,6 +119,25 @@ public class ArtistService {
             return null;
         }
         return artistRepository.findByNameAndFolderIn(artistName, musicFolders).orElse(null);
+    }
+
+    /**
+     * Get the ids of the artists with the given names, in one query per 500 names. Use this instead of one
+     * {@link #getArtist(String)} call per name when building long lists.
+     *
+     * @param artistNames artist names; null and empty names are ignored
+     * @return artist id by name, for the names that match an artist
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Integer> getArtistIdsByName(Collection<String> artistNames) {
+        List<String> names = new ArrayList<>(artistNames.stream().filter(StringUtils::hasLength).distinct().toList());
+        Map<String, Integer> result = new HashMap<>();
+        for (List<String> chunk : ListUtils.partition(names, 500)) {
+            for (Object[] row : artistRepository.findIdAndNameByNameIn(chunk)) {
+                result.putIfAbsent((String) row[1], (Integer) row[0]);
+            }
+        }
+        return result;
     }
 
     /**
@@ -205,6 +228,25 @@ public class ArtistService {
         Map<Integer, Instant> result = new HashMap<>();
         for (Object[] row : starredArtistRepository.findArtistIdAndCreatedByUsername(username)) {
             result.put((Integer) row[0], (Instant) row[1]);
+        }
+        return result;
+    }
+
+    /**
+     * Returns the dates the user starred those of the given artists that are starred, keyed by artist id, in one
+     * query per 500 ids. Unlike {@link #getStarredDates(String)} this only loads the ids asked for, so it suits one
+     * page of a list.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Instant> getStarredDates(Collection<Integer> artistIds, String username) {
+        Map<Integer, Instant> result = new HashMap<>();
+        if (!StringUtils.hasLength(username)) {
+            return result;
+        }
+        for (List<Integer> chunk : ListUtils.partition(new ArrayList<>(new LinkedHashSet<>(artistIds)), 500)) {
+            for (Object[] row : starredArtistRepository.findArtistIdAndCreatedByUsernameAndArtistIdIn(username, chunk)) {
+                result.put((Integer) row[0], (Instant) row[1]);
+            }
         }
         return result;
     }

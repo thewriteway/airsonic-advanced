@@ -118,7 +118,12 @@ public class RESTRequestParameterProcessingFilter extends AbstractAuthentication
         return this.getAuthenticationManager().authenticate(authRequest);
     }
 
-    private void checkAPIVersion(String version) {
+    /**
+     * Rejects clients whose major API version differs from the server's. A client with a newer minor version
+     * (e.g. 1.16.1 against a 1.15.0 server) is accepted: minor versions only add endpoints and optional fields,
+     * and every response reports the server's version, so clients can tell what is supported.
+     */
+    static void checkAPIVersion(String version) {
         Version clientVersion = new Version(version);
 
         try {
@@ -127,7 +132,7 @@ public class RESTRequestParameterProcessingFilter extends AbstractAuthentication
             } else if (serverVersion.getMajor() < clientVersion.getMajor()) {
                 throw new APIException(ErrorCode.PROTOCOL_MISMATCH_SERVER_TOO_OLD);
             } else if (serverVersion.getMinor() < clientVersion.getMinor()) {
-                throw new APIException(ErrorCode.PROTOCOL_MISMATCH_SERVER_TOO_OLD);
+                LOG.debug("Accepting client API version {}, newer than the server's {}", version, serverVersion);
             }
         } catch (APIException e) {
             throw new AuthenticationServiceException("", e);

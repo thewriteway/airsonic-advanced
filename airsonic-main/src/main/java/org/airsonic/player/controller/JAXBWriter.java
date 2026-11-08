@@ -68,6 +68,12 @@ public class JAXBWriter {
 
     private final String SERVER_TYPE = "Airsonic-Advanced";
 
+    /**
+     * Request attribute set to the {@link Error} of any Subsonic error response written for the request,
+     * so the REST request log can report what the client was told.
+     */
+    public static final String ERROR_REQUEST_ATTRIBUTE = JAXBWriter.class.getName() + ".error";
+
     public JAXBWriter() {
         Map<String, Object> properties = Map.of(JAXBContext.JAXB_CONTEXT_FACTORY, "org.eclipse.persistence.jaxb.JAXBContextFactory");
         Class<?>[] classes = {Response.class};
@@ -175,6 +181,9 @@ public class JAXBWriter {
     }
 
     public Entry<String, String> serializeForType(HttpServletRequest request, Response resp) {
+        if (resp.getError() != null) {
+            request.setAttribute(ERROR_REQUEST_ATTRIBUTE, resp.getError());
+        }
         String format = getStringParameter(request, "f", "xml");
         String jsonpCallback = request.getParameter("callback");
         boolean json = "json".equals(format);

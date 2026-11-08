@@ -30,6 +30,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,6 +48,23 @@ public interface UserRatingRepository extends JpaRepository<UserRating, UserRati
 
     @Query("SELECT AVG(u.rating) FROM UserRating u WHERE u.mediaFileId = :mediaFileId")
     public Double getAverageRatingByMediaFileId(@Param("mediaFileId") int mediaFileId);
+
+    /** Returns pairs of media file id and the given user's rating, for those of the given media files the user rated. */
+    @Query("SELECT u.mediaFileId, u.rating FROM UserRating u WHERE u.username = :username AND u.mediaFileId IN :mediaFileIds")
+    public List<Object[]> findMediaFileIdAndRatingByUsernameAndMediaFileIdIn(@Param("username") String username,
+            @Param("mediaFileIds") Collection<Integer> mediaFileIds);
+
+    /** Returns pairs of media file id and average rating, for those of the given media files that have ratings. */
+    @Query("SELECT u.mediaFileId, AVG(u.rating) FROM UserRating u WHERE u.mediaFileId IN :mediaFileIds GROUP BY u.mediaFileId")
+    public List<Object[]> findAverageRatingsByMediaFileIdIn(@Param("mediaFileIds") Collection<Integer> mediaFileIds);
+
+    /** Returns pairs of media file id and the given user's rating, for every media file the user rated. */
+    @Query("SELECT u.mediaFileId, u.rating FROM UserRating u WHERE u.username = :username")
+    public List<Object[]> findMediaFileIdAndRatingByUsername(@Param("username") String username);
+
+    /** Returns pairs of media file id and average rating, for every rated media file. */
+    @Query("SELECT u.mediaFileId, AVG(u.rating) FROM UserRating u GROUP BY u.mediaFileId")
+    public List<Object[]> findAllAverageRatings();
 
     /**
      * Returns pairs of media file id and average rating, highest first, for present media files

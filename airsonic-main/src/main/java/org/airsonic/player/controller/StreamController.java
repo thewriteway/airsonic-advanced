@@ -252,9 +252,11 @@ public class StreamController {
         InputStream playStream = new PlayQueueInputStream(player.getPlayQueue(), fileStartListener, fileEndListener, streamGenerator);
         BiConsumer<InputStream, TransferStatus> streamInit = (i, s) -> {};
 
-        // Enabled SHOUTcast, if requested.
+        // Enable SHOUTcast, if requested, for the continuous play queue stream only. A single file is a plain file
+        // download: SHOUTcast hides its length, so byte range requests (seeking) would restart it from the top.
+        // iOS players send "Icy-MetaData: 1" with every request, and Subsonic clients get titles from the API anyway.
         String clientId = Optional.ofNullable(swr.getParameter("c")).orElse("");
-        if (!ICY_IGNORED_CLIENT.contains(clientId) && "1".equals(swr.getHeader("icy-metadata"))) {
+        if (!isSingleFile && !ICY_IGNORED_CLIENT.contains(clientId) && "1".equals(swr.getHeader("icy-metadata"))) {
             expectedSize = null;
             ShoutcastDetails shoutcastDetails = getShoutcastDetails(playStream);
             playStream = shoutcastDetails.getStream();

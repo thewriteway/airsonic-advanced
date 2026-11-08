@@ -255,6 +255,17 @@ public class TranscodingService {
     }
 
     /**
+     * Returns the format the given file would be transcoded to by default, or {@code null} if it would be streamed
+     * as is. This is what {@link #isTranscodingRequired} and {@link #getSuffix} with no preferred format decide,
+     * but takes the player's transcodings from {@link #getTranscodingsForPlayer} up front, so that building a long
+     * list of files does not load them again for every file.
+     */
+    public String getTranscodedSuffix(MediaFile mediaFile, List<Transcoding> transcodingsForPlayer) {
+        Transcoding transcoding = selectTranscoding(mediaFile, transcodingsForPlayer, null);
+        return transcoding == null ? null : transcoding.getTargetFormat();
+    }
+
+    /**
      * Returns the suffix for the given player and media file, taking transcodings into account.
      *
      * @param player                The player in question.
@@ -542,7 +553,6 @@ public class TranscodingService {
      */
     private Transcoding getTranscoding(MediaFile mediaFile, Player player, String preferredTargetFormat, boolean hls) {
         Transcoding transcoding = null;
-        String suffix = mediaFile.getFormat();
 
         if (hls) {
             // HLS can not be combined with cue-indexed files
@@ -552,40 +562,37 @@ public class TranscodingService {
                 // RAW and cue-indexed files can be combined since the split command does not re-encode audio or video
                 transcoding = null;
             } else {
-
-                List<Transcoding> applicableTranscodings = new LinkedList<>();
-
-                List<Transcoding> transcodingsForPlayer = getTranscodingsForPlayer(player);
-                for (Transcoding tr : transcodingsForPlayer) {
-                    // special case for now as video must have a transcoding
-                    if (mediaFile.isVideo() && tr.getTargetFormat().equalsIgnoreCase(preferredTargetFormat) && isTranscodingInstalled(tr)) {
-                        LOG.debug("Detected source to target format match for video");
-                        applicableTranscodings.add(tr);
-                        break;
-                    }
-                    for (String sourceFormat : tr.getSourceFormatsAsArray()) {
-                        if (sourceFormat.equalsIgnoreCase(suffix) && isTranscodingInstalled(tr)) {
-                            applicableTranscodings.add(tr);
-                        }
-                    }
-                }
-
-                if (!applicableTranscodings.isEmpty()) {
-                    for (Transcoding tr : applicableTranscodings) {
-                        if (tr.getTargetFormat().equalsIgnoreCase(preferredTargetFormat)) {
-                            transcoding = tr;
-                            break;
-                        }
-                    }
-
-                    if (transcoding == null) {
-                        transcoding = applicableTranscodings.get(0);
-                    }
-                }
+                transcoding = selectTranscoding(mediaFile, getTranscodingsForPlayer(player), preferredTargetFormat);
             }
         }
 
         return transcoding;
+    }
+
+    private Transcoding selectTranscoding(MediaFile mediaFile, List<Transcoding> transcodingsForPlayer, String preferredTargetFormat) {
+        String suffix = mediaFile.getFormat();
+        List<Transcoding> applicableTranscodings = new LinkedList<>();
+
+        for (Transcoding tr : transcodingsForPlayer) {
+            // special case for now as video must have a transcoding
+            if (mediaFile.isVideo() && tr.getTargetFormat().equalsIgnoreCase(preferredTargetFormat) && isTranscodingInstalled(tr)) {
+                LOG.debug("Detected source to target format match for video");
+                applicableTranscodings.add(tr);
+                break;
+            }
+            for (String sourceFormat : tr.getSourceFormatsAsArray()) {
+                if (sourceFormat.equalsIgnoreCase(suffix) && isTranscodingInstalled(tr)) {
+                    applicableTranscodings.add(tr);
+                }
+            }
+        }
+
+        for (Transcoding tr : applicableTranscodings) {
+            if (tr.getTargetFormat().equalsIgnoreCase(preferredTargetFormat)) {
+                return tr;
+            }
+        }
+        return applicableTranscodings.isEmpty() ? null : applicableTranscodings.get(0);
     }
 
     /**

@@ -11,6 +11,7 @@ import org.airsonic.player.domain.Artist;
 import org.airsonic.player.domain.MediaFile;
 import org.airsonic.player.domain.MusicFolder;
 import org.airsonic.player.domain.MusicFolder.Type;
+import org.airsonic.player.domain.Player;
 import org.airsonic.player.repository.MediaFileRepository;
 import org.airsonic.player.repository.MusicFolderRepository;
 import org.airsonic.player.util.MusicFolderTestData;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.subsonic.restapi.Child;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,10 +38,13 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -90,6 +95,15 @@ public class MediaScannerServiceTestCase {
 
     @Autowired
     private MediaFolderService mediaFolderService;
+
+    @Autowired
+    private JaxbContentService jaxbContentService;
+
+    @Autowired
+    private RatingService ratingService;
+
+    @Autowired
+    private PlayerService playerService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -173,6 +187,132 @@ public class MediaScannerServiceTestCase {
         System.out.print("End");
     }
 
+
+    /**
+     * The bulk album builder used by getAlbumList2 and other album lists must give the same result as building
+     * each album on its own, against a real database.
+     */
+    @Test
+    public void testBulkAlbumConversionMatchesPerAlbumConversion() {
+        testFolders = MusicFolderTestData.getTestMusicFolders();
+        musicFolderRepository.saveAll(testFolders);
+        mediaFolderService.clearMusicFolderCache();
+        TestCaseUtils.execScan(mediaScannerService);
+
+        List<Album> albums = albumService.getAlphabeticalAlbums(true, true, testFolders);
+        assertEquals(5, albums.size());
+        albumService.starOrUnstar(albums.get(0).getId(), "admin", true);
+
+        List<org.subsonic.restapi.AlbumID3> bulk = jaxbContentService.createJaxbAlbums(albums, "admin");
+
+        assertEquals(albums.size(), bulk.size());
+        assertNotNull(bulk.get(0).getStarred());
+        for (int i = 0; i < albums.size(); i++) {
+            org.subsonic.restapi.AlbumID3 single = jaxbContentService.createJaxbAlbum(
+                    new org.subsonic.restapi.AlbumID3(), albums.get(i), "admin");
+            org.subsonic.restapi.AlbumID3 fromBulk = bulk.get(i);
+            assertEquals(single.getId(), fromBulk.getId());
+            assertEquals(single.getName(), fromBulk.getName());
+            assertEquals(single.getArtist(), fromBulk.getArtist());
+            assertEquals(single.getArtistId(), fromBulk.getArtistId(), "artistId of " + single.getName());
+            assertEquals(single.getCoverArt(), fromBulk.getCoverArt(), "coverArt of " + single.getName());
+            assertEquals(single.getStarred(), fromBulk.getStarred(), "starred of " + single.getName());
+        }
+        assertTrue(bulk.stream().anyMatch(a -> a.getArtistId() != null), "some albums should resolve their artist");
+    }
+
+    @Test
+    public void testBulkChildConversionMatchesPerChildConversion() {
+        testFolders = MusicFolderTestData.getTestMusicFolders();
+        musicFolderRepository.saveAll(testFolders);
+        mediaFolderService.clearMusicFolderCache();
+        TestCaseUtils.execScan(mediaScannerService);
+
+        List<MediaFile> songs = mediaFileService.getSongs(testFolders, 1000, 0);
+        assertTrue(songs.size() > 1, "the test library should have songs");
+        // songs plus their album directories, so both kinds of entry are compared
+        List<MediaFile> entries = Stream.concat(songs.stream(),
+                songs.stream().map(mediaFileService::getParentOf).filter(Objects::nonNull).distinct()).toList();
+        mediaFileService.starMediaFiles(List.of(songs.get(0).getId()), "admin");
+        ratingService.setRatingForUser("admin", songs.get(1), 4);
+        Player player = new Player();
+        player.setUsername("admin");
+        player = playerService.createPlayer(player);
+
+        List<Child> bulk = jaxbContentService.createJaxbChildren(player, entries, "admin");
+
+        assertEquals(entries.size(), bulk.size());
+        assertNotNull(bulk.get(0).getStarred());
+        assertEquals(4, bulk.get(1).getUserRating());
+        assertEquals(4.0, bulk.get(1).getAverageRating());
+        for (int i = 0; i < entries.size(); i++) {
+            Child single = jaxbContentService.createJaxbChild(player, entries.get(i), "admin");
+            Child fromBulk = bulk.get(i);
+            String what = " of " + entries.get(i).getPath();
+            assertEquals(single.getId(), fromBulk.getId());
+            assertEquals(single.isIsDir(), fromBulk.isIsDir(), "isDir" + what);
+            assertEquals(single.getParent(), fromBulk.getParent(), "parent" + what);
+            assertEquals(single.getCoverArt(), fromBulk.getCoverArt(), "coverArt" + what);
+            assertEquals(single.getStarred(), fromBulk.getStarred(), "starred" + what);
+            assertEquals(single.getUserRating(), fromBulk.getUserRating(), "userRating" + what);
+            assertEquals(single.getAverageRating(), fromBulk.getAverageRating(), "averageRating" + what);
+            assertEquals(single.getAlbumId(), fromBulk.getAlbumId(), "albumId" + what);
+            assertEquals(single.getArtistId(), fromBulk.getArtistId(), "artistId" + what);
+            assertEquals(single.getType(), fromBulk.getType(), "type" + what);
+            assertEquals(single.getTranscodedSuffix(), fromBulk.getTranscodedSuffix(), "transcodedSuffix" + what);
+        }
+        assertTrue(bulk.stream().anyMatch(c -> c.getAlbumId() != null), "some songs should resolve their album");
+        assertTrue(bulk.stream().anyMatch(c -> c.getArtistId() != null), "some songs should resolve their artist");
+        assertTrue(bulk.stream().anyMatch(c -> c.getParent() != null), "some entries should have a parent");
+    }
+
+    @Test
+    public void testBulkArtistConversionMatchesPerArtistConversion() {
+        testFolders = MusicFolderTestData.getTestMusicFolders();
+        musicFolderRepository.saveAll(testFolders);
+        mediaFolderService.clearMusicFolderCache();
+        TestCaseUtils.execScan(mediaScannerService);
+
+        // artists as id3 entries (search3, getStarred2, getArtistInfo2)
+        List<Artist> artists = artistService.getArtists(testFolders, 100, 0);
+        assertTrue(artists.size() > 1, "the test library should have artists");
+        artistService.starOrUnstar(artists.get(0).getId(), "admin", true);
+        List<org.subsonic.restapi.ArtistID3> bulkId3 = jaxbContentService.createJaxbArtistsID3(artists, "admin");
+        assertEquals(artists.size(), bulkId3.size());
+        assertNotNull(bulkId3.get(0).getStarred());
+        for (int i = 0; i < artists.size(); i++) {
+            org.subsonic.restapi.ArtistID3 single = jaxbContentService.createJaxbArtist(
+                    new org.subsonic.restapi.ArtistID3(), artists.get(i), "admin");
+            assertEquals(single.getId(), bulkId3.get(i).getId());
+            assertEquals(single.getName(), bulkId3.get(i).getName());
+            assertEquals(single.getStarred(), bulkId3.get(i).getStarred(), "starred of " + single.getName());
+            assertEquals(single.getCoverArt(), bulkId3.get(i).getCoverArt(), "coverArt of " + single.getName());
+        }
+
+        // directories as folder entries (getIndexes shortcuts, search2, getStarred, getArtistInfo)
+        List<MediaFile> dirs = mediaFileService.getSongs(testFolders, 1000, 0).stream()
+                .map(mediaFileService::getParentOf).filter(Objects::nonNull).distinct().toList();
+        assertTrue(dirs.size() > 1, "the test library should have directories");
+        mediaFileService.starMediaFiles(List.of(dirs.get(0).getId()), "admin");
+        ratingService.setRatingForUser("admin", dirs.get(1), 3);
+        List<org.subsonic.restapi.Artist> bulkFolders = jaxbContentService.createJaxbArtists(dirs, "admin");
+        assertNotNull(bulkFolders.get(0).getStarred());
+        assertEquals(3, bulkFolders.get(1).getUserRating());
+        for (int i = 0; i < dirs.size(); i++) {
+            org.subsonic.restapi.Artist single = jaxbContentService.createJaxbArtist(dirs.get(i), "admin");
+            assertEquals(single.getId(), bulkFolders.get(i).getId());
+            assertEquals(single.getName(), bulkFolders.get(i).getName());
+            assertEquals(single.getStarred(), bulkFolders.get(i).getStarred(), "starred of " + single.getName());
+            assertEquals(single.getUserRating(), bulkFolders.get(i).getUserRating(), "userRating of " + single.getName());
+            assertEquals(single.getAverageRating(), bulkFolders.get(i).getAverageRating(), "averageRating of " + single.getName());
+        }
+
+        // the whole-library lookups getIndexes uses
+        assertEquals(mediaFileService.getMediaFileStarredDate(dirs.get(0), "admin"),
+                mediaFileService.getMediaFileStarredDates("admin").get(dirs.get(0).getId()));
+        assertEquals(3, ratingService.getRatingsForUser("admin").get(dirs.get(1).getId()));
+        assertEquals(3.0, ratingService.getAverageRatings().get(dirs.get(1).getId()));
+    }
 
     @Test
     public void testSpecialCharactersInFilename() throws Exception {

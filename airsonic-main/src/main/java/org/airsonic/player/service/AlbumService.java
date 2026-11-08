@@ -8,6 +8,7 @@ import org.airsonic.player.repository.AlbumRepository;
 import org.airsonic.player.repository.GenreSpecifications;
 import org.airsonic.player.repository.OffsetBasedPageRequest;
 import org.airsonic.player.repository.StarredAlbumRepository;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,9 +18,16 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -70,6 +78,37 @@ public class AlbumService {
             return null;
         }
         return albumRepository.findByArtistAndName(mediaFile.getAlbumArtist(), mediaFile.getAlbumName()).orElse(null);
+    }
+
+    /**
+     * Returns the album ids of the given media files, keyed by media file id, as {@link #getAlbumByMediaFile} finds
+     * them, in one query per 500 distinct albums. Media files without a matching album are left out.
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Integer> getAlbumIdsByMediaFile(Collection<MediaFile> mediaFiles) {
+        Map<List<String>, List<Integer>> mediaFileIdsByAlbum = new LinkedHashMap<>();
+        for (MediaFile mediaFile : mediaFiles) {
+            if (mediaFile != null && mediaFile.getAlbumArtist() != null && mediaFile.getAlbumName() != null) {
+                mediaFileIdsByAlbum.computeIfAbsent(List.of(mediaFile.getAlbumArtist(), mediaFile.getAlbumName()),
+                        k -> new ArrayList<>()).add(mediaFile.getId());
+            }
+        }
+        Map<Integer, Integer> result = new HashMap<>();
+        for (List<List<String>> chunk : ListUtils.partition(new ArrayList<>(mediaFileIdsByAlbum.keySet()), 500)) {
+            Set<String> artists = new HashSet<>();
+            Set<String> names = new HashSet<>();
+            chunk.forEach(key -> {
+                artists.add(key.get(0));
+                names.add(key.get(1));
+            });
+            for (Object[] row : albumRepository.findIdArtistAndNameByArtistInAndNameIn(artists, names)) {
+                List<Integer> mediaFileIds = mediaFileIdsByAlbum.get(List.of((String) row[1], (String) row[2]));
+                if (mediaFileIds != null) {
+                    mediaFileIds.forEach(id -> result.put(id, (Integer) row[0]));
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -274,6 +313,27 @@ public class AlbumService {
             }
             return true;
         }).orElse(false);
+    }
+
+    /**
+     * Get the starred dates of those of the given albums that the user has starred, in one query per 500 albums.
+     *
+     * @param albumIds album ids to check
+     * @param username username to check. If null or empty, return empty map
+     * @return starred date by album id
+     */
+    @Transactional(readOnly = true)
+    public Map<Integer, Instant> getAlbumStarredDates(Collection<Integer> albumIds, String username) {
+        if (!StringUtils.hasLength(username) || albumIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<Integer, Instant> result = new HashMap<>();
+        for (List<Integer> chunk : ListUtils.partition(new ArrayList<>(albumIds), 500)) {
+            for (Object[] row : starredAlbumRepository.findAlbumIdAndCreatedByUsernameAndAlbumIdIn(username, chunk)) {
+                result.put((Integer) row[0], (Instant) row[1]);
+            }
+        }
+        return result;
     }
 
     /**
