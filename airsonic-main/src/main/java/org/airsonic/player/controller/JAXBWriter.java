@@ -102,7 +102,7 @@ public class JAXBWriter {
             Marshaller marshaller;
             marshaller = jaxbContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_ENCODING, StringUtil.ENCODING_UTF8);
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE);
             marshaller.setProperty(MarshallerProperties.MEDIA_TYPE, "application/json");
             marshaller.setProperty(MarshallerProperties.JSON_INCLUDE_ROOT, true);
             return marshaller;

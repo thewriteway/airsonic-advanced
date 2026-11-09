@@ -97,6 +97,8 @@ public class SettingsService {
     private static final String KEY_PODCAST_EPISODE_DOWNLOAD_COUNT = "PodcastEpisodeDownloadCount";
     private static final String KEY_DOWNLOAD_BITRATE_LIMIT = "DownloadBitrateLimit";
     private static final String KEY_UPLOAD_BITRATE_LIMIT = "UploadBitrateLimit";
+    private static final String KEY_REST_ARTIST_LIMIT = "RestArtistLimit";
+    private static final String KEY_REST_ALBUM_LIMIT = "RestAlbumLimit";
     private static final String KEY_SPLIT_OPTIONS = "SplitOptions";
     private static final String KEY_SPLIT_COMMAND = "SplitCommand";
     private static final String KEY_DOWNSAMPLING_COMMAND = "DownsamplingCommand4";
@@ -203,6 +205,8 @@ public class SettingsService {
     private static final int DEFAULT_PODCAST_EPISODE_DOWNLOAD_COUNT = 1;
     private static final long DEFAULT_DOWNLOAD_BITRATE_LIMIT = 0;
     private static final long DEFAULT_UPLOAD_BITRATE_LIMIT = 0;
+    private static final int DEFAULT_REST_ARTIST_LIMIT = 0;
+    private static final int DEFAULT_REST_ALBUM_LIMIT = 0;
     private static final String DEFAULT_SPLIT_OPTIONS = "-ss %o -t %d";
     private static final String DEFAULT_SPLIT_COMMAND = "ffmpeg %S -i %s -vcodec copy -acodec copy -f %f -";
     private static final String DEFAULT_DOWNSAMPLING_COMMAND = "ffmpeg %S -i %s -map 0:0 -b:a %bk -v 0 -f mp3 -";
@@ -923,6 +927,30 @@ public class SettingsService {
     public void setUploadBitrateLimit(long limit) {
         setLong(KEY_UPLOAD_BITRATE_LIMIT, limit);
         getUploadBitrateLimiter().setRate(adjustBitrateLimit(limit));
+    }
+
+    /**
+     * @return How many artists the Subsonic API artist lists (getIndexes, getArtists and the search3 library
+     *         listing) return at most, for clients that can't cope with very large libraries. Zero if unlimited.
+     */
+    public int getRestArtistLimit() {
+        return getInt(KEY_REST_ARTIST_LIMIT, DEFAULT_REST_ARTIST_LIMIT);
+    }
+
+    public void setRestArtistLimit(int limit) {
+        setInt(KEY_REST_ARTIST_LIMIT, Math.max(0, limit));
+    }
+
+    /**
+     * @return How many albums the Subsonic API album lists (getAlbumList, getAlbumList2 and the search3 library
+     *         listing) return at most, counted across pages. Zero if unlimited.
+     */
+    public int getRestAlbumLimit() {
+        return getInt(KEY_REST_ALBUM_LIMIT, DEFAULT_REST_ALBUM_LIMIT);
+    }
+
+    public void setRestAlbumLimit(int limit) {
+        setInt(KEY_REST_ALBUM_LIMIT, Math.max(0, limit));
     }
 
     public String getSplitOptions() {

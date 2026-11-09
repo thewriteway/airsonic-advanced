@@ -39,6 +39,22 @@
                 <th:block th:replace="~{helpToolTip(topic=uploadlimit)}" />
             </td>
         </tr>
+
+        <tr>
+            <td th:utext="#{advancedsettings.restartistlimit}"></td>
+            <td>
+                <input th:field="*{restArtistLimit}" size="8"/>
+                <th:block th:replace="~{helpToolTip(topic=restartistlimit)}" />
+            </td>
+        </tr>
+
+        <tr>
+            <td th:utext="#{advancedsettings.restalbumlimit}"></td>
+            <td>
+                <input th:field="*{restAlbumLimit}" size="8"/>
+                <th:block th:replace="~{helpToolTip(topic=restalbumlimit)}" />
+            </td>
+        </tr>
     </table>
 
     <table class="indent">

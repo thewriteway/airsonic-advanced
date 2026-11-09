@@ -27,6 +27,7 @@ import org.airsonic.player.service.MediaFolderService;
 import org.airsonic.player.service.PlayerService;
 import org.airsonic.player.service.SearchService;
 import org.airsonic.player.service.SecurityService;
+import org.airsonic.player.service.SettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,11 +41,17 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -73,6 +80,8 @@ public class SubsonicRESTControllerSearchTest {
     private AlbumService albumService;
     @Mock
     private MediaFileService mediaFileService;
+    @Mock
+    private SettingsService settingsService;
 
     @InjectMocks
     private SubsonicRESTController controller;
@@ -260,6 +269,97 @@ public class SubsonicRESTControllerSearchTest {
         assertThat(artistArgs).isEmpty();
         assertThat(albumArgs).isEmpty();
         assertThat(songArgs).isEmpty();
+    }
+
+    @Test
+    public void search3EmptyQueryStopsAtApiListLimits() throws Exception {
+        when(settingsService.getRestArtistLimit()).thenReturn(1000);
+        when(settingsService.getRestAlbumLimit()).thenReturn(1200);
+        MockHttpServletRequest request = req();
+        request.setParameter("query", "\"\"");
+        setAllCountsAndOffsets(request, "500", "900");
+
+        controller.search3(request, new MockHttpServletResponse());
+
+        assertThat(artistArgs).containsExactly(new int[] {100, 900});
+        assertThat(albumArgs).containsExactly(new int[] {300, 900});
+        assertThat(songArgs).containsExactly(new int[] {500, 900}); // songs are not limited
+
+        artistArgs.clear();
+        albumArgs.clear();
+        request.setParameter("artistOffset", "1000");
+        request.setParameter("albumOffset", "1500");
+        controller.search3(request, new MockHttpServletResponse());
+
+        assertThat(artistArgs).isEmpty();
+        assertThat(albumArgs).isEmpty();
+    }
+
+    @Test
+    public void search3WithQueryIgnoresApiListLimits() throws Exception {
+        when(settingsService.getRestArtistLimit()).thenReturn(10);
+        when(settingsService.getRestAlbumLimit()).thenReturn(10);
+        MockHttpServletRequest request = req();
+        setAllCountsAndOffsets(request, "100", "50");
+
+        controller.search3(request, new MockHttpServletResponse());
+
+        assertThat(searchArgs).hasSize(3).allSatisfy(args -> assertThat(args).containsExactly(100, 50));
+    }
+
+    @Test
+    public void getAlbumList2StopsAtAlbumLimit() throws Exception {
+        when(settingsService.getRestAlbumLimit()).thenReturn(1200);
+        MockHttpServletRequest request = req();
+        request.setParameter("type", "alphabeticalByName");
+        request.setParameter("size", "500");
+        request.setParameter("offset", "1000");
+
+        controller.getAlbumList2(request, new MockHttpServletResponse());
+        verify(albumService).getAlphabeticalAlbums(eq(1000), eq(200), eq(false), eq(false), any());
+
+        request.setParameter("offset", "1200");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        controller.getAlbumList2(request, response);
+        verify(albumService, never()).getAlphabeticalAlbums(eq(1200), anyInt(), anyBoolean(), anyBoolean(), any());
+        assertThat(response.getContentAsString()).contains("albumList2").doesNotContain("<album ");
+    }
+
+    @Test
+    public void getAlbumListStopsAtAlbumLimit() throws Exception {
+        when(settingsService.getRestAlbumLimit()).thenReturn(1200);
+        MockHttpServletRequest request = req();
+        request.setParameter("type", "newest");
+        request.setParameter("size", "500");
+        request.setParameter("offset", "1000");
+
+        controller.getAlbumList(request, new MockHttpServletResponse());
+        verify(mediaFileService).getNewestAlbums(eq(1000), eq(200), any());
+
+        request.setParameter("offset", "5000");
+        controller.getAlbumList(request, new MockHttpServletResponse());
+        verify(mediaFileService, never()).getNewestAlbums(eq(5000), anyInt(), any());
+    }
+
+    @Test
+    public void limitIndexKeepsFirstArtistsAndDropsEmptyLetters() {
+        TreeMap<String, List<String>> index = new TreeMap<>(Map.of(
+                "A", List.of("a1", "a2"), "B", List.of("b1", "b2"), "C", List.of("c1")));
+
+        assertThat(SubsonicRESTController.limitIndex(index, 3))
+                .containsExactly(Map.entry("A", List.of("a1", "a2")), Map.entry("B", List.of("b1")));
+        assertThat(SubsonicRESTController.limitIndex(index, 2)).containsOnlyKeys("A");
+        assertThat(SubsonicRESTController.limitIndex(index, 0)).isSameAs(index);
+        assertThat(SubsonicRESTController.limitIndex(index, 100)).isEqualTo(index);
+    }
+
+    @Test
+    public void limitPageSizeEndsPagesAtTheLimit() {
+        assertThat(SubsonicRESTController.limitPageSize(0, 500, 0)).isEqualTo(500);
+        assertThat(SubsonicRESTController.limitPageSize(4800, 500, 5000)).isEqualTo(200);
+        assertThat(SubsonicRESTController.limitPageSize(5000, 500, 5000)).isZero();
+        assertThat(SubsonicRESTController.limitPageSize(9000, 500, 5000)).isZero();
+        assertThat(SubsonicRESTController.limitPageSize(-10, 500, 100)).isEqualTo(100);
     }
 
     private static void setAllCountsAndOffsets(MockHttpServletRequest request, String count, String offset) {

@@ -302,7 +302,10 @@ public class SubsonicRESTController {
         Map<Integer, Integer> userRatings = ratingService.getRatingsForUser(username);
         Map<Integer, Double> averageRatings = ratingService.getAverageRatings();
 
-        for (Map.Entry<MusicIndex, List<MusicIndex.SortableArtistWithMediaFiles>> entry : musicFolderContent.getIndexedArtists().entrySet()) {
+        // the artist list limit only shortens this list: every folder can still be opened by id
+        Map<MusicIndex, List<MusicIndex.SortableArtistWithMediaFiles>> indexedArtists =
+                limitIndex(musicFolderContent.getIndexedArtists(), settingsService.getRestArtistLimit());
+        for (Map.Entry<MusicIndex, List<MusicIndex.SortableArtistWithMediaFiles>> entry : indexedArtists.entrySet()) {
             Index index = new Index();
             indexes.getIndex().add(index);
             index.setName(entry.getKey().getIndex());
@@ -384,7 +387,8 @@ public class SubsonicRESTController {
         List<org.airsonic.player.domain.MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username, musicFolderId);
 
         List<org.airsonic.player.domain.Artist> artists = artistService.getAlphabeticalArtists(musicFolders);
-        SortedMap<MusicIndex, List<MusicIndex.SortableArtistWithArtist>> indexedArtists = musicIndexService.getIndexedArtists(artists);
+        Map<MusicIndex, List<MusicIndex.SortableArtistWithArtist>> indexedArtists =
+                limitIndex(musicIndexService.getIndexedArtists(artists), settingsService.getRestArtistLimit());
         java.util.function.Function<org.airsonic.player.domain.Artist, ArtistID3> toJaxbArtist = indexedArtists.isEmpty()
                 ? null : jaxbContentService.createJaxbArtistConverter(username);
         for (Map.Entry<MusicIndex, List<MusicIndex.SortableArtistWithArtist>> entry : indexedArtists.entrySet()) {
@@ -754,6 +758,9 @@ public class SubsonicRESTController {
         int artistCount = clampSearchCount(getIntParameter(request, "artistCount", 20));
         int artistOffset = getIntParameter(request, "artistOffset", 0);
         if (StringUtils.isEmpty(query)) {
+            // listing the whole library (client sync): honour the API list limits. Searches by name are not limited.
+            artistCount = limitPageSize(artistOffset, artistCount, settingsService.getRestArtistLimit());
+            albumCount = limitPageSize(albumOffset, albumCount, settingsService.getRestAlbumLimit());
             if (artistCount > 0) {
                 addAllIfAny(searchResult::getArtist, jaxbContentService.createJaxbArtistsID3(
                         artistService.getArtists(musicFolders, artistCount, enumerationOffset(artistOffset)), username));
@@ -795,16 +802,6 @@ public class SubsonicRESTController {
      * more simply receives {@code MAX_SEARCH_COUNT} back rather than an error. The floor also
      * normalises a negative value, which {@code getIntParameter} passes through unchanged.
      */
-    /**
-     * Adds the entries to the list the getter returns, but only if there are any: the JAXB getter creates an
-     * empty list on first call, which would then be written as an empty array instead of being left out.
-     */
-    private static <T> void addAllIfAny(Supplier<List<T>> list, List<? extends T> entries) {
-        if (!entries.isEmpty()) {
-            list.get().addAll(entries);
-        }
-    }
-
     static int clampSearchCount(int value) {
         return Math.max(0, Math.min(MAX_SEARCH_COUNT, value));
     }
@@ -816,6 +813,55 @@ public class SubsonicRESTController {
      */
     static int enumerationOffset(int value) {
         return Math.max(0, value);
+    }
+
+    /**
+     * Adds the entries to the list the getter returns, but only if there are any: the JAXB getter creates an
+     * empty list on first call, which would then be written as an empty array instead of being left out.
+     */
+    private static <T> void addAllIfAny(Supplier<List<T>> list, List<? extends T> entries) {
+        if (!entries.isEmpty()) {
+            list.get().addAll(entries);
+        }
+    }
+
+    /**
+     * Shrinks a page so that it ends within the first {@code limit} entries of a list (the API list limits in
+     * the advanced settings), so a client paging through the list stops at the limit.
+     *
+     * @param limit zero for no limit
+     * @return the page size to fetch, zero if the page starts at or beyond the limit
+     */
+    static int limitPageSize(int offset, int size, int limit) {
+        if (limit <= 0) {
+            return size;
+        }
+        return Math.max(0, Math.min(size, limit - Math.max(0, offset)));
+    }
+
+    /**
+     * Keeps the first {@code limit} artists of an alphabetical index, dropping index letters left empty.
+     *
+     * @param limit zero for no limit
+     */
+    static <K, V> Map<K, List<V>> limitIndex(SortedMap<K, List<V>> index, int limit) {
+        if (limit <= 0) {
+            return index;
+        }
+        Map<K, List<V>> result = new LinkedHashMap<>();
+        int remaining = limit;
+        for (Map.Entry<K, List<V>> entry : index.entrySet()) {
+            if (remaining <= 0) {
+                break;
+            }
+            List<V> artists = entry.getValue();
+            if (artists.size() > remaining) {
+                artists = artists.subList(0, remaining);
+            }
+            result.put(entry.getKey(), artists);
+            remaining -= artists.size();
+        }
+        return result;
     }
 
     @RequestMapping({"/getPlaylists", "/getPlaylists.view"})
@@ -1093,11 +1139,13 @@ public class SubsonicRESTController {
 
         List<org.airsonic.player.domain.MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username, musicFolderId);
 
-        size = Math.max(0, Math.min(size, 500));
+        size = limitPageSize(offset, Math.max(0, Math.min(size, 500)), settingsService.getRestAlbumLimit());
         String type = getRequiredStringParameter(request, "type");
 
         List<MediaFile> albums;
-        if ("highest".equals(type)) {
+        if (size == 0) {
+            albums = List.of();
+        } else if ("highest".equals(type)) {
             albums = ratingService.getHighestRatedAlbums(offset, size, musicFolders);
         } else if ("frequent".equals(type)) {
             albums = mediaFileService.getMostFrequentlyPlayedAlbums(offset, size, musicFolders);
@@ -1136,14 +1184,16 @@ public class SubsonicRESTController {
 
         int size = getIntParameter(request, "size", 10);
         int offset = getIntParameter(request, "offset", 0);
-        size = Math.max(0, Math.min(size, 500));
+        size = limitPageSize(offset, Math.max(0, Math.min(size, 500)), settingsService.getRestAlbumLimit());
         String type = getRequiredStringParameter(request, "type");
         String username = securityService.getCurrentUsername(request);
         Integer musicFolderId = getIntParameter(request, "musicFolderId");
         List<org.airsonic.player.domain.MusicFolder> musicFolders = mediaFolderService.getMusicFoldersForUser(username, musicFolderId);
 
         List<Album> albums;
-        if ("frequent".equals(type)) {
+        if (size == 0) {
+            albums = List.of();
+        } else if ("frequent".equals(type)) {
             albums = albumService.getMostFrequentlyPlayedAlbums(offset, size, musicFolders);
         } else if ("recent".equals(type)) {
             albums = albumService.getMostResentlyPlayedAlbums(offset, size, musicFolders);

@@ -48,6 +48,8 @@ public class AdvancedSettingsController {
         AdvancedSettingsCommand command = new AdvancedSettingsCommand();
         command.setDownloadLimit(String.valueOf(settingsService.getDownloadBitrateLimit()));
         command.setUploadLimit(String.valueOf(settingsService.getUploadBitrateLimit()));
+        command.setRestArtistLimit(String.valueOf(settingsService.getRestArtistLimit()));
+        command.setRestAlbumLimit(String.valueOf(settingsService.getRestAlbumLimit()));
         command.setLdapEnabled(settingsService.isLdapEnabled());
         command.setLdapUrl(settingsService.getLdapUrl());
         command.setLdapSearchFilter(settingsService.getLdapSearchFilter());
@@ -79,6 +81,12 @@ public class AdvancedSettingsController {
         try {
             settingsService.setUploadBitrateLimit(Long.parseLong(command.getUploadLimit()));
         } catch (NumberFormatException x) { /* Intentionally ignored. */ }
+        try {
+            settingsService.setRestArtistLimit(Integer.parseInt(command.getRestArtistLimit().trim()));
+        } catch (NumberFormatException | NullPointerException x) { /* Intentionally ignored. */ }
+        try {
+            settingsService.setRestAlbumLimit(Integer.parseInt(command.getRestAlbumLimit().trim()));
+        } catch (NumberFormatException | NullPointerException x) { /* Intentionally ignored. */ }
 
         settingsService.setLdapEnabled(command.isLdapEnabled());
         settingsService.setLdapUrl(command.getLdapUrl());

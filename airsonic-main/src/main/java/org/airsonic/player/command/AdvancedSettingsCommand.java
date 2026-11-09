@@ -30,6 +30,8 @@ public class AdvancedSettingsCommand {
 
     private String downloadLimit;
     private String uploadLimit;
+    private String restArtistLimit;
+    private String restAlbumLimit;
     private boolean ldapEnabled;
     private String ldapUrl;
     private String ldapSearchFilter;
@@ -63,6 +65,22 @@ public class AdvancedSettingsCommand {
 
     public void setUploadLimit(String uploadLimit) {
         this.uploadLimit = uploadLimit;
+    }
+
+    public String getRestArtistLimit() {
+        return restArtistLimit;
+    }
+
+    public void setRestArtistLimit(String restArtistLimit) {
+        this.restArtistLimit = restArtistLimit;
+    }
+
+    public String getRestAlbumLimit() {
+        return restAlbumLimit;
+    }
+
+    public void setRestAlbumLimit(String restAlbumLimit) {
+        this.restAlbumLimit = restAlbumLimit;
     }
 
     public boolean isLdapEnabled() {
